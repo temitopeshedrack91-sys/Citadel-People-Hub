@@ -1,0 +1,6 @@
+{
+  "name": "Citadel People Hub",
+  "description": "Professional internal People, Culture and HR Management Platform for the Citadel organization (CGCC, Citadel School of Government, Citadel Holdings).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

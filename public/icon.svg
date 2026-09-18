@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0A1E3F"/>
+      <stop offset="100%" stop-color="#152B52"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E5C178"/>
+      <stop offset="50%" stop-color="#C5A059"/>
+      <stop offset="100%" stop-color="#997733"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bgGrad)"/>
+  
+  <!-- Architectural Citadel Arch & Columns -->
+  <path d="M128 390 L128 240 Q256 120 384 240 L384 390" fill="none" stroke="url(#goldGrad)" stroke-width="24" stroke-linecap="round"/>
+  <line x1="104" y1="390" x2="408" y2="390" stroke="url(#goldGrad)" stroke-width="20" stroke-linecap="round"/>
+  
+  <!-- Central Community & People Emblem (PCCM / Citadel Core) -->
+  <circle cx="256" cy="200" r="38" fill="url(#goldGrad)" />
+  <path d="M196 320 C196 268 222 250 256 250 C290 250 316 268 316 320" fill="none" stroke="url(#goldGrad)" stroke-width="22" stroke-linecap="round" />
+  
+  <!-- Flanking Unity Nodes -->
+  <circle cx="176" cy="235" r="22" fill="#FFFFFF" fill-opacity="0.9" />
+  <path d="M142 330 C142 295 160 278 184 278" fill="none" stroke="#FFFFFF" stroke-opacity="0.9" stroke-width="16" stroke-linecap="round" />
+
+  <circle cx="336" cy="235" r="22" fill="#FFFFFF" fill-opacity="0.9" />
+  <path d="M370 330 C370 295 352 278 328 278" fill="none" stroke="#FFFFFF" stroke-opacity="0.9" stroke-width="16" stroke-linecap="round" />
+
+  <!-- Crown / Star Accent -->
+  <polygon points="256,92 264,112 284,112 268,124 274,144 256,132 238,144 244,124 228,112 248,112" fill="url(#goldGrad)"/>
+</svg>

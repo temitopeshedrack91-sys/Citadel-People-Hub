@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 120" fill="none" width="100%" height="100%">
+  <!-- The Citadel Global Community Church Official Logo Vector -->
+  <g id="citadel-emblem">
+    <!-- Outer Gold Square Frame (stroke 12px) -->
+    <rect x="10" y="10" width="100" height="100" stroke="#C59B27" stroke-width="13" fill="none" rx="2" />
+    
+    <!-- Gold 5-pointed Star in top-left quadrant -->
+    <!-- Centered around x=38, y=38 -->
+    <path d="M 38 23 
+             L 41.5 32.5 
+             L 51.5 33 
+             L 43.5 39.5 
+             L 46.5 49.5 
+             L 38 43.5 
+             L 29.5 49.5 
+             L 32.5 39.5 
+             L 24.5 33 
+             L 34.5 32.5 Z" 
+          fill="#C59B27" />
+
+    <!-- Two Building Silhouette Towers in bottom-right quadrant -->
+    <!-- Base gap in gold frame covered cleanly by the towers -->
+    <!-- Tower 1 (Left, shorter: width 24, height 48, angled roof) -->
+    <polygon points="56,114 56,66 70,58 78,63 78,114" fill="currentColor" />
+    <!-- Tower 2 (Right, taller: width 34, height 68, angled sharp diagonal roof) -->
+    <polygon points="76,114 76,46 114,64 114,114" fill="currentColor" />
+  </g>
+
+  <!-- Wordmark: THE CITADEL / GLOBAL COMMUNITY / CHURCH -->
+  <g id="citadel-wordmark" fill="currentColor" font-family="'Montserrat', 'Plus Jakarta Sans', 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="900">
+    <text x="135" y="44" font-size="36" letter-spacing="0.5" font-weight="900">THE CITADEL</text>
+    <text x="135" y="80" font-size="34" letter-spacing="0.2" font-weight="900">GLOBAL COMMUNITY</text>
+    <text x="135" y="113" font-size="34" letter-spacing="1" font-weight="900">CHURCH</text>
+  </g>
+</svg>
