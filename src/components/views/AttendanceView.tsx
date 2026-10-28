@@ -636,7 +636,8 @@ export const AttendanceView: React.FC = () => {
               </span>
             </div>
 
-            <div className="overflow-x-auto custom-scrollbar">
+            {/* Desktop: horizontal table */}
+            <div className="hidden lg:block overflow-x-auto custom-scrollbar">
               <table className="w-full text-left text-xs">
                 <thead className="bg-[#083E34] text-white uppercase tracking-wider text-xs font-bold">
                   <tr>
@@ -699,6 +700,81 @@ export const AttendanceView: React.FC = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile: stacked cards */}
+            <div className="lg:hidden divide-y divide-slate-200 space-y-2">
+              {CITADEL_ATTENDANCE_SCHEDULES.map((sched) => (
+                <div key={sched.id} className="p-3 space-y-2 hover:bg-slate-50/60 rounded-lg transition border border-transparent hover:border-slate-200">
+                  <div className="flex items-center gap-2 text-xs font-black text-black">
+                    <Building className="w-3.5 h-3.5 text-[#083E34]" />
+                    <span>{sched.entityOrUnit}</span>
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-semibold">
+                    Category: {sched.category}
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5 text-xs">
+                    <div className="px-2 py-1 rounded bg-slate-50 border border-slate-200">
+                      <span className="block text-[10px] text-slate-500 font-semibold mb-0.5">
+                        Shift Timings
+                      </span>
+                      <span className={`font-black block ${
+                        sched.shiftStart === '7:00 AM'
+                          ? 'text-amber-900'
+                          : 'text-black'
+                      }`}>
+                        {sched.shiftStart} – {sched.shiftEnd}
+                      </span>
+                      {sched.shiftStart === '7:00 AM' && (
+                        <span className="text-[10px] text-amber-800 font-bold mt-0.5">
+                          Early Operational Shift
+                        </span>
+                      )}
+                    </div>
+                    <div className="px-2 py-1 rounded bg-slate-50 border border-slate-200 flex flex-col justify-between">
+                      <span className="block text-[10px] text-slate-500 font-semibold">
+                        Hours / Day
+                      </span>
+                      <span className="font-black text-black">
+                        {sched.hoursPerDay} Hours
+                      </span>
+                    </div>
+                    <div className="px-2 py-1 rounded bg-slate-50 border border-slate-200 flex flex-col justify-between">
+                      <span className="block text-[10px] text-slate-500 font-semibold">
+                        Biometric Capture
+                      </span>
+                      <span className="inline-flex items-center gap-1 font-black text-emerald-800">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>YES (Mandatory)</span>
+                      </span>
+                    </div>
+                    <div className="px-2 py-1 rounded bg-slate-50 border border-slate-200 flex flex-col justify-between">
+                      <span className="block text-[10px] text-slate-500 font-semibold">
+                        Grace Window
+                      </span>
+                      <span className="font-black text-black">
+                        {sched.gracePeriodMinutes} Minutes
+                      </span>
+                    </div>
+                    <div className="px-2 py-1 rounded bg-slate-50 border border-slate-200">
+                      <span className="block text-[10px] text-slate-500 font-semibold">
+                        Late Threshold
+                      </span>
+                      <span className="font-mono font-black text-rose-700 block">
+                        After {sched.lateThreshold}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="px-2 py-1.5 rounded bg-slate-50 border border-slate-200">
+                    <span className="block text-[10px] text-slate-500 font-semibold mb-1">
+                      Operational &amp; Event Rules
+                    </span>
+                    <span className="text-[11px] text-slate-800 leading-relaxed">
+                      {sched.specialRules}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

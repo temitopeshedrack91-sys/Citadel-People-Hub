@@ -13,7 +13,6 @@ import { Col, Container, Row } from 'react-bootstrap';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Header } from './components/layout/Header';
 import { Sidebar, NavModule } from './components/layout/Sidebar';
-import { DemoDataBanner } from './components/common/DemoDataBanner';
 import { OfflineIndicator } from './components/pwa/OfflineIndicator';
 
 // View modules
@@ -264,10 +263,7 @@ const MainAppLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F6F8FA] flex flex-col font-sans text-slate-800">
-      {/* 1. Notice Banner: Indicating demo data and production Supabase architecture */}
-      <DemoDataBanner />
-
-      {/* 2. Full-Width Top Navigation Bar: Spans top of screen, never covered by sidebar */}
+      {/* 1. Full-Width Top Navigation Bar: Spans top of screen, never covered by sidebar */}
       <Header
         activeModuleTitle={getModuleTitle(currentModule)}
         activeModuleId={currentModule}
