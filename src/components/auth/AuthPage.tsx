@@ -77,6 +77,13 @@ const DEMO_ACCOUNTS: DemoAccount[] = [
     role: 'Backend Systems Lead',
     password: 'Password123!',
   },
+  {
+    label: 'Viewer',
+    name: 'Grace Okafor',
+    email: 'grace.okafor@citadel.ng',
+    role: 'Compliance Auditor (Viewer)',
+    password: 'Password123!',
+  },
 ];
 
 const KELVORA_ALIASES: Record<string, string> = {

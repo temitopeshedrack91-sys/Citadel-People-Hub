@@ -47,7 +47,7 @@ export const AIAssistantView: React.FC = () => {
 
         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
           <div className="flex items-center gap-2">
-            <Lock className="w-4 h-4 text-[#D4AF37]" />
+            <Lock className="w-4 h-4 text-[#FF9900]" />
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">Restricted data</h3>
           </div>
           <div className="mt-3 text-3xl font-black text-slate-900">4</div>
@@ -58,7 +58,7 @@ export const AIAssistantView: React.FC = () => {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="px-5 py-3.5 border-b border-slate-200 bg-slate-50/80">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+            <Sparkles className="w-4 h-4 text-[#FF9900]" />
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">AI capability matrix</h3>
           </div>
         </div>
@@ -82,7 +82,7 @@ export const AIAssistantView: React.FC = () => {
                   {useCase.humanApprovalRequired ? (
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   ) : (
-                    <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />
+                    <ShieldCheck className="w-4 h-4 text-[#FF9900]" />
                   )}
                   <span>{useCase.humanApprovalRequired ? 'Human approval required' : 'Auto-approved draft'}</span>
                 </div>
@@ -94,8 +94,8 @@ export const AIAssistantView: React.FC = () => {
 
       <div className="bg-[#083E34] rounded-2xl border border-emerald-800/40 p-6 shadow-sm text-white">
         <div className="flex items-center gap-2 mb-3">
-          <Lock className="w-4 h-4 text-[#D4AF37]" />
-          <h3 className="text-xs font-black uppercase tracking-wider text-[#D4AF37]">Safe operating requirements</h3>
+          <Lock className="w-4 h-4 text-[#FF9900]" />
+          <h3 className="text-xs font-black uppercase tracking-wider text-[#FF9900]">Safe operating requirements</h3>
         </div>
         <ul className="space-y-2 text-xs text-slate-200 leading-relaxed">
           {safetyControls.map((item) => (

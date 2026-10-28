@@ -191,7 +191,7 @@ export const TrellisTaskDetail: React.FC = () => {
             data-testid="trellis-toggle-edit-btn"
             className={`p-1.5 rounded-lg transition ${
               isEditMode
-                ? 'bg-[#FF9900] text-slate-950 shadow-xs'
+                ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
                 : 'hover:bg-slate-100 hover:text-slate-700'
             }`}
             title={isEditMode ? 'Exit edit mode' : 'Edit task'}
@@ -359,7 +359,7 @@ export const TrellisTaskDetail: React.FC = () => {
                     }}
                     className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border transition cursor-pointer ${
                       isSelected
-                        ? 'bg-[#FF9900] text-slate-950 border-[#E68A00]'
+                        ? 'bg-[#D4AF37] text-slate-950 border-[#C59B27]'
                         : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
@@ -383,7 +383,7 @@ export const TrellisTaskDetail: React.FC = () => {
             <button
               type="submit"
               data-testid="trellis-save-edit-btn"
-              className="px-5 py-2 rounded-xl bg-[#FF9900] hover:bg-[#FFAA2B] text-slate-950 text-xs font-bold transition shadow-xs min-h-[40px]"
+              className="px-5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold transition shadow-xs min-h-[40px]"
             >
               Save Changes
             </button>

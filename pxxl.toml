@@ -7,3 +7,4 @@ installCommand = "npm install"
 
 [routing]
 spa = true
+

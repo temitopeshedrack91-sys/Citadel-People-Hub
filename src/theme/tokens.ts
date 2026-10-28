@@ -22,13 +22,13 @@ export const themeTokens = {
       border: '#A3D4C7',
     },
 
-    // Secondary / Action Accent (Citadel Vibrant Orange from Church SOP & Brand Guidelines)
+    // Secondary / Action Accent (Citadel Classic Gold from Church SOP & Brand Guidelines)
     accent: {
-      DEFAULT: '#FF9900',
-      hover: '#FFAA2B',
-      light: '#FFF8F0',
+      DEFAULT: '#D4AF37',
+      hover: '#C59B27',
+      light: '#FAF5EB',
       subtle: '#FFF3E0',
-      gold: '#FF9900',
+      gold: '#D4AF37',
     },
 
     // Canvas & Surfaces

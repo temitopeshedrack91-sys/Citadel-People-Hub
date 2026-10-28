@@ -38,6 +38,11 @@ import { Badge } from '../common/Badge';
 import { EmployeeProfileModal } from '../employee/EmployeeProfileModal';
 import { CreateEmployeeModal } from '../employee/CreateEmployeeModal';
 import { NavModule } from '../layout/Sidebar';
+import {
+  filterEmployeesForUser,
+  maskSensitiveEmployeeData,
+  canPerformAction,
+} from '../../utils/rbac';
 
 interface EmployeeManagementViewProps {
   isAddModalOpen?: boolean;
@@ -52,6 +57,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
 }) => {
   const { currentUser, currentRole, selectedEntityFilter } = useAuth();
   const isPCCM = currentRole === 'PCCM_SUPER_ADMIN';
+  const canManageEmployees = canPerformAction(currentUser, 'manage_employees').allowed;
 
   // Data State
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -100,12 +106,14 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
   const loadData = async () => {
     setLoading(true);
     try {
-      const [empList, entList, deptList] = await Promise.all([
+      const [rawEmpList, entList, deptList] = await Promise.all([
         employeeRepository.getAll(),
         organizationRepository.getEntities(),
         organizationRepository.getDepartments(),
       ]);
-      setEmployees(empList);
+      const scopedEmpList = filterEmployeesForUser(currentUser, rawEmpList);
+      const maskedEmpList = scopedEmpList.map((emp) => maskSensitiveEmployeeData(currentUser, emp));
+      setEmployees(maskedEmpList);
       setEntities(entList);
       setDepartments(deptList);
     } finally {
@@ -115,7 +123,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [currentUser?.id, currentUser?.role, currentUser?.departmentName]);
 
   // Filter and Sort Pipeline
   const filteredAndSortedEmployees = useMemo(() => {
@@ -247,12 +255,12 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
             </button>
           </div>
 
-          {/* Add Employee (PCCM / Admin authorized) */}
-          {isPCCM && (
+          {/* Add Employee (Admin & HR Staff authorized) */}
+          {canManageEmployees && (
             <button
               id="btn-add-employee-trigger"
               onClick={() => setShowAddModal(true)}
-              className="px-4 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#C59B27] transition"
+              className="px-4 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#C59B27] transition cursor-pointer"
             >
               <Plus className="w-4 h-4 text-slate-950 stroke-[2.5]" />
               <span className="font-bold">Enroll Employee</span>
@@ -511,7 +519,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                           <span>Dossier</span>
                         </button>
 
-                        {isPCCM && (
+                        {canManageEmployees && (
                           <button
                             onClick={() => {
                               setSelectedEmployee(emp);
