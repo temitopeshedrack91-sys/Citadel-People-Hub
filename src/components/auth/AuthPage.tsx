@@ -227,9 +227,7 @@ export const AuthPage: React.FC = () => {
         {/* Header Title & Subtitle */}
         <div className="text-left space-y-1.5 pt-2">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-[#083E34] text-white flex items-center justify-center shadow-xs">
-              <CitadelLogo variant="mark" colorMode="dark" className="h-5 w-5" />
-            </div>
+            <CitadelLogo useImage colorMode="light" className="h-6 w-6" />
             <span className="text-xs font-black text-[#083E34] uppercase tracking-wider">
               Citadel People Hub
             </span>
