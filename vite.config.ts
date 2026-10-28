@@ -62,6 +62,22 @@ export default defineConfig(({ mode, command }) => {
         '@': fileURLToPath(new URL('.', import.meta.url)),
       },
     },
+    build: {
+      chunkSizeWarningLimit: 1000,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('lucide-react')) return 'vendor-lucide';
+              if (id.includes('framer-motion') || id.includes('motion-dom')) return 'vendor-motion';
+              if (id.includes('@supabase') || id.includes('supabase-js')) return 'vendor-supabase';
+              if (id.includes('react-bootstrap') || id.includes('bootstrap')) return 'vendor-bootstrap';
+              return 'vendor';
+            }
+          },
+        },
+      },
+    },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
