@@ -94,9 +94,9 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
             <button
               onClick={onOpenLeaveModal}
               id="employee-apply-leave-btn"
-              className="px-3.5 py-2 rounded-xl bg-[#083E34] hover:bg-[#062f28] text-white font-bold text-xs shadow-xs transition flex items-center gap-2 active:scale-95 cursor-pointer min-h-[38px]"
+              className="px-3.5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold text-xs shadow-xs transition flex items-center gap-2 active:scale-95 cursor-pointer min-h-[38px] border border-[#C59B27]"
             >
-              <CalendarDays className="w-4 h-4 text-white" />
+              <CalendarDays className="w-4 h-4 text-slate-950" />
               <span>Apply for Leave</span>
             </button>
             <button
@@ -281,7 +281,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
           </div>
           <button
             onClick={onOpenLeaveModal}
-            className="px-3.5 py-1.5 rounded-xl bg-[#083E34] text-amber-300 hover:bg-[#062f28] font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs active:scale-95"
+            className="px-3.5 py-1.5 rounded-xl bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs active:scale-95 border border-[#C59B27]"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New Request</span>
@@ -429,7 +429,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
             </p>
             <button
               onClick={onOpenLeaveModal}
-              className="px-4 py-2 rounded-xl bg-[#083E34] text-amber-300 font-bold text-xs hover:bg-[#062f28] transition shadow-xs cursor-pointer active:scale-95"
+              className="px-4 py-2 rounded-xl bg-[#D4AF37] text-slate-950 font-bold text-xs hover:bg-[#C59B27] transition shadow-xs cursor-pointer active:scale-95 border border-[#C59B27]"
             >
               + Apply for Leave Now
             </button>

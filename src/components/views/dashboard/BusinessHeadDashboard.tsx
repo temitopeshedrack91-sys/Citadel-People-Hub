@@ -200,9 +200,9 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
             <button
               onClick={onOpenLeaveModal}
               id="business-head-apply-leave-btn"
-              className="px-3.5 py-2 rounded-xl bg-[#083E34] hover:bg-[#062f28] text-white font-bold text-xs shadow-xs transition flex items-center gap-2 active:scale-95 cursor-pointer min-h-[38px]"
+              className="px-3.5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold text-xs shadow-xs transition flex items-center gap-2 active:scale-95 cursor-pointer min-h-[38px] border border-[#C59B27]"
             >
-              <CalendarDays className="w-4 h-4 text-white" />
+              <CalendarDays className="w-4 h-4 text-slate-950" />
               <span>Apply for Leave</span>
             </button>
             <button
@@ -346,9 +346,9 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
                   </button>
                   <button
                     onClick={() => handleExecutiveSignOff(req)}
-                    className="px-4 py-2 rounded-xl bg-[#083E34] text-amber-300 hover:bg-[#062f28] font-black text-xs shadow-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] font-black text-xs shadow-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer border border-[#C59B27]"
                   >
-                    <Check className="w-4 h-4 text-amber-300" />
+                    <Check className="w-4 h-4 text-slate-950" />
                     <span>Executive Endorse & Sign Off</span>
                   </button>
                 </div>

@@ -974,7 +974,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
                             isResolved
                               ? 'bg-emerald-100 text-emerald-900'
-                              : 'bg-[#083E34] text-white hover:bg-[#052C25]'
+                              : 'bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] border border-[#C59B27]'
                           }`}
                         >
                           {isResolved ? 'Resolved' : 'Approve'}
