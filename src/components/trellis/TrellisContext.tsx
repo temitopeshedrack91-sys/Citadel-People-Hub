@@ -74,48 +74,6 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [tasks, setTasks] = useState<TrellisTask[]>(initialTasks);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialTeamMembers);
   const [currentUser, setCurrentUser] = useState<TeamMember>(initialTeamMembers[0]); // Nadia Safitri by default
-
-  // Synchronize team member roles and attributes with Supabase employees if available
-  useEffect(() => {
-    let isMounted = true;
-    supabase
-      .from('employees')
-      .select('*')
-      .in('email', [
-        'nadia@citadel.ng',
-        'bayu@citadel.ng',
-        'sinta@citadel.ng',
-        'jonathan@citadel.ng',
-        'raka@citadel.ng',
-      ])
-      .then(({ data, error }) => {
-        if (isMounted && data && data.length > 0) {
-          setTeamMembers((prev) =>
-            prev.map((m) => {
-              const dbMatch = data.find(
-                (d: any) =>
-                  d.email?.toLowerCase() === m.email.toLowerCase() ||
-                  `${d.first_name} ${d.last_name}`.toLowerCase() === m.name.toLowerCase()
-              );
-              if (!dbMatch) return m;
-              return {
-                ...m,
-                supabaseId: dbMatch.id,
-                staffId: dbMatch.staff_id || m.staffId,
-                role: dbMatch.position || dbMatch.job_title || m.role,
-                avatarBg: dbMatch.avatar_bg || m.avatarBg,
-                avatarText: dbMatch.avatar_text || m.avatarText,
-              };
-            })
-          );
-        }
-      })
-      .catch((err) => console.warn('Supabase fetch team members error:', err));
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
   const [notifications, setNotifications] = useState<TrellisNotification[]>([
     {
       id: 'notif-1',
@@ -163,6 +121,60 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isEditMode, setIsEditMode] = useState(false);
   const [activeToast, setActiveToast] = useState<ActivityHistoryItem | null>(null);
   const [undoStack, setUndoStack] = useState<ActivityHistoryItem[]>([]);
+
+  // Synchronize team member roles and attributes with Supabase employees if available
+  useEffect(() => {
+    let isMounted = true;
+
+    async function syncTeamMembers() {
+      try {
+        const { data, error } = await supabase
+          .from('employees')
+          .select('*')
+          .in('email', [
+            'nadia@citadel.ng',
+            'bayu@citadel.ng',
+            'sinta@citadel.ng',
+            'jonathan@citadel.ng',
+            'raka@citadel.ng',
+          ]);
+
+        if (error) {
+          console.warn('Supabase fetch team members warning:', error.message);
+          return;
+        }
+
+        if (isMounted && data && data.length > 0) {
+          setTeamMembers((prev) =>
+            prev.map((m) => {
+              const dbMatch = data.find(
+                (d: any) =>
+                  d.email?.toLowerCase() === m.email.toLowerCase() ||
+                  `${d.first_name} ${d.last_name}`.toLowerCase() === m.name.toLowerCase()
+              );
+              if (!dbMatch) return m;
+              return {
+                ...m,
+                supabaseId: dbMatch.id,
+                staffId: dbMatch.staff_id || m.staffId,
+                role: dbMatch.position || dbMatch.job_title || m.role,
+                avatarBg: dbMatch.avatar_bg || m.avatarBg,
+                avatarText: dbMatch.avatar_text || m.avatarText,
+              };
+            })
+          );
+        }
+      } catch (err) {
+        console.warn('Supabase sync team members error:', err);
+      }
+    }
+
+    syncTeamMembers();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Fetch tasks from Supabase and subscribe to realtime changes
   React.useEffect(() => {
