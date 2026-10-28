@@ -115,6 +115,13 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [activeToast, setActiveToast] = useState<ActivityHistoryItem | null>(null);
   const [undoStack, setUndoStack] = useState<ActivityHistoryItem[]>([]);
 
+  // Listen for global open new task event
+  React.useEffect(() => {
+    const handleOpenModal = () => setIsNewTaskModalOpen(true);
+    window.addEventListener('trellis-open-new-task', handleOpenModal);
+    return () => window.removeEventListener('trellis-open-new-task', handleOpenModal);
+  }, []);
+
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAssigneeFilter, setSelectedAssigneeFilter] = useState('All');

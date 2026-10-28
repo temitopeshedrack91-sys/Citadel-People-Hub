@@ -214,12 +214,12 @@ export const CalendarView: React.FC = () => {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <CalendarIcon className="w-6 h-6 text-[#083E34]" />
-            <span>Citadel Master Calendar</span>
+          <h1 className="text-lg sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-[#083E34] shrink-0" />
+            <span>Calendar</span>
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Institutional master calendar capturing leadership summits, statutory holidays, staff leaves, and anniversaries.
+            Company calendar for leadership summits, holidays, staff leaves, and team events.
           </p>
         </div>
 
@@ -349,10 +349,10 @@ export const CalendarView: React.FC = () => {
                 <button
                   onClick={() => handleSyncToOutlook(evt)}
                   data-testid={`btn-sync-calendar-${evt.id}`}
-                  className="px-3.5 py-2 rounded-xl bg-[#083E34] hover:bg-[#052C25] text-white text-xs font-bold flex items-center gap-2 shadow-xs transition self-start sm:self-center shrink-0 active:scale-95 cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-[#083E34] text-slate-700 hover:text-white border border-slate-200/90 text-xs font-semibold flex items-center gap-1.5 transition self-start sm:self-center shrink-0 active:scale-95 cursor-pointer shadow-2xs group"
                 >
-                  <CalendarDays className="w-4 h-4 text-emerald-300" />
-                  <span>Add to Outlook / Apple (.ics)</span>
+                  <CalendarDays className="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-300 transition" />
+                  <span>Add to Calendar (.ics)</span>
                 </button>
               </div>
             ))}

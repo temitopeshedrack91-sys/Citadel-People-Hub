@@ -359,7 +359,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500 font-medium">Handover Note:</span>
-                <span className="font-bold text-emerald-700">Acknowledged ✓</span>
+                <span className="font-bold text-emerald-700">Acknowledged</span>
               </div>
             </div>
           </div>
@@ -419,19 +419,19 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
 
       {/* Top Banner: Leave Balance Semicircular Gauge & Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs">
-        <div className="lg:col-span-8 space-y-2">
+        <div className="lg:col-span-8 space-y-1.5 min-w-0">
           <div className="flex items-center gap-2">
-            <CalendarDays className="w-5 h-5 text-[#083E34]" />
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-              Leave Management & Request Inbox
+            <CalendarDays className="w-5 h-5 text-[#083E34] shrink-0" />
+            <h1 className="text-lg sm:text-2xl font-bold text-slate-900 tracking-tight leading-tight">
+              Leave Requests &amp; Allowances
             </h1>
           </div>
           <p className="text-xs text-slate-500 font-medium max-w-2xl">
-            Pillio list-and-detail inbox for reviewing leave requests, quota balances, handover coverage, and governance approvals across Citadel.
+            Review leave applications, track remaining allowances, and manage team coverage.
           </p>
         </div>
 
-        <div className="lg:col-span-4 flex items-center justify-start lg:justify-end gap-3">
+        <div className="lg:col-span-4 flex items-center justify-start lg:justify-end gap-3 flex-wrap">
           <div className="flex items-center gap-3">
             <ProgressRing
               value={65}
@@ -444,7 +444,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
           <button
             onClick={() => setShowApplyModal(true)}
             data-testid="leave-apply-btn"
-            className="px-4 py-2.5 rounded-xl bg-[#083E34] hover:bg-[#052C25] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition active:scale-[0.98] shrink-0"
+            className="px-4 py-2.5 rounded-xl bg-[#083E34] hover:bg-[#062f28] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition active:scale-[0.98] shrink-0 min-h-[40px]"
           >
             <Plus className="w-4 h-4" />
             <span>Apply for Leave</span>

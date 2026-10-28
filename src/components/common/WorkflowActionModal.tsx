@@ -73,30 +73,30 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-5 overflow-y-auto animate-fade-in">
-      <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in">
+      <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 bg-[#0A1E3F] text-white shrink-0">
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 bg-[#083E34] text-white shrink-0">
           <div>
             <h3 className="text-base font-semibold text-white">Workflow Action</h3>
-            <p className="text-xs text-amber-300/80">{title}</p>
+            <p className="text-xs text-amber-300/90">{title}</p>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-300 hover:text-white p-1 rounded transition"
+            className="text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
-          <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-700">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+          <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700">
             <span className="font-semibold block text-slate-900 mb-1">Item Reference:</span>
             {itemDescription}
             <div className="mt-2 flex items-center gap-2">
               <span className="text-slate-500">Current Status:</span>
-              <span className="px-2 py-0.5 rounded font-mono font-medium bg-amber-100 text-amber-800 text-[11px]">
+              <span className="px-2 py-0.5 rounded-full font-mono font-medium bg-amber-100 text-amber-800 text-[11px] border border-amber-300">
                 {currentStatus}
               </span>
             </div>
@@ -114,9 +114,9 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
                     key={action}
                     type="button"
                     onClick={() => setSelectedAction(action)}
-                    className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs font-medium transition ${
+                    className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition cursor-pointer ${
                       isSelected
-                        ? 'border-[#0A1E3F] bg-[#0A1E3F]/5 text-[#0A1E3F] ring-1 ring-[#0A1E3F]'
+                        ? 'border-[#083E34] bg-[#083E34]/5 text-[#083E34] ring-1 ring-[#083E34]'
                         : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
@@ -141,7 +141,7 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
               onChange={(e) => setComments(e.target.value)}
               rows={3}
               placeholder={`State rationale for ${selectedAction} (will be captured in audit trail and notified to requester)...`}
-              className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:border-[#0A1E3F] focus:ring-1 focus:ring-[#0A1E3F] outline-none"
+              className="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34] outline-none"
             />
           </div>
 
@@ -152,7 +152,7 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
           </div>
 
           {error && (
-            <div className="p-2.5 rounded bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+            <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
               {error}
             </div>
           )}
@@ -161,14 +161,14 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-900 border border-slate-200 rounded-lg hover:bg-slate-50"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 rounded-xl hover:bg-slate-50 transition cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 text-xs font-medium text-white bg-[#0A1E3F] hover:bg-[#152B52] rounded-lg transition disabled:opacity-50"
+              className="px-4 py-2 text-xs font-bold text-white bg-[#083E34] hover:bg-[#062f28] rounded-xl transition disabled:opacity-50 cursor-pointer shadow-xs active:scale-95"
             >
               {isSubmitting ? 'Recording Action...' : `Confirm ${selectedAction}`}
             </button>

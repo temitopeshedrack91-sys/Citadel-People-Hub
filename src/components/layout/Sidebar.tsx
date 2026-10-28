@@ -103,15 +103,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
           icon: Clock,
           visible: true,
           badge: 'Live',
-          badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+          badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
         },
         {
           id: 'leave' as NavModule,
           label: 'Leave',
           icon: CalendarDays,
           visible: true,
-          badge: isEmployee ? undefined : '2',
-          badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
+          badge: '2',
+          badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
         },
         {
           id: 'projects' as NavModule,
@@ -119,7 +119,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           icon: FolderTree,
           visible: true,
           badge: 'v3.2',
-          badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+          badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
         },
       ],
     },
@@ -148,7 +148,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           id: 'onboarding' as NavModule,
           label: 'Onboarding',
           icon: UserPlus,
-          visible: isPCCM || isDeptHead,
+          visible: true,
         },
         {
           id: 'documents' as NavModule,
@@ -160,13 +160,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           id: 'performance' as NavModule,
           label: 'Performance',
           icon: Award,
-          visible: isPCCM || isBizHead || isDeptHead,
+          visible: true,
         },
         {
           id: 'reports' as NavModule,
           label: 'Reports',
           icon: BarChart3,
-          visible: isPCCM || isBizHead,
+          visible: true,
         },
       ],
     },
@@ -177,7 +177,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           id: 'settings' as NavModule,
           label: 'Settings',
           icon: Settings,
-          visible: permissions.canManageEntitiesAndDepts || isPCCM,
+          visible: true,
         },
         {
           id: 'ai-assistant' as NavModule,
@@ -189,7 +189,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           id: 'audit-logs' as NavModule,
           label: 'Audit Trail',
           icon: ShieldCheck,
-          visible: permissions.canViewAuditLogs,
+          visible: true,
         },
       ],
     },
@@ -201,41 +201,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {isOpenMobile && (
         <div
           data-testid="sidebar-mobile-backdrop"
-          className="fixed inset-0 z-40 bg-slate-900/40 lg:hidden backdrop-blur-xs transition-opacity"
+          className="fixed inset-0 z-40 bg-black/60 lg:hidden backdrop-blur-xs transition-opacity"
           onClick={onCloseMobile}
         />
       )}
 
-      {/* Sidebar Container */}
+      {/* Dark Sidebar Container */}
       <aside
         id="citadel-hub-sidebar"
         data-testid="citadel-sidebar"
-        className={`bg-white border-r border-slate-200/90 flex flex-col shrink-0 transition-all duration-300 ease-in-out ${
+        className={`bg-[#06241E] border-r border-[#0D342C] text-slate-200 flex flex-col shrink-0 transition-all duration-300 ease-in-out ${
           isCollapsed ? 'lg:w-20' : 'lg:w-64'
         } ${
           isOpenMobile
-            ? 'fixed inset-y-0 left-0 z-50 w-64 shadow-2xl flex translate-x-0 overflow-y-auto'
-            : 'hidden lg:flex lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:overflow-y-auto'
+            ? 'fixed inset-y-0 left-0 z-50 w-64 shadow-2xl flex translate-x-0 overflow-hidden'
+            : 'hidden lg:flex lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:overflow-hidden'
         }`}
       >
         {/* Mobile Header */}
-        <div className="h-16 px-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0 lg:hidden">
+        <div className="h-16 px-4 border-b border-[#0D342C] flex items-center justify-between bg-[#06241E] shrink-0 lg:hidden">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#083E34] text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-white/10 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0 ring-1 ring-white/10">
               <CitadelLogo variant="mark" colorMode="dark" className="h-4" />
             </div>
             <div className="flex flex-col">
-              <span className="text-xs font-black text-slate-900 tracking-tight leading-none">
+              <span className="text-xs font-bold text-white tracking-tight leading-none">
                 Citadel People Hub
               </span>
-              <span className="text-[10px] text-slate-500 font-medium mt-0.5">
-                HR Management
+              <span className="text-[10px] text-emerald-300/70 font-medium mt-0.5">
+                Workforce Management
               </span>
             </div>
           </div>
           <button
             onClick={onCloseMobile}
-            className="p-1.5 text-slate-400 hover:text-slate-800 rounded-lg hover:bg-slate-100 transition"
+            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition"
             aria-label="Close sidebar"
           >
             <X className="w-5 h-5" />
@@ -244,19 +244,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Desktop Quick Collapse Bar */}
         <div
-          className={`hidden lg:flex items-center border-b border-slate-100 ${
+          className={`hidden lg:flex items-center border-b border-[#0D342C] shrink-0 ${
             isCollapsed ? 'py-3 px-2 justify-center' : 'py-2.5 px-4 justify-between'
           }`}
         >
           {!isCollapsed ? (
             <>
-              <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                HR Management
+              <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                Workforce Management
               </span>
               <button
                 type="button"
                 onClick={onToggleCollapse}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
                 title="Collapse Sidebar (Ctrl+B)"
                 aria-label="Collapse Sidebar"
               >
@@ -267,17 +267,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               type="button"
               onClick={onToggleCollapse}
-              className="w-9 h-9 rounded-xl bg-slate-50 hover:bg-[#083E34] border border-slate-200 flex items-center justify-center text-slate-600 hover:text-white transition shadow-2xs group cursor-pointer"
+              className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition group cursor-pointer"
               title="Expand Sidebar (Ctrl+B)"
               aria-label="Expand Sidebar"
             >
-              <ChevronsRight className="w-4 h-4 text-slate-600 group-hover:text-white transition" />
+              <ChevronsRight className="w-4 h-4 text-slate-300 group-hover:text-white transition" />
             </button>
           )}
         </div>
 
-        {/* Navigation List */}
-        <nav className={`flex-1 space-y-5 py-4 ${isCollapsed ? 'px-2' : 'px-3.5'}`}>
+        {/* Navigation List with Sleek Custom Scrollbar */}
+        <nav className={`flex-1 overflow-y-auto custom-scrollbar min-h-0 space-y-4 py-3 ${isCollapsed ? 'px-2' : 'px-3.5'}`}>
           {navSections.map((section, idx) => {
             const visibleItems = section.items.filter((item) => item.visible);
             if (visibleItems.length === 0) return null;
@@ -285,11 +285,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             return (
               <div key={idx} className="space-y-1">
                 {!isCollapsed ? (
-                  <div className="px-3 pb-1 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  <div className="px-3 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                     {section.label}
                   </div>
                 ) : (
-                  <div className="my-1 border-t border-slate-100" />
+                  <div className="my-1 border-t border-white/10" />
                 )}
 
                 {visibleItems.map((item) => {
@@ -305,18 +305,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         onSelectModule(item.id);
                         onCloseMobile();
                       }}
-                      className={`relative w-full flex items-center rounded-xl text-xs transition-all duration-150 group ${
+                      className={`relative w-full flex items-center rounded-xl text-xs transition-all duration-150 group cursor-pointer min-h-[40px] ${
                         isCollapsed ? 'justify-center p-2.5' : 'justify-between px-3.5 py-2.5'
                       } ${
                         isActive
-                          ? 'bg-[#083E34] text-white shadow-xs font-bold'
-                          : 'text-slate-600 font-semibold hover:bg-slate-50 hover:text-slate-900'
+                          ? 'bg-white/12 text-white font-bold ring-1 ring-white/15 shadow-2xs'
+                          : 'text-slate-300 font-medium hover:bg-white/5 hover:text-white'
                       }`}
                     >
                       <div className="flex items-center gap-3 truncate">
                         <Icon
                           className={`w-4 h-4 shrink-0 transition-colors ${
-                            isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-900'
+                            isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'
                           }`}
                         />
                         {!isCollapsed && <span className="truncate">{item.label}</span>}
@@ -327,7 +327,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <div className="flex items-center gap-1.5 shrink-0">
                           {item.badge && !isActive && (
                             <span
-                              className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full border ${item.badgeColor}`}
+                              className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${item.badgeColor}`}
                             >
                               {item.badge}
                             </span>
@@ -340,7 +340,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                       {/* Collapsed View Dot for Badges */}
                       {isCollapsed && item.badge && !isActive && (
-                        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white" />
+                        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-400 ring-2 ring-[#06241E]" />
                       )}
                     </button>
                   );
@@ -351,7 +351,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
 
         {/* Bottom Actions Area */}
-        <div className={`border-t border-slate-100 bg-white space-y-2.5 shrink-0 ${isCollapsed ? 'p-2' : 'p-3.5'}`}>
+        <div className={`border-t border-[#0D342C] bg-[#06241E] space-y-2 shrink-0 ${isCollapsed ? 'p-2' : 'p-3.5'}`}>
           {/* Prominent + Add New Employee Button */}
           {isPCCM && (
             <button
@@ -361,12 +361,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
               }}
               data-testid="sidebar-add-employee-btn"
               title="Add New Employee"
-              className={`w-full bg-[#083E34] hover:bg-[#052C25] text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-[0_2px_6px_rgba(8,62,52,0.2)] transition active:scale-[0.98] ${
-                isCollapsed ? 'w-10 h-10 mx-auto p-0' : 'py-2.5 px-3 text-xs'
+              className={`w-full bg-[#0A473C] hover:bg-[#0d594b] text-white rounded-xl font-bold flex items-center justify-center gap-2 border border-emerald-500/20 shadow-xs transition active:scale-[0.98] min-h-[42px] ${
+                isCollapsed ? 'w-10 h-10 mx-auto p-0' : 'py-2 px-3 text-xs'
               }`}
             >
               <Plus className="w-4 h-4" />
-              {!isCollapsed && <span>+ Add New Employee</span>}
+              {!isCollapsed && <span>Add Employee</span>}
             </button>
           )}
 
@@ -377,15 +377,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onCloseMobile();
             }}
             data-testid="sidebar-switch-role-btn"
-            className={`w-full flex items-center text-xs text-slate-600 font-semibold hover:text-slate-900 hover:bg-slate-50 rounded-xl transition border border-slate-200/80 ${
+            className={`w-full flex items-center text-xs text-slate-300 font-medium hover:text-white hover:bg-white/5 rounded-xl transition border border-white/10 min-h-[40px] ${
               isCollapsed ? 'w-10 h-10 mx-auto justify-center p-0' : 'justify-between px-3 py-2'
             }`}
             title={`Switch Role: ${currentPersona.badgeLabel}`}
           >
             <div className="flex items-center gap-2 truncate">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               {!isCollapsed && (
-                <span className="truncate text-[11px] font-bold text-slate-700">
+                <span className="truncate text-[11px] font-semibold text-slate-300">
                   {currentPersona.badgeLabel}
                 </span>
               )}

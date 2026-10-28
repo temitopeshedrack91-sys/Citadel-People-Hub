@@ -15,7 +15,7 @@ export const Badge: React.FC<BadgeProps> = ({
 }) => {
   const variantStyles = {
     default: 'bg-slate-100 text-slate-700 border-slate-200',
-    citadel: 'bg-[#0A1E3F]/10 text-[#0A1E3F] border-[#0A1E3F]/20 font-medium',
+    citadel: 'bg-[#083E34]/10 text-[#083E34] border-[#083E34]/20 font-medium',
     success: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     warning: 'bg-amber-50 text-amber-700 border-amber-200',
     danger: 'bg-rose-50 text-rose-700 border-rose-200',

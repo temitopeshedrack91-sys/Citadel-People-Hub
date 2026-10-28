@@ -101,7 +101,7 @@ export const OnboardingView: React.FC = () => {
   const deptConfigs: { id: OnboardingDepartment; label: string; icon: any; color: string }[] = [
     { id: 'IT', label: 'IT Checklist', icon: Laptop, color: 'text-blue-600 bg-blue-50 border-blue-200' },
     { id: 'Manager', label: 'Unit Manager', icon: Briefcase, color: 'text-purple-600 bg-purple-50 border-purple-200' },
-    { id: 'PCCM', label: 'People, Culture & Change', icon: ShieldCheck, color: 'text-[#0A1E3F] bg-amber-50 border-amber-200' },
+    { id: 'PCCM', label: 'People, Culture & Change', icon: ShieldCheck, color: 'text-[#083E34] bg-amber-50 border-amber-200' },
     { id: 'Finance', label: 'Finance & Accounts', icon: CreditCard, color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
     { id: 'Mentor', label: 'Mentor / Buddy', icon: HeartHandshake, color: 'text-rose-600 bg-rose-50 border-rose-200' },
   ];
@@ -125,33 +125,33 @@ export const OnboardingView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Official Church SOP Reference Banner */}
-      <div className="bg-[#0A1E3F] text-white rounded-2xl p-4 sm:p-5 shadow-sm border border-amber-400/20 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-[#083E34] text-white rounded-2xl p-4 sm:p-5 border border-[#06241E] flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-start sm:items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-300 shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-amber-300 shrink-0">
             <FileCheck2 className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-amber-300 font-bold bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
-                Official Ministry SOP Protocol
+              <span className="text-[10px] uppercase tracking-wider text-amber-300 font-bold bg-white/10 px-2 py-0.5 rounded border border-white/10">
+                Staff Onboarding SOP
               </span>
-              <span className="text-xs text-slate-300 hidden sm:inline">• March 2024 Edition</span>
+              <span className="text-xs text-slate-300 hidden sm:inline">• 90-Day Induction</span>
             </div>
-            <h2 className="text-base font-bold text-white tracking-tight font-serif mt-0.5">
-              The Citadel Global Community Church — Onboarding Checklist & Schedule
+            <h2 className="text-base font-bold text-white tracking-tight mt-0.5">
+              Citadel New Hire Onboarding &amp; Induction Guide
             </h2>
             <p className="text-xs text-slate-300 mt-0.5">
-              Authored by Sussan Afuwape • 90-day induction framework across Unit Managers, PCCM, IT, Finance, and Mentors.
+              Task checklists and milestone handovers across Unit Leads, PCCM, IT, and Finance.
             </p>
           </div>
         </div>
 
         <button
           onClick={() => setIsSopModalOpen(true)}
-          className="self-start md:self-auto px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-[#0A1E3F] font-black text-xs transition flex items-center gap-2 shrink-0 shadow-xs cursor-pointer"
+          className="self-start md:self-auto px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-[#083E34] font-bold text-xs transition flex items-center gap-2 shrink-0 shadow-xs cursor-pointer active:scale-95 min-h-[38px]"
         >
           <Eye className="w-4 h-4" />
-          <span>View Official SOP Guide</span>
+          <span>View SOP guide</span>
         </button>
       </div>
 
@@ -163,9 +163,9 @@ export const OnboardingView: React.FC = () => {
             <div
               key={j.id}
               onClick={() => setSelectedJourneyId(j.id)}
-              className={`p-4 rounded-xl border text-left cursor-pointer transition shadow-2xs ${
+              className={`p-4 rounded-2xl border text-left cursor-pointer transition shadow-2xs ${
                 isSelected
-                  ? 'bg-white border-[#0A1E3F] ring-2 ring-[#0A1E3F]/15 shadow-sm'
+                  ? 'bg-white border-[#083E34] ring-2 ring-[#083E34]/15 shadow-sm'
                   : 'bg-white border-slate-200 hover:border-slate-300 opacity-90 hover:opacity-100'
               }`}
             >
@@ -178,7 +178,7 @@ export const OnboardingView: React.FC = () => {
                   <p className="text-xs font-semibold text-slate-700 truncate mt-0.5">{j.jobTitle}</p>
                   <p className="text-[11px] text-slate-600 font-medium truncate">{j.entityName}</p>
                 </div>
-                <span className="text-xs font-black text-[#0A1E3F] bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300 shrink-0">
+                <span className="text-xs font-black text-[#083E34] bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300 shrink-0">
                   {j.overallProgressPercent}%
                 </span>
               </div>
@@ -186,7 +186,7 @@ export const OnboardingView: React.FC = () => {
               {/* Mini Progress Bar */}
               <div className="mt-3 w-full bg-slate-100 rounded-full h-1.5 overflow-hidden border border-slate-200">
                 <div
-                  className="bg-[#0A3B32] h-1.5 rounded-full transition-all duration-300"
+                  className="bg-[#083E34] h-1.5 rounded-full transition-all duration-300"
                   style={{ width: `${j.overallProgressPercent}%` }}
                 />
               </div>
@@ -202,11 +202,11 @@ export const OnboardingView: React.FC = () => {
 
       {/* Selected Employee Summary Bar */}
       {currentJourney && (
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2.5">
-                <h3 className="text-lg font-black text-black font-serif">{currentJourney.employeeName}</h3>
+                <h3 className="text-lg font-black text-black ">{currentJourney.employeeName}</h3>
                 <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-300">
                   {currentJourney.staffId}
                 </span>
@@ -230,11 +230,11 @@ export const OnboardingView: React.FC = () => {
             <div className="lg:text-right min-w-[200px] bg-slate-50 p-3.5 rounded-xl border border-slate-200">
               <div className="flex items-baseline justify-between lg:justify-end gap-2">
                 <span className="text-xs font-bold text-black">Onboarding Progress:</span>
-                <span className="text-xl font-black text-[#0A1E3F]">{currentJourney.overallProgressPercent}%</span>
+                <span className="text-xl font-black text-[#083E34]">{currentJourney.overallProgressPercent}%</span>
               </div>
               <div className="mt-1.5 w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
                 <div
-                  className="bg-[#0A1E3F] h-2.5 rounded-full transition-all duration-300"
+                  className="bg-[#083E34] h-2.5 rounded-full transition-all duration-300"
                   style={{ width: `${currentJourney.overallProgressPercent}%` }}
                 />
               </div>
@@ -244,7 +244,7 @@ export const OnboardingView: React.FC = () => {
             </div>
           </div>
 
-          {/* Departmental Progress Cards (Realizing the Cross-Functional Team Assessment requirement) */}
+          {/* Departmental Progress Cards */}
           <div className="mt-5 pt-4 border-t border-slate-200 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
             {deptConfigs.map((dept) => {
               const stats = getDeptStats(dept.id);
@@ -256,7 +256,7 @@ export const OnboardingView: React.FC = () => {
                     setActiveTab('tasks');
                     setDepartmentFilter(departmentFilter === dept.id ? 'All' : dept.id);
                   }}
-                  className={`p-2.5 rounded-lg border text-left cursor-pointer transition ${
+                  className={`p-2.5 rounded-xl border text-left cursor-pointer transition ${
                     departmentFilter === dept.id
                       ? 'bg-amber-50 border-amber-400 ring-1 ring-amber-400'
                       : 'bg-white border-slate-200 hover:border-slate-300'
@@ -274,7 +274,7 @@ export const OnboardingView: React.FC = () => {
                   </div>
                   <div className="mt-1 w-full bg-slate-100 rounded-full h-1 overflow-hidden">
                     <div
-                      className="bg-[#0A3B32] h-1 rounded-full transition-all duration-300"
+                      className="bg-[#083E34] h-1 rounded-full transition-all duration-300"
                       style={{ width: `${stats.pct}%` }}
                     />
                   </div>
@@ -286,12 +286,12 @@ export const OnboardingView: React.FC = () => {
       )}
 
       {/* Navigation Sub-Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2.5 overflow-x-auto custom-scrollbar">
         <button
           onClick={() => setActiveTab('tasks')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer ${
             activeTab === 'tasks'
-              ? 'bg-[#0A1E3F] text-white shadow-xs'
+              ? 'bg-[#083E34] text-white shadow-xs'
               : 'text-black hover:bg-slate-100'
           }`}
         >
@@ -301,9 +301,9 @@ export const OnboardingView: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('welcome-email')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer ${
             activeTab === 'welcome-email'
-              ? 'bg-[#0A1E3F] text-white shadow-xs'
+              ? 'bg-[#083E34] text-white shadow-xs'
               : 'text-black hover:bg-slate-100'
           }`}
         >
@@ -313,9 +313,9 @@ export const OnboardingView: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('documents')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer ${
             activeTab === 'documents'
-              ? 'bg-[#0A1E3F] text-white shadow-xs'
+              ? 'bg-[#083E34] text-white shadow-xs'
               : 'text-black hover:bg-slate-100'
           }`}
         >
@@ -325,9 +325,9 @@ export const OnboardingView: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('orientation')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer ${
             activeTab === 'orientation'
-              ? 'bg-[#0A1E3F] text-white shadow-xs'
+              ? 'bg-[#083E34] text-white shadow-xs'
               : 'text-black hover:bg-slate-100'
           }`}
         >
@@ -337,9 +337,9 @@ export const OnboardingView: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('accountability')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer ${
             activeTab === 'accountability'
-              ? 'bg-[#0A1E3F] text-white shadow-xs'
+              ? 'bg-[#083E34] text-white shadow-xs'
               : 'text-black hover:bg-slate-100'
           }`}
         >
@@ -349,7 +349,7 @@ export const OnboardingView: React.FC = () => {
       </div>
 
       {activeTab === 'welcome-email' && (
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div>
               <h3 className="text-xs font-black uppercase tracking-wider text-black">Welcome Email Template</h3>
@@ -358,7 +358,7 @@ export const OnboardingView: React.FC = () => {
             <button
               type="button"
               onClick={handleCopyWelcomeEmail}
-              className="px-3 py-1.5 rounded-lg bg-[#0A1E3F] text-amber-300 hover:bg-[#152B52] text-xs font-bold flex items-center gap-1.5"
+              className="px-3.5 py-2 rounded-xl bg-[#083E34] text-amber-300 hover:bg-[#062f28] text-xs font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-xs"
             >
               <Send className="w-3.5 h-3.5" />
               <span>{copiedEmail ? 'Copied' : 'Copy email'}</span>
@@ -382,7 +382,7 @@ export const OnboardingView: React.FC = () => {
       {activeTab === 'tasks' && (
         <div className="space-y-4">
           {/* Filters Bar: Department, Timeline, Search */}
-          <div className="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2 text-xs">
               {/* Department Filter */}
               <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-300">
@@ -428,7 +428,7 @@ export const OnboardingView: React.FC = () => {
                     setTimelineFilter('All');
                     setSearchQuery('');
                   }}
-                  className="px-2.5 py-1 text-xs font-bold text-[#0A1E3F] hover:bg-slate-100 rounded-lg transition"
+                  className="px-2.5 py-1 text-xs font-bold text-[#083E34] hover:bg-slate-100 rounded-lg transition"
                 >
                   Reset Filters
                 </button>
@@ -443,7 +443,7 @@ export const OnboardingView: React.FC = () => {
                 placeholder="Search checklist tasks..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs text-black font-semibold bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:border-[#0A1E3F] focus:bg-white transition"
+                className="w-full pl-8 pr-3 py-1.5 text-xs text-black font-semibold bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:border-[#083E34] focus:bg-white transition"
               />
             </div>
           </div>
@@ -524,10 +524,10 @@ export const OnboardingView: React.FC = () => {
 
       {/* TAB 2: REQUIRED ONBOARDING DOCUMENTS */}
       {activeTab === 'documents' && (
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-4">
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
           <div className="border-b border-slate-200 pb-3">
             <h3 className="text-sm font-black text-black uppercase tracking-wider flex items-center gap-2">
-              <FileCheck2 className="w-4 h-4 text-[#0A1E3F]" />
+              <FileCheck2 className="w-4 h-4 text-[#083E34]" />
               <span>Required Onboarding Documents for New Hires</span>
             </h3>
             <p className="text-xs text-slate-600 mt-0.5 font-medium">
@@ -569,10 +569,10 @@ export const OnboardingView: React.FC = () => {
 
       {/* TAB 3: ON-SITE ORIENTATION CHECKLIST */}
       {activeTab === 'orientation' && (
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-4">
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
           <div className="border-b border-slate-200 pb-3">
             <h3 className="text-sm font-black text-black uppercase tracking-wider flex items-center gap-2">
-              <Gift className="w-4 h-4 text-[#0A1E3F]" />
+              <Gift className="w-4 h-4 text-[#083E34]" />
               <span>New Hire On-Site Orientation Checklist</span>
             </h3>
             <p className="text-xs text-slate-600 mt-0.5 font-medium">
@@ -612,10 +612,10 @@ export const OnboardingView: React.FC = () => {
 
       {/* TAB 4: TEAM ACCOUNTABILITY & ROSTER */}
       {activeTab === 'accountability' && (
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-4">
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
           <div className="border-b border-slate-200 pb-3">
             <h3 className="text-sm font-black text-black uppercase tracking-wider flex items-center gap-2">
-              <Users className="w-4 h-4 text-[#0A1E3F]" />
+              <Users className="w-4 h-4 text-[#083E34]" />
               <span>Assigned Onboarding Team Roster & Assessment</span>
             </h3>
             <p className="text-xs text-slate-600 mt-0.5 font-medium">
@@ -643,7 +643,7 @@ export const OnboardingView: React.FC = () => {
 
             {/* 2. PCCM Division */}
             <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs">
-              <div className="flex items-center gap-2 text-xs font-black text-[#0A1E3F] bg-amber-50 p-2 rounded-lg border border-amber-300">
+              <div className="flex items-center gap-2 text-xs font-black text-[#083E34] bg-amber-50 p-2 rounded-lg border border-amber-300">
                 <ShieldCheck className="w-4 h-4 text-[#C59B27]" />
                 <span>People, Culture & Change (HR)</span>
               </div>
@@ -717,13 +717,13 @@ export const OnboardingView: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
           <div className="bg-white rounded-2xl border border-slate-300 shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-slate-200 bg-[#0A1E3F] text-white flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-emerald-900/20 bg-[#083E34] text-white flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-amber-400 text-[#0A1E3F] flex items-center justify-center font-bold">
+                <div className="w-9 h-9 rounded-xl bg-amber-400 text-[#083E34] flex items-center justify-center font-bold">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white font-serif">
+                  <h3 className="text-sm font-bold text-white ">
                     The Citadel Global Community Church
                   </h3>
                   <p className="text-xs text-amber-300 font-mono font-bold">
@@ -733,14 +733,14 @@ export const OnboardingView: React.FC = () => {
               </div>
               <button
                 onClick={() => setIsSopModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition"
+                className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Document Body */}
-            <div className="p-6 overflow-y-auto space-y-6 text-xs text-slate-800">
+            <div className="p-6 overflow-y-auto space-y-6 text-xs text-slate-800 custom-scrollbar">
               {/* Introduction Box */}
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                 <h4 className="font-black text-black text-sm uppercase tracking-wider">Introduction</h4>
@@ -765,7 +765,7 @@ export const OnboardingView: React.FC = () => {
                   New Hire Onboarding Task Allocation
                 </h4>
 
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto custom-scrollbar">
                   <table className="w-full text-left border-collapse border border-slate-200 rounded-lg">
                     <thead>
                       <tr className="bg-amber-100 text-black font-black">
@@ -847,7 +847,7 @@ export const OnboardingView: React.FC = () => {
             <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-end">
               <button
                 onClick={() => setIsSopModalOpen(false)}
-                className="px-4 py-2 bg-[#0A1E3F] text-white rounded-xl text-xs font-bold hover:bg-[#06152b] transition"
+                className="px-4 py-2 bg-[#083E34] text-white rounded-xl text-xs font-bold hover:bg-[#062f28] transition cursor-pointer"
               >
                 Close Document
               </button>

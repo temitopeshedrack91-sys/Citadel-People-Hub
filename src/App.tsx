@@ -38,11 +38,45 @@ import { ProjectsView } from './components/views/ProjectsView';
 import { TeamNotesView } from './components/views/TeamNotesView';
 import { LoginModal } from './components/auth/LoginModal';
 
+const VALID_MODULES: NavModule[] = [
+  'dashboard', 'employees', 'directory', 'leave', 'attendance', 'projects',
+  'calendar', 'team-notes', 'recruitment', 'onboarding', 'offboarding',
+  'performance', 'documents', 'reports', 'notifications', 'integrations',
+  'ai-assistant', 'settings', 'audit-logs'
+];
+
+const getInitialModule = (): NavModule => {
+  if (typeof window !== 'undefined') {
+    const hash = window.location.hash.replace('#', '') as NavModule;
+    if (VALID_MODULES.includes(hash)) return hash;
+  }
+  return 'dashboard';
+};
+
 const MainAppLayout: React.FC = () => {
   const { backendEnabled, isAuthenticated, currentRole, currentUser } = useAuth();
   const shouldReduceMotion = useReducedMotion();
-  const [currentModule, setCurrentModule] = useState<NavModule>('dashboard');
+  const [currentModule, setCurrentModuleState] = useState<NavModule>(getInitialModule);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  const setCurrentModule = (mod: NavModule) => {
+    setCurrentModuleState(mod);
+    if (typeof window !== 'undefined') {
+      window.location.hash = mod;
+    }
+  };
+
+  // Sync with hashchange events (back/forward navigation)
+  React.useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '') as NavModule;
+      if (VALID_MODULES.includes(hash)) {
+        setCurrentModuleState(hash);
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   // Desktop sidebar collapse state with localStorage persistence
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
@@ -82,55 +116,46 @@ const MainAppLayout: React.FC = () => {
   const getModuleTitle = (mod: NavModule): string => {
     switch (mod) {
       case 'dashboard':
-        if (currentRole === 'EMPLOYEE') return 'My Employee Dashboard';
+        if (currentRole === 'EMPLOYEE') return 'Dashboard';
         if (currentRole === 'DEPARTMENT_HEAD') return `${currentUser.departmentName || 'Department'} Dashboard`;
-        if (currentRole === 'BUSINESS_HEAD') return 'Executive Business Head Dashboard';
-        return 'Overview Dashboard (PCCM Super Admin)';
+        if (currentRole === 'BUSINESS_HEAD') return 'Leadership Dashboard';
+        return 'Dashboard';
       case 'employees':
-        if (currentRole === 'EMPLOYEE') return 'My Profile & Team Records';
-        if (currentRole === 'DEPARTMENT_HEAD') return `${currentUser.departmentName || 'Department'} Team Records`;
-        if (currentRole === 'BUSINESS_HEAD') return 'Divisional Workforce Records';
-        return 'Employee Records';
+        return 'Employees';
       case 'directory':
-        return 'Corporate Directory';
+        return 'Directory';
       case 'leave':
-        if (currentRole === 'EMPLOYEE') return 'My Leave Requests & Quotas';
-        if (currentRole === 'DEPARTMENT_HEAD') return 'Department Leave Approvals';
-        if (currentRole === 'BUSINESS_HEAD') return 'Executive Leave Sign-Offs';
-        return 'Leave Management & Governance';
+        return 'Leave';
       case 'attendance':
-        if (currentRole === 'EMPLOYEE') return 'My Attendance & Biometric Status';
-        if (currentRole === 'DEPARTMENT_HEAD') return 'Department Attendance Adherence';
-        if (currentRole === 'BUSINESS_HEAD') return 'Divisional Attendance Analytics';
-        return 'Attendance & Biometrics';
+        return 'Attendance';
       case 'recruitment':
-        return 'Recruitment & Pipelines';
+        return 'Recruitment';
       case 'onboarding':
-        return currentRole === 'EMPLOYEE' ? 'My Onboarding Tasks' : 'Onboarding Journeys';
+        return 'Onboarding';
       case 'offboarding':
-        return 'Employee Lifecycle & Offboarding';
+        return 'Offboarding';
       case 'performance':
-        return 'Performance & Appraisals';
+        return 'Performance';
       case 'documents':
-        return 'Documents & Policies';
+        return 'Documents';
       case 'calendar':
-        return 'Citadel Master Calendar';
+        return 'Calendar';
       case 'reports':
-        return 'Reports & Workforce Analytics';
+        return 'Reports';
       case 'notifications':
-        return 'Notifications & Alerts';
+        return 'Notifications';
       case 'integrations':
-        return 'Integrations & Cloud';
+        return 'Integrations';
       case 'ai-assistant':
-        return 'AI Assistant & HR Automation';
+        return 'Help & Assistant';
       case 'settings':
-        return 'Organization Settings';
+        return 'Settings';
       case 'projects':
         return 'Citadel People Hub • v3.2 release';
       case 'team-notes':
-        return 'Team Notes & Operations';
+        return 'Team Notes';
       case 'audit-logs':
-        return 'Compliance & Audit Trail';
+        return 'Audit Trail';
       default:
         return 'Citadel People Hub';
     }
@@ -229,6 +254,12 @@ const MainAppLayout: React.FC = () => {
         onToggleSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
         isSidebarCollapsed={isSidebarCollapsed}
         onToggleCollapse={toggleSidebarCollapse}
+        onOpenNewTask={() => {
+          setCurrentModule('projects');
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('trellis-open-new-task'));
+          }, 60);
+        }}
       />
 
       {/* 3. Main Workspace: Natural Flex container for Sidebar & Main Content */}

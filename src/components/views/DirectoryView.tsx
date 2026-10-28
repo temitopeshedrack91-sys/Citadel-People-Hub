@@ -353,12 +353,12 @@ export const DirectoryView: React.FC = () => {
 
       {/* Page Title */}
       <div>
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-          <FolderTree className="w-6 h-6 text-[#083E34]" />
-          <span>Citadel Employee Directory</span>
+        <h1 className="text-lg sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+          <FolderTree className="w-5 h-5 sm:w-6 sm:h-6 text-[#083E34] shrink-0" />
+          <span>Staff Directory</span>
         </h1>
         <p className="text-xs text-slate-500 font-medium mt-0.5">
-          Corporate workforce roster with Pillio list-and-detail inspector across Church, School of Government, and Commercial Holdings.
+          Find and view staff profiles across Church, School of Government, and Holdings.
         </p>
       </div>
 

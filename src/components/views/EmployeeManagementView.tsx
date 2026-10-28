@@ -205,18 +205,18 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
   return (
     <div className="space-y-5">
       {/* 1. Header & Controls Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-black font-serif text-black tracking-tight">
-              Citadel Employee Records
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
+              Employees
             </h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-[#C59B27] border border-amber-300 font-mono text-xs font-bold">
-              {totalItems} Personnel
+            <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold">
+              {totalItems} total
             </span>
           </div>
-          <p className="text-xs text-black font-semibold mt-0.5">
-            Centralized workforce database across Citadel Global Community Church, CSOG, and Holdings.
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
+            Centralized staff records across Church, School of Government, and Holdings.
           </p>
         </div>
 
@@ -262,7 +262,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
       </div>
 
       {/* 2. Comprehensive Filter & Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3">
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
           {/* Search Box */}
           <div className="relative lg:col-span-1">
@@ -275,7 +275,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-8 pr-3 py-2 text-xs border border-slate-200 rounded-lg focus:border-[#0A1E3F] outline-none"
+              className="w-full pl-8 pr-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34]/20 outline-none transition"
             />
           </div>
 
@@ -288,7 +288,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 setDeptFilter('');
                 setCurrentPage(1);
               }}
-              className="w-full py-2 px-2.5 text-xs border border-slate-200 rounded-lg focus:border-[#0A1E3F] outline-none bg-white text-slate-700 font-medium"
+              className="w-full py-2 px-2.5 text-xs border border-slate-200 rounded-xl focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34]/20 outline-none bg-white text-slate-700 font-medium transition"
             >
               <option value="">All Citadel Entities</option>
               {entities.map((ent) => (
@@ -307,7 +307,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 setDeptFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full py-2 px-2.5 text-xs border border-slate-200 rounded-lg focus:border-[#0A1E3F] outline-none bg-white text-slate-700 font-medium"
+              className="w-full py-2 px-2.5 text-xs border border-slate-200 rounded-xl focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34]/20 outline-none bg-white text-slate-700 font-medium transition"
             >
               <option value="">All Departments</option>
               {availableDepartments.map((dept) => (
@@ -326,7 +326,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 setStatusFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full py-2 px-2.5 text-xs border border-slate-200 rounded-lg focus:border-[#0A1E3F] outline-none bg-white text-slate-700 font-medium"
+              className="w-full py-2 px-2.5 text-xs border border-slate-200 rounded-xl focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34]/20 outline-none bg-white text-slate-700 font-medium transition"
             >
               <option value="">All Lifecycle Statuses</option>
               <option value="Active">Active</option>
@@ -349,7 +349,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 setTypeFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full py-2 px-2.5 text-xs border border-slate-200 rounded-lg focus:border-[#0A1E3F] outline-none bg-white text-slate-700 font-medium"
+              className="w-full py-2 px-2.5 text-xs border border-slate-200 rounded-xl focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34]/20 outline-none bg-white text-slate-700 font-medium transition"
             >
               <option value="">All Contract Types</option>
               <option value="Full-Time">Full-Time</option>
@@ -362,7 +362,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
             {(searchQuery || entityFilter || deptFilter || statusFilter || typeFilter) && (
               <button
                 onClick={handleResetFilters}
-                className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition shrink-0"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition shrink-0"
                 title="Reset all filters"
               >
                 <RotateCcw className="w-4 h-4" />
@@ -392,86 +392,86 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
         </div>
       ) : viewMode === 'table' ? (
         /* TABLE VIEW */
-        <div className="bg-white rounded-xl border border-slate-300 shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] overflow-hidden">
+          <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-100 border-b-2 border-slate-300 text-xs font-black uppercase tracking-wider text-black">
+                <tr className="bg-slate-50/90 border-b border-slate-200/80 text-[11px] font-black uppercase tracking-wider text-slate-500">
                   <th
                     onClick={() => handleSort('staffId')}
-                    className="py-3 px-4 cursor-pointer hover:text-slate-900 select-none text-black font-black"
+                    className="py-3.5 px-4 cursor-pointer hover:text-slate-900 select-none whitespace-nowrap"
                   >
                     <div className="flex items-center gap-1">
                       <span>Staff ID</span>
-                      <ArrowUpDown className="w-3 h-3 text-black" />
+                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
                     </div>
                   </th>
                   <th
                     onClick={() => handleSort('name')}
-                    className="py-3 px-4 cursor-pointer hover:text-slate-900 select-none text-black font-black"
+                    className="py-3.5 px-4 cursor-pointer hover:text-slate-900 select-none whitespace-nowrap"
                   >
                     <div className="flex items-center gap-1">
                       <span>Full Name & Role</span>
-                      <ArrowUpDown className="w-3 h-3 text-black" />
+                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
                     </div>
                   </th>
-                  <th className="py-3 px-4 text-black font-black">Entity & Department</th>
-                  <th className="py-3 px-4 text-black font-black">Manager / Head</th>
-                  <th className="py-3 px-4 text-black font-black">Status</th>
-                  <th className="py-3 px-4 text-black font-black">Type</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Entity & Department</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Manager / Head</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Status</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Type</th>
                   <th
                     onClick={() => handleSort('date')}
-                    className="py-3 px-4 cursor-pointer hover:text-slate-900 select-none text-black font-black"
+                    className="py-3.5 px-4 cursor-pointer hover:text-slate-900 select-none whitespace-nowrap"
                   >
                     <div className="flex items-center gap-1">
                       <span>Joined</span>
-                      <ArrowUpDown className="w-3 h-3 text-black" />
+                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
                     </div>
                   </th>
-                  <th className="py-3 px-4 text-right text-black font-black">Actions</th>
+                  <th className="py-3.5 px-4 text-right whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-slate-100">
                 {paginatedEmployees.map((emp) => (
                   <tr
                     key={emp.id}
                     onClick={() => setSelectedEmployee(emp)}
-                    className="hover:bg-amber-50/40 cursor-pointer transition group"
+                    className="hover:bg-slate-50/80 cursor-pointer transition group"
                   >
                     {/* Staff ID */}
-                    <td className="py-3 px-4 font-mono font-black text-black group-hover:text-[#0A1E3F]">
+                    <td className="py-3 px-4 font-mono font-bold text-slate-800 group-hover:text-[#083E34] whitespace-nowrap">
                       {emp.staffId}
                     </td>
 
                     {/* Full Name & Job Title */}
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-[#0A1E3F] text-amber-300 font-extrabold flex items-center justify-center text-xs shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-[#083E34] text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-xs">
                           {emp.firstName[0]}
                           {emp.lastName[0]}
                         </div>
-                        <div>
-                          <div className="font-extrabold text-black group-hover:text-[#0A1E3F]">
+                        <div className="min-w-0">
+                          <div className="font-bold text-slate-900 group-hover:text-[#083E34] truncate">
                             {emp.fullName}
                           </div>
-                          <div className="text-xs text-black font-semibold">{emp.jobTitle}</div>
+                          <div className="text-[11px] text-slate-500 font-medium truncate">{emp.jobTitle}</div>
                         </div>
                       </div>
                     </td>
 
                     {/* Entity & Department */}
                     <td className="py-3 px-4">
-                      <div className="font-bold text-black">{emp.entityName}</div>
-                      <div className="text-xs text-black font-semibold">{emp.departmentName}</div>
+                      <div className="font-semibold text-slate-900 leading-tight">{emp.entityName}</div>
+                      <div className="text-[11px] text-slate-500 font-medium mt-0.5">{emp.departmentName}</div>
                     </td>
 
                     {/* Manager / Supervisor */}
-                    <td className="py-3 px-4 text-black font-semibold">
+                    <td className="py-3 px-4 text-slate-700 font-medium text-xs">
                       {emp.managerName || 'PCCM Head'}
                     </td>
 
                     {/* Status Badge */}
-                    <td className="py-3 px-4">
+                    <td className="py-3 px-4 whitespace-nowrap">
                       <Badge
                         variant={
                           emp.status === 'Active'
@@ -488,26 +488,26 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                     </td>
 
                     {/* Employment Type */}
-                    <td className="py-3 px-4 text-black font-bold">
-                      <span className="text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-black border border-slate-300">
+                    <td className="py-3 px-4 whitespace-nowrap">
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 border border-slate-200/80 whitespace-nowrap">
                         {emp.employmentType}
                       </span>
                     </td>
 
                     {/* Employment Date */}
-                    <td className="py-3 px-4 font-mono text-xs text-black font-bold">
+                    <td className="py-3 px-4 font-mono text-xs text-slate-600 font-medium whitespace-nowrap">
                       {emp.employmentDate}
                     </td>
 
                     {/* Action Buttons */}
-                    <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                    <td className="py-3 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => setSelectedEmployee(emp)}
-                          className="px-2.5 py-1 rounded bg-[#0A1E3F] text-white hover:bg-[#152B52] text-[11px] font-semibold transition flex items-center gap-1"
+                          className="px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-[#083E34] text-slate-700 hover:text-white border border-slate-200 text-xs font-semibold transition flex items-center gap-1 shadow-2xs"
                           title="View complete employee dossier"
                         >
-                          <Eye className="w-3 h-3" />
+                          <Eye className="w-3.5 h-3.5" />
                           <span>Dossier</span>
                         </button>
 
@@ -516,7 +516,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                             onClick={() => {
                               setSelectedEmployee(emp);
                             }}
-                            className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                            className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
                             title="Edit employee record"
                           >
                             <Edit className="w-3.5 h-3.5" />
@@ -565,10 +565,10 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 </div>
 
                 <div className="mt-3">
-                  <h3 className="font-extrabold text-black text-sm group-hover:text-[#0A1E3F] transition line-clamp-1">
+                  <h3 className="font-extrabold text-black text-sm group-hover:text-[#083E34] transition line-clamp-1">
                     {emp.fullName}
                   </h3>
-                  <p className="text-xs text-[#0A1E3F] font-bold line-clamp-1 mt-0.5">
+                  <p className="text-xs text-[#083E34] font-bold line-clamp-1 mt-0.5">
                     {emp.jobTitle}
                   </p>
                   <p className="text-xs text-black font-semibold mt-1 line-clamp-1">
@@ -589,7 +589,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                     e.stopPropagation();
                     setSelectedEmployee(emp);
                   }}
-                  className="text-[#0A1E3F] font-bold hover:underline flex items-center gap-1"
+                  className="text-[#083E34] font-bold hover:underline flex items-center gap-1 cursor-pointer"
                 >
                   <span>Dossier →</span>
                 </button>
@@ -631,7 +631,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 onClick={() => setCurrentPage(pNum)}
                 className={`w-7 h-7 rounded text-xs font-semibold transition ${
                   currentPage === pNum
-                    ? 'bg-[#0A1E3F] text-white shadow-xs'
+                    ? 'bg-[#083E34] text-white shadow-xs'
                     : 'border border-slate-200 hover:bg-slate-100 text-slate-700'
                 }`}
               >

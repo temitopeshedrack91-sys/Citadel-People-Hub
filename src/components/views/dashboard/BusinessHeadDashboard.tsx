@@ -177,48 +177,47 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
   return (
     <div className="space-y-6 animate-fade-in">
       {/* 1. Executive Leadership Header */}
-      <div className="relative rounded-2xl bg-gradient-to-r from-[#0A1E3F] via-[#1a3869] to-[#0A3B32] p-6 sm:p-8 text-white shadow-lg overflow-hidden border border-amber-500/25">
-        <div className="absolute top-0 right-0 -mt-8 -mr-8 w-72 h-72 rounded-full bg-amber-400/10 blur-3xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] p-5 sm:p-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 font-mono text-[11px] font-bold">
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-bold">
                 Tier-2 Governance: Business Head (GEC Member)
               </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-slate-200 text-[11px] font-mono">
+              <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[11px] font-medium border border-slate-200">
                 {currentUser.entityName}
               </span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-black font-serif tracking-tight text-white">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900">
               {portfolio.scopeTitle}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-200/90 font-medium max-w-2xl">
-              Executive: <strong className="text-amber-300">{currentUser.name}</strong> ({currentUser.jobTitle}) • {portfolio.description}
+            <p className="text-xs text-slate-500 font-medium max-w-2xl">
+              Executive: <strong className="text-slate-800 font-bold">{currentUser.name}</strong> ({currentUser.jobTitle}) • {portfolio.description}
             </p>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0 flex-wrap">
+          <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
             <button
               onClick={onOpenLeaveModal}
               id="business-head-apply-leave-btn"
-              className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-[#0A1E3F] font-black text-xs shadow-md transition flex items-center gap-2 active:scale-95"
+              className="px-3.5 py-2 rounded-xl bg-[#083E34] hover:bg-[#062f28] text-white font-bold text-xs shadow-xs transition flex items-center gap-2 active:scale-95 cursor-pointer min-h-[38px]"
             >
-              <CalendarDays className="w-4 h-4 text-[#0A1E3F]" />
-              <span>Apply for Executive Leave</span>
+              <CalendarDays className="w-4 h-4 text-white" />
+              <span>Apply for Leave</span>
             </button>
             <button
               onClick={() => onNavigate('reports')}
-              className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition flex items-center gap-2"
+              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-semibold text-xs border border-slate-200 transition flex items-center gap-2 cursor-pointer min-h-[38px]"
             >
-              <BarChart3 className="w-4 h-4" />
+              <BarChart3 className="w-4 h-4 text-slate-500" />
               <span>Divisional Reports</span>
             </button>
           </div>
         </div>
 
         {actionFeedback && (
-          <div className="mt-4 p-2.5 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-semibold flex items-center gap-2 animate-fade-in">
-            <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
+          <div className="mt-4 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2 animate-fade-in">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>{actionFeedback}</span>
           </div>
         )}
@@ -230,12 +229,12 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-amber-300 transition">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-black uppercase text-slate-700">Divisional Headcount</span>
-            <div className="w-8 h-8 rounded-xl bg-[#0A1E3F] text-amber-300 flex items-center justify-center font-bold text-xs">
+            <div className="w-8 h-8 rounded-xl bg-[#083E34] text-amber-300 flex items-center justify-center font-bold text-xs">
               <Users className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-[#0A1E3F]">{portfolio.headcountTarget}</span>
+            <span className="text-2xl font-black text-[#083E34]">{portfolio.headcountTarget}</span>
             <span className="text-xs text-slate-500 font-bold">total staff under command</span>
           </div>
           <p className="text-[11px] text-slate-600 mt-2 font-medium">
@@ -252,7 +251,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
             </div>
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-[#0A1E3F]">{portfolio.departments.length}</span>
+            <span className="text-2xl font-black text-[#083E34]">{portfolio.departments.length}</span>
             <span className="text-xs text-slate-500 font-bold">operational units</span>
           </div>
           <p className="text-[11px] text-slate-600 mt-2 font-medium truncate">
@@ -286,7 +285,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
             </div>
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-[#0A1E3F]">95.4%</span>
+            <span className="text-2xl font-black text-[#083E34]">95.4%</span>
             <span className="text-xs text-slate-500 font-bold">divisional average</span>
           </div>
           <p className="text-[11px] text-emerald-700 mt-2 font-semibold">
@@ -300,14 +299,14 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
         <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
           <div>
             <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-[#C59B27]" />
+              <ShieldCheck className="w-4 h-4 text-amber-600" />
               <span>Tier-2 Executive Sign-Off Queue ({pendingExecutiveQueue.length})</span>
             </h3>
             <p className="text-xs text-slate-600 mt-0.5">
               Leave requests recommended by Department Heads within your divisional portfolio awaiting your executive sign-off before final HR validation.
             </p>
           </div>
-          <span className="text-xs font-mono font-bold text-blue-800 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-300">
+          <span className="text-xs font-mono font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-300">
             Tier-2 GEC Authority
           </span>
         </div>
@@ -340,14 +339,14 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={() => handleExecutiveDecline(req)}
-                    className="px-3.5 py-2 rounded-xl border border-rose-200 text-rose-700 hover:bg-rose-50 font-bold text-xs flex items-center gap-1.5 transition active:scale-95"
+                    className="px-3.5 py-2 rounded-xl border border-rose-200 text-rose-700 hover:bg-rose-50 font-bold text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5" />
                     <span>Decline</span>
                   </button>
                   <button
                     onClick={() => handleExecutiveSignOff(req)}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#0A1E3F] to-[#0A3B32] text-amber-300 hover:from-[#152B52] hover:to-[#062c25] font-black text-xs shadow-xs flex items-center gap-1.5 transition active:scale-95"
+                    className="px-4 py-2 rounded-xl bg-[#083E34] text-amber-300 hover:bg-[#062f28] font-black text-xs shadow-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
                   >
                     <Check className="w-4 h-4 text-amber-300" />
                     <span>Executive Endorse & Sign Off</span>
@@ -372,7 +371,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-[#0A1E3F]" />
+              <Building2 className="w-4 h-4 text-[#083E34]" />
               <span>Supervised Departments Breakdown</span>
             </h3>
             <p className="text-xs text-slate-600 mt-0.5">
@@ -381,7 +380,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
           </div>
           <button
             onClick={() => onNavigate('employees')}
-            className="text-xs font-bold text-[#0A1E3F] hover:text-[#C59B27] flex items-center gap-1"
+            className="text-xs font-bold text-[#083E34] hover:text-amber-700 flex items-center gap-1 cursor-pointer"
           >
             <span>View Workforce</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
@@ -389,7 +388,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {portfolio.departments.map((dept, i) => (
+          {portfolio.departments.map((dept) => (
             <div
               key={dept}
               className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 transition space-y-2.5"
@@ -409,7 +408,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
                 </p>
               </div>
               <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-[11px]">
-                <span className="font-bold text-[#0A1E3F]">HOD Operational Lead</span>
+                <span className="font-bold text-[#083E34]">HOD Operational Lead</span>
                 <span className="text-emerald-700 font-semibold">Tier-1 Cleared</span>
               </div>
             </div>

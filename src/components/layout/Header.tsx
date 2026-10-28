@@ -9,6 +9,7 @@ import {
   HelpCircle,
   Command,
   ChevronsRight,
+  Plus,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { PWAInstallButton } from '../pwa/PWAInstallButton';
@@ -24,6 +25,7 @@ interface HeaderProps {
   activeModuleTitle: string;
   activeModuleId: NavModule;
   onNavigate: (module: NavModule) => void;
+  onOpenNewTask?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -33,6 +35,7 @@ export const Header: React.FC<HeaderProps> = ({
   activeModuleTitle,
   activeModuleId,
   onNavigate,
+  onOpenNewTask,
 }) => {
   const {
     currentUser,
@@ -298,11 +301,11 @@ export const Header: React.FC<HeaderProps> = ({
               <MessageSquare className="w-4 h-4 text-slate-600" />
             </button>
 
-            {/* User Profile Pill matching Hrivio reference (Avatar + Name + Email + Chevron) */}
+            {/* User Profile Pill ("Dr. Bukola Adeleke") matching reference */}
             <div
               data-testid="header-user-profile-pill"
               onClick={() => setIsLoginModalOpen(true)}
-              className="flex items-center gap-2.5 pl-2 sm:pl-3 border-l border-slate-200 cursor-pointer hover:opacity-90 transition group"
+              className="flex items-center gap-2 sm:gap-2.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl border border-slate-200/90 hover:bg-slate-50 cursor-pointer transition group"
               title="Switch role or manage session"
             >
               <div className="relative shrink-0">
@@ -315,16 +318,37 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
               </div>
-              <div className="hidden lg:block text-left">
+              <div className="hidden sm:block text-left">
                 <div className="text-xs font-bold text-slate-900 leading-tight">
                   {currentUser.name}
                 </div>
-                <div className="text-[11px] text-slate-400 font-medium truncate max-w-[150px]">
-                  {currentUser.email}
+                <div className="text-[10px] text-slate-500 font-medium truncate max-w-[130px]">
+                  {currentUser.jobTitle || 'PCCM Super Admin'}
                 </div>
               </div>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 transition shrink-0" />
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 transition shrink-0 hidden sm:block" />
             </div>
+
+            {/* "New task" button beside user profile */}
+            <button
+              type="button"
+              onClick={() => {
+                if (onOpenNewTask) {
+                  onOpenNewTask();
+                } else {
+                  onNavigate('projects');
+                  setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('trellis-open-new-task'));
+                  }, 50);
+                }
+              }}
+              data-testid="header-new-task-btn"
+              className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-[#083E34] hover:bg-[#062f28] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer shrink-0 min-h-[36px] sm:min-h-[38px]"
+              title="Create New Task"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">New task</span>
+            </button>
           </div>
         </div>
       </header>

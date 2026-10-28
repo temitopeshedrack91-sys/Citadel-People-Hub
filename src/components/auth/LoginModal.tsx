@@ -67,14 +67,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#061328]/80 backdrop-blur-xs p-4 overflow-y-auto animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#04241e]/80 backdrop-blur-sm p-4 overflow-y-auto animate-fade-in">
       <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-6">
         {/* Modal Branded Header */}
-        <div className="bg-[#0A1E3F] text-white p-6 sm:p-7 relative border-b border-amber-500/20">
+        <div className="bg-[#083E34] text-white p-6 sm:p-7 relative border-b border-emerald-900/30">
           {!required && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition"
+            className="absolute top-4 right-4 text-slate-300 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition cursor-pointer"
             title="Close modal"
           >
             <X className="w-5 h-5" />
@@ -87,7 +87,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
           </div>
 
           <div className="text-center max-w-md mx-auto">
-            <h2 className="text-lg sm:text-xl font-bold font-serif text-white tracking-wide">
+            <h2 className="text-lg sm:text-xl font-bold text-white tracking-wide">
               Citadel People Hub Authentication
             </h2>
             <p className="text-xs text-amber-200/80 mt-1 font-medium">
@@ -114,7 +114,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
                   type="button"
                   disabled={isSubmitting}
                   onClick={handleBackendLogout}
-                  className="rounded-lg bg-rose-700 px-4 py-2 text-xs font-bold text-white disabled:opacity-60"
+                  className="rounded-xl bg-rose-700 px-4 py-2 text-xs font-bold text-white disabled:opacity-60 cursor-pointer"
                 >
                   {isSubmitting ? 'Signing out...' : 'Sign out'}
                 </button>
@@ -130,7 +130,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
                     required
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-[#0A1E3F] focus:outline-none"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-[#083E34] focus:outline-none"
                   />
                 </div>
                 <div>
@@ -142,14 +142,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
                     required
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-[#0A1E3F] focus:outline-none"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-[#083E34] focus:outline-none"
                   />
                 </div>
                 {errorMessage && <p role="alert" className="text-xs font-semibold text-rose-700">{errorMessage}</p>}
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full rounded-lg bg-[#0A1E3F] px-4 py-2.5 text-sm font-bold text-amber-300 disabled:opacity-60"
+                  className="w-full rounded-xl bg-[#083E34] px-4 py-2.5 text-sm font-bold text-amber-300 hover:bg-[#062f28] disabled:opacity-60 cursor-pointer transition shadow-xs"
                 >
                   {isSubmitting ? 'Signing in...' : 'Sign in securely'}
                 </button>
@@ -168,12 +168,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
           </div>
 
           {/* Role Filter Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-3 scrollbar-none text-xs">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-3 custom-scrollbar text-xs">
             <button
               onClick={() => setPersonaFilter('ALL')}
-              className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition ${
+              className={`px-3 py-1.5 rounded-xl font-bold shrink-0 transition whitespace-nowrap cursor-pointer ${
                 personaFilter === 'ALL'
-                  ? 'bg-[#0A1E3F] text-amber-300 shadow-xs'
+                  ? 'bg-[#083E34] text-white shadow-xs'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
@@ -181,9 +181,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
             </button>
             <button
               onClick={() => setPersonaFilter('BUSINESS_HEAD')}
-              className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition ${
+              className={`px-3 py-1.5 rounded-xl font-bold shrink-0 transition whitespace-nowrap cursor-pointer ${
                 personaFilter === 'BUSINESS_HEAD'
-                  ? 'bg-[#0A1E3F] text-amber-300 shadow-xs'
+                  ? 'bg-[#083E34] text-white shadow-xs'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
@@ -191,9 +191,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
             </button>
             <button
               onClick={() => setPersonaFilter('DEPARTMENT_HEAD')}
-              className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition ${
+              className={`px-3 py-1.5 rounded-xl font-bold shrink-0 transition whitespace-nowrap cursor-pointer ${
                 personaFilter === 'DEPARTMENT_HEAD'
-                  ? 'bg-[#0A1E3F] text-amber-300 shadow-xs'
+                  ? 'bg-[#083E34] text-white shadow-xs'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
@@ -201,9 +201,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
             </button>
             <button
               onClick={() => setPersonaFilter('EMPLOYEE')}
-              className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition ${
+              className={`px-3 py-1.5 rounded-xl font-bold shrink-0 transition whitespace-nowrap cursor-pointer ${
                 personaFilter === 'EMPLOYEE'
-                  ? 'bg-[#0A1E3F] text-amber-300 shadow-xs'
+                  ? 'bg-[#083E34] text-white shadow-xs'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
@@ -211,9 +211,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
             </button>
             <button
               onClick={() => setPersonaFilter('ADMIN')}
-              className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition ${
+              className={`px-3 py-1.5 rounded-xl font-bold shrink-0 transition whitespace-nowrap cursor-pointer ${
                 personaFilter === 'ADMIN'
-                  ? 'bg-[#0A1E3F] text-amber-300 shadow-xs'
+                  ? 'bg-[#083E34] text-white shadow-xs'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
@@ -221,24 +221,24 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
             </button>
           </div>
 
-          <div className="space-y-2.5 max-h-[50vh] overflow-y-auto pr-1">
+          <div className="space-y-2.5 max-h-[50vh] overflow-y-auto pr-1 custom-scrollbar">
             {filteredPersonas.map((persona) => {
               const isSelected = currentPersona.user.id === persona.user.id;
               return (
                 <button
                   key={persona.user.id}
                   onClick={() => handleSelectAndLogin(persona)}
-                  className={`w-full text-left p-3.5 rounded-xl border transition flex items-start justify-between gap-3 group ${
+                  className={`w-full text-left p-3.5 rounded-xl border transition flex items-start justify-between gap-3 group cursor-pointer ${
                     isSelected
-                      ? 'border-[#C59B27] bg-amber-50/60 shadow-xs ring-1 ring-amber-400/40'
+                      ? 'border-amber-400 bg-amber-50/60 shadow-xs ring-1 ring-amber-400/40'
                       : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     <div
-                      className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 mt-0.5 ${
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 mt-0.5 ${
                         isSelected
-                          ? 'bg-[#0A1E3F] text-amber-300'
+                          ? 'bg-[#083E34] text-amber-300'
                           : 'bg-slate-100 text-slate-700 group-hover:bg-slate-200'
                       }`}
                     >
@@ -269,7 +269,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
                           {persona.badgeLabel}
                         </span>
                       </div>
-                      <p className="text-xs text-[#0A1E3F] font-bold mt-0.5">
+                      <p className="text-xs text-[#083E34] font-bold mt-0.5">
                         {persona.user.jobTitle}
                       </p>
                       <p className="text-[11px] text-slate-600 font-mono mt-0.5">
@@ -288,7 +288,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
                         <span>Active</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 group-hover:text-[#0A1E3F]">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 group-hover:text-[#083E34]">
                         <span>Switch</span>
                         <ArrowRight className="w-3 h-3" />
                       </span>
@@ -300,7 +300,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
           </div>
 
           <div className="mt-5 p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 flex items-start gap-2.5">
-            <Shield className="w-4 h-4 text-[#C59B27] shrink-0 mt-0.5" />
+            <Shield className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <div>
               <span className="font-semibold text-slate-800 block">
                 Security & Data Protection Notice:
@@ -319,7 +319,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
           {!required && (
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-[#0A1E3F] text-white text-xs font-semibold rounded-lg hover:bg-[#152B52] transition"
+            className="px-4 py-2 bg-[#083E34] text-white text-xs font-semibold rounded-xl hover:bg-[#062f28] transition cursor-pointer shadow-xs"
           >
             Done
           </button>

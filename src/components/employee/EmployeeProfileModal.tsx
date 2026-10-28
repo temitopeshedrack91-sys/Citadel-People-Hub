@@ -84,13 +84,13 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#061328]/80 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#04241e]/80 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto animate-fade-in">
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-6 flex flex-col max-h-[90vh]">
-        {/* Modal Top Header (Dignified Navy & Gold Banner) */}
-        <div className="bg-[#0A1E3F] text-white p-5 sm:p-6 relative border-b border-amber-500/20 shrink-0">
+        {/* Modal Top Header */}
+        <div className="bg-[#083E34] text-white p-5 sm:p-6 relative border-b border-emerald-900/30 shrink-0">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition"
+            className="absolute top-4 right-4 text-slate-300 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition cursor-pointer"
             title="Close dossier"
           >
             <X className="w-5 h-5" />
@@ -99,14 +99,14 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               {/* Profile Avatar / Photo */}
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[#b18a3b] text-white font-black text-2xl flex items-center justify-center shadow-lg border-2 border-white/20 shrink-0">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-amber-600 text-white font-black text-2xl flex items-center justify-center shadow-lg border-2 border-white/20 shrink-0">
                 {employee.firstName[0]}
                 {employee.lastName[0]}
               </div>
 
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-lg sm:text-xl font-bold font-serif text-white tracking-wide">
+                  <h2 className="text-lg sm:text-xl font-bold text-white tracking-wide">
                     {employee.fullName}
                   </h2>
                   <span className="px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 font-mono text-[11px] font-bold border border-amber-400/30">
@@ -133,7 +133,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
 
                 <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-slate-300">
                   <span className="flex items-center gap-1">
-                    <Building2 className="w-3.5 h-3.5 text-[#C59B27]" />
+                    <Building2 className="w-3.5 h-3.5 text-amber-400" />
                     <span>{employee.entityName}</span>
                   </span>
                   <span>•</span>
@@ -146,13 +146,13 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
             <div className="flex sm:flex-col items-end gap-2 shrink-0">
               <button
                 onClick={handleCopyContact}
-                className="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-slate-100 text-xs font-semibold border border-white/20 transition flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
               >
-                <Share2 className="w-3.5 h-3.5 text-[#C59B27]" />
+                <Share2 className="w-3.5 h-3.5 text-amber-300" />
                 <span>{isCopied ? 'Copied Contact!' : 'Share Contact'}</span>
               </button>
 
-              <div className="text-[11px] text-slate-400 font-mono">
+              <div className="text-[11px] text-slate-300 font-mono">
                 Tenure: {employee.yearsOfService} Years in Citadel
               </div>
             </div>
@@ -160,7 +160,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
         </div>
 
         {/* Tab Navigation Strip */}
-        <div className="bg-slate-100 border-b border-slate-200 px-4 sm:px-6 flex overflow-x-auto gap-1 shrink-0 scrollbar-thin">
+        <div className="bg-slate-100 border-b border-slate-200 px-4 sm:px-6 flex overflow-x-auto gap-1 shrink-0 custom-scrollbar">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             const Icon = tab.icon;
@@ -168,13 +168,13 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-3 px-3.5 text-xs font-semibold whitespace-nowrap flex items-center gap-2 border-b-2 transition ${
+                className={`py-3 px-3.5 text-xs font-bold whitespace-nowrap flex items-center gap-2 border-b-2 transition cursor-pointer ${
                   isActive
-                    ? 'border-[#0A1E3F] text-[#0A1E3F] bg-white rounded-t-lg shadow-2xs'
+                    ? 'border-[#083E34] text-[#083E34] bg-white rounded-t-xl shadow-2xs'
                     : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-[#C59B27]' : 'text-slate-400'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-amber-600' : 'text-slate-400'}`} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -249,7 +249,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                       <span className="text-[10px] text-slate-400 block">Official Citadel Email</span>
                       <a
                         href={`mailto:${employee.email}`}
-                        className="font-semibold text-[#0A1E3F] hover:underline"
+                        className="font-bold text-[#083E34] hover:underline"
                       >
                         {employee.email}
                       </a>
@@ -264,7 +264,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                       <span className="text-[10px] text-slate-400 block">Official Phone</span>
                       <a
                         href={`tel:${employee.phone}`}
-                        className="font-semibold text-[#0A1E3F] hover:underline font-mono"
+                        className="font-bold text-[#083E34] hover:underline font-mono"
                       >
                         {employee.phone}
                       </a>
@@ -325,9 +325,9 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
             <div className="space-y-6 animate-fade-in">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* Emergency Contact */}
-                <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-200 text-[#0A1E3F] font-bold">
-                    <HeartPulse className="w-4 h-4 text-[#C59B27]" />
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-200 text-[#083E34] font-bold">
+                    <HeartPulse className="w-4 h-4 text-amber-600" />
                     <span>Primary Emergency Contact</span>
                   </div>
 
@@ -352,8 +352,8 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                 </div>
 
                 {/* Next of Kin */}
-                <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-200 text-[#0A1E3F] font-bold">
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-200 text-[#083E34] font-bold">
                     <Shield className="w-4 h-4 text-amber-600" />
                     <span>Next of Kin (Confidential)</span>
                   </div>
@@ -664,7 +664,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
               {onNavigateLeave && (
                 <button
                   onClick={onNavigateLeave}
-                  className="w-full py-2.5 rounded-xl bg-[#0A1E3F] text-amber-300 font-semibold text-xs hover:bg-[#152B52] transition text-center"
+                  className="w-full py-2.5 rounded-xl bg-[#083E34] text-amber-300 font-bold text-xs hover:bg-[#062f28] transition text-center cursor-pointer shadow-xs active:scale-95"
                 >
                   Manage Leave Requests in Leave Module →
                 </button>
@@ -731,7 +731,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                     </span>
                   </div>
                 </div>
-                <Award className="w-10 h-10 text-[#C59B27]" />
+                <Award className="w-10 h-10 text-amber-600" />
               </div>
 
               <div className="space-y-3">
@@ -755,10 +755,10 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                     <span className="font-semibold text-slate-800">
                       2. Alignment with Citadel Leadership Excellence Accord
                     </span>
-                    <span className="font-mono font-bold text-[#C59B27]">100% Exemplary</span>
+                    <span className="font-mono font-bold text-amber-600">100% Exemplary</span>
                   </div>
                   <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#C59B27] rounded-full" style={{ width: '100%' }}></div>
+                    <div className="h-full bg-amber-500 rounded-full" style={{ width: '100%' }}></div>
                   </div>
                 </div>
               </div>
@@ -776,14 +776,14 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
             {isPCCM && onEdit && (
               <button
                 onClick={() => onEdit(employee)}
-                className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-100 transition"
+                className="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-100 transition cursor-pointer"
               >
                 Edit Records
               </button>
             )}
             <button
               onClick={onClose}
-              className="px-4 py-2 bg-[#0A1E3F] text-white rounded-lg text-xs font-semibold hover:bg-[#152B52] transition"
+              className="px-4 py-2 bg-[#083E34] text-white rounded-xl text-xs font-bold hover:bg-[#062f28] transition cursor-pointer shadow-xs active:scale-95"
             >
               Close Dossier
             </button>

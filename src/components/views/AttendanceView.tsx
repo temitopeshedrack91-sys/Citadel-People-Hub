@@ -117,43 +117,43 @@ export const AttendanceView: React.FC = () => {
   return (
     <div className="space-y-6 font-sans animate-fade-in text-slate-900">
       <div>
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-          <Clock className="w-6 h-6 text-[#083E34]" />
-          <span>Attendance & Biometric Verification</span>
+        <h1 className="text-lg sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+          <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-[#083E34] shrink-0" />
+          <span>Attendance &amp; Check-ins</span>
         </h1>
         <p className="text-xs text-slate-500 font-medium mt-0.5">
-          Real-time biometric terminal telemetry, ZKTeco reader integrations, and institutional shift schedules.
+          Daily clock-in activity, shift schedules, and attendance logs across all locations.
         </p>
       </div>
 
       {/* View Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-3" role="tablist">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-3 overflow-x-auto no-scrollbar" role="tablist">
         <button
           role="tab"
           aria-selected={activeTab === 'live_logs'}
           onClick={() => setActiveTab('live_logs')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 min-h-[40px] shrink-0 cursor-pointer ${
             activeTab === 'live_logs'
               ? 'bg-[#083E34] text-white shadow-xs'
               : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
           }`}
         >
           <Clock className="w-4 h-4" />
-          <span>Live Clock-ins & Telemetry</span>
+          <span>Live Check-ins</span>
         </button>
 
         <button
           role="tab"
           aria-selected={activeTab === 'schedules'}
           onClick={() => setActiveTab('schedules')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 min-h-[40px] shrink-0 cursor-pointer ${
             activeTab === 'schedules'
               ? 'bg-[#083E34] text-white shadow-xs'
               : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
           }`}
         >
           <Building className="w-4 h-4 text-amber-500" />
-          <span>Shift Schedules & Grace Policies</span>
+          <span>Shift Schedules &amp; Policies</span>
         </button>
       </div>
 
@@ -189,20 +189,20 @@ export const AttendanceView: React.FC = () => {
             <button
               id="btn-toggle-clock-in"
               onClick={handleToggleClock}
-              className={`px-5 py-2.5 rounded-xl font-bold text-xs transition flex items-center gap-2 shadow-xs active:scale-[0.98] ${
+              className={`px-5 py-2.5 rounded-xl font-bold text-xs transition flex items-center gap-2 shadow-xs active:scale-[0.98] cursor-pointer ${
                 clockedIn
-                  ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
                   : 'bg-[#083E34] hover:bg-[#052C25] text-white'
               }`}
             >
               {clockedIn ? (
                 <>
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-4 h-4 text-rose-600" />
                   <span>Record Clock-Out</span>
                 </>
               ) : (
                 <>
-                  <LogIn className="w-4 h-4" />
+                  <LogIn className="w-4 h-4 text-emerald-300" />
                   <span>Record Clock-In (Web Portal)</span>
                 </>
               )}
@@ -255,51 +255,51 @@ export const AttendanceView: React.FC = () => {
           </div>
 
           {/* Attendance Logs Table */}
-          <div className="bg-white rounded-xl border border-slate-300 shadow-xs overflow-hidden">
-            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-              <h3 className="text-xs font-black text-black uppercase tracking-wider">
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider">
                 Today's Attendance Logs (All Entities)
               </h3>
-              <span className="text-xs text-black font-mono font-bold">18 September 2026</span>
+              <span className="text-xs text-slate-500 font-bold">18 September 2026</span>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-100 border-b-2 border-slate-300 text-black font-black uppercase tracking-wider text-xs">
+                <thead className="bg-slate-50/90 border-b border-slate-200/80 text-slate-500 font-black uppercase tracking-wider text-[11px]">
                   <tr>
-                    <th className="py-3 px-4 text-black font-black">Employee</th>
-                    <th className="py-3 px-4 text-black font-black">Entity & Department</th>
-                    <th className="py-3 px-4 text-black font-black">Clock In</th>
-                    <th className="py-3 px-4 text-black font-black">Clock Out</th>
-                    <th className="py-3 px-4 text-black font-black">Verification Source</th>
-                    <th className="py-3 px-4 text-black font-black">Status</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">Employee</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">Entity & Department</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">Clock In</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">Clock Out</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">Verification Source</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="divide-y divide-slate-100">
                   {logs.map((log) => (
-                    <tr key={log.id} className="hover:bg-slate-100 transition">
+                    <tr key={log.id} className="hover:bg-slate-50/80 transition">
                       <td className="py-3 px-4">
-                        <p className="font-extrabold text-black">{log.employeeName}</p>
-                        <span className="text-xs text-black font-mono font-bold">{log.employeeStaffId}</span>
+                        <p className="font-bold text-slate-900">{log.employeeName}</p>
+                        <span className="text-[11px] text-slate-500 font-mono font-medium">{log.employeeStaffId}</span>
                       </td>
                       <td className="py-3 px-4">
-                        <p className="text-black font-bold">{log.entityName}</p>
-                        <p className="text-xs text-black font-semibold">{log.departmentName}</p>
+                        <p className="text-slate-800 font-semibold">{log.entityName}</p>
+                        <p className="text-[11px] text-slate-500 font-medium">{log.departmentName}</p>
                       </td>
-                      <td className="py-3 px-4 font-mono font-bold text-black">
+                      <td className="py-3 px-4 font-mono font-semibold text-slate-800 whitespace-nowrap">
                         {log.clockInTime || '—'}
                       </td>
-                      <td className="py-3 px-4 font-mono text-black font-bold">{log.clockOutTime || '—'}</td>
+                      <td className="py-3 px-4 font-mono text-slate-800 font-semibold whitespace-nowrap">{log.clockOutTime || '—'}</td>
                       <td className="py-3 px-4">
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-black">
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
                           {getSourceIcon(log.verificationSource)}
                           <span>{log.verificationSource.replace('_', ' ')}</span>
                           {log.deviceId && (
-                            <span className="text-xs text-black font-mono font-bold">({log.deviceId})</span>
+                            <span className="text-[11px] text-slate-400 font-mono">({log.deviceId})</span>
                           )}
                         </div>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 whitespace-nowrap">
                         <Badge
                           variant={
                             log.status === 'Present'
@@ -344,22 +344,22 @@ export const AttendanceView: React.FC = () => {
                 </h3>
                 <p className="text-[11px] text-slate-600">Standard operating shifts, early shifts, and special schedules from Workbook Sheet 7</p>
               </div>
-              <span className="text-xs font-black px-2.5 py-1 bg-[#0A1E3F] text-amber-300 rounded-md">
+              <span className="text-xs font-black px-2.5 py-1 bg-[#083E34] text-amber-300 rounded-lg">
                 5 Active Schedules
               </span>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[#0A1E3F] text-white uppercase tracking-wider text-xs font-bold">
+                <thead className="bg-[#083E34] text-white uppercase tracking-wider text-xs font-bold">
                   <tr>
-                    <th className="py-3.5 px-4">Entity / Operational Unit</th>
-                    <th className="py-3.5 px-4">Shift Timings</th>
-                    <th className="py-3.5 px-4">Hours / Day</th>
-                    <th className="py-3.5 px-4">Biometric Capture</th>
-                    <th className="py-3.5 px-4">Grace Window</th>
-                    <th className="py-3.5 px-4">Late Threshold</th>
-                    <th className="py-3.5 px-4">Operational &amp; Event Rules</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">Entity / Operational Unit</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">Shift Timings</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">Hours / Day</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">Biometric Capture</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">Grace Window</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">Late Threshold</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">Operational &amp; Event Rules</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
@@ -367,7 +367,7 @@ export const AttendanceView: React.FC = () => {
                     <tr key={sched.id} className="hover:bg-slate-50 transition">
                       <td className="py-3.5 px-4 font-black text-black">
                         <div className="flex items-center gap-2">
-                          <Building className="w-4 h-4 text-[#0A1E3F]" />
+                          <Building className="w-4 h-4 text-[#083E34]" />
                           <span>{sched.entityOrUnit}</span>
                         </div>
                         <span className="text-[10px] text-slate-500 font-semibold block ml-6">

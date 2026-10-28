@@ -91,54 +91,53 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
   return (
     <div className="space-y-6 animate-fade-in">
       {/* 1. Employee Welcome Hero Banner */}
-      <div className="relative rounded-2xl bg-gradient-to-r from-[#0A1E3F] via-[#122b56] to-[#0A3B32] p-6 sm:p-8 text-white shadow-lg overflow-hidden border border-amber-500/20">
-        <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 rounded-full bg-amber-400/10 blur-2xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] p-5 sm:p-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 font-mono text-[11px] font-bold">
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-bold">
                 Employee Self-Service Portal
               </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-slate-200 text-[11px] font-mono">
+              <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[11px] font-medium border border-slate-200">
                 Staff ID: {currentUser.staffId}
               </span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-black font-serif tracking-tight text-white">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900">
               Welcome back, {currentUser.name}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-200/90 font-medium max-w-xl">
+            <p className="text-xs text-slate-500 font-medium max-w-xl">
               {currentUser.jobTitle} • {currentUser.departmentName} • {currentUser.entityName}
             </p>
           </div>
 
           {/* Quick Action Trigger in Banner */}
-          <div className="flex items-center gap-3 shrink-0 flex-wrap">
+          <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
             <button
               onClick={onOpenLeaveModal}
               id="employee-apply-leave-btn"
-              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-[#0A1E3F] font-black text-xs shadow-md hover:shadow-lg transition flex items-center gap-2 active:scale-95"
+              className="px-3.5 py-2 rounded-xl bg-[#083E34] hover:bg-[#062f28] text-white font-bold text-xs shadow-xs transition flex items-center gap-2 active:scale-95 cursor-pointer min-h-[38px]"
             >
-              <CalendarDays className="w-4 h-4 text-[#0A1E3F]" />
+              <CalendarDays className="w-4 h-4 text-white" />
               <span>Apply for Leave</span>
             </button>
             <button
               onClick={handleToggleClock}
               id="employee-clock-toggle-btn"
-              className={`px-4 py-2.5 rounded-xl font-bold text-xs transition border flex items-center gap-2 shadow-xs active:scale-95 ${
+              className={`px-3.5 py-2 rounded-xl font-semibold text-xs transition border flex items-center gap-2 shadow-2xs active:scale-95 cursor-pointer min-h-[38px] ${
                 isClockedIn
-                  ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-400/30'
-                  : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-400/30'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
               }`}
             >
-              <Clock className="w-4 h-4" />
+              <Clock className="w-4 h-4 text-slate-500" />
               <span>{isClockedIn ? `Clocked In (${clockInTime})` : 'Clock In Now'}</span>
             </button>
           </div>
         </div>
 
         {clockFeedback && (
-          <div className="mt-4 p-2.5 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-semibold flex items-center gap-2 animate-fade-in">
-            <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
+          <div className="mt-4 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2 animate-fade-in">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>{clockFeedback}</span>
           </div>
         )}
@@ -155,12 +154,12 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
             </div>
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-[#0A1E3F]">{annualRemaining}</span>
+            <span className="text-2xl font-black text-[#083E34]">{annualRemaining}</span>
             <span className="text-xs text-slate-500 font-bold">/ {annualTotal} days remaining</span>
           </div>
           <div className="mt-3 w-full bg-slate-100 rounded-full h-2 overflow-hidden">
             <div
-              className="bg-gradient-to-r from-amber-500 to-[#0A3B32] h-full rounded-full transition-all duration-500"
+              className="bg-[#083E34] h-full rounded-full transition-all duration-500"
               style={{ width: `${(annualRemaining / annualTotal) * 100}%` }}
             />
           </div>
@@ -180,12 +179,12 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
           <div className="grid grid-cols-2 gap-2 pt-1">
             <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
               <span className="text-[10px] uppercase font-bold text-slate-600 block">Casual</span>
-              <span className="text-lg font-black text-[#0A1E3F]">{casualRemaining}</span>
+              <span className="text-lg font-black text-[#083E34]">{casualRemaining}</span>
               <span className="text-[10px] text-slate-500 font-semibold block">days left</span>
             </div>
             <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
               <span className="text-[10px] uppercase font-bold text-slate-600 block">Sick</span>
-              <span className="text-lg font-black text-[#0A1E3F]">{sickRemaining}</span>
+              <span className="text-lg font-black text-[#083E34]">{sickRemaining}</span>
               <span className="text-[10px] text-slate-500 font-semibold block">days left</span>
             </div>
           </div>
@@ -225,7 +224,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
             </div>
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-[#0A1E3F]">98.2%</span>
+            <span className="text-2xl font-black text-[#083E34]">98.2%</span>
             <span className="text-xs font-bold text-emerald-600">Excellent</span>
           </div>
           <div className="mt-2 text-xs text-slate-600 flex items-center justify-between">
@@ -291,9 +290,9 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
 
           <button
             onClick={() => onNavigate('ai-assistant')}
-            className="p-3.5 rounded-xl border border-slate-200 hover:border-[#0A1E3F] hover:bg-slate-50 flex flex-col items-center justify-center text-center gap-2 transition group col-span-2 sm:col-span-1"
+            className="p-3.5 rounded-xl border border-slate-200 hover:border-[#083E34] hover:bg-slate-50 flex flex-col items-center justify-center text-center gap-2 transition group col-span-2 sm:col-span-1 cursor-pointer"
           >
-            <div className="w-9 h-9 rounded-xl bg-[#0A1E3F] text-amber-300 flex items-center justify-center group-hover:scale-110 transition">
+            <div className="w-9 h-9 rounded-xl bg-[#083E34] text-amber-300 flex items-center justify-center group-hover:scale-110 transition">
               <Sparkles className="w-5 h-5 text-amber-300" />
             </div>
             <span className="font-bold text-slate-900">Ask HR AI</span>
@@ -307,7 +306,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
         <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
           <div>
             <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-              <CalendarDays className="w-4 h-4 text-[#0A1E3F]" />
+              <CalendarDays className="w-4 h-4 text-[#083E34]" />
               <span>My Leave Applications & Multi-Tier Approval Pipeline</span>
             </h3>
             <p className="text-xs text-slate-600 mt-0.5">
@@ -316,7 +315,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
           </div>
           <button
             onClick={onOpenLeaveModal}
-            className="px-3.5 py-1.5 rounded-xl bg-[#0A1E3F] text-amber-300 hover:bg-[#152B52] font-bold text-xs flex items-center gap-1.5 transition"
+            className="px-3.5 py-1.5 rounded-xl bg-[#083E34] text-amber-300 hover:bg-[#062f28] font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs active:scale-95"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New Request</span>
@@ -329,7 +328,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-black text-[#0A1E3F]">{activeLeave.leaveType}</span>
+                  <span className="text-sm font-black text-[#083E34]">{activeLeave.leaveType}</span>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
                     {activeLeave.status}
                   </span>
@@ -464,7 +463,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
             </p>
             <button
               onClick={onOpenLeaveModal}
-              className="px-4 py-2 rounded-xl bg-[#0A1E3F] text-amber-300 font-bold text-xs hover:bg-[#152B52] transition shadow-xs"
+              className="px-4 py-2 rounded-xl bg-[#083E34] text-amber-300 font-bold text-xs hover:bg-[#062f28] transition shadow-xs cursor-pointer active:scale-95"
             >
               + Apply for Leave Now
             </button>
@@ -485,7 +484,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
             </div>
             <button
               onClick={() => onNavigate('directory')}
-              className="text-xs font-bold text-[#0A1E3F] hover:text-[#C59B27] flex items-center gap-1"
+              className="text-xs font-bold text-[#083E34] hover:text-amber-700 flex items-center gap-1 cursor-pointer"
             >
               <span>Directory</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
@@ -500,7 +499,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                   className="p-3 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/50 flex items-center justify-between gap-3 text-xs"
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-full bg-[#0A1E3F] text-amber-300 flex items-center justify-center font-black text-[10px] shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-[#083E34] text-amber-300 flex items-center justify-center font-black text-[10px] shrink-0">
                       {mate.fullName
                         .split(' ')
                         .map((n) => n[0])
@@ -538,7 +537,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
             </div>
             <button
               onClick={() => onNavigate('calendar')}
-              className="text-xs font-bold text-[#0A1E3F] hover:text-[#C59B27] flex items-center gap-1"
+              className="text-xs font-bold text-[#083E34] hover:text-amber-700 flex items-center gap-1 cursor-pointer"
             >
               <span>Full Calendar</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
@@ -563,7 +562,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
 
             <div className="p-3 rounded-xl border border-slate-200 bg-white flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-[#0A1E3F] text-amber-300 flex items-center justify-center font-bold text-xs shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-[#083E34] text-amber-300 flex items-center justify-center font-bold text-xs shrink-0">
                   <Building className="w-4 h-4" />
                 </div>
                 <div>

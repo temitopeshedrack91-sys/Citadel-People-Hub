@@ -189,47 +189,47 @@ Timestamp:     ${new Date().toLocaleString()}
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-black text-black tracking-tight font-serif flex items-center gap-2">
-            <FileText className="w-5 h-5 text-[#0A1E3F]" />
-            <span>Documents & Organizational Policies</span>
+          <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <FileText className="w-5 h-5 text-[#083E34]" />
+            <span>Documents</span>
           </h2>
-          <p className="text-xs text-black font-semibold">
-            Official Citadel Community Church, School of Government, and Holdings charters, templates, and employee manuals.
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
+            Charters, policy templates, and employee manuals across all Citadel entities.
           </p>
         </div>
 
         {permissions.canManageDocuments && (
           <button
             onClick={() => setIsUploadModalOpen(true)}
-            className="px-3.5 py-2 rounded-lg bg-[#0A1E3F] text-amber-300 hover:bg-[#152B52] text-xs font-bold flex items-center gap-1.5 shadow-xs transition"
+            className="px-3.5 py-2 rounded-xl bg-[#083E34] text-white hover:bg-[#062f28] text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer active:scale-95 min-h-[38px]"
           >
             <Upload className="w-4 h-4" />
-            <span>Upload Document</span>
+            <span>Upload document</span>
           </button>
         )}
       </div>
 
       {/* Filter toolbar */}
-      <div className="bg-white p-3.5 rounded-xl border border-slate-300 shadow-xs flex flex-wrap gap-3 items-center justify-between">
+      <div className="bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] flex flex-wrap gap-3 items-center justify-between">
         <div className="relative flex-1 min-w-[240px]">
-          <Search className="w-4 h-4 absolute left-3 top-2.5 text-black" />
+          <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
           <input
             type="text"
             placeholder="Search document title, category, or policy..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-slate-300 text-black font-semibold placeholder:text-slate-600 focus:outline-none focus:border-[#0A1E3F]"
+            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34]"
           />
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar">
           {['All', 'Policy', 'Handbook', 'Template', 'Contract'].map((cat) => (
             <button
               key={cat}
               onClick={() => setCategoryFilter(cat)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition shrink-0 cursor-pointer ${
                 categoryFilter === cat
-                  ? 'bg-[#0A1E3F] text-white shadow-xs'
+                  ? 'bg-[#083E34] text-white shadow-xs'
                   : 'text-black hover:bg-slate-100'
               }`}
             >
@@ -244,17 +244,17 @@ Timestamp:     ${new Date().toLocaleString()}
         {filteredDocs.map((doc) => (
           <div
             key={doc.id}
-            className="bg-white rounded-xl border border-slate-300 p-4 shadow-xs flex flex-col justify-between hover:border-slate-400 transition"
+            className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] flex flex-col justify-between hover:border-slate-300 transition group"
           >
             <div>
               <div className="flex items-start justify-between gap-2">
-                <div className="w-9 h-9 rounded-lg bg-[#0A1E3F]/5 text-[#0A1E3F] flex items-center justify-center shrink-0">
-                  <FileText className="w-5 h-5 text-[#C5A059]" />
+                <div className="w-9 h-9 rounded-xl bg-[#083E34]/10 text-[#083E34] flex items-center justify-center shrink-0">
+                  <FileText className="w-4 h-4 text-[#083E34]" />
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap justify-end">
                   <Badge variant="citadel">{doc.category}</Badge>
                   {doc.accessLevel === 'PCCM_Only' && (
-                    <span className="p-1 rounded bg-amber-100 text-amber-900 border border-amber-300" title="Restricted to PCCM">
+                    <span className="p-1 rounded-md bg-amber-50 text-amber-800 border border-amber-200" title="Restricted to PCCM">
                       <Lock className="w-3 h-3" />
                     </span>
                   )}
@@ -262,27 +262,27 @@ Timestamp:     ${new Date().toLocaleString()}
               </div>
 
               <div className="mt-3">
-                <h3 className="text-xs font-black text-black leading-snug">{doc.title}</h3>
-                <p className="text-xs text-black font-medium mt-1 line-clamp-2">{doc.description}</p>
+                <h3 className="text-xs font-bold text-slate-900 leading-snug group-hover:text-[#083E34] transition">{doc.title}</h3>
+                <p className="text-xs text-slate-500 font-medium mt-1 line-clamp-2">{doc.description}</p>
               </div>
 
-              <div className="mt-3 pt-3 border-t border-slate-200 text-xs text-black font-bold space-y-1">
-                <div className="flex justify-between">
-                  <span>Version: {doc.version}</span>
-                  <span>Size: {doc.fileSize}</span>
+              <div className="mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-600 font-medium space-y-1">
+                <div className="flex justify-between items-center gap-2">
+                  <span className="truncate">Version: <strong className="text-slate-800 font-semibold">{doc.version}</strong></span>
+                  <span className="shrink-0 text-slate-500 font-mono">{doc.fileSize}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Scope: {doc.entityScope}</span>
-                  <span>Date: {doc.uploadedDate}</span>
+                <div className="flex justify-between items-center gap-2">
+                  <span className="truncate">Scope: <strong className="text-slate-800 font-semibold">{doc.entityScope}</strong></span>
+                  <span className="shrink-0 whitespace-nowrap text-slate-500 font-mono">{doc.uploadedDate}</span>
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between">
-              <span className="text-xs font-mono font-bold text-black">Official Document</span>
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] font-bold text-slate-400">Official Document</span>
               <button
                 onClick={() => handleDownload(doc)}
-                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-[#0A1E3F] text-black hover:text-amber-300 text-xs font-bold border border-slate-300 flex items-center gap-1.5 transition"
+                className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-[#083E34] text-slate-700 hover:text-white text-xs font-semibold border border-slate-200 flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Download</span>
@@ -294,16 +294,16 @@ Timestamp:     ${new Date().toLocaleString()}
 
       {/* Upload Document Modal */}
       {isUploadModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#061328]/80 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#04241e]/80 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto animate-fade-in">
           <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
-            <div className="bg-[#0A1E3F] text-white p-5 relative border-b border-amber-500/20 shrink-0">
+            <div className="bg-[#083E34] text-white p-5 relative border-b border-emerald-900/30 shrink-0">
               <button
                 onClick={() => setIsUploadModalOpen(false)}
-                className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+                className="absolute top-4 right-4 text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
-              <h3 className="text-base font-bold font-serif text-white flex items-center gap-2">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
                 <Upload className="w-4 h-4 text-amber-300" />
                 <span>Upload Document to Vault</span>
               </h3>
@@ -312,7 +312,7 @@ Timestamp:     ${new Date().toLocaleString()}
               </p>
             </div>
 
-            <form onSubmit={handleUploadSubmit} className="p-4 sm:p-5 space-y-4 text-xs overflow-y-auto flex-1">
+            <form onSubmit={handleUploadSubmit} className="p-4 sm:p-5 space-y-4 text-xs overflow-y-auto flex-1 custom-scrollbar">
               <div>
                 <label className="block text-slate-700 font-semibold mb-1">Document Title *</label>
                 <input
@@ -321,7 +321,7 @@ Timestamp:     ${new Date().toLocaleString()}
                   placeholder="e.g. Citadel Staff Code of Conduct 2026/2027"
                   value={docTitle}
                   onChange={(e) => setDocTitle(e.target.value)}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0A1E3F]"
+                  className="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#083E34]"
                 />
               </div>
 
@@ -331,7 +331,7 @@ Timestamp:     ${new Date().toLocaleString()}
                   <select
                     value={docCategory}
                     onChange={(e) => setDocCategory(e.target.value as any)}
-                    className="w-full p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0A1E3F]"
+                    className="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#083E34]"
                   >
                     <option value="Company Policy">Company Policy</option>
                     <option value="PCCM Form / Template">PCCM Form / Template</option>
@@ -344,7 +344,7 @@ Timestamp:     ${new Date().toLocaleString()}
                   <select
                     value={docAccessLevel}
                     onChange={(e) => setDocAccessLevel(e.target.value as any)}
-                    className="w-full p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0A1E3F]"
+                    className="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#083E34]"
                   >
                     <option value="Public">Public (All Citadel Staff)</option>
                     <option value="Departmental">Departmental Only</option>
@@ -358,7 +358,7 @@ Timestamp:     ${new Date().toLocaleString()}
                 <select
                   value={docEntityScope}
                   onChange={(e) => setDocEntityScope(e.target.value)}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0A1E3F]"
+                  className="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#083E34]"
                 >
                   <option value="All Citadel Entities">All Citadel Entities (CGCC, CSOG, Holdings)</option>
                   <option value="Citadel Global Community Church (CGCC)">Citadel Global Community Church (CGCC)</option>
@@ -374,14 +374,14 @@ Timestamp:     ${new Date().toLocaleString()}
                   placeholder="Brief summary of document purpose and guidelines..."
                   value={docDescription}
                   onChange={(e) => setDocDescription(e.target.value)}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0A1E3F]"
+                  className="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#083E34]"
                 />
               </div>
 
               {/* File Attachment Input */}
               <div>
                 <label className="block text-slate-700 font-semibold mb-1">Select File (PDF, DOCX, XLSX)</label>
-                <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:border-[#0A1E3F] transition cursor-pointer relative">
+                <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:border-[#083E34] transition cursor-pointer relative">
                   <input
                     type="file"
                     onChange={handleFileChange}
@@ -403,14 +403,14 @@ Timestamp:     ${new Date().toLocaleString()}
                 <button
                   type="button"
                   onClick={() => setIsUploadModalOpen(false)}
-                  className="px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition font-semibold"
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isUploading}
-                  className="px-5 py-2 bg-[#0A1E3F] text-amber-300 font-bold rounded-lg hover:bg-[#152B52] transition shadow-xs"
+                  className="px-5 py-2 bg-[#083E34] text-amber-300 font-bold rounded-xl hover:bg-[#062f28] transition shadow-xs cursor-pointer active:scale-95"
                 >
                   {isUploading ? 'Publishing...' : 'Save & Publish Document'}
                 </button>

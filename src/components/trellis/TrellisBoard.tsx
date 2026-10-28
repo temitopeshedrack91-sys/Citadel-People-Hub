@@ -68,16 +68,37 @@ export const TrellisBoard: React.FC = () => {
   });
 
   return (
-    <div className="flex-1 overflow-x-auto p-6 bg-slate-50/50">
-      <div className="flex gap-5 items-start min-w-[1000px]">
+    <div className="flex-1 overflow-x-auto p-4 sm:p-6 bg-slate-50/50">
+      {/* Mobile column quick-jump links */}
+      <div className="flex md:hidden items-center gap-1.5 overflow-x-auto pb-3 custom-scrollbar">
+        {columnConfigs.map((col) => {
+          const count = filteredTasks.filter((t) => t.status === col.status).length;
+          return (
+            <a
+              key={col.status}
+              href={`#column-${col.status.toLowerCase().replace(' ', '-')}`}
+              className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 shrink-0 flex items-center gap-1.5 min-h-[44px] shadow-2xs"
+            >
+              <span className={`w-2 h-2 rounded-full ${col.dotColor}`} />
+              <span>{col.label}</span>
+              <span className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded-full font-bold">
+                {count}
+              </span>
+            </a>
+          );
+        })}
+      </div>
+
+      <div className="flex flex-col md:flex-row gap-4 md:gap-5 items-stretch md:items-start md:min-w-[1000px]">
         {columnConfigs.map((col) => {
           const colTasks = filteredTasks.filter((t) => t.status === col.status);
 
           return (
             <div
               key={col.status}
+              id={`column-${col.status.toLowerCase().replace(' ', '-')}`}
               data-testid={`trellis-column-${col.status.toLowerCase().replace(' ', '-')}`}
-              className="flex-1 bg-slate-100/70 rounded-2xl p-3 border border-slate-200/60 flex flex-col max-h-[calc(100vh-210px)]"
+              className="flex-1 bg-slate-100/70 rounded-2xl p-3 border border-slate-200/60 flex flex-col md:max-h-[calc(100vh-210px)]"
             >
               {/* Column Header */}
               <div className="flex items-center justify-between px-1.5 pb-2.5 shrink-0">

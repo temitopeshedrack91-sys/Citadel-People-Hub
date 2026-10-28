@@ -172,6 +172,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     return 'Good Evening';
   }, []);
 
+  const greetingName = useMemo(() => {
+    if (!currentUser?.name) return 'Team';
+    const parts = currentUser.name.trim().split(/\s+/);
+    const titles = ['Dr.', 'Dr', 'Prof.', 'Prof', 'Pastor', 'Rev.', 'Rev', 'Mr.', 'Mr', 'Mrs.', 'Mrs', 'Ms.', 'Ms', 'Engr.', 'Engr'];
+    if (titles.includes(parts[0]) && parts.length > 1) {
+      return `${parts[0]} ${parts[1]}`;
+    }
+    return parts[0] || 'Team';
+  }, [currentUser?.name]);
+
   // Summary Metrics calculations
   const totalEmployeesDisplay = liveEmployees.length > 0 ? liveEmployees.length : 482;
   const activeStaffDisplay = liveEmployees.length > 0 ? liveEmployees.filter((e) => e.status === 'Active').length : 142;
@@ -387,7 +397,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {/* Greeting Header */}
             <div>
               <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                {greeting} {currentUser.name.split(' ')[0]}
+                {greeting}, {greetingName}
               </h1>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
                 People, Culture & Performance • Workforce Overview.
@@ -917,7 +927,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             : 'bg-white hover:bg-pink-100 text-pink-700 border border-pink-200 shadow-2xs'
                         }`}
                       >
-                        {isWished ? 'Wished ✓' : 'Wish 🎉'}
+                        {isWished ? 'Wished' : 'Send Wish'}
                       </button>
                     </div>
                   );
@@ -967,7 +977,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                               : 'bg-[#083E34] text-white hover:bg-[#052C25]'
                           }`}
                         >
-                          {isResolved ? 'Resolved ✓' : 'Approve'}
+                          {isResolved ? 'Resolved' : 'Approve'}
                         </button>
                       </div>
                     </div>

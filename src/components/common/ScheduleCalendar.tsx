@@ -381,8 +381,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
   const [internalSelectedDay, setInternalSelectedDay] = useState<number>(() => {
     if (controlledSelectedDay !== undefined) return controlledSelectedDay;
     if (initialMonth === 'January 2026') return 16;
-    const now = new Date();
-    return now.getDate(); // 27 by default
+    return 27;
   });
   const [activeCategory, setActiveCategory] = useState<'All' | 'Meeting' | 'Events' | 'Holidays'>('All');
   const [eventsList, setEventsList] = useState<ScheduleEvent[]>(propEvents || citadelEvents);

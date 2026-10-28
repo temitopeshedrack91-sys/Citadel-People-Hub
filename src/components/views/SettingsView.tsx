@@ -120,11 +120,11 @@ export const SettingsView: React.FC = () => {
     <div className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-black text-black tracking-tight font-serif flex items-center gap-2">
-            <Settings className="w-5 h-5 text-[#0A1E3F]" />
+          <h2 className="text-lg font-black text-black tracking-tight flex items-center gap-2">
+            <Settings className="w-5 h-5 text-[#083E34]" />
             <span>Organization Settings & Entity Governance</span>
           </h2>
-          <p className="text-xs text-black font-semibold">
+          <p className="text-xs text-slate-500 font-medium">
             Citadel institutional hierarchy, Group Executive Council (GEC) leadership, and 5-tier role governance.
           </p>
         </div>
@@ -132,7 +132,7 @@ export const SettingsView: React.FC = () => {
         {activeTab === 'entities_depts' && (
           <button
             onClick={() => setShowAddDeptModal(true)}
-            className="px-3.5 py-2 rounded-lg bg-[#0A1E3F] text-amber-300 hover:bg-[#152B52] text-xs font-black flex items-center gap-1.5 shadow-xs transition"
+            className="px-3.5 py-2 rounded-xl bg-[#083E34] text-amber-300 hover:bg-[#062f28] text-xs font-black flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Add Department</span>
@@ -141,13 +141,13 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {/* Main Settings Tabs */}
-      <div className="flex items-center gap-2 border-b-2 border-slate-300 pb-2 overflow-x-auto scrollbar-none">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 custom-scrollbar scroll-smooth" role="tablist">
         <button
           onClick={() => setActiveTab('entities_depts')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-black transition flex items-center gap-1.5 shrink-0 ${
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
             activeTab === 'entities_depts'
-              ? 'bg-[#0A1E3F] text-white shadow-xs'
-              : 'text-black hover:bg-slate-200'
+              ? 'bg-[#083E34] text-white shadow-xs'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
           }`}
         >
           <Building2 className="w-3.5 h-3.5" />
@@ -156,38 +156,38 @@ export const SettingsView: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('gec_roster')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-black transition flex items-center gap-1.5 shrink-0 ${
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
             activeTab === 'gec_roster'
-              ? 'bg-[#0A1E3F] text-white shadow-xs'
-              : 'text-black hover:bg-slate-200'
+              ? 'bg-[#083E34] text-white shadow-xs'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
           }`}
         >
-          <Users className="w-3.5 h-3.5 text-amber-600" />
+          <Users className="w-3.5 h-3.5 text-amber-500" />
           <span>Group Executive Council (GEC) &amp; Shared Services (Sheet 3)</span>
         </button>
 
         <button
           onClick={() => setActiveTab('roles_matrix')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-black transition flex items-center gap-1.5 shrink-0 ${
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
             activeTab === 'roles_matrix'
-              ? 'bg-[#0A1E3F] text-white shadow-xs'
-              : 'text-black hover:bg-slate-200'
+              ? 'bg-[#083E34] text-white shadow-xs'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
           }`}
         >
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
           <span>Roles &amp; Permissions Governance Matrix (Sheet 4)</span>
         </button>
 
         <button
           onClick={() => setActiveTab('requirements_form')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-black transition flex items-center gap-1.5 shrink-0 ${
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
             activeTab === 'requirements_form'
-              ? 'bg-[#0A1E3F] text-white shadow-xs'
-              : 'text-black hover:bg-slate-200'
+              ? 'bg-[#083E34] text-white shadow-xs'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
           }`}
         >
-          <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />
-          <span>V1 Requirements Form Summary</span>
+          <CheckCircle2 className="w-3.5 h-3.5 text-amber-500" />
+          <span>V1 Requirements</span>
         </button>
       </div>
 
@@ -195,31 +195,31 @@ export const SettingsView: React.FC = () => {
         <div className="space-y-5">
           {/* 3 Core Entities Display */}
           <div>
-            <h3 className="text-xs font-black text-black uppercase tracking-wider mb-3">
+            <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-3">
               Citadel Corporate Entities &amp; Subsidiaries
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {entities.map((ent) => (
                 <div
                   key={ent.id}
-                  className="bg-white rounded-xl border border-slate-300 p-5 shadow-xs flex flex-col justify-between"
+                  className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-center justify-between">
-                      <span className="px-2 py-0.5 rounded font-mono text-xs font-bold bg-[#0A1E3F]/10 text-[#0A1E3F]">
-                        {ent.shortCode}
+                      <span className="px-2.5 py-0.5 rounded-lg font-mono text-xs font-bold bg-[#083E34]/10 text-[#083E34]">
+                        {ent.shortCode || 'CGCC'}
                       </span>
                       <Badge variant={ent.isActive ? 'success' : 'neutral'}>
                         {ent.isActive ? 'Active Entity' : 'Inactive'}
                       </Badge>
                     </div>
-                    <h4 className="text-sm font-black text-black mt-2">{ent.name}</h4>
-                    <p className="text-xs text-slate-700 mt-1 leading-relaxed font-medium">{ent.description}</p>
+                    <h4 className="text-sm font-bold text-slate-900 mt-2.5">{ent.name}</h4>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed font-medium">{ent.description}</p>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between text-xs text-black">
-                    <span className="font-semibold text-slate-600">Code: {ent.code}</span>
-                    <span className="font-black text-black">
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span className="font-mono text-slate-400 font-bold">{ent.shortCode || 'CGCC'}</span>
+                    <span className="font-bold text-slate-800">
                       {departments.filter((d) => d.entityId === ent.id).length} Operational Departments
                     </span>
                   </div>
@@ -229,53 +229,55 @@ export const SettingsView: React.FC = () => {
           </div>
 
           {/* Departments Master List */}
-          <div className="bg-white rounded-xl border border-slate-300 shadow-xs overflow-hidden">
-            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div>
-                <h3 className="text-xs font-black text-black uppercase tracking-wider">
+                <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider">
                   Departments &amp; Divisions Master Table
                 </h3>
-                <p className="text-[11px] text-slate-600">Organizational units across Citadel Global Community Church, CSOG, and Citadel Holdings</p>
+                <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                  Organizational units across Citadel Global Community Church, CSOG, and Citadel Holdings
+                </p>
               </div>
-              <span className="text-xs font-bold text-black font-mono">
+              <span className="text-xs font-bold text-slate-500">
                 {departments.length} registered operational units
               </span>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left text-xs min-w-[700px]">
-                <thead className="bg-[#0A1E3F] text-white uppercase tracking-wider text-xs font-bold">
+                <thead className="bg-slate-50/90 text-slate-500 border-b border-slate-200/80 uppercase tracking-wider text-[11px] font-black">
                   <tr>
-                    <th className="py-3.5 px-4">Department Name</th>
-                    <th className="py-3.5 px-4">Code</th>
-                    <th className="py-3.5 px-4">Parent Entity</th>
-                    <th className="py-3.5 px-4">Head of Department / Lead</th>
-                    <th className="py-3.5 px-4">Status</th>
-                    <th className="py-3.5 px-4 text-right">Actions</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">Department Name</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">Code</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">Parent Entity</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">Head of Department / Lead</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">Status</th>
+                    <th className="py-3.5 px-4 text-right whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="divide-y divide-slate-100">
                   {departments.map((dept) => (
-                    <tr key={dept.id} className="hover:bg-slate-50 transition">
+                    <tr key={dept.id} className="hover:bg-slate-50/80 transition">
                       <td className="py-3.5 px-4">
-                        <p className="font-black text-black">{dept.name}</p>
-                        <p className="text-[11px] text-slate-600 font-medium">{dept.description}</p>
+                        <p className="font-bold text-slate-900">{dept.name}</p>
+                        <p className="text-[11px] text-slate-500 font-medium">{dept.description}</p>
                       </td>
-                      <td className="py-3.5 px-4 font-mono font-black text-black">{dept.code}</td>
-                      <td className="py-3.5 px-4 font-bold text-black">{dept.entityName}</td>
-                      <td className="py-3.5 px-4 font-bold text-black">{dept.headOfDepartmentName}</td>
-                      <td className="py-3.5 px-4">
+                      <td className="py-3.5 px-4 font-mono font-bold text-slate-800">{dept.code}</td>
+                      <td className="py-3.5 px-4 font-semibold text-slate-800">{dept.entityName}</td>
+                      <td className="py-3.5 px-4 font-semibold text-slate-800">{dept.headOfDepartment || dept.headOfDepartmentName || 'To Be Appointed'}</td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         <Badge variant={dept.isActive ? 'success' : 'neutral'}>
                           {dept.isActive ? 'Active' : 'Archived'}
                         </Badge>
                       </td>
-                      <td className="py-3.5 px-4 text-right">
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <button
                           onClick={() => handleToggleDeptStatus(dept)}
-                          className={`text-xs font-bold px-2.5 py-1 rounded transition ${
+                          className={`text-xs font-semibold px-2.5 py-1 rounded-lg border transition cursor-pointer ${
                             dept.isActive
-                              ? 'text-rose-700 hover:bg-rose-100'
-                              : 'text-emerald-800 hover:bg-emerald-100'
+                              ? 'border-slate-200 text-slate-600 hover:text-rose-700 hover:bg-rose-50 hover:border-rose-200'
+                              : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
                           }`}
                         >
                           {dept.isActive ? 'Deactivate' : 'Activate'}
@@ -311,38 +313,38 @@ export const SettingsView: React.FC = () => {
             {CITADEL_GEC_ROSTER.map((member) => (
               <div
                 key={member.id}
-                className="bg-white rounded-xl border border-slate-300 p-5 shadow-xs flex flex-col justify-between"
+                className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
+                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
                           member.roleType === 'Business Head'
-                            ? 'bg-[#0A1E3F] text-amber-300'
+                            ? 'bg-[#083E34] text-amber-300'
                             : 'bg-emerald-100 text-emerald-900 border border-emerald-300'
                         }`}>
                           {member.roleType}
                         </span>
                         {member.roleType === 'Business Head' && (
-                          <span className="text-[10px] font-bold text-purple-900 bg-purple-100 px-2 py-0.5 rounded border border-purple-300">
+                          <span className="text-[10px] font-bold text-purple-900 bg-purple-100 px-2 py-0.5 rounded-md border border-purple-300">
                             GEC Member
                           </span>
                         )}
                       </div>
-                      <h4 className="text-sm font-black text-black mt-2">{member.name}</h4>
-                      <p className="text-xs font-bold text-[#0A1E3F]">{member.title}</p>
+                      <h4 className="text-sm font-black text-slate-900 mt-2">{member.name}</h4>
+                      <p className="text-xs font-bold text-[#083E34]">{member.title}</p>
                     </div>
                   </div>
 
-                  <div className="mt-3 bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs space-y-1.5">
+                  <div className="mt-3 bg-slate-50/80 p-3 rounded-xl border border-slate-200/80 text-xs space-y-1.5">
                     <div>
                       <span className="text-slate-500 font-semibold block text-[10px]">Governance Portfolio:</span>
-                      <span className="font-black text-black">{member.portfolio}</span>
+                      <span className="font-bold text-slate-800">{member.portfolio}</span>
                     </div>
                     <div>
                       <span className="text-slate-500 font-semibold block text-[10px]">Entity Jurisdiction:</span>
-                      <span className="font-bold text-slate-800">{member.entityScope}</span>
+                      <span className="font-semibold text-slate-700">{member.entityScope}</span>
                     </div>
                     {member.reportingLine && (
                       <div>
@@ -353,15 +355,15 @@ export const SettingsView: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between text-xs">
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                   <a
                     href={`mailto:${member.email}`}
-                    className="inline-flex items-center gap-1.5 font-bold text-indigo-700 hover:text-indigo-900"
+                    className="inline-flex items-center gap-1.5 font-bold text-[#083E34] hover:underline"
                   >
                     <Mail className="w-3.5 h-3.5" />
                     <span>{member.email}</span>
                   </a>
-                  <span className="text-[10px] text-slate-500 font-medium">Citadel Official</span>
+                  <span className="text-[10px] text-slate-400 font-medium">Citadel Official</span>
                 </div>
               </div>
             ))}
@@ -373,7 +375,7 @@ export const SettingsView: React.FC = () => {
       {activeTab === 'roles_matrix' && (
         <div className="space-y-5">
           {/* Matrix Header Banner */}
-          <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-xl flex items-start gap-3">
+          <div className="p-4 bg-emerald-50/80 border border-emerald-200 rounded-2xl flex items-start gap-3 shadow-xs">
             <ShieldCheck className="w-5 h-5 text-emerald-800 shrink-0 mt-0.5" />
             <div>
               <h3 className="text-xs font-black text-emerald-950 uppercase tracking-wider">
@@ -386,22 +388,22 @@ export const SettingsView: React.FC = () => {
           </div>
 
           {/* Matrix Table */}
-          <div className="bg-white rounded-xl border border-slate-300 shadow-xs overflow-hidden">
-            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <h3 className="text-xs font-black text-black uppercase tracking-wider">
+                <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
                   5-Tier Access &amp; Authorization Permissions Matrix
                 </h3>
-                <p className="text-[11px] text-slate-600">Cross-cutting permission rules from Super Admin to Self-Service Employee</p>
+                <p className="text-[11px] text-slate-500 font-medium">Cross-cutting permission rules from Super Admin to Self-Service Employee</p>
               </div>
-              <span className="text-xs font-black px-2.5 py-1 bg-[#0A1E3F] text-amber-300 rounded-md">
+              <span className="text-xs font-black px-2.5 py-1 bg-[#083E34] text-amber-300 rounded-lg shadow-xs">
                 5 Standard Tiers
               </span>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left text-xs min-w-[900px]">
-                <thead className="bg-[#0A1E3F] text-white uppercase tracking-wider text-xs font-bold">
+                <thead className="bg-[#083E34] text-white uppercase tracking-wider text-[11px] font-bold">
                   <tr>
                     <th className="py-3.5 px-4 w-12 text-center">Tier</th>
                     <th className="py-3.5 px-4">Role Title &amp; Code</th>
@@ -412,39 +414,39 @@ export const SettingsView: React.FC = () => {
                     <th className="py-3.5 px-4">Audit Trail Access</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="divide-y divide-slate-100">
                   {CITADEL_ROLES_MATRIX.map((tier) => (
-                    <tr key={tier.tierNumber} className="hover:bg-slate-50 transition">
+                    <tr key={tier.tierNumber} className="hover:bg-slate-50/80 transition">
                       <td className="py-3.5 px-4 text-center">
-                        <span className="w-6 h-6 rounded-full bg-slate-200 text-black font-black text-xs inline-flex items-center justify-center">
+                        <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-800 font-black text-xs inline-flex items-center justify-center border border-slate-200">
                           {tier.tierNumber}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 font-black text-black">
+                      <td className="py-3.5 px-4 font-black text-slate-900">
                         <span>{tier.roleName}</span>
-                        <span className="text-[10px] text-slate-600 font-mono block mt-0.5">
+                        <span className="text-[10px] text-slate-500 font-mono block mt-0.5">
                           Code: {tier.code}
                         </span>
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
                           tier.gecStatus.includes('GEC')
                             ? 'bg-purple-100 text-purple-900 border border-purple-300'
-                            : 'bg-slate-100 text-black border border-slate-200'
+                            : 'bg-slate-100 text-slate-700 border border-slate-200'
                         }`}>
                           {tier.gecStatus}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 font-bold text-black text-[11px] max-w-xs">
+                      <td className="py-3.5 px-4 font-bold text-slate-800 text-[11px] max-w-xs">
                         {tier.scopeOfAccess}
                       </td>
-                      <td className="py-3.5 px-4 text-slate-800 text-[11px] font-medium leading-relaxed max-w-xs">
+                      <td className="py-3.5 px-4 text-slate-600 text-[11px] font-medium leading-relaxed max-w-xs">
                         {tier.leaveApprovalAuthority}
                       </td>
-                      <td className="py-3.5 px-4 text-slate-800 text-[11px] font-medium leading-relaxed max-w-xs">
+                      <td className="py-3.5 px-4 text-slate-600 text-[11px] font-medium leading-relaxed max-w-xs">
                         {tier.attendanceAccess}
                       </td>
-                      <td className="py-3.5 px-4 text-slate-800 text-[11px] font-medium leading-relaxed max-w-xs">
+                      <td className="py-3.5 px-4 text-slate-600 text-[11px] font-medium leading-relaxed max-w-xs">
                         {tier.auditTrailAccess}
                       </td>
                     </tr>
@@ -459,11 +461,11 @@ export const SettingsView: React.FC = () => {
 
       {activeTab === 'requirements_form' && (
         <div className="space-y-5">
-          <div className="p-4 bg-[#0A1E3F] border border-slate-300 rounded-xl flex items-start gap-3 text-white">
+          <div className="p-5 bg-[#083E34] border border-[#06241E] rounded-2xl flex items-start gap-3 text-white shadow-xs">
             <Info className="w-5 h-5 text-amber-300 shrink-0 mt-0.5" />
             <div>
               <h3 className="text-xs font-black uppercase tracking-wider text-amber-300">
-                V1 Requirement Capture & Operational Workflow Summary
+                V1 Requirement Capture &amp; Operational Workflow Summary
               </h3>
               <p className="text-xs text-slate-200 mt-1 leading-relaxed font-medium">
                 This summary translates the onboarding and governance responses captured in the requirements form into the Citadel People Hub operating model.
@@ -472,23 +474,23 @@ export const SettingsView: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-xs">
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
               <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Approval structure</p>
-              <p className="mt-2 text-sm font-black text-black">{CITADEL_V1_REQUIREMENTS_FORM.approvalStructure}</p>
+              <p className="mt-2 text-sm font-black text-slate-900">{CITADEL_V1_REQUIREMENTS_FORM.approvalStructure}</p>
             </div>
-            <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-xs">
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
               <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">HR-managed recruitment</p>
-              <p className="mt-2 text-sm font-black text-black">{CITADEL_V1_REQUIREMENTS_FORM.hrManagedRecruitment}</p>
+              <p className="mt-2 text-sm font-black text-slate-900">{CITADEL_V1_REQUIREMENTS_FORM.hrManagedRecruitment}</p>
             </div>
-            <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-xs">
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
               <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Microsoft 365 authorization</p>
-              <p className="mt-2 text-sm font-black text-black">{CITADEL_V1_REQUIREMENTS_FORM.microsoft365Authorization}</p>
+              <p className="mt-2 text-sm font-black text-slate-900">{CITADEL_V1_REQUIREMENTS_FORM.microsoft365Authorization}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-xs">
-              <h4 className="text-xs font-black uppercase tracking-wider text-black">Business head structure</h4>
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
+              <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">Business head structure</h4>
               <ul className="mt-3 space-y-2 text-xs text-slate-700 font-medium">
                 {CITADEL_V1_REQUIREMENTS_FORM.businessHeadStructure.map((item) => (
                   <li key={item} className="flex items-start gap-2">
@@ -499,12 +501,12 @@ export const SettingsView: React.FC = () => {
               </ul>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-xs">
-              <h4 className="text-xs font-black uppercase tracking-wider text-black">Shared service reporting</h4>
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
+              <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">Shared service reporting</h4>
               <ul className="mt-3 space-y-2 text-xs text-slate-700 font-medium">
                 {CITADEL_V1_REQUIREMENTS_FORM.sharedServices.map((item) => (
                   <li key={item} className="flex items-start gap-2">
-                    <Network className="w-3.5 h-3.5 text-[#0A1E3F] mt-0.5 shrink-0" />
+                    <Network className="w-3.5 h-3.5 text-[#083E34] mt-0.5 shrink-0" />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -513,8 +515,8 @@ export const SettingsView: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-xs">
-              <h4 className="text-xs font-black uppercase tracking-wider text-black">Required onboarding documents</h4>
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
+              <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">Required onboarding documents</h4>
               <ul className="mt-3 space-y-2 text-xs text-slate-700 font-medium">
                 {CITADEL_V1_REQUIREMENTS_FORM.newEmployeeDocuments.map((item) => (
                   <li key={item} className="flex items-start gap-2">
@@ -525,8 +527,8 @@ export const SettingsView: React.FC = () => {
               </ul>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-xs">
-              <h4 className="text-xs font-black uppercase tracking-wider text-black">Attendance rules captured</h4>
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
+              <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">Attendance rules captured</h4>
               <ul className="mt-3 space-y-2 text-xs text-slate-700 font-medium">
                 {CITADEL_V1_REQUIREMENTS_FORM.attendanceRules.map((item) => (
                   <li key={item} className="flex items-start gap-2">
@@ -539,8 +541,8 @@ export const SettingsView: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-xs">
-              <h4 className="text-xs font-black uppercase tracking-wider text-black">HR-only information</h4>
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
+              <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">HR-only information</h4>
               <ul className="mt-3 space-y-2 text-xs text-slate-700 font-medium">
                 {CITADEL_V1_REQUIREMENTS_FORM.hrOnlyInformation.map((item) => (
                   <li key={item} className="flex items-start gap-2">
@@ -551,47 +553,47 @@ export const SettingsView: React.FC = () => {
               </ul>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-xs">
-              <h4 className="text-xs font-black uppercase tracking-wider text-black">Document storage & links</h4>
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
+              <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">Document storage &amp; links</h4>
               <ul className="mt-3 space-y-3 text-xs text-slate-700 font-medium">
                 <li className="flex items-start gap-2">
                   <FolderTree className="w-3.5 h-3.5 text-emerald-700 mt-0.5 shrink-0" />
-                  <span><span className="font-black text-black">Storage model:</span> {CITADEL_V1_REQUIREMENTS_FORM.employeeAndHrDocumentStorage}</span>
+                  <span><span className="font-black text-slate-900">Storage model:</span> {CITADEL_V1_REQUIREMENTS_FORM.employeeAndHrDocumentStorage}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <ArrowUpRight className="w-3.5 h-3.5 text-violet-700 mt-0.5 shrink-0" />
-                  <span><span className="font-black text-black">Template upload:</span> {CITADEL_V1_REQUIREMENTS_FORM.templateUploadLink}</span>
+                  <span><span className="font-black text-slate-900">Template upload:</span> {CITADEL_V1_REQUIREMENTS_FORM.templateUploadLink}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <ArrowUpRight className="w-3.5 h-3.5 text-violet-700 mt-0.5 shrink-0" />
-                  <span><span className="font-black text-black">Onboarding process:</span> {CITADEL_V1_REQUIREMENTS_FORM.onboardingProcessLink}</span>
+                  <span><span className="font-black text-slate-900">Onboarding process:</span> {CITADEL_V1_REQUIREMENTS_FORM.onboardingProcessLink}</span>
                 </li>
               </ul>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-300 shadow-xs overflow-hidden">
-            <div className="p-4 border-b border-slate-200 flex items-center justify-between gap-4">
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between gap-4">
               <div>
-                <h3 className="text-xs font-black text-black uppercase tracking-wider">V1 feature priority mapping</h3>
-                <p className="text-[11px] text-slate-600">Must-have, can-late, and future-phase requirement cycle</p>
+                <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">V1 feature priority mapping</h3>
+                <p className="text-[11px] text-slate-500 font-medium">Must-have, can-late, and future-phase requirement cycle</p>
               </div>
-              <span className="text-[10px] font-black px-2.5 py-1 bg-[#0A1E3F] text-amber-300 rounded-md">V1 Release Priority</span>
+              <span className="text-[10px] font-black px-2.5 py-1 bg-[#083E34] text-amber-300 rounded-lg shadow-xs">V1 Release Priority</span>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-[#0A1E3F] text-white uppercase tracking-wider text-xs font-bold">
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-left text-xs min-w-[500px]">
+                <thead className="bg-[#083E34] text-white uppercase tracking-wider text-[11px] font-bold">
                   <tr>
                     <th className="py-3.5 px-4">Feature</th>
                     <th className="py-3.5 px-4">Priority</th>
                     <th className="py-3.5 px-4">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="divide-y divide-slate-100">
                   {CITADEL_V1_REQUIREMENTS_FORM.featurePriorities.map((feature) => (
-                    <tr key={feature.feature} className="hover:bg-slate-50 transition">
-                      <td className="py-3 px-4 font-black text-black">{feature.feature}</td>
+                    <tr key={feature.feature} className="hover:bg-slate-50/80 transition">
+                      <td className="py-3 px-4 font-black text-slate-900">{feature.feature}</td>
                       <td className="py-3 px-4 font-bold text-slate-700">{feature.priority}</td>
                       <td className="py-3 px-4 font-mono text-[11px]">{feature.status}</td>
                     </tr>
@@ -601,7 +603,7 @@ export const SettingsView: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 text-xs text-amber-900">
+          <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-4.5 text-xs text-amber-900 shadow-xs">
             <div className="flex items-center gap-2 mb-2">
               <Award className="w-4 h-4 text-amber-700" />
               <span className="font-black uppercase tracking-wider">Additional note</span>
@@ -614,28 +616,28 @@ export const SettingsView: React.FC = () => {
 
       {/* Add Department Modal */}
       {showAddDeptModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-5 overflow-y-auto animate-fade-in">
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
-            <div className="bg-[#0A1E3F] text-white p-5 flex items-center justify-between shrink-0">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200/90 overflow-hidden my-auto max-h-[90vh] flex flex-col">
+            <div className="bg-[#083E34] text-white p-5 flex items-center justify-between shrink-0">
               <div>
                 <h3 className="text-base font-bold text-white">Create Department</h3>
-                <p className="text-xs text-amber-300">PCCM Organizational Structure</p>
+                <p className="text-xs text-amber-300 font-medium">PCCM Organizational Structure</p>
               </div>
               <button
                 onClick={() => setShowAddDeptModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-300 hover:text-white p-1 rounded-lg transition"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateDepartment} className="p-4 sm:p-6 space-y-4 text-xs overflow-y-auto flex-1">
+            <form onSubmit={handleCreateDepartment} className="p-4 sm:p-6 space-y-4 text-xs overflow-y-auto custom-scrollbar flex-1">
               <div>
                 <label className="block text-slate-700 font-semibold mb-1">Parent Entity</label>
                 <select
                   value={deptEntityId}
                   onChange={(e) => setDeptEntityId(e.target.value)}
-                  className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                  className="w-full p-2.5 border border-slate-300 rounded-xl focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34] outline-none text-slate-900 bg-white"
                 >
                   {entities.map((e) => (
                     <option key={e.id} value={e.id}>
@@ -656,7 +658,7 @@ export const SettingsView: React.FC = () => {
                     value={deptName}
                     onChange={(e) => setDeptName(e.target.value)}
                     required
-                    className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                    className="w-full p-2.5 border border-slate-300 rounded-xl focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34] outline-none text-slate-900 bg-white"
                   />
                 </div>
                 <div>
@@ -667,7 +669,7 @@ export const SettingsView: React.FC = () => {
                     value={deptCode}
                     onChange={(e) => setDeptCode(e.target.value)}
                     required
-                    className="w-full p-2 border border-slate-300 rounded-lg font-mono uppercase focus:border-[#0A1E3F] outline-none"
+                    className="w-full p-2.5 border border-slate-300 rounded-xl font-mono uppercase focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34] outline-none text-slate-900 bg-white"
                   />
                 </div>
               </div>
@@ -681,7 +683,7 @@ export const SettingsView: React.FC = () => {
                   placeholder="e.g. Pastor David Adeleke"
                   value={deptHeadName}
                   onChange={(e) => setDeptHeadName(e.target.value)}
-                  className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                  className="w-full p-2.5 border border-slate-300 rounded-xl focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34] outline-none text-slate-900 bg-white"
                 />
               </div>
 
@@ -692,22 +694,22 @@ export const SettingsView: React.FC = () => {
                   value={deptDescription}
                   onChange={(e) => setDeptDescription(e.target.value)}
                   rows={2}
-                  className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                  className="w-full p-2.5 border border-slate-300 rounded-xl focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34] outline-none text-slate-900 bg-white"
                 />
               </div>
 
-              <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowAddDeptModal(false)}
-                  className="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium"
+                  className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 font-medium transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 bg-[#0A1E3F] text-amber-300 rounded-lg hover:bg-[#152B52] font-semibold transition"
+                  className="px-4 py-2 bg-[#083E34] text-amber-300 rounded-xl hover:bg-[#062f28] font-bold shadow-xs transition active:scale-95 cursor-pointer"
                 >
                   {isSubmitting ? 'Saving...' : 'Add Department'}
                 </button>

@@ -236,19 +236,19 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#061328]/80 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#04241e]/80 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto animate-fade-in">
       <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-6 flex flex-col max-h-[90vh]">
         {/* Modal Header */}
-        <div className="bg-[#0A1E3F] text-white p-5 sm:p-6 relative shrink-0 border-b border-amber-500/20">
+        <div className="bg-[#083E34] text-white p-5 sm:p-6 relative shrink-0 border-b border-emerald-900/30">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition"
+            className="absolute top-4 right-4 text-slate-300 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
 
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold font-serif text-white">Create Employee Master Record</h2>
+            <h2 className="text-lg font-bold text-white">Create Employee Master Record</h2>
             <span className="px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 font-mono text-[10px] font-bold border border-amber-400/30">
               PCCM Enrollment
             </span>
@@ -310,7 +310,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                     placeholder="e.g. Oluwatosin"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none"
                   />
                 </div>
                 <div>
@@ -321,7 +321,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                     placeholder="e.g. Balogun"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none"
                   />
                 </div>
               </div>
@@ -335,7 +335,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                     placeholder="o.balogun@citadelcommunity.org"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none font-mono text-xs"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none font-mono text-xs"
                   />
                 </div>
                 <div>
@@ -345,7 +345,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none font-mono text-xs"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none font-mono text-xs"
                   />
                 </div>
               </div>
@@ -356,7 +356,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                   <select
                     value={gender}
                     onChange={(e) => setGender(e.target.value as 'Male' | 'Female')}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none bg-white"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none bg-white"
                   >
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
@@ -368,7 +368,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                     type="date"
                     value={dateOfBirth}
                     onChange={(e) => setDateOfBirth(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none"
                   />
                 </div>
               </div>
@@ -379,7 +379,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                   type="text"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                  className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none"
                 />
               </div>
             </div>
@@ -400,7 +400,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                     required
                     value={staffId}
                     onChange={(e) => setStaffId(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg font-mono focus:border-[#0A1E3F] outline-none font-bold text-[#0A1E3F]"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg font-mono focus:border-[#083E34] outline-none font-bold text-[#083E34]"
                   />
                 </div>
                 <div>
@@ -412,7 +412,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                       const depts = departments.filter((d) => d.entityId === e.target.value);
                       if (depts[0]) setDepartmentId(depts[0].id);
                     }}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none bg-white font-medium"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none bg-white font-medium"
                   >
                     {entities.map((ent) => (
                       <option key={ent.id} value={ent.id}>
@@ -429,7 +429,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                   <select
                     value={departmentId}
                     onChange={(e) => setDepartmentId(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none bg-white font-medium"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none bg-white font-medium"
                   >
                     {departments
                       .filter((d) => d.entityId === entityId)
@@ -448,7 +448,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                     placeholder="e.g. Media Production Specialist"
                     value={jobTitle}
                     onChange={(e) => setJobTitle(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none"
                   />
                 </div>
               </div>
@@ -459,7 +459,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                   <select
                     value={gradeLevel}
                     onChange={(e) => setGradeLevel(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none bg-white"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none bg-white"
                   >
                     <option>Associate (A-1)</option>
                     <option>Senior Associate (SA-1)</option>
@@ -473,7 +473,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                   <select
                     value={employmentType}
                     onChange={(e) => setEmploymentType(e.target.value as EmploymentType)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none bg-white"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none bg-white"
                   >
                     <option value="Full-Time">Full-Time</option>
                     <option value="Part-Time">Part-Time</option>
@@ -487,7 +487,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value as EmployeeStatus)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none bg-white font-semibold"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none bg-white font-semibold"
                   >
                     <option value="Active">Active</option>
                     <option value="Probation">Probation</option>
@@ -504,7 +504,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                     type="date"
                     value={employmentDate}
                     onChange={(e) => setEmploymentDate(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none"
                   />
                 </div>
                 <div>
@@ -513,7 +513,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                     type="text"
                     value={managerName}
                     onChange={(e) => setManagerName(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none"
                   />
                 </div>
               </div>
@@ -528,7 +528,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
               </h3>
 
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-                <span className="font-bold text-[#0A1E3F] block text-xs">Primary Emergency Contact</span>
+                <span className="font-bold text-[#083E34] block text-xs">Primary Emergency Contact</span>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-slate-600 mb-1">Contact Name *</label>
@@ -537,7 +537,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                       placeholder="e.g. Mary Balogun"
                       value={emergName}
                       onChange={(e) => setEmergName(e.target.value)}
-                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none"
                     />
                   </div>
                   <div>
@@ -546,7 +546,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                       type="text"
                       value={emergRelationship}
                       onChange={(e) => setEmergRelationship(e.target.value)}
-                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none"
                     />
                   </div>
                   <div>
@@ -555,14 +555,14 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                       type="tel"
                       value={emergPhone}
                       onChange={(e) => setEmergPhone(e.target.value)}
-                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none font-mono"
+                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none font-mono"
                     />
                   </div>
                 </div>
               </div>
 
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-                <span className="font-bold text-[#0A1E3F] block text-xs">Next of Kin (Confidential)</span>
+                <span className="font-bold text-[#083E34] block text-xs">Next of Kin (Confidential)</span>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-slate-600 mb-1">Next of Kin Name *</label>
@@ -571,7 +571,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                       placeholder="e.g. Mary Balogun"
                       value={nokName}
                       onChange={(e) => setNokName(e.target.value)}
-                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none"
                     />
                   </div>
                   <div>
@@ -580,7 +580,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                       type="text"
                       value={nokRelationship}
                       onChange={(e) => setNokRelationship(e.target.value)}
-                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none"
                     />
                   </div>
                   <div>
@@ -589,7 +589,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                       type="tel"
                       value={nokPhone}
                       onChange={(e) => setNokPhone(e.target.value)}
-                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none font-mono"
+                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none font-mono"
                     />
                   </div>
                 </div>
@@ -599,7 +599,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                     type="text"
                     value={nokAddress}
                     onChange={(e) => setNokAddress(e.target.value)}
-                    className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                    className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none"
                   />
                 </div>
               </div>
@@ -622,7 +622,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                       type="text"
                       value={degree}
                       onChange={(e) => setDegree(e.target.value)}
-                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none"
                     />
                   </div>
                   <div>
@@ -631,7 +631,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                       type="text"
                       value={institution}
                       onChange={(e) => setInstitution(e.target.value)}
-                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none"
                     />
                   </div>
                 </div>
@@ -642,7 +642,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                       type="text"
                       value={fieldOfStudy}
                       onChange={(e) => setFieldOfStudy(e.target.value)}
-                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none"
                     />
                   </div>
                   <div>
@@ -651,7 +651,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                       type="number"
                       value={yearCompleted}
                       onChange={(e) => setYearCompleted(parseInt(e.target.value))}
-                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none font-mono"
+                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none font-mono"
                     />
                   </div>
                 </div>
@@ -666,7 +666,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                       type="text"
                       value={certName}
                       onChange={(e) => setCertName(e.target.value)}
-                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none"
                     />
                   </div>
                   <div>
@@ -675,7 +675,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                       type="number"
                       value={certYear}
                       onChange={(e) => setCertYear(parseInt(e.target.value))}
-                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none font-mono"
+                      className="w-full p-2 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none font-mono"
                     />
                   </div>
                 </div>
@@ -704,7 +704,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                     type="text"
                     value={bankName}
                     onChange={(e) => setBankName(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none"
                   />
                 </div>
                 <div>
@@ -713,7 +713,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                     type="text"
                     value={accountNumber}
                     onChange={(e) => setAccountNumber(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none font-mono"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none font-mono"
                   />
                 </div>
               </div>
@@ -725,7 +725,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                     type="number"
                     value={basicSalary}
                     onChange={(e) => setBasicSalary(parseInt(e.target.value))}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none font-mono font-bold"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none font-mono font-bold"
                   />
                 </div>
                 <div>
@@ -734,7 +734,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                     type="text"
                     value={pfaName}
                     onChange={(e) => setPfaName(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none"
                   />
                 </div>
               </div>
@@ -746,7 +746,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                     type="text"
                     value={rsaPin}
                     onChange={(e) => setRsaPin(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none font-mono text-xs"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none font-mono text-xs"
                   />
                 </div>
                 <div>
@@ -755,7 +755,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                     type="text"
                     value={hmoProvider}
                     onChange={(e) => setHmoProvider(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none"
                   />
                 </div>
                 <div>
@@ -764,7 +764,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                     type="text"
                     value={hmoPlan}
                     onChange={(e) => setHmoPlan(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#0A1E3F] outline-none"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none"
                   />
                 </div>
               </div>
@@ -799,7 +799,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="px-4 py-2 bg-[#0A1E3F] hover:bg-[#152B52] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition"
+                  className="px-4 py-2 bg-[#083E34] hover:bg-[#062f28] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs active:scale-95"
                 >
                   <span>Continue</span>
                   <ArrowRight className="w-3.5 h-3.5" />

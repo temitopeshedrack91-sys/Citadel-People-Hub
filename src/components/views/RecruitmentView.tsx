@@ -37,18 +37,18 @@ export const RecruitmentView: React.FC = () => {
     <div className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-black text-black tracking-tight font-serif flex items-center gap-2">
-            <Briefcase className="w-5 h-5 text-[#0A1E3F]" />
-            <span>Recruitment & Talent Acquisition</span>
+          <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <Briefcase className="w-5 h-5 text-[#083E34]" />
+            <span>Recruitment</span>
           </h2>
-          <p className="text-xs text-black font-semibold">
-            Citadel 10-stage recruitment framework, two-stage interview governance, and active candidate pipelines.
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
+            Hiring requisitions, candidate interviews, and application stages.
           </p>
         </div>
 
         <button
-          onClick={() => alert('New Job Requisition request initiated for PCCM and GEC review.')}
-          className="px-3.5 py-2 rounded-lg bg-[#0A1E3F] text-amber-300 hover:bg-[#152B52] text-xs font-black flex items-center gap-1.5 shadow-xs transition"
+          onClick={() => {}}
+          className="px-3.5 py-2 rounded-xl bg-[#083E34] text-amber-300 hover:bg-[#062f28] text-xs font-black flex items-center gap-1.5 shadow-xs transition cursor-pointer active:scale-95"
         >
           <Plus className="w-4 h-4" />
           <span>New Requisition</span>
@@ -56,13 +56,13 @@ export const RecruitmentView: React.FC = () => {
       </div>
 
       {/* Sub Tabs */}
-      <div className="flex items-center gap-2 border-b-2 border-slate-300 pb-2">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 custom-scrollbar scroll-smooth" role="tablist">
         <button
           onClick={() => setActiveTab('requisitions')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-black transition flex items-center gap-1.5 ${
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
             activeTab === 'requisitions'
-              ? 'bg-[#0A1E3F] text-white shadow-xs'
-              : 'text-black hover:bg-slate-200'
+              ? 'bg-[#083E34] text-white shadow-xs'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
           }`}
         >
           <Briefcase className="w-3.5 h-3.5" />
@@ -71,102 +71,127 @@ export const RecruitmentView: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('sop_stages')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-black transition flex items-center gap-1.5 ${
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
             activeTab === 'sop_stages'
-              ? 'bg-[#0A1E3F] text-white shadow-xs'
-              : 'text-black hover:bg-slate-200'
+              ? 'bg-[#083E34] text-white shadow-xs'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
           }`}
         >
-          <Layers className="w-3.5 h-3.5 text-amber-600" />
+          <Layers className="w-3.5 h-3.5 text-amber-500" />
           <span>Official 10-Stage Recruitment Framework (Sheet 8)</span>
         </button>
       </div>
 
       {activeTab === 'requisitions' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {requisitions.map((req) => (
-            <div
-              key={req.id}
-              className="bg-white rounded-xl border border-slate-300 p-5 shadow-xs flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="text-sm font-black text-black">{req.jobTitle}</h3>
-                    <p className="text-xs text-[#0A1E3F] font-bold mt-0.5">
-                      {req.departmentName} ({req.entityName})
-                    </p>
-                  </div>
-                  <Badge variant={req.status === 'Open' ? 'success' : 'neutral'}>
-                    {req.status}
-                  </Badge>
-                </div>
+          {requisitions.map((req) => {
+            const hiringMgr = (req as any).hiringManager || 'Dr. Bukola Adeleke';
+            const targetDt = (req as any).targetDate || (req as any).targetHiringDate || '2026-11-30';
+            const candidates = req.candidates || [];
 
-                <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-black bg-slate-100 p-3 rounded-lg border border-slate-200">
-                  <div>
-                    <span className="text-slate-600 block text-[10px] font-bold">Open Positions:</span>
-                    <span className="font-black text-black">{req.openPositions} Opening(s)</span>
+            return (
+              <div
+                key={req.id}
+                className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] flex flex-col justify-between hover:border-slate-300 transition group"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#083E34] transition">{req.jobTitle}</h3>
+                      <p className="text-xs text-[#083E34] font-semibold mt-0.5">
+                        {req.departmentName} ({req.entityName})
+                      </p>
+                    </div>
+                    <Badge variant={req.status === 'Open' ? 'success' : 'neutral'}>
+                      {req.status}
+                    </Badge>
                   </div>
-                  <div>
-                    <span className="text-slate-600 block text-[10px] font-bold">Hiring Manager:</span>
-                    <span className="font-black text-black">{req.hiringManager}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-600 block text-[10px] font-bold">Target Date:</span>
-                    <span className="font-black text-black">{req.targetHiringDate}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-600 block text-[10px] font-bold">Applicants:</span>
-                    <span className="font-black text-black">{req.applicantsCount} in pipeline</span>
-                  </div>
-                </div>
 
-                {/* Candidate Pipeline Tracker */}
-                <div className="mt-4">
-                  <span className="text-[10px] font-black text-black uppercase tracking-wider block mb-2">
-                    Active Candidates in 10-Stage Pipeline
-                  </span>
-                  <div className="space-y-1.5">
-                    {(req.candidates || []).map((cand: any) => (
-                      <div
-                        key={cand.id}
-                        className="flex items-center justify-between p-2.5 rounded-lg border border-slate-200 bg-white text-xs hover:bg-slate-50 transition"
-                      >
-                        <div>
-                          <span className="font-bold text-black block">{cand.name}</span>
-                          <span className="text-[10px] text-slate-600 font-mono">
-                            Applied: {cand.appliedDate}
-                          </span>
-                        </div>
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
-                            cand.stage === 'Pre-Onboarding'
-                              ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
-                              : cand.stage === 'Offer Extended'
-                              ? 'bg-amber-100 text-amber-900 border-amber-300'
-                              : 'bg-slate-100 text-black border-slate-300'
-                          }`}
-                        >
-                          {cand.stage}
-                        </span>
+                  <div className="mt-3.5 grid grid-cols-2 gap-2 text-xs bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+                    <div>
+                      <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Open Positions:</span>
+                      <span className="font-bold text-slate-800">{req.openPositions} Opening(s)</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Hiring Manager:</span>
+                      <span className="font-bold text-slate-800">{hiringMgr}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Target Date:</span>
+                      <span className="font-bold text-slate-800 font-mono">{targetDt}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Applicants:</span>
+                      <span className="font-bold text-slate-800">{req.applicantsCount} in pipeline</span>
+                    </div>
+                  </div>
+
+                  {/* Candidate Pipeline Tracker */}
+                  <div className="mt-4">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-2">
+                      Active Candidates in 10-Stage Pipeline
+                    </span>
+                    {candidates.length > 0 ? (
+                      <div className="space-y-1.5">
+                        {candidates.map((cand: any) => (
+                          <div
+                            key={cand.id}
+                            className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 bg-white text-xs hover:bg-slate-50 transition"
+                          >
+                            <div>
+                              <span className="font-bold text-slate-900 block">{cand.name}</span>
+                              <span className="text-[10px] text-slate-400 font-mono">
+                                Applied: {cand.appliedDate}
+                              </span>
+                            </div>
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                cand.stage === 'Pre-Onboarding'
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                  : cand.stage === 'Offer Extended'
+                                  ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                  : 'bg-slate-100 text-slate-700 border-slate-200'
+                              }`}
+                            >
+                              {cand.stage}
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    ) : (
+                      <div className="p-3 rounded-xl bg-slate-50/50 border border-slate-100 text-xs">
+                        <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600 mb-1.5">
+                          <span>Sourcing &amp; Screening Active</span>
+                          <span className="text-emerald-700 font-bold">{req.applicantsCount} Resumes</span>
+                        </div>
+                        <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden flex">
+                          <div className="bg-[#083E34] h-full" style={{ width: '45%' }} />
+                          <div className="bg-amber-500 h-full" style={{ width: '30%' }} />
+                          <div className="bg-emerald-500 h-full" style={{ width: '15%' }} />
+                        </div>
+                        <div className="flex justify-between text-[10px] text-slate-400 font-medium mt-1">
+                          <span>Screening (60%)</span>
+                          <span>Interviewing (30%)</span>
+                          <span>Offer (10%)</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between">
-                <span className="text-[11px] text-slate-700 font-medium">PCCM Recruitment Engine</span>
-                <button
-                  onClick={() => alert(`Reviewing candidate profiles for ${req.jobTitle}`)}
-                  className="text-xs font-bold text-[#0A1E3F] hover:underline flex items-center gap-1"
-                >
-                  <span>View All Candidates</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-[11px] text-slate-400 font-medium">PCCM Recruitment Engine</span>
+                  <button
+                    onClick={() => alert(`Reviewing candidate profiles for ${req.jobTitle}`)}
+                    className="text-xs font-bold text-[#083E34] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>View All Candidates</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         /* 10-Stage Recruitment Framework from Sheet 8 */
@@ -201,7 +226,7 @@ export const RecruitmentView: React.FC = () => {
                 >
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="w-6 h-6 rounded-full bg-[#0A1E3F] text-amber-300 font-black text-xs flex items-center justify-center">
+                      <span className="w-6 h-6 rounded-full bg-[#083E34] text-amber-300 font-black text-xs flex items-center justify-center">
                         {st.step}
                       </span>
                       <span className="text-[10px] font-bold text-slate-600 font-mono">
@@ -222,7 +247,7 @@ export const RecruitmentView: React.FC = () => {
           </div>
 
           {/* Detailed Stage Table */}
-          <div className="bg-white rounded-xl border border-slate-300 shadow-xs overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-300 shadow-xs overflow-hidden">
             <div className="p-4 border-b border-slate-200 flex items-center justify-between">
               <div>
                 <h3 className="text-xs font-black text-black uppercase tracking-wider">
@@ -230,14 +255,14 @@ export const RecruitmentView: React.FC = () => {
                 </h3>
                 <p className="text-[11px] text-slate-600">Roles, responsibilities, SLA days, and stage deliverables</p>
               </div>
-              <span className="text-xs font-black px-2.5 py-1 bg-[#0A1E3F] text-amber-300 rounded-md">
+              <span className="text-xs font-black px-2.5 py-1 bg-[#083E34] text-amber-300 rounded-md">
                 Sheet 8 Mandate
               </span>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[#0A1E3F] text-white uppercase tracking-wider text-xs font-bold">
+                <thead className="bg-[#083E34] text-white uppercase tracking-wider text-xs font-bold">
                   <tr>
                     <th className="py-3.5 px-4 w-12 text-center">Step</th>
                     <th className="py-3.5 px-4">Stage Name</th>

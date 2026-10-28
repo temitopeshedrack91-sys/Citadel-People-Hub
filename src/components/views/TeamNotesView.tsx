@@ -189,10 +189,16 @@ export const TeamNotesView: React.FC = () => {
             </div>
             <p className="text-xs text-slate-400 mt-1 font-medium">{note.date}</p>
           </div>
+          <button
+            onClick={() => showToast('Note copied to clipboard!')}
+            className="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs self-start sm:self-auto cursor-pointer"
+          >
+            <span>Copy Note</span>
+          </button>
         </div>
 
-        <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
-          <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+        <div className="p-5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-3">
+          <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">
             Operational Note Details
           </h4>
           <p className="text-xs text-slate-700 leading-relaxed font-medium">
@@ -200,8 +206,8 @@ export const TeamNotesView: React.FC = () => {
           </p>
         </div>
 
-        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-3">
-          <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+        <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-3">
+          <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">
             Assigned Collaborators
           </h4>
           <div className="flex items-center gap-3">
@@ -221,6 +227,17 @@ export const TeamNotesView: React.FC = () => {
             </span>
           </div>
         </div>
+
+        {/* Activity & Audit Trail Note */}
+        <div className="p-4 rounded-2xl bg-slate-50/50 border border-slate-200/70 text-xs text-slate-500 space-y-1.5">
+          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
+            <span>Governance &amp; Handover Status</span>
+            <span className="text-emerald-700 font-bold">Synchronized</span>
+          </div>
+          <p className="text-[11px] text-slate-500">
+            Updates to this note are logged in the compliance audit trail and visible to assigned division leads.
+          </p>
+        </div>
       </div>
     );
   };
@@ -229,21 +246,21 @@ export const TeamNotesView: React.FC = () => {
     <div className="space-y-5 animate-fade-in font-sans">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <StickyNote className="w-6 h-6 text-[#083E34]" />
-            <span>Citadel Team Notes & Handovers</span>
+          <h1 className="text-lg sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <StickyNote className="w-5 h-5 sm:w-6 sm:h-6 text-[#083E34] shrink-0" />
+            <span>Team Notes</span>
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Operational notes, change management action items, and inter-departmental handovers.
+            Shared notes, action items, and team handovers.
           </p>
         </div>
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 rounded-xl bg-[#083E34] hover:bg-[#052C25] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition"
+          className="px-3.5 py-2 rounded-xl bg-[#083E34] hover:bg-[#062f28] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer min-h-[38px] shrink-0"
         >
           <Plus className="w-4 h-4" />
-          <span>+ Add Note</span>
+          <span>New note</span>
         </button>
       </div>
 

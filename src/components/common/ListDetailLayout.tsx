@@ -109,7 +109,7 @@ export function ListDetailLayout<T = any>({
 
           {/* Filter Tabs if provided */}
           {filterTabs && filterTabs.length > 0 && (
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar" role="tablist">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 custom-scrollbar scroll-smooth" role="tablist">
               {filterTabs.map((tab) => {
                 const isActive = activeFilterTab === tab.id;
                 return (
@@ -119,16 +119,16 @@ export function ListDetailLayout<T = any>({
                     aria-selected={isActive}
                     data-testid={`filter-tab-${tab.id}`}
                     onClick={() => onFilterTabChange?.(tab.id)}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 ${
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 shrink-0 cursor-pointer ${
                       isActive
                         ? 'bg-[#083E34] text-white shadow-xs'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900'
                     }`}
                   >
                     <span>{tab.label}</span>
                     {typeof tab.count === 'number' && (
                       <span
-                        className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                        className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                           isActive
                             ? 'bg-white/20 text-white'
                             : 'bg-slate-200 text-slate-700'
