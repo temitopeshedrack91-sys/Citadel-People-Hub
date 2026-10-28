@@ -246,12 +246,7 @@ const MainAppLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F6F8FA] flex flex-col font-sans text-slate-800">
       {/* 1. Notice Banner: Indicating demo data and production Supabase architecture */}
-      <DemoDataBanner
-        onOpenDemoUsers={() => {
-          setLoginModalTab('personas');
-          setIsLoginModalOpen(true);
-        }}
-      />
+      <DemoDataBanner />
 
       {/* 2. Full-Width Top Navigation Bar: Spans top of screen, never covered by sidebar */}
       <Header
