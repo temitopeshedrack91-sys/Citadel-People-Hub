@@ -238,7 +238,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="h-16 px-4 border-b border-zinc-800 flex items-center justify-between bg-black shrink-0 lg:hidden">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0 ring-1 ring-zinc-700">
-              <CitadelLogo variant="mark" colorMode="dark" className="h-4" />
+              <CitadelLogo variant="mark" colorMode="dark" className="h-5 w-5" />
             </div>
             <div className="flex flex-col">
               <span className="text-xs font-bold text-white tracking-tight leading-none">

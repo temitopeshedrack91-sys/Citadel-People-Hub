@@ -29,7 +29,6 @@ import { useAuth } from '../../context/AuthContext';
 import { SensitiveField } from '../common/SensitiveField';
 import { Badge } from '../common/Badge';
 import { auditRepository } from '../../services';
-import { CitadelLogo } from '../brand/CitadelLogo';
 
 interface EmployeeProfileModalProps {
   employee: Employee | null;

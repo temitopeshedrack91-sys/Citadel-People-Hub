@@ -155,7 +155,7 @@ export const Header: React.FC<HeaderProps> = ({
               title="Citadel People Hub Dashboard"
             >
               <div className="w-8 h-8 rounded-xl bg-[#083E34] text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0">
-                <CitadelLogo variant="mark" colorMode="dark" className="h-4" />
+                <CitadelLogo variant="mark" colorMode="dark" className="h-5 w-5" />
               </div>
               <div className="hidden min-[420px]:flex flex-col">
                 <span className="text-xs font-black text-slate-900 tracking-tight leading-none">
