@@ -29,6 +29,7 @@ interface TrellisContextType {
   tasks: TrellisTask[];
   teamMembers: TeamMember[];
   currentUser: TeamMember;
+  findMember: (idOrEmail?: string | number) => TeamMember | undefined;
   switchUser: (userId: string) => void;
   notifications: TrellisNotification[];
   unreadNotificationCount: number;
@@ -71,8 +72,50 @@ const TrellisContext = createContext<TrellisContextType | undefined>(undefined);
 
 export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [tasks, setTasks] = useState<TrellisTask[]>(initialTasks);
-  const [teamMembers] = useState<TeamMember[]>(initialTeamMembers);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialTeamMembers);
   const [currentUser, setCurrentUser] = useState<TeamMember>(initialTeamMembers[0]); // Nadia Safitri by default
+
+  // Synchronize team member roles and attributes with Supabase employees if available
+  useEffect(() => {
+    let isMounted = true;
+    supabase
+      .from('employees')
+      .select('*')
+      .in('email', [
+        'nadia@citadel.ng',
+        'bayu@citadel.ng',
+        'sinta@citadel.ng',
+        'jonathan@citadel.ng',
+        'raka@citadel.ng',
+      ])
+      .then(({ data, error }) => {
+        if (isMounted && data && data.length > 0) {
+          setTeamMembers((prev) =>
+            prev.map((m) => {
+              const dbMatch = data.find(
+                (d: any) =>
+                  d.email?.toLowerCase() === m.email.toLowerCase() ||
+                  `${d.first_name} ${d.last_name}`.toLowerCase() === m.name.toLowerCase()
+              );
+              if (!dbMatch) return m;
+              return {
+                ...m,
+                supabaseId: dbMatch.id,
+                staffId: dbMatch.staff_id || m.staffId,
+                role: dbMatch.position || dbMatch.job_title || m.role,
+                avatarBg: dbMatch.avatar_bg || m.avatarBg,
+                avatarText: dbMatch.avatar_text || m.avatarText,
+              };
+            })
+          );
+        }
+      })
+      .catch((err) => console.warn('Supabase fetch team members error:', err));
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
   const [notifications, setNotifications] = useState<TrellisNotification[]>([
     {
       id: 'notif-1',
@@ -167,12 +210,28 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [selectedLabelFilter, setSelectedLabelFilter] = useState('All');
   const [selectedGroupFilter, setSelectedGroupFilter] = useState<'Status' | 'Assignee' | 'Priority'>('Status');
 
+  const findMember = useCallback(
+    (idOrEmail?: string | number): TeamMember | undefined => {
+      if (!idOrEmail) return undefined;
+      const str = String(idOrEmail).trim().toLowerCase();
+      return teamMembers.find(
+        (m) =>
+          m.id.toLowerCase() === str ||
+          String(m.supabaseId || '').toLowerCase() === str ||
+          String(m.staffId || '').toLowerCase() === str ||
+          m.email.toLowerCase() === str ||
+          m.name.toLowerCase() === str
+      );
+    },
+    [teamMembers]
+  );
+
   const switchUser = useCallback((userId: string) => {
-    const found = teamMembers.find((m) => m.id === userId);
+    const found = findMember(userId);
     if (found) {
       setCurrentUser(found);
     }
-  }, [teamMembers]);
+  }, [findMember]);
 
   // Notifications filtered for current user
   const userNotifications = useMemo(() => {
@@ -197,26 +256,23 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Dynamically calculate team workload hours from active tasks
   const teamWorkload = useMemo(() => {
-    const hoursMap: Record<string, number> = {
-      'user-nadia': 0,
-      'user-bayu': 0,
-      'user-sinta': 0,
-      'user-jonathan': 0,
-      'user-raka': 0,
-    };
+    const hoursMap: Record<string, number> = {};
+    teamMembers.forEach((m) => {
+      hoursMap[m.id] = 0;
+    });
 
     tasks.forEach((t) => {
       // Done tasks are archived/complete; active tasks contribute to workload
       if (t.status !== 'Done') {
-        const assignedId = t.assigneeId;
-        if (hoursMap[assignedId] !== undefined) {
-          hoursMap[assignedId] += t.hours || 8;
+        const member = findMember(t.assigneeId);
+        if (member) {
+          hoursMap[member.id] = (hoursMap[member.id] || 0) + (t.hours || 8);
         }
       }
     });
 
     return hoursMap;
-  }, [tasks]);
+  }, [tasks, teamMembers, findMember]);
 
   // Create Task Flow
   const createTask = useCallback(
@@ -508,6 +564,7 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
         tasks,
         teamMembers,
         currentUser,
+        findMember,
         switchUser,
         notifications: userNotifications,
         unreadNotificationCount,

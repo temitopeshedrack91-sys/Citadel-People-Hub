@@ -113,7 +113,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           icon: CalendarDays,
           visible: true,
           badge: '2',
-          badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+          badgeColor: 'bg-[#FF9900]/20 text-[#FF9900] border-[#FF9900]/40',
         },
 
 
@@ -311,14 +311,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         isCollapsed ? 'justify-center p-2.5' : 'justify-between px-3.5 py-2.5'
                       } ${
                         isActive
-                          ? 'bg-white/12 text-white font-bold ring-1 ring-white/15 shadow-2xs'
+                          ? 'bg-white/12 text-white font-bold ring-1 ring-[#FF9900]/30 shadow-2xs border-l-2 border-[#FF9900]'
                           : 'text-slate-300 font-medium hover:bg-white/5 hover:text-white'
                       }`}
                     >
                       <div className="flex items-center gap-3 truncate">
                         <Icon
                           className={`w-4 h-4 shrink-0 transition-colors ${
-                            isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'
+                            isActive ? 'text-[#FF9900]' : 'text-slate-400 group-hover:text-white'
                           }`}
                         />
                         {!isCollapsed && <span className="truncate">{item.label}</span>}
@@ -335,14 +335,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             </span>
                           )}
                           {isActive && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#FF9900] shadow-[0_0_6px_#FF9900]" />
                           )}
                         </div>
                       )}
 
                       {/* Collapsed View Dot for Badges */}
                       {isCollapsed && item.badge && !isActive && (
-                        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-400 ring-2 ring-[#06241E]" />
+                        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#FF9900] ring-2 ring-[#06241E]" />
                       )}
                     </button>
                   );

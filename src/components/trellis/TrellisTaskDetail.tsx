@@ -41,6 +41,7 @@ export const TrellisTaskDetail: React.FC = () => {
     selectedTaskId,
     setSelectedTaskId,
     teamMembers,
+    findMember,
     currentUser,
     updateTask,
     deleteTask,
@@ -105,11 +106,13 @@ export const TrellisTaskDetail: React.FC = () => {
 
   if (!task) return null;
 
-  const assignee = teamMembers.find((m) => m.id === task.assigneeId);
-  const assigner = teamMembers.find((m) => m.id === task.assignerId);
-  const reviewer = teamMembers.find((m) => m.id === task.reviewerId);
+  const assignee = findMember(task.assigneeId) || teamMembers.find((m) => m.id === task.assigneeId);
+  const assigner = findMember(task.assignerId) || teamMembers.find((m) => m.id === task.assignerId);
+  const reviewer = findMember(task.reviewerId) || teamMembers.find((m) => m.id === task.reviewerId);
 
-  const isAssignedToCurrentUser = task.assigneeId === currentUser.id;
+  const isAssignedToCurrentUser =
+    task.assigneeId === currentUser.id ||
+    (currentUser.supabaseId && String(task.assigneeId) === String(currentUser.supabaseId));
 
   const handleSaveEdit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -44,7 +44,10 @@ export const TrellisHeader: React.FC = () => {
   const openCount = tasks.filter((t) => t.status !== 'Done').length;
   const doneCount = tasks.filter((t) => t.status === 'Done').length;
   const myTasksCount = tasks.filter(
-    (t) => t.assigneeId === currentUser.id && t.status !== 'Done'
+    (t) =>
+      (t.assigneeId === currentUser.id ||
+        (currentUser.supabaseId && String(t.assigneeId) === String(currentUser.supabaseId))) &&
+      t.status !== 'Done'
   ).length;
 
   const tabs: { key: ViewTab; label: string; icon: React.FC<{ className?: string }> }[] = [
@@ -71,7 +74,7 @@ export const TrellisHeader: React.FC = () => {
         <div className="flex items-center gap-2.5 flex-wrap">
           {/* Team Avatar Stack */}
           <div className="flex -space-x-1.5 overflow-hidden items-center mr-1">
-            {teamMembers.slice(0, 5).map((member) => (
+            {teamMembers.map((member) => (
               <div
                 key={member.id}
                 title={`${member.name} (${member.role})`}
@@ -80,9 +83,6 @@ export const TrellisHeader: React.FC = () => {
                 {member.initials}
               </div>
             ))}
-            <div className="w-6 h-6 rounded-full bg-slate-100 ring-2 ring-white flex items-center justify-center text-[9px] font-bold text-slate-500 select-none">
-              +3
-            </div>
           </div>
 
           {/* User Persona Switcher Pill */}

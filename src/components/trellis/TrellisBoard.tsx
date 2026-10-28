@@ -43,6 +43,7 @@ export const TrellisBoard: React.FC = () => {
   const {
     tasks,
     teamMembers,
+    findMember,
     currentUser,
     myTasksMode,
     selectedAssigneeFilter,
@@ -57,8 +58,17 @@ export const TrellisBoard: React.FC = () => {
 
   // Filter tasks based on search, assignee, label, and myTasksMode
   const filteredTasks = tasks.filter((t) => {
-    if (myTasksMode && t.assigneeId !== currentUser.id) return false;
-    if (selectedAssigneeFilter !== 'All' && t.assigneeId !== selectedAssigneeFilter) return false;
+    if (
+      myTasksMode &&
+      t.assigneeId !== currentUser.id &&
+      (!currentUser.supabaseId || String(t.assigneeId) !== String(currentUser.supabaseId))
+    )
+      return false;
+    if (selectedAssigneeFilter !== 'All') {
+      const targetMember = findMember(selectedAssigneeFilter);
+      const taskMember = findMember(t.assigneeId);
+      if (!targetMember || !taskMember || targetMember.id !== taskMember.id) return false;
+    }
     if (selectedLabelFilter !== 'All' && !t.labels.includes(selectedLabelFilter as any)) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -132,7 +142,7 @@ export const TrellisBoard: React.FC = () => {
                   </div>
                 ) : (
                   colTasks.map((task) => {
-                    const assignee = teamMembers.find((m) => m.id === task.assigneeId);
+                    const assignee = findMember(task.assigneeId) || teamMembers.find((m) => m.id === task.assigneeId);
 
                     return (
                       <div

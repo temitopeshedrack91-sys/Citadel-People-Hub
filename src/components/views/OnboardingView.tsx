@@ -265,8 +265,8 @@ export const OnboardingView: React.FC = () => {
         <div className="absolute -right-16 -top-16 w-48 h-48 bg-[#FF9900]/15 rounded-full blur-2xl pointer-events-none" />
 
         <div className="flex items-start sm:items-center gap-4 relative z-10">
-          <div className="w-12 h-12 rounded-xl bg-[#FF9900] text-black flex items-center justify-center font-black shrink-0 shadow-md">
-            <FileCheck2 className="w-6 h-6 text-black" />
+          <div className="w-12 h-12 rounded-xl bg-[#FF9900] text-white flex items-center justify-center font-black shrink-0 shadow-md">
+            <FileCheck2 className="w-6 h-6 text-white" />
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-2">

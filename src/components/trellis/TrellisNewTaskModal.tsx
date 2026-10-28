@@ -138,7 +138,7 @@ export const TrellisNewTaskModal: React.FC = () => {
               >
                 {teamMembers.map((m) => (
                   <option key={m.id} value={m.id}>
-                    {m.name} ({m.role.split(' ')[0]})
+                    {m.name} ({m.role})
                   </option>
                 ))}
               </select>

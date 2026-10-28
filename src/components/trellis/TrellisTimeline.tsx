@@ -203,7 +203,7 @@ export const TrellisTimeline: React.FC = () => {
           </div>
 
           <div className="space-y-3.5 pt-1">
-            {teamMembers.slice(0, 4).map((member) => {
+            {teamMembers.map((member) => {
               const currentHours = teamWorkload[member.id] || 0;
               const maxHours = member.capacityHours || 40;
               const isOverloaded = currentHours > maxHours;

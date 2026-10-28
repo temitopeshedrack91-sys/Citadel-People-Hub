@@ -22,12 +22,13 @@ export const themeTokens = {
       border: '#A3D4C7',
     },
 
-    // Secondary / Action Accent (Lightning bolt, highlights)
+    // Secondary / Action Accent (Citadel Warm Gold / Orange from Church Onboarding SOP)
     accent: {
-      DEFAULT: '#F59E0B',
-      hover: '#D97706',
-      light: '#FEF3C7',
-      subtle: '#FFFBEB',
+      DEFAULT: '#FF9900',
+      hover: '#FFAA2B',
+      light: '#FFF8F0',
+      subtle: '#FFF3E0',
+      gold: '#FF9900',
     },
 
     // Canvas & Surfaces
