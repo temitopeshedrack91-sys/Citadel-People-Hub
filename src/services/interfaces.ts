@@ -2,10 +2,7 @@
  * Data Access Layer Interfaces
  * Citadel People Hub
  * 
- * These interfaces form the architectural abstraction boundary.
- * The current mock repository implements these interfaces.
- * When Supabase PostgreSQL and Auth are connected in a future phase,
- * a SupabaseRepository will implement these same interfaces with ZERO UI code changes.
+ * These interfaces isolate view components from local demo storage or Laravel.
  */
 
 import {
@@ -70,12 +67,12 @@ export interface IWorkflowRepository {
 
 export interface IAuditRepository {
   getLogs(filter?: { module?: string; userId?: string; limit?: number }): Promise<AuditLogEntry[]>;
-  logAction(entry: Omit<AuditLogEntry, 'id' | 'timestamp'>): Promise<AuditLogEntry>;
+  logAction(entry: Omit<AuditLogEntry, 'id' | 'timestamp'>): Promise<void | AuditLogEntry>;
 }
 
 export interface IDocumentRepository {
   getAll(filter?: { category?: string; accessLevel?: string }): Promise<HubDocument[]>;
-  uploadDocument(doc: Omit<HubDocument, 'id' | 'uploadedDate'>): Promise<HubDocument>;
+  uploadDocument(doc: Omit<HubDocument, 'id' | 'uploadedDate'>, file?: File): Promise<HubDocument>;
 }
 
 export interface INotificationRepository {

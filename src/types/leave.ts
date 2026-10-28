@@ -7,13 +7,22 @@ import { WorkflowStatus } from './workflow';
 
 export type LeaveType =
   | 'Annual Leave'
-  | 'Casual Leave'
   | 'Sick Leave'
   | 'Maternity Leave'
   | 'Paternity Leave'
-  | 'Study Leave'
+  | 'Exam Leave'
   | 'Compassionate Leave'
-  | 'Sabbatical';
+  | 'Casual Leave';
+
+export interface LeavePolicyRule {
+  leaveType: LeaveType;
+  entitlement: string;
+  entitlementDays: number;
+  eligibility: string;
+  approvalFlow: 'Line Manager -> HR' | 'Direct HR';
+  attachmentRequired: string;
+  notes: string;
+}
 
 export interface LeaveBalance {
   leaveType: LeaveType;

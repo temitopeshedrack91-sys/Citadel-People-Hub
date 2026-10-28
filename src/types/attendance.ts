@@ -47,3 +47,17 @@ export interface AttendanceDeviceConfig {
   lastHeartbeat: string;
   status: 'Online' | 'Offline' | 'Syncing' | 'Pending_Setup';
 }
+
+export interface CitadelAttendanceSchedule {
+  id: string;
+  entityOrUnit: string;
+  category: 'Entity' | 'Operational Unit';
+  shiftStart: string;
+  shiftEnd: string;
+  hoursPerDay: number;
+  biometricRequired: boolean;
+  gracePeriodMinutes: number;
+  lateThreshold: string;
+  specialRules?: string;
+}
+

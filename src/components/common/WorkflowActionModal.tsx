@@ -73,10 +73,10 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-5 overflow-y-auto animate-fade-in">
+      <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-[#0A1E3F] text-white">
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 bg-[#0A1E3F] text-white shrink-0">
           <div>
             <h3 className="text-base font-semibold text-white">Workflow Action</h3>
             <p className="text-xs text-amber-300/80">{title}</p>
@@ -90,7 +90,7 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
         </div>
 
         {/* Content */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
           <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-700">
             <span className="font-semibold block text-slate-900 mb-1">Item Reference:</span>
             {itemDescription}
@@ -106,7 +106,7 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
               Select Decision / Action
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {allowedActions.map((action) => {
                 const isSelected = selectedAction === action;
                 return (

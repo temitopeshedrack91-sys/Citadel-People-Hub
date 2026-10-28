@@ -10,14 +10,28 @@ import {
   Shield,
   Save,
   X,
+  Users,
+  ShieldCheck,
+  Mail,
+  Network,
+  ArrowUpRight,
+  Award,
+  Lock,
+  Key,
+  Info,
+  Layers,
+  Clock,
+  FileText,
 } from 'lucide-react';
 import { CitadelEntity, CitadelDepartment } from '../../types';
 import { organizationRepository, auditRepository } from '../../services';
 import { useAuth } from '../../context/AuthContext';
 import { Badge } from '../common/Badge';
+import { CITADEL_GEC_ROSTER, CITADEL_ROLES_MATRIX, CITADEL_V1_REQUIREMENTS_FORM } from '../../data/mockData';
 
 export const SettingsView: React.FC = () => {
   const { currentUser, currentRole } = useAuth();
+  const [activeTab, setActiveTab] = useState<'entities_depts' | 'gec_roster' | 'roles_matrix' | 'requirements_form'>('entities_depts');
   const [entities, setEntities] = useState<CitadelEntity[]>([]);
   const [departments, setDepartments] = useState<CitadelDepartment[]>([]);
   const [showAddDeptModal, setShowAddDeptModal] = useState(false);
@@ -106,121 +120,503 @@ export const SettingsView: React.FC = () => {
     <div className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold text-slate-900 tracking-tight font-serif flex items-center gap-2">
+          <h2 className="text-lg font-black text-black tracking-tight font-serif flex items-center gap-2">
             <Settings className="w-5 h-5 text-[#0A1E3F]" />
             <span>Organization Settings & Entity Governance</span>
           </h2>
-          <p className="text-xs text-slate-500">
-            Configure Citadel corporate entities, subsidiaries, operational departments, and organizational units.
+          <p className="text-xs text-black font-semibold">
+            Citadel institutional hierarchy, Group Executive Council (GEC) leadership, and 5-tier role governance.
           </p>
         </div>
 
+        {activeTab === 'entities_depts' && (
+          <button
+            onClick={() => setShowAddDeptModal(true)}
+            className="px-3.5 py-2 rounded-lg bg-[#0A1E3F] text-amber-300 hover:bg-[#152B52] text-xs font-black flex items-center gap-1.5 shadow-xs transition"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Department</span>
+          </button>
+        )}
+      </div>
+
+      {/* Main Settings Tabs */}
+      <div className="flex items-center gap-2 border-b-2 border-slate-300 pb-2 overflow-x-auto scrollbar-none">
         <button
-          onClick={() => setShowAddDeptModal(true)}
-          className="px-3.5 py-2 rounded-lg bg-[#0A1E3F] text-amber-300 hover:bg-[#152B52] text-xs font-semibold flex items-center gap-1.5 shadow-xs transition"
+          onClick={() => setActiveTab('entities_depts')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-black transition flex items-center gap-1.5 shrink-0 ${
+            activeTab === 'entities_depts'
+              ? 'bg-[#0A1E3F] text-white shadow-xs'
+              : 'text-black hover:bg-slate-200'
+          }`}
         >
-          <Plus className="w-4 h-4" />
-          <span>Add Department</span>
+          <Building2 className="w-3.5 h-3.5" />
+          <span>Entities &amp; Departments</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('gec_roster')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-black transition flex items-center gap-1.5 shrink-0 ${
+            activeTab === 'gec_roster'
+              ? 'bg-[#0A1E3F] text-white shadow-xs'
+              : 'text-black hover:bg-slate-200'
+          }`}
+        >
+          <Users className="w-3.5 h-3.5 text-amber-600" />
+          <span>Group Executive Council (GEC) &amp; Shared Services (Sheet 3)</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('roles_matrix')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-black transition flex items-center gap-1.5 shrink-0 ${
+            activeTab === 'roles_matrix'
+              ? 'bg-[#0A1E3F] text-white shadow-xs'
+              : 'text-black hover:bg-slate-200'
+          }`}
+        >
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+          <span>Roles &amp; Permissions Governance Matrix (Sheet 4)</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('requirements_form')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-black transition flex items-center gap-1.5 shrink-0 ${
+            activeTab === 'requirements_form'
+              ? 'bg-[#0A1E3F] text-white shadow-xs'
+              : 'text-black hover:bg-slate-200'
+          }`}
+        >
+          <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />
+          <span>V1 Requirements Form Summary</span>
         </button>
       </div>
 
-      {/* 3 Core Entities Display */}
-      <div>
-        <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">
-          Citadel Corporate Entities & Subsidiaries
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {entities.map((ent) => (
-            <div
-              key={ent.id}
-              className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="px-2 py-0.5 rounded font-mono text-xs font-bold bg-[#0A1E3F]/10 text-[#0A1E3F]">
-                    {ent.shortCode}
-                  </span>
-                  <Badge variant={ent.isActive ? 'success' : 'neutral'}>
-                    {ent.isActive ? 'Active Entity' : 'Inactive'}
-                  </Badge>
+      {activeTab === 'entities_depts' && (
+        <div className="space-y-5">
+          {/* 3 Core Entities Display */}
+          <div>
+            <h3 className="text-xs font-black text-black uppercase tracking-wider mb-3">
+              Citadel Corporate Entities &amp; Subsidiaries
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {entities.map((ent) => (
+                <div
+                  key={ent.id}
+                  className="bg-white rounded-xl border border-slate-300 p-5 shadow-xs flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="px-2 py-0.5 rounded font-mono text-xs font-bold bg-[#0A1E3F]/10 text-[#0A1E3F]">
+                        {ent.shortCode}
+                      </span>
+                      <Badge variant={ent.isActive ? 'success' : 'neutral'}>
+                        {ent.isActive ? 'Active Entity' : 'Inactive'}
+                      </Badge>
+                    </div>
+                    <h4 className="text-sm font-black text-black mt-2">{ent.name}</h4>
+                    <p className="text-xs text-slate-700 mt-1 leading-relaxed font-medium">{ent.description}</p>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between text-xs text-black">
+                    <span className="font-semibold text-slate-600">Code: {ent.code}</span>
+                    <span className="font-black text-black">
+                      {departments.filter((d) => d.entityId === ent.id).length} Operational Departments
+                    </span>
+                  </div>
                 </div>
-                <h4 className="text-sm font-bold text-slate-900 mt-2">{ent.name}</h4>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">{ent.description}</p>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-                <span>Code: {ent.code}</span>
-                <span className="font-semibold text-slate-700">
-                  {departments.filter((d) => d.entityId === ent.id).length} Departments
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Departments Master List */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-          <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-            Departments & Divisions Master Table
-          </h3>
-          <span className="text-[11px] text-slate-500">
-            {departments.length} registered operational units
-          </span>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
-              <tr>
-                <th className="py-3 px-4">Department</th>
-                <th className="py-3 px-4">Code</th>
-                <th className="py-3 px-4">Parent Entity</th>
-                <th className="py-3 px-4">Head of Department</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {departments.map((dept) => (
-                <tr key={dept.id} className="hover:bg-slate-50/80 transition">
-                  <td className="py-3 px-4">
-                    <p className="font-semibold text-slate-900">{dept.name}</p>
-                    <p className="text-[11px] text-slate-400">{dept.description}</p>
-                  </td>
-                  <td className="py-3 px-4 font-mono font-bold text-slate-700">{dept.code}</td>
-                  <td className="py-3 px-4 font-medium text-slate-800">{dept.entityName}</td>
-                  <td className="py-3 px-4 text-slate-700">{dept.headOfDepartmentName}</td>
-                  <td className="py-3 px-4">
-                    <Badge variant={dept.isActive ? 'success' : 'neutral'}>
-                      {dept.isActive ? 'Active' : 'Archived'}
-                    </Badge>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <button
-                      onClick={() => handleToggleDeptStatus(dept)}
-                      className={`text-[11px] font-semibold px-2 py-1 rounded transition ${
-                        dept.isActive
-                          ? 'text-rose-600 hover:bg-rose-50'
-                          : 'text-emerald-700 hover:bg-emerald-50'
-                      }`}
-                    >
-                      {dept.isActive ? 'Deactivate' : 'Activate'}
-                    </button>
-                  </td>
-                </tr>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </div>
+
+          {/* Departments Master List */}
+          <div className="bg-white rounded-xl border border-slate-300 shadow-xs overflow-hidden">
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-black text-black uppercase tracking-wider">
+                  Departments &amp; Divisions Master Table
+                </h3>
+                <p className="text-[11px] text-slate-600">Organizational units across Citadel Global Community Church, CSOG, and Citadel Holdings</p>
+              </div>
+              <span className="text-xs font-bold text-black font-mono">
+                {departments.length} registered operational units
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs min-w-[700px]">
+                <thead className="bg-[#0A1E3F] text-white uppercase tracking-wider text-xs font-bold">
+                  <tr>
+                    <th className="py-3.5 px-4">Department Name</th>
+                    <th className="py-3.5 px-4">Code</th>
+                    <th className="py-3.5 px-4">Parent Entity</th>
+                    <th className="py-3.5 px-4">Head of Department / Lead</th>
+                    <th className="py-3.5 px-4">Status</th>
+                    <th className="py-3.5 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {departments.map((dept) => (
+                    <tr key={dept.id} className="hover:bg-slate-50 transition">
+                      <td className="py-3.5 px-4">
+                        <p className="font-black text-black">{dept.name}</p>
+                        <p className="text-[11px] text-slate-600 font-medium">{dept.description}</p>
+                      </td>
+                      <td className="py-3.5 px-4 font-mono font-black text-black">{dept.code}</td>
+                      <td className="py-3.5 px-4 font-bold text-black">{dept.entityName}</td>
+                      <td className="py-3.5 px-4 font-bold text-black">{dept.headOfDepartmentName}</td>
+                      <td className="py-3.5 px-4">
+                        <Badge variant={dept.isActive ? 'success' : 'neutral'}>
+                          {dept.isActive ? 'Active' : 'Archived'}
+                        </Badge>
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <button
+                          onClick={() => handleToggleDeptStatus(dept)}
+                          className={`text-xs font-bold px-2.5 py-1 rounded transition ${
+                            dept.isActive
+                              ? 'text-rose-700 hover:bg-rose-100'
+                              : 'text-emerald-800 hover:bg-emerald-100'
+                          }`}
+                        >
+                          {dept.isActive ? 'Deactivate' : 'Activate'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* GEC & Shared Services Tab (Extracted from Workbook Sheet 3) */}
+      {activeTab === 'gec_roster' && (
+        <div className="space-y-5">
+          {/* Highlights Info Banner */}
+          <div className="p-4 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-3">
+            <Info className="w-5 h-5 text-amber-800 shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-xs font-black text-amber-950 uppercase tracking-wider">
+                Citadel Group Executive Council (GEC) &amp; Shared Services Governance
+              </h3>
+              <p className="text-xs text-amber-900 mt-1 leading-relaxed font-medium">
+                The Group Executive Council oversees strategic alignment across CGCC, CSOG, and Citadel Holdings. Central Shared Services—including <span className="font-bold text-amber-950">People, Culture &amp; Change Management (PCCM)</span>, <span className="font-bold text-amber-950">Campus Security</span>, <span className="font-bold text-amber-950">Administration &amp; Protocol</span>, <span className="font-bold text-amber-950">ICT</span>, and <span className="font-bold text-amber-950">Transport &amp; Logistics</span>—operate across all Citadel entities under designated GEC reporting lines.
+              </p>
+            </div>
+          </div>
+
+          {/* GEC Members Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {CITADEL_GEC_ROSTER.map((member) => (
+              <div
+                key={member.id}
+                className="bg-white rounded-xl border border-slate-300 p-5 shadow-xs flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
+                          member.roleType === 'Business Head'
+                            ? 'bg-[#0A1E3F] text-amber-300'
+                            : 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                        }`}>
+                          {member.roleType}
+                        </span>
+                        {member.roleType === 'Business Head' && (
+                          <span className="text-[10px] font-bold text-purple-900 bg-purple-100 px-2 py-0.5 rounded border border-purple-300">
+                            GEC Member
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="text-sm font-black text-black mt-2">{member.name}</h4>
+                      <p className="text-xs font-bold text-[#0A1E3F]">{member.title}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs space-y-1.5">
+                    <div>
+                      <span className="text-slate-500 font-semibold block text-[10px]">Governance Portfolio:</span>
+                      <span className="font-black text-black">{member.portfolio}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 font-semibold block text-[10px]">Entity Jurisdiction:</span>
+                      <span className="font-bold text-slate-800">{member.entityScope}</span>
+                    </div>
+                    {member.reportingLine && (
+                      <div>
+                        <span className="text-slate-500 font-semibold block text-[10px]">Reporting Structure:</span>
+                        <span className="font-semibold text-slate-700">{member.reportingLine}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between text-xs">
+                  <a
+                    href={`mailto:${member.email}`}
+                    className="inline-flex items-center gap-1.5 font-bold text-indigo-700 hover:text-indigo-900"
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    <span>{member.email}</span>
+                  </a>
+                  <span className="text-[10px] text-slate-500 font-medium">Citadel Official</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 5-Tier Roles & Permissions Governance Matrix (Extracted from Workbook Sheet 4) */}
+      {activeTab === 'roles_matrix' && (
+        <div className="space-y-5">
+          {/* Matrix Header Banner */}
+          <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-xl flex items-start gap-3">
+            <ShieldCheck className="w-5 h-5 text-emerald-800 shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-xs font-black text-emerald-950 uppercase tracking-wider">
+                Citadel 5-Tier Role &amp; Permission Governance Charter (Workbook Sheet 4)
+              </h3>
+              <p className="text-xs text-emerald-900 mt-1 leading-relaxed font-medium">
+                Access to Citadel People Hub is strictly partitioned into 5 hierarchical tiers. PCCM Super Admin maintains full multi-entity oversight; Business Heads govern entity subsidiaries; HODs manage departmental leaves and team attendance; Employees utilize self-service; and System Admins manage technical biometrics infrastructure without sensitive HR payroll access.
+              </p>
+            </div>
+          </div>
+
+          {/* Matrix Table */}
+          <div className="bg-white rounded-xl border border-slate-300 shadow-xs overflow-hidden">
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-black text-black uppercase tracking-wider">
+                  5-Tier Access &amp; Authorization Permissions Matrix
+                </h3>
+                <p className="text-[11px] text-slate-600">Cross-cutting permission rules from Super Admin to Self-Service Employee</p>
+              </div>
+              <span className="text-xs font-black px-2.5 py-1 bg-[#0A1E3F] text-amber-300 rounded-md">
+                5 Standard Tiers
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs min-w-[900px]">
+                <thead className="bg-[#0A1E3F] text-white uppercase tracking-wider text-xs font-bold">
+                  <tr>
+                    <th className="py-3.5 px-4 w-12 text-center">Tier</th>
+                    <th className="py-3.5 px-4">Role Title &amp; Code</th>
+                    <th className="py-3.5 px-4">GEC Governance Status</th>
+                    <th className="py-3.5 px-4">Platform Scope</th>
+                    <th className="py-3.5 px-4">Leave Approval Authority</th>
+                    <th className="py-3.5 px-4">Attendance &amp; Biometrics Visibility</th>
+                    <th className="py-3.5 px-4">Audit Trail Access</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {CITADEL_ROLES_MATRIX.map((tier) => (
+                    <tr key={tier.tierNumber} className="hover:bg-slate-50 transition">
+                      <td className="py-3.5 px-4 text-center">
+                        <span className="w-6 h-6 rounded-full bg-slate-200 text-black font-black text-xs inline-flex items-center justify-center">
+                          {tier.tierNumber}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 font-black text-black">
+                        <span>{tier.roleName}</span>
+                        <span className="text-[10px] text-slate-600 font-mono block mt-0.5">
+                          Code: {tier.code}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                          tier.gecStatus.includes('GEC')
+                            ? 'bg-purple-100 text-purple-900 border border-purple-300'
+                            : 'bg-slate-100 text-black border border-slate-200'
+                        }`}>
+                          {tier.gecStatus}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 font-bold text-black text-[11px] max-w-xs">
+                        {tier.scopeOfAccess}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-800 text-[11px] font-medium leading-relaxed max-w-xs">
+                        {tier.leaveApprovalAuthority}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-800 text-[11px] font-medium leading-relaxed max-w-xs">
+                        {tier.attendanceAccess}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-800 text-[11px] font-medium leading-relaxed max-w-xs">
+                        {tier.auditTrailAccess}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+      {activeTab === 'requirements_form' && (
+        <div className="space-y-5">
+          <div className="p-4 bg-[#0A1E3F] border border-slate-300 rounded-xl flex items-start gap-3 text-white">
+            <Info className="w-5 h-5 text-amber-300 shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-wider text-amber-300">
+                V1 Requirement Capture & Operational Workflow Summary
+              </h3>
+              <p className="text-xs text-slate-200 mt-1 leading-relaxed font-medium">
+                This summary translates the onboarding and governance responses captured in the requirements form into the Citadel People Hub operating model.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-xs">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Approval structure</p>
+              <p className="mt-2 text-sm font-black text-black">{CITADEL_V1_REQUIREMENTS_FORM.approvalStructure}</p>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-xs">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">HR-managed recruitment</p>
+              <p className="mt-2 text-sm font-black text-black">{CITADEL_V1_REQUIREMENTS_FORM.hrManagedRecruitment}</p>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-xs">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Microsoft 365 authorization</p>
+              <p className="mt-2 text-sm font-black text-black">{CITADEL_V1_REQUIREMENTS_FORM.microsoft365Authorization}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-xs">
+              <h4 className="text-xs font-black uppercase tracking-wider text-black">Business head structure</h4>
+              <ul className="mt-3 space-y-2 text-xs text-slate-700 font-medium">
+                {CITADEL_V1_REQUIREMENTS_FORM.businessHeadStructure.map((item) => (
+                  <li key={item} className="flex items-start gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5 shrink-0" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-xs">
+              <h4 className="text-xs font-black uppercase tracking-wider text-black">Shared service reporting</h4>
+              <ul className="mt-3 space-y-2 text-xs text-slate-700 font-medium">
+                {CITADEL_V1_REQUIREMENTS_FORM.sharedServices.map((item) => (
+                  <li key={item} className="flex items-start gap-2">
+                    <Network className="w-3.5 h-3.5 text-[#0A1E3F] mt-0.5 shrink-0" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-xs">
+              <h4 className="text-xs font-black uppercase tracking-wider text-black">Required onboarding documents</h4>
+              <ul className="mt-3 space-y-2 text-xs text-slate-700 font-medium">
+                {CITADEL_V1_REQUIREMENTS_FORM.newEmployeeDocuments.map((item) => (
+                  <li key={item} className="flex items-start gap-2">
+                    <FileText className="w-3.5 h-3.5 text-amber-700 mt-0.5 shrink-0" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-xs">
+              <h4 className="text-xs font-black uppercase tracking-wider text-black">Attendance rules captured</h4>
+              <ul className="mt-3 space-y-2 text-xs text-slate-700 font-medium">
+                {CITADEL_V1_REQUIREMENTS_FORM.attendanceRules.map((item) => (
+                  <li key={item} className="flex items-start gap-2">
+                    <Clock className="w-3.5 h-3.5 text-indigo-700 mt-0.5 shrink-0" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-xs">
+              <h4 className="text-xs font-black uppercase tracking-wider text-black">HR-only information</h4>
+              <ul className="mt-3 space-y-2 text-xs text-slate-700 font-medium">
+                {CITADEL_V1_REQUIREMENTS_FORM.hrOnlyInformation.map((item) => (
+                  <li key={item} className="flex items-start gap-2">
+                    <Lock className="w-3.5 h-3.5 text-rose-600 mt-0.5 shrink-0" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-xs">
+              <h4 className="text-xs font-black uppercase tracking-wider text-black">Document storage & links</h4>
+              <ul className="mt-3 space-y-3 text-xs text-slate-700 font-medium">
+                <li className="flex items-start gap-2">
+                  <FolderTree className="w-3.5 h-3.5 text-emerald-700 mt-0.5 shrink-0" />
+                  <span><span className="font-black text-black">Storage model:</span> {CITADEL_V1_REQUIREMENTS_FORM.employeeAndHrDocumentStorage}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <ArrowUpRight className="w-3.5 h-3.5 text-violet-700 mt-0.5 shrink-0" />
+                  <span><span className="font-black text-black">Template upload:</span> {CITADEL_V1_REQUIREMENTS_FORM.templateUploadLink}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <ArrowUpRight className="w-3.5 h-3.5 text-violet-700 mt-0.5 shrink-0" />
+                  <span><span className="font-black text-black">Onboarding process:</span> {CITADEL_V1_REQUIREMENTS_FORM.onboardingProcessLink}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-300 shadow-xs overflow-hidden">
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between gap-4">
+              <div>
+                <h3 className="text-xs font-black text-black uppercase tracking-wider">V1 feature priority mapping</h3>
+                <p className="text-[11px] text-slate-600">Must-have, can-late, and future-phase requirement cycle</p>
+              </div>
+              <span className="text-[10px] font-black px-2.5 py-1 bg-[#0A1E3F] text-amber-300 rounded-md">V1 Release Priority</span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#0A1E3F] text-white uppercase tracking-wider text-xs font-bold">
+                  <tr>
+                    <th className="py-3.5 px-4">Feature</th>
+                    <th className="py-3.5 px-4">Priority</th>
+                    <th className="py-3.5 px-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {CITADEL_V1_REQUIREMENTS_FORM.featurePriorities.map((feature) => (
+                    <tr key={feature.feature} className="hover:bg-slate-50 transition">
+                      <td className="py-3 px-4 font-black text-black">{feature.feature}</td>
+                      <td className="py-3 px-4 font-bold text-slate-700">{feature.priority}</td>
+                      <td className="py-3 px-4 font-mono text-[11px]">{feature.status}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 text-xs text-amber-900">
+            <div className="flex items-center gap-2 mb-2">
+              <Award className="w-4 h-4 text-amber-700" />
+              <span className="font-black uppercase tracking-wider">Additional note</span>
+            </div>
+            <p className="font-medium leading-relaxed">{CITADEL_V1_REQUIREMENTS_FORM.additionalRequirements}</p>
+            <p className="mt-2 font-black">Confirmation: {CITADEL_V1_REQUIREMENTS_FORM.confirmation}</p>
+          </div>
+        </div>
+      )}
 
       {/* Add Department Modal */}
       {showAddDeptModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
-            <div className="bg-[#0A1E3F] text-white p-5 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-5 overflow-y-auto animate-fade-in">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
+            <div className="bg-[#0A1E3F] text-white p-5 flex items-center justify-between shrink-0">
               <div>
                 <h3 className="text-base font-bold text-white">Create Department</h3>
                 <p className="text-xs text-amber-300">PCCM Organizational Structure</p>
@@ -233,7 +629,7 @@ export const SettingsView: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleCreateDepartment} className="p-6 space-y-4 text-xs">
+            <form onSubmit={handleCreateDepartment} className="p-4 sm:p-6 space-y-4 text-xs overflow-y-auto flex-1">
               <div>
                 <label className="block text-slate-700 font-semibold mb-1">Parent Entity</label>
                 <select
@@ -249,7 +645,7 @@ export const SettingsView: React.FC = () => {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1">
                     Department Name

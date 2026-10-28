@@ -208,38 +208,38 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold font-serif text-slate-900 tracking-tight">
+            <h1 className="text-xl font-black font-serif text-black tracking-tight">
               Citadel Employee Records
             </h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-[#C59B27] border border-amber-200/60 font-mono text-[11px] font-bold">
+            <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-[#C59B27] border border-amber-300 font-mono text-xs font-bold">
               {totalItems} Personnel
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-black font-semibold mt-0.5">
             Centralized workforce database across Citadel Global Community Church, CSOG, and Holdings.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           {/* View Mode Toggle */}
-          <div className="flex items-center p-1 bg-slate-100 rounded-lg border border-slate-200">
+          <div className="flex items-center p-1 bg-slate-100 rounded-lg border border-slate-300">
             <button
               onClick={() => setViewMode('table')}
               className={`p-1.5 rounded-md transition ${
                 viewMode === 'table'
-                  ? 'bg-white text-[#0A1E3F] shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900'
+                  ? 'bg-white text-black shadow-xs font-bold'
+                  : 'text-black hover:bg-slate-200'
               }`}
               title="Table View"
             >
-              <TableIcon className="w-4 h-4" />
+              <TableIcon className="w-4 h-4 text-black" />
             </button>
             <button
               onClick={() => setViewMode('card')}
               className={`p-1.5 rounded-md transition ${
                 viewMode === 'card'
-                  ? 'bg-white text-[#0A1E3F] shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900'
+                  ? 'bg-white text-black shadow-xs font-bold'
+                  : 'text-black hover:bg-slate-200'
               }`}
               title="Card Grid View"
             >
@@ -252,9 +252,9 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
             <button
               id="btn-add-employee-trigger"
               onClick={() => setShowAddModal(true)}
-              className="px-3.5 py-2 rounded-lg bg-[#0A1E3F] hover:bg-[#152B52] text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition"
+              className="px-4 py-2 rounded-xl bg-[#083E34] hover:bg-[#052C25] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition"
             >
-              <Plus className="w-4 h-4 text-[#C59B27]" />
+              <Plus className="w-4 h-4" />
               <span>Enroll Employee</span>
             </button>
           )}
@@ -392,46 +392,46 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
         </div>
       ) : viewMode === 'table' ? (
         /* TABLE VIEW */
-        <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-300 shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <tr className="bg-slate-100 border-b-2 border-slate-300 text-xs font-black uppercase tracking-wider text-black">
                   <th
                     onClick={() => handleSort('staffId')}
-                    className="py-3 px-4 cursor-pointer hover:text-slate-900 select-none"
+                    className="py-3 px-4 cursor-pointer hover:text-slate-900 select-none text-black font-black"
                   >
                     <div className="flex items-center gap-1">
                       <span>Staff ID</span>
-                      <ArrowUpDown className="w-3 h-3" />
+                      <ArrowUpDown className="w-3 h-3 text-black" />
                     </div>
                   </th>
                   <th
                     onClick={() => handleSort('name')}
-                    className="py-3 px-4 cursor-pointer hover:text-slate-900 select-none"
+                    className="py-3 px-4 cursor-pointer hover:text-slate-900 select-none text-black font-black"
                   >
                     <div className="flex items-center gap-1">
                       <span>Full Name & Role</span>
-                      <ArrowUpDown className="w-3 h-3" />
+                      <ArrowUpDown className="w-3 h-3 text-black" />
                     </div>
                   </th>
-                  <th className="py-3 px-4">Entity & Department</th>
-                  <th className="py-3 px-4">Manager / Head</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Type</th>
+                  <th className="py-3 px-4 text-black font-black">Entity & Department</th>
+                  <th className="py-3 px-4 text-black font-black">Manager / Head</th>
+                  <th className="py-3 px-4 text-black font-black">Status</th>
+                  <th className="py-3 px-4 text-black font-black">Type</th>
                   <th
                     onClick={() => handleSort('date')}
-                    className="py-3 px-4 cursor-pointer hover:text-slate-900 select-none"
+                    className="py-3 px-4 cursor-pointer hover:text-slate-900 select-none text-black font-black"
                   >
                     <div className="flex items-center gap-1">
                       <span>Joined</span>
-                      <ArrowUpDown className="w-3 h-3" />
+                      <ArrowUpDown className="w-3 h-3 text-black" />
                     </div>
                   </th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <th className="py-3 px-4 text-right text-black font-black">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-200">
                 {paginatedEmployees.map((emp) => (
                   <tr
                     key={emp.id}
@@ -439,34 +439,34 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                     className="hover:bg-amber-50/40 cursor-pointer transition group"
                   >
                     {/* Staff ID */}
-                    <td className="py-3 px-4 font-mono font-bold text-slate-700 group-hover:text-[#0A1E3F]">
+                    <td className="py-3 px-4 font-mono font-black text-black group-hover:text-[#0A1E3F]">
                       {emp.staffId}
                     </td>
 
                     {/* Full Name & Job Title */}
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-[#0A1E3F] text-amber-300 font-bold flex items-center justify-center text-xs shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-[#0A1E3F] text-amber-300 font-extrabold flex items-center justify-center text-xs shrink-0">
                           {emp.firstName[0]}
                           {emp.lastName[0]}
                         </div>
                         <div>
-                          <div className="font-semibold text-slate-900 group-hover:text-[#0A1E3F]">
+                          <div className="font-extrabold text-black group-hover:text-[#0A1E3F]">
                             {emp.fullName}
                           </div>
-                          <div className="text-[11px] text-slate-500">{emp.jobTitle}</div>
+                          <div className="text-xs text-black font-semibold">{emp.jobTitle}</div>
                         </div>
                       </div>
                     </td>
 
                     {/* Entity & Department */}
                     <td className="py-3 px-4">
-                      <div className="font-medium text-slate-800">{emp.entityName}</div>
-                      <div className="text-[11px] text-slate-500">{emp.departmentName}</div>
+                      <div className="font-bold text-black">{emp.entityName}</div>
+                      <div className="text-xs text-black font-semibold">{emp.departmentName}</div>
                     </td>
 
                     {/* Manager / Supervisor */}
-                    <td className="py-3 px-4 text-slate-600">
+                    <td className="py-3 px-4 text-black font-semibold">
                       {emp.managerName || 'PCCM Head'}
                     </td>
 
@@ -488,14 +488,14 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                     </td>
 
                     {/* Employment Type */}
-                    <td className="py-3 px-4 text-slate-600">
-                      <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                    <td className="py-3 px-4 text-black font-bold">
+                      <span className="text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-black border border-slate-300">
                         {emp.employmentType}
                       </span>
                     </td>
 
                     {/* Employment Date */}
-                    <td className="py-3 px-4 font-mono text-[11px] text-slate-500">
+                    <td className="py-3 px-4 font-mono text-xs text-black font-bold">
                       {emp.employmentDate}
                     </td>
 
@@ -541,7 +541,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
             >
               <div>
                 <div className="flex items-start justify-between gap-2">
-                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#0A1E3F] to-[#152B52] text-amber-300 font-bold flex items-center justify-center text-sm shadow-xs shrink-0">
+                  <div className="w-11 h-11 rounded-xl bg-[#15345b] text-white font-bold flex items-center justify-center text-sm shadow-xs shrink-0">
                     {emp.firstName[0]}
                     {emp.lastName[0]}
                   </div>
@@ -565,23 +565,23 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 </div>
 
                 <div className="mt-3">
-                  <h3 className="font-bold text-slate-900 text-sm group-hover:text-[#0A1E3F] transition line-clamp-1">
+                  <h3 className="font-extrabold text-black text-sm group-hover:text-[#0A1E3F] transition line-clamp-1">
                     {emp.fullName}
                   </h3>
-                  <p className="text-xs text-[#0A1E3F] font-medium line-clamp-1 mt-0.5">
+                  <p className="text-xs text-[#0A1E3F] font-bold line-clamp-1 mt-0.5">
                     {emp.jobTitle}
                   </p>
-                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-1">
+                  <p className="text-xs text-black font-semibold mt-1 line-clamp-1">
                     {emp.departmentName}
                   </p>
-                  <p className="text-[10px] text-slate-400 line-clamp-1">
+                  <p className="text-xs text-slate-900 font-medium line-clamp-1">
                     {emp.entityName}
                   </p>
                 </div>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                <span className="text-slate-500 font-medium">
+              <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between text-xs">
+                <span className="text-black font-bold">
                   {emp.employmentType}
                 </span>
                 <button

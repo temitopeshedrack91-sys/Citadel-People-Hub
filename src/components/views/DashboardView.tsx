@@ -1,30 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import {
   Users,
   UserCheck,
   CalendarDays,
   Clock,
-  Cake,
-  AlertTriangle,
-  UserPlus,
-  ArrowUpRight,
-  CheckCircle2,
-  Building,
-  Building2,
   Sparkles,
-  FileCheck2,
-  Award,
-  Check,
+  CheckCircle2,
   ChevronRight,
-  Send,
-  Filter,
+  Plus,
+  Building2,
+  Calendar,
+  Download,
+  Zap,
+  MoreHorizontal,
+  Paperclip,
+  MessageSquare,
+  StickyNote,
+  X,
+  Briefcase,
+  FileSpreadsheet,
+  Cake,
   ShieldCheck,
-  Flame,
+  Activity,
+  FileText,
 } from 'lucide-react';
-import { StatCard } from '../common/StatCard';
 import { useAuth } from '../../context/AuthContext';
 import { NavModule } from '../layout/Sidebar';
-import { CitadelLogo } from '../brand/CitadelLogo';
+import {
+  employeeRepository,
+  leaveRepository,
+  talentRepository,
+  attendanceRepository,
+} from '../../services';
+import { Employee, LeaveRequest, OnboardingJourney, AttendanceRecord } from '../../types';
+import { StatCard } from '../common/StatCard';
+import { StatusPill } from '../common/StatusPill';
+import { ProgressRing } from '../common/ProgressRing';
+import { ScheduleCalendar } from '../common/ScheduleCalendar';
+import { Card } from '../common/Card';
+import { ErrorBoundary } from '../common/ErrorBoundary';
 
 interface DashboardViewProps {
   onNavigate: (module: NavModule) => void;
@@ -32,38 +47,245 @@ interface DashboardViewProps {
   onOpenAddEmployee: () => void;
 }
 
+interface TeamNote {
+  id: string;
+  title: string;
+  category: 'Incoming' | 'Ongoing' | 'In Progress';
+  description: string;
+  collaborators: string;
+  avatars: { initials: string; bg: string; name: string }[];
+}
+
+// User Initials Avatar
+const InitialsAvatar: React.FC<{
+  initials: string;
+  name: string;
+  bgClass?: string;
+  sizeClass?: string;
+}> = ({ initials, name, bgClass = 'bg-[#083E34]', sizeClass = 'w-6 h-6 text-[10px]' }) => (
+  <div
+    title={name}
+    className={`${sizeClass} rounded-full flex items-center justify-center font-bold text-white ring-2 ring-white select-none ${bgClass} shrink-0`}
+  >
+    {initials}
+  </div>
+);
+
 export const DashboardView: React.FC<DashboardViewProps> = ({
   onNavigate,
   onOpenLeaveModal,
   onOpenAddEmployee,
 }) => {
-  const { currentUser, currentRole, selectedEntityFilter, setSelectedEntityFilter } = useAuth();
+  const { currentUser, currentRole, selectedEntityFilter } = useAuth();
+  const shouldReduceMotion = useReducedMotion();
 
-  const isPCCM = currentRole === 'PCCM_SUPER_ADMIN';
+  // Repository live data
+  const [liveEmployees, setLiveEmployees] = useState<Employee[]>([]);
+  const [liveLeaves, setLiveLeaves] = useState<LeaveRequest[]>([]);
+  const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
 
-  // Demo action state
-  const [actionDone, setActionDone] = useState<Record<string, boolean>>({});
+  // Interactive UI states
+  const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
+  const [isAddNoteModalOpen, setIsAddNoteModalOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Resolved actions & birthdays
+  const [resolvedActions, setResolvedActions] = useState<Record<string, boolean>>({});
   const [wishedBirthday, setWishedBirthday] = useState<Record<string, boolean>>({});
+  const [activeAttendanceDay, setActiveAttendanceDay] = useState<'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri'>('Wed');
 
-  const handleQuickApprove = (actionId: string) => {
-    setActionDone((prev) => ({ ...prev, [actionId]: true }));
-  };
+  // New Note Form State
+  const [newNoteTitle, setNewNoteTitle] = useState('');
+  const [newNoteCategory, setNewNoteCategory] = useState<'Incoming' | 'Ongoing' | 'In Progress'>('Incoming');
+  const [newNoteDesc, setNewNoteDesc] = useState('');
+  const [newNoteCollab, setNewNoteCollab] = useState('Mia, Harper');
 
-  const handleSendWish = (id: string) => {
-    setWishedBirthday((prev) => ({ ...prev, [id]: true }));
-  };
+  // Team notes matching reference design
+  const [teamNotes, setTeamNotes] = useState<TeamNote[]>([
+    {
+      id: 'note-1',
+      title: 'Employee Onboarding',
+      category: 'Incoming',
+      description: 'Prepare onboarding access and HR documents for new employees.',
+      collaborators: 'Collaborate with Mia, Harper',
+      avatars: [
+        { initials: 'MA', bg: 'bg-emerald-600', name: 'Mia Anderson' },
+        { initials: 'HL', bg: 'bg-indigo-600', name: 'Harper Lee' },
+      ],
+    },
+    {
+      id: 'note-2',
+      title: 'Performance Review',
+      category: 'Ongoing',
+      description: 'Review employee progress and attendance performance.',
+      collaborators: 'Collaborate with Chloe, Ethan',
+      avatars: [
+        { initials: 'CM', bg: 'bg-rose-600', name: 'Chloe Martin' },
+        { initials: 'EB', bg: 'bg-amber-600', name: 'Ethan Brooks' },
+      ],
+    },
+    {
+      id: 'note-3',
+      title: 'Design system V2',
+      category: 'In Progress',
+      description: 'Standardize brand components and responsive tokens across all modules.',
+      collaborators: 'Collaborate with Femi, Blessing',
+      avatars: [
+        { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
+        { initials: 'BO', bg: 'bg-teal-600', name: 'Blessing Okafor' },
+      ],
+    },
+  ]);
 
-  // Dynamic values adjusted for entity filter
-  const isCgcc = selectedEntityFilter === 'entity-cgcc';
-  const isCsog = selectedEntityFilter === 'entity-csog';
-  const isHoldings = selectedEntityFilter === 'entity-holdings';
+  // Load repositories
+  useEffect(() => {
+    let isMounted = true;
+    const loadData = async () => {
+      try {
+        const [emp, lvs, att] = await Promise.all([
+          employeeRepository.getAll({
+            entityId: selectedEntityFilter === 'all' ? undefined : selectedEntityFilter,
+          }),
+          leaveRepository.getAll(),
+          attendanceRepository.getRecentLogs(),
+        ]);
+        if (isMounted) {
+          setLiveEmployees(emp);
+          setLiveLeaves(lvs);
+          setAttendanceLogs(att);
+        }
+      } catch (err) {
+        console.error('Failed to load dashboard data:', err);
+      }
+    };
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedEntityFilter]);
 
-  const totalEmployees = isCgcc ? 82 : isCsog ? 28 : isHoldings ? 34 : 144;
-  const activeEmployees = isCgcc ? 79 : isCsog ? 27 : isHoldings ? 32 : 138;
-  const employeesOnLeaveCount = isCgcc ? 2 : isCsog ? 1 : isHoldings ? 1 : 4;
-  const pendingLeaveCount = isCgcc ? 1 : isCsog ? 1 : isHoldings ? 0 : 2;
-  const pendingActionsCount = isCgcc ? 3 : isCsog ? 1 : isHoldings ? 1 : 5;
-  const onboardingCount = isCgcc ? 1 : isCsog ? 1 : isHoldings ? 0 : 2;
+  // Dynamic Greeting matching reference ("Good Morning John")
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  }, []);
+
+  // Summary Metrics calculations
+  const totalEmployeesDisplay = liveEmployees.length > 0 ? liveEmployees.length : 482;
+  const activeStaffDisplay = liveEmployees.length > 0 ? liveEmployees.filter((e) => e.status === 'Active').length : 142;
+  const onlineStaffCount = 8;
+  const newHiresCount = 2;
+
+  // Active Projects matching reference design
+  const activeProjects = [
+    {
+      id: 'proj-1',
+      title: 'Rest API Endpoint',
+      subtitle: 'Define and manage secure API connections for payroll and biometrics...',
+      dueDate: 'Mon, Feb 4',
+      priority: 'High' as const,
+      commentsCount: 4,
+      attachmentsCount: 2,
+      assignees: [
+        { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
+        { initials: 'MA', bg: 'bg-emerald-600', name: 'Mia Anderson' },
+        { initials: 'CM', bg: 'bg-rose-600', name: 'Chloe Martin' },
+      ],
+    },
+    {
+      id: 'proj-2',
+      title: 'UI System Planning',
+      subtitle: 'Create structured UI patterns for consistent enterprise accessibility...',
+      dueDate: 'Tue, Feb 6',
+      priority: 'Medium' as const,
+      commentsCount: 6,
+      attachmentsCount: 3,
+      assignees: [
+        { initials: 'NB', bg: 'bg-amber-600', name: 'Noah Bennett' },
+        { initials: 'BA', bg: 'bg-indigo-600', name: 'Dr. Bukola Adeleke' },
+      ],
+    },
+    {
+      id: 'proj-3',
+      title: 'Visual Style Guide',
+      subtitle: 'Define visual standards for a unified design and brand language...',
+      dueDate: 'Sat, Feb 9',
+      priority: 'High' as const,
+      commentsCount: 5,
+      attachmentsCount: 4,
+      assignees: [
+        { initials: 'MA', bg: 'bg-emerald-600', name: 'Mia Anderson' },
+        { initials: 'HL', bg: 'bg-indigo-600', name: 'Harper Lee' },
+        { initials: 'EB', bg: 'bg-teal-600', name: 'Ethan Brooks' },
+      ],
+    },
+  ];
+
+  // Presence Members matching reference design
+  const presenceMembers = [
+    {
+      name: 'Daniel Carter',
+      role: 'Coverage assigned to Olivia M.',
+      status: 'On Leave',
+      initials: 'DC',
+      bg: 'bg-slate-700',
+    },
+    {
+      name: 'Mia Anderson',
+      role: 'Design Team',
+      status: '22 min',
+      initials: 'MA',
+      bg: 'bg-emerald-600',
+    },
+    {
+      name: 'Noah Bennett',
+      role: 'Marketing Lead',
+      status: '15 min',
+      initials: 'NB',
+      bg: 'bg-amber-600',
+    },
+    {
+      name: 'Chloe Martin',
+      role: 'Product Strategy',
+      status: '9 min',
+      initials: 'CM',
+      bg: 'bg-rose-600',
+    },
+    {
+      name: 'Mila Jackson',
+      role: 'Product Strategy',
+      status: '1 min',
+      initials: 'MJ',
+      bg: 'bg-indigo-600',
+    },
+  ];
+
+  // Pending Governance Actions
+  const pendingActions = [
+    {
+      id: 'act-1',
+      title: 'Blessing Okafor - Casual Leave (2 Days)',
+      subtitle: 'CGCC • People, Culture & Change Department',
+      priority: 'High',
+      module: 'leave' as NavModule,
+    },
+    {
+      id: 'act-2',
+      title: 'Review Staff Dossier: Michael Babatunde',
+      subtitle: 'Citadel Holdings • Retail Store Assistant',
+      priority: 'High',
+      module: 'employees' as NavModule,
+    },
+    {
+      id: 'act-3',
+      title: 'Verify NYSC Discharge Certificate: Kelechi Eze',
+      subtitle: 'CGCC • Media & Protocol Wing',
+      priority: 'Medium',
+      module: 'documents' as NavModule,
+    },
+  ];
 
   // Upcoming Birthdays
   const upcomingBirthdays = [
@@ -71,755 +293,897 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       id: 'b-1',
       name: 'Blessing Okafor',
       dept: 'People, Culture & Change',
-      entity: 'CGCC',
       date: 'Sep 28',
       milestone: '31st Birthday',
+      initials: 'BO',
     },
     {
       id: 'b-2',
       name: 'Chef Kolawole Briggs',
       dept: 'Cafe & Culinary Services',
-      entity: 'Citadel Holdings',
       date: 'Oct 04',
       milestone: '36th Birthday',
+      initials: 'KB',
     },
     {
       id: 'b-3',
       name: 'Engr. Femi Olatunji',
       dept: 'ICT & Infrastructure',
-      entity: 'CGCC',
       date: 'Nov 20',
       milestone: '39th Birthday',
+      initials: 'FO',
     },
   ];
 
-  // Employees currently on leave
-  const employeesOnLeave = [
-    {
-      name: 'Chef Kolawole Briggs',
-      role: 'Head Chef',
-      dept: 'Cafe',
-      entity: 'Citadel Holdings',
-      until: '25 Sep 2026',
-      type: 'Annual Leave',
-    },
-    {
-      name: 'Barr. Tunde Sholanke',
-      role: 'Admin & Ops Lead',
-      dept: 'Admin & Operations',
-      entity: 'Citadel School of Government',
-      until: '22 Sep 2026',
-      type: 'Casual Leave',
-    },
-    {
-      name: 'Mrs. Folashade Adeyemo',
-      role: 'Head of Finance',
-      dept: 'Finance',
-      entity: 'CGCC',
-      until: '21 Sep 2026',
-      type: 'Compassionate Leave',
-    },
-    {
-      name: 'Abimbola Wright',
-      role: 'Curriculum Associate',
-      dept: 'Academy & Programmes',
-      entity: 'Citadel School of Government',
-      until: '28 Sep 2026',
-      type: 'Maternity Leave',
-    },
+  const weeklyAttendanceData = [
+    { day: 'Mon', rate: 92, isToday: false },
+    { day: 'Tue', rate: 96, isToday: false },
+    { day: 'Wed', rate: 94, isToday: true },
+    { day: 'Thu', rate: 91, isToday: false },
+    { day: 'Fri', rate: 89, isToday: false },
   ];
 
-  // 5 Required Pending Actions
-  const pendingActions = [
-    {
-      id: 'act-1',
-      type: 'Leave Approval',
-      title: 'Blessing Okafor - Casual Leave (2 Days)',
-      subtitle: 'CGCC • People, Culture & Change Department',
-      priority: 'High',
-      time: '12 mins ago',
-      module: 'leave' as NavModule,
-    },
-    {
-      id: 'act-2',
-      type: 'Employee Profile Approval',
-      title: 'Review Staff Dossier: Michael Babatunde',
-      subtitle: 'Citadel Holdings • Retail Store Assistant',
-      priority: 'High',
-      time: '1 hour ago',
-      module: 'employees' as NavModule,
-    },
-    {
-      id: 'act-3',
-      type: 'Document Verification',
-      title: 'Verify NYSC Discharge Certificate: Kelechi Eze',
-      subtitle: 'CGCC • Media & Protocol Wing',
-      priority: 'Medium',
-      time: '3 hours ago',
-      module: 'documents' as NavModule,
-    },
-    {
-      id: 'act-4',
-      type: 'Onboarding Task',
-      title: 'Assign IT Workstation & Email: Engr. Daniel Alabi',
-      subtitle: 'CSOG • Public Policy Fellow',
-      priority: 'Medium',
-      time: 'Yesterday',
-      module: 'onboarding' as NavModule,
-    },
-    {
-      id: 'act-5',
-      type: 'Performance Review',
-      title: 'Sign off Q3 Leadership Appraisal: Femi Olatunji',
-      subtitle: 'CGCC • ICT & Technical Infrastructure Lead',
-      priority: 'Low',
-      time: '2 days ago',
-      module: 'performance' as NavModule,
-    },
-  ];
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
-  // Formatted Recent Activity List
-  const recentActivities = [
-    {
-      id: 'act-log-1',
-      actor: 'Dr. Bukola Adeleke (PCCM)',
-      action: 'Approved Annual Leave',
-      subject: 'Chef Kolawole Briggs (Holdings)',
-      time: '15 mins ago',
-      tag: 'Leave',
-    },
-    {
-      id: 'act-log-2',
-      actor: 'Biometric Gate Sensor #02',
-      action: 'Logged Shift Clock-In',
-      subject: '94 Staff Verified at CGCC Main Gate',
-      time: '08:45 AM',
-      tag: 'Attendance',
-    },
-    {
-      id: 'act-log-3',
-      actor: 'Pastor David Adeleke',
-      action: 'Submitted Quarterly OKRs',
-      subject: 'Citadel School of Government (CSOG)',
-      time: 'Yesterday 04:30 PM',
-      tag: 'Performance',
-    },
-    {
-      id: 'act-log-4',
-      actor: 'Femi Olatunji',
-      action: 'Uploaded Document',
-      subject: 'Cisco Enterprise Network Audit Report',
-      time: 'Yesterday 02:15 PM',
-      tag: 'Documents',
-    },
-    {
-      id: 'act-log-5',
-      actor: 'PCCM Enrollment Desk',
-      action: 'Initiated Onboarding Journey',
-      subject: 'Daniel Alabi (CSOG Fellow)',
-      time: '2 days ago',
-      tag: 'Onboarding',
-    },
-  ];
+  const handleResolveAction = (id: string, title: string) => {
+    setResolvedActions((prev) => ({ ...prev, [id]: true }));
+    showToast(`Action "${title}" marked as resolved.`);
+  };
+
+  const handleSendWish = (id: string, name: string) => {
+    setWishedBirthday((prev) => ({ ...prev, [id]: true }));
+    showToast(`Birthday greeting sent to ${name}!`);
+  };
+
+  const handleExportReport = () => {
+    showToast('Workforce Executive Summary Report exported successfully (PDF/CSV).');
+  };
+
+  const handleAddNoteSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newNoteTitle.trim()) return;
+
+    const newNote: TeamNote = {
+      id: `note-${Date.now()}`,
+      title: newNoteTitle,
+      category: newNoteCategory,
+      description: newNoteDesc || 'Operational task update.',
+      collaborators: `Collaborate with ${newNoteCollab}`,
+      avatars: [
+        { initials: 'BA', bg: 'bg-[#083E34]', name: 'Dr. Bukola Adeleke' },
+        { initials: 'PC', bg: 'bg-emerald-600', name: 'PCCM Team' },
+      ],
+    };
+
+    setTeamNotes([newNote, ...teamNotes]);
+    setIsAddNoteModalOpen(false);
+    setNewNoteTitle('');
+    setNewNoteDesc('');
+    showToast('Team note successfully published.');
+  };
 
   return (
-    <div className="space-y-6">
-      {/* 1. Official PCCM Executive Welcome Header */}
-      <div className="bg-gradient-to-r from-[#0A1E3F] via-[#102954] to-[#0A1E3F] rounded-2xl p-6 sm:p-7 text-white border border-[#C59B27]/30 shadow-md relative overflow-hidden">
-        {/* Background Citadel Logo Watermark */}
-        <div className="absolute -right-6 -bottom-8 opacity-10 pointer-events-none flex items-center pr-6 select-none">
-          <CitadelLogo variant="mark" colorMode="dark" className="w-64 h-64" />
-        </div>
-
-        <div className="relative z-10 max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#C59B27]/20 border border-[#C59B27]/40 text-amber-300 text-xs font-semibold mb-2.5">
-            <Sparkles className="w-3.5 h-3.5 text-[#C59B27]" />
-            <span>People, Culture & Change Management (PCCM)</span>
+    <ErrorBoundary fallbackTitle="Dashboard Unavailable">
+      <div className="space-y-6 pb-12 font-sans antialiased text-slate-900" data-testid="dashboard-view">
+        {/* Toast Notification */}
+        {toastMessage && (
+          <div className="fixed bottom-6 right-6 z-50 bg-[#083E34] text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-bold animate-slide-up">
+            <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+            <span>{toastMessage}</span>
           </div>
+        )}
 
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-white font-serif">
-            Welcome back, {currentUser.name}
-          </h1>
-
-          <p className="text-xs sm:text-sm text-slate-300 mt-1.5 leading-relaxed">
-            Centralized HR governance and personnel operations for{' '}
-            <strong className="text-white">Citadel Global Community Church</strong>,{' '}
-            <strong className="text-white">Citadel School of Government</strong>, and{' '}
-            <strong className="text-white">Citadel Holdings</strong>.
-          </p>
-
-          <div className="mt-5 flex flex-wrap gap-2.5 pt-3 border-t border-slate-700/60">
-            {isPCCM && (
-              <button
-                id="btn-dash-add-employee"
-                onClick={onOpenAddEmployee}
-                className="px-4 py-2 rounded-lg bg-[#C59B27] text-slate-950 text-xs font-bold hover:bg-[#D4A836] transition flex items-center gap-1.5 shadow-xs"
-              >
-                <UserPlus className="w-3.5 h-3.5" />
-                <span>Add New Employee</span>
-              </button>
-            )}
-            <button
-              id="btn-dash-request-leave"
-              onClick={onOpenLeaveModal}
-              className="px-4 py-2 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-white text-xs font-semibold border border-slate-600 transition flex items-center gap-1.5"
-            >
-              <CalendarDays className="w-3.5 h-3.5 text-[#C59B27]" />
-              <span>Apply for Leave</span>
-            </button>
-            <button
-              onClick={() => onNavigate('employees')}
-              className="px-4 py-2 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-600 transition flex items-center gap-1.5"
-            >
-              <Users className="w-3.5 h-3.5 text-slate-300" />
-              <span>Manage Workforce</span>
-            </button>
-            <button
-              onClick={() => onNavigate('attendance')}
-              className="px-4 py-2 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-600 transition flex items-center gap-1.5"
-            >
-              <Clock className="w-3.5 h-3.5 text-slate-300" />
-              <span>Biometric Records</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. Six Required PCCM Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-        <StatCard
-          id="stat-total-employees"
-          title="Total Workforce"
-          value={totalEmployees.toString()}
-          subtitle="All Citadel entities"
-          icon={Users}
-        />
-        <StatCard
-          id="stat-active-employees"
-          title="Active Employees"
-          value={activeEmployees.toString()}
-          subtitle="Current staff in post"
-          icon={UserCheck}
-          iconColor="text-emerald-600"
-          iconBg="bg-emerald-50"
-        />
-        <StatCard
-          id="stat-employees-on-leave"
-          title="Employees on Leave"
-          value={employeesOnLeaveCount.toString()}
-          subtitle="Authorized absences"
-          icon={CalendarDays}
-          iconColor="text-indigo-600"
-          iconBg="bg-indigo-50"
-        />
-        <StatCard
-          id="stat-pending-leave"
-          title="Pending Leave"
-          value={pendingLeaveCount.toString()}
-          subtitle="Requires PCCM sign-off"
-          icon={CalendarDays}
-          iconColor="text-amber-600"
-          iconBg="bg-amber-50"
-        />
-        <StatCard
-          id="stat-pending-actions"
-          title="Pending PCCM Actions"
-          value={pendingActionsCount.toString()}
-          subtitle="Approvals & tasks"
-          icon={AlertTriangle}
-          iconColor="text-rose-600"
-          iconBg="bg-rose-50"
-        />
-        <StatCard
-          id="stat-in-onboarding"
-          title="In Onboarding"
-          value={onboardingCount.toString()}
-          subtitle="Active induction track"
-          icon={UserPlus}
-          iconColor="text-[#C59B27]"
-          iconBg="bg-amber-50"
-        />
-      </div>
-
-      {/* 3. People Overview & Attendance Overview (Two-column layout) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* People Overview Panel (Spans 2 columns) */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+        {/* ======================================================== */}
+        {/* 2-COLUMN ENTERPRISE DASHBOARD MATCHING HRIVIO REFERENCE   */}
+        {/* ======================================================== */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          {/* ======================================================== */}
+          {/* LEFT MAJOR COLUMN (8 OF 12 COLS - ~67% WIDTH)            */}
+          {/* ======================================================== */}
+          <div className="lg:col-span-8 space-y-5">
+            {/* Greeting Header */}
             <div>
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-[#0A1E3F]" />
-                <span>People Overview</span>
-              </h3>
-              <p className="text-xs text-slate-500">
-                Staff distribution breakdown across entities, departments, and lifecycle status.
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                {greeting} {currentUser.name.split(' ')[0]}
+              </h1>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                People, Culture & Performance • Workforce Overview.
               </p>
             </div>
-            <span className="text-[11px] font-mono text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 self-start sm:self-auto">
-              Total: {totalEmployees} Staff
-            </span>
-          </div>
 
-          {/* Breakdown by Entity */}
-          <div>
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-700 mb-2">
-              <span className="uppercase tracking-wider text-[10px] text-slate-500">
-                1. Distribution by Citadel Entity
-              </span>
-              <span className="text-[11px] text-slate-400">Target: 100% capacity</span>
+            {/* 3 Summary Stat Cards in a row */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Card 1: Total Employees */}
+              <StatCard
+                title="Total employees"
+                value={totalEmployeesDisplay}
+                icon={Users}
+                trend={{ value: '+20%', isPositive: true, label: 'This Month' }}
+                onClick={() => onNavigate('employees')}
+                dataTestId="stat-total-employees"
+              />
+
+              {/* Card 2: Attendance */}
+              <StatCard
+                title="Attendance"
+                value="94.2%"
+                icon={Clock}
+                trend={{ value: '-2%', isPositive: false, label: 'from yesterday' }}
+                onClick={() => onNavigate('attendance')}
+                dataTestId="stat-attendance"
+              />
+
+              {/* Card 3: Active Staff */}
+              <StatCard
+                title="Active Staff"
+                value={activeStaffDisplay}
+                icon={UserCheck}
+                supportingText={
+                  <>
+                    <span className="font-black text-emerald-600 whitespace-nowrap">
+                      {onlineStaffCount} Online
+                    </span>
+                    <span className="text-slate-400 font-medium">•</span>
+                    <span className="text-slate-500 font-medium whitespace-nowrap">
+                      {newHiresCount} New Hires
+                    </span>
+                  </>
+                }
+                onClick={() => onNavigate('directory')}
+                dataTestId="stat-active-staff"
+              />
             </div>
 
-            <div className="space-y-2.5">
-              {/* CGCC */}
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="font-medium text-slate-800">
-                    Citadel Global Community Church (CGCC)
-                  </span>
-                  <span className="font-mono text-slate-600 font-semibold">
-                    82 Staff (57.0%)
-                  </span>
-                </div>
-                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#0A1E3F] rounded-full" style={{ width: '57%' }}></div>
-                </div>
+            {/* Active Projects Section matching reference cards */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-bold text-slate-900 tracking-tight">Active Projects</h2>
+                <button
+                  onClick={() => onNavigate('performance')}
+                  data-testid="projects-view-all"
+                  className="text-xs font-semibold text-slate-500 hover:text-slate-900 transition"
+                >
+                  View All
+                </button>
               </div>
 
-              {/* CSOG */}
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="font-medium text-slate-800">
-                    Citadel School of Government (CSOG)
-                  </span>
-                  <span className="font-mono text-slate-600 font-semibold">
-                    28 Staff (19.4%)
-                  </span>
-                </div>
-                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#C59B27] rounded-full" style={{ width: '19.4%' }}></div>
-                </div>
-              </div>
-
-              {/* Citadel Holdings */}
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="font-medium text-slate-800">
-                    Citadel Holdings (Bookshop, Cafe, Workstation, Asabi Aladire)
-                  </span>
-                  <span className="font-mono text-slate-600 font-semibold">
-                    34 Staff (23.6%)
-                  </span>
-                </div>
-                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-600 rounded-full" style={{ width: '23.6%' }}></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Breakdown by Key Departments & Employment Status */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100">
-            {/* Departments */}
-            <div>
-              <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-                2. Key Departments
-              </h4>
-              <div className="space-y-1.5 text-xs">
-                <div className="flex justify-between py-1 px-2 rounded bg-slate-50">
-                  <span className="text-slate-700">Finance & Accounts</span>
-                  <span className="font-mono font-bold text-slate-900">12</span>
-                </div>
-                <div className="flex justify-between py-1 px-2 rounded bg-slate-50">
-                  <span className="text-slate-700">People, Culture & Change (PCCM)</span>
-                  <span className="font-mono font-bold text-[#C59B27]">8</span>
-                </div>
-                <div className="flex justify-between py-1 px-2 rounded bg-slate-50">
-                  <span className="text-slate-700">Facilities & Maintenance</span>
-                  <span className="font-mono font-bold text-slate-900">22</span>
-                </div>
-                <div className="flex justify-between py-1 px-2 rounded bg-slate-50">
-                  <span className="text-slate-700">ICT & Technical Infrastructure</span>
-                  <span className="font-mono font-bold text-slate-900">14</span>
-                </div>
-                <div className="flex justify-between py-1 px-2 rounded bg-slate-50">
-                  <span className="text-slate-700">School of Government (CSOG)</span>
-                  <span className="font-mono font-bold text-slate-900">28</span>
-                </div>
-                <div className="flex justify-between py-1 px-2 rounded bg-slate-50">
-                  <span className="text-slate-700">Holdings Commercial Units</span>
-                  <span className="font-mono font-bold text-slate-900">34</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Employment Status */}
-            <div>
-              <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-                3. Lifecycle Employment Status
-              </h4>
-              <div className="space-y-1.5 text-xs">
-                <div className="flex items-center justify-between py-1 px-2 rounded bg-emerald-50 text-emerald-900">
-                  <span className="font-medium">Active (Confirmed)</span>
-                  <span className="font-mono font-bold">132</span>
-                </div>
-                <div className="flex items-center justify-between py-1 px-2 rounded bg-amber-50 text-amber-900">
-                  <span className="font-medium">Probationary Period</span>
-                  <span className="font-mono font-bold">6</span>
-                </div>
-                <div className="flex items-center justify-between py-1 px-2 rounded bg-indigo-50 text-indigo-900">
-                  <span className="font-medium">On Authorized Leave</span>
-                  <span className="font-mono font-bold">4</span>
-                </div>
-                <div className="flex items-center justify-between py-1 px-2 rounded bg-slate-100 text-slate-700">
-                  <span className="font-medium">Notice Period / Offboarding</span>
-                  <span className="font-mono font-bold">2</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Attendance Overview (Demo Visualization) */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-5 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-[#0A1E3F]" />
-                <h3 className="text-sm font-bold text-slate-900">Attendance Overview</h3>
-              </div>
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 font-mono">
-                DEVELOPMENT / DEMO
-              </span>
-            </div>
-
-            <p className="text-xs text-slate-500 mt-2">
-              Biometric check-in snapshot from Citadel main gatehouse and campus readers:
-            </p>
-
-            {/* Visual Attendance Bar */}
-            <div className="mt-4">
-              <div className="h-4 w-full rounded-full bg-slate-100 overflow-hidden flex shadow-inner">
-                <div
-                  className="bg-emerald-500 h-full"
-                  style={{ width: '88.9%' }}
-                  title="Present: 128"
-                ></div>
-                <div
-                  className="bg-amber-400 h-full"
-                  style={{ width: '5.6%' }}
-                  title="Late: 8"
-                ></div>
-                <div
-                  className="bg-rose-500 h-full"
-                  style={{ width: '2.8%' }}
-                  title="Absent: 4"
-                ></div>
-                <div
-                  className="bg-indigo-500 h-full"
-                  style={{ width: '2.7%' }}
-                  title="On Leave: 4"
-                ></div>
-              </div>
-
-              {/* Legend & Numbers */}
-              <div className="grid grid-cols-2 gap-2 mt-4 text-xs">
-                <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-100">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                    <span className="text-slate-700 font-medium">Present</span>
-                  </div>
-                  <div className="text-lg font-bold text-emerald-800 mt-1">128</div>
-                  <span className="text-[10px] text-emerald-600">88.9% on-time</span>
-                </div>
-
-                <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-100">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                    <span className="text-slate-700 font-medium">Late</span>
-                  </div>
-                  <div className="text-lg font-bold text-amber-800 mt-1">8</div>
-                  <span className="text-[10px] text-amber-600">Grace period applied</span>
-                </div>
-
-                <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-100">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-                    <span className="text-slate-700 font-medium">Absent</span>
-                  </div>
-                  <div className="text-lg font-bold text-rose-800 mt-1">4</div>
-                  <span className="text-[10px] text-rose-600">Pending justification</span>
-                </div>
-
-                <div className="p-2.5 rounded-lg bg-indigo-50 border border-indigo-100">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
-                    <span className="text-slate-700 font-medium">On Leave</span>
-                  </div>
-                  <div className="text-lg font-bold text-indigo-800 mt-1">4</div>
-                  <span className="text-[10px] text-indigo-600">PCCM approved</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-500">
-              <span className="font-semibold text-slate-700 block mb-0.5">Biometric Sensor Note:</span>
-              Demonstrating device sync architecture with Anviz / ZKTeco biometric stream.
-            </div>
-          </div>
-
-          <button
-            onClick={() => onNavigate('attendance')}
-            className="mt-4 w-full py-2 text-xs font-semibold text-[#0A1E3F] hover:text-[#152B52] border border-slate-200 hover:border-slate-300 rounded-lg transition text-center"
-          >
-            Explore Detailed Attendance Log →
-          </button>
-        </div>
-      </div>
-
-      {/* 4. Three Operational Columns: Pending Actions, Birthdays, Personnel on Leave */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Pending Actions List (Leave approval, Profile approval, Doc verification, Onboarding, Performance) */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-5 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-500" />
-                <h3 className="text-sm font-bold text-slate-900">Pending PCCM Actions</h3>
-              </div>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 font-mono">
-                5 Tasks
-              </span>
-            </div>
-
-            <div className="mt-3 space-y-2.5">
-              {pendingActions.map((act) => {
-                const isDone = actionDone[act.id];
-                return (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {activeProjects.map((proj) => (
                   <div
-                    key={act.id}
-                    className={`p-3 rounded-lg border transition ${
-                      isDone
-                        ? 'bg-slate-50 border-slate-200 opacity-60'
-                        : 'bg-white border-slate-200 hover:border-slate-300 shadow-2xs'
-                    }`}
+                    key={proj.id}
+                    data-testid={`project-card-${proj.id}`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => onNavigate('projects')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onNavigate('projects');
+                      }
+                    }}
+                    className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-[0_2px_10px_rgba(15,23,42,0.03)] flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(15,23,42,0.06)] hover:border-slate-300 cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#083E34] focus-visible:ring-offset-2 select-none"
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-[#C59B27]">
-                          {act.type}
-                        </span>
-                        <p className={`text-xs font-semibold ${isDone ? 'line-through text-slate-400' : 'text-slate-800'}`}>
-                          {act.title}
-                        </p>
-                        <p className="text-[10px] text-slate-500 mt-0.5">{act.subtitle}</p>
-                        <span className="text-[9px] text-slate-400 font-mono mt-1 block">
-                          {act.time}
-                        </span>
+                    <div>
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-[#083E34] transition">
+                          {proj.title}
+                        </h3>
+                        <button className="text-slate-400 hover:text-slate-700 p-0.5">
+                          <MoreHorizontal className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1.5 font-medium leading-relaxed line-clamp-2">
+                        {proj.subtitle}
+                      </p>
+
+                      <div className="mt-3.5 flex items-center justify-between text-xs font-semibold">
+                        <div className="flex items-center gap-1.5 text-slate-500">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{proj.dueDate}</span>
+                        </div>
+                        <StatusPill
+                          status={proj.priority === 'High' ? 'high' : 'medium'}
+                          label={proj.priority}
+                          showDot
+                          size="sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                      <div className="flex -space-x-1.5 overflow-hidden">
+                        {proj.assignees.map((asgn, idx) => (
+                          <InitialsAvatar
+                            key={idx}
+                            initials={asgn.initials}
+                            name={asgn.name}
+                            bgClass={asgn.bg}
+                            sizeClass="w-6 h-6 text-[10px]"
+                          />
+                        ))}
                       </div>
 
-                      <div className="shrink-0 flex flex-col items-end gap-1.5">
-                        <span
-                          className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${
-                            act.priority === 'High'
-                              ? 'bg-rose-100 text-rose-700'
-                              : act.priority === 'Medium'
-                              ? 'bg-amber-100 text-amber-700'
-                              : 'bg-slate-100 text-slate-600'
-                          }`}
-                        >
-                          {act.priority}
+                      <div className="flex items-center gap-2.5 text-xs text-slate-500 font-semibold">
+                        <span className="flex items-center gap-1">
+                          <span>{proj.commentsCount}</span>
+                          <MessageSquare className="w-3 h-3 text-slate-400" />
                         </span>
+                        <span className="flex items-center gap-1">
+                          <span>{proj.attachmentsCount}</span>
+                          <Paperclip className="w-3 h-3 text-slate-400" />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-                        {!isDone ? (
-                          <button
-                            onClick={() => handleQuickApprove(act.id)}
-                            className="px-2 py-1 rounded bg-[#0A1E3F] hover:bg-[#152B52] text-white text-[10px] font-semibold transition"
-                          >
-                            Resolve
-                          </button>
-                        ) : (
-                          <span className="text-[10px] font-bold text-emerald-700 flex items-center gap-1">
-                            <Check className="w-3 h-3" /> Done
+            {/* Team Presence Tracker (Left) & Team Notes (Right) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Team Presence Tracker */}
+              <div
+                data-testid="team-presence-card"
+                className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-bold text-slate-900 tracking-tight">Team Presence Tracker</h2>
+                  <button
+                    onClick={() => onNavigate('attendance')}
+                    className="text-xs font-semibold text-slate-500 hover:text-slate-900 transition"
+                  >
+                    View All
+                  </button>
+                </div>
+
+                <div className="space-y-3.5">
+                  <div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">
+                      On Leave
+                    </span>
+                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="flex items-center gap-2.5">
+                        <InitialsAvatar
+                          initials="DC"
+                          name="Daniel Carter"
+                          bgClass="bg-slate-700"
+                          sizeClass="w-8 h-8 text-xs"
+                        />
+                        <div>
+                          <h4 className="text-xs font-bold text-slate-900">Daniel Carter</h4>
+                          <p className="text-[11px] text-slate-500 font-medium">Coverage assigned to Olivia M.</p>
+                        </div>
+                      </div>
+                      <StatusPill status="on-leave" label="On Leave" showDot size="sm" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">
+                      Away
+                    </span>
+                    <div className="space-y-1 divide-y divide-slate-100">
+                      {presenceMembers.slice(1).map((mem, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between py-2 px-1 hover:bg-slate-50 rounded-lg transition"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <InitialsAvatar
+                              initials={mem.initials}
+                              name={mem.name}
+                              bgClass={mem.bg}
+                              sizeClass="w-7 h-7 text-[10px]"
+                            />
+                            <div>
+                              <h4 className="text-xs font-bold text-slate-900 leading-none">{mem.name}</h4>
+                              <p className="text-[11px] text-slate-500 font-medium mt-1">{mem.role}</p>
+                            </div>
+                          </div>
+                          <StatusPill status="away" label={mem.status} showDot size="sm" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Team Notes */}
+              <div
+                data-testid="team-notes-card"
+                className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] space-y-4 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between pb-1">
+                    <h2 className="text-sm font-bold text-slate-900 tracking-tight">Team Notes</h2>
+                    <button
+                      onClick={() => setIsAddNoteModalOpen(true)}
+                      data-testid="add-note-btn"
+                      className="text-xs font-bold text-[#083E34] hover:underline flex items-center gap-1 transition"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Note</span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-3 mt-3">
+                    {teamNotes.map((note) => (
+                      <div
+                        key={note.id}
+                        className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50 hover:bg-white transition-all space-y-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-xs font-bold text-slate-900">{note.title}</h4>
+                          <StatusPill
+                            status={
+                              note.category === 'Incoming'
+                                ? 'incoming'
+                                : note.category === 'Ongoing'
+                                ? 'ongoing'
+                                : 'in-progress'
+                            }
+                            label={note.category}
+                            size="sm"
+                          />
+                        </div>
+                        <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                          {note.description}
+                        </p>
+                        <div className="flex items-center justify-between pt-1 text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <div className="flex -space-x-1.5 overflow-hidden">
+                              {note.avatars.map((av, i) => (
+                                <InitialsAvatar
+                                  key={i}
+                                  initials={av.initials}
+                                  name={av.name}
+                                  bgClass={av.bg}
+                                  sizeClass="w-5 h-5 text-[9px]"
+                                />
+                              ))}
+                            </div>
+                            <span className="font-semibold text-slate-600 text-[11px]">
+                              {note.collaborators}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Biometric Attendance Weekly Trends Bar Chart */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-[#083E34]" />
+                    <h3 className="text-sm font-bold text-slate-900">
+                      Biometric Attendance Weekly Trends
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    Gatehouse terminal check-in telemetry across Citadel units.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>ZKTeco Gate 01 Online</span>
+                  </span>
+                  <button
+                    onClick={() => onNavigate('attendance')}
+                    className="text-xs font-semibold text-slate-500 hover:text-slate-900 flex items-center gap-0.5"
+                  >
+                    <span>Details</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* 5-Day Columns */}
+              <div className="grid grid-cols-5 gap-3 pt-3 pb-1">
+                {weeklyAttendanceData.map((d) => {
+                  const isActive = activeAttendanceDay === d.day;
+                  return (
+                    <button
+                      key={d.day}
+                      onClick={() => setActiveAttendanceDay(d.day as any)}
+                      className={`flex flex-col items-center group cursor-pointer transition p-2 rounded-xl ${
+                        isActive ? 'bg-slate-100' : 'hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className="text-xs font-black text-slate-900 mb-1.5">
+                        {d.rate}%
+                      </span>
+
+                      <div className="w-10 sm:w-12 h-24 bg-slate-100 rounded-xl overflow-hidden flex flex-col justify-end p-1 border border-slate-200/70">
+                        <div
+                          style={{ height: `${d.rate}%` }}
+                          className={`w-full rounded-lg transition-all duration-500 ${
+                            d.isToday ? 'bg-[#083E34]' : 'bg-emerald-600'
+                          }`}
+                        />
+                      </div>
+
+                      <div className="mt-2 text-center">
+                        <span className="text-xs font-bold text-slate-700 block">{d.day}</span>
+                        {d.isToday && (
+                          <span className="text-[9px] font-black uppercase text-[#083E34] bg-emerald-50 px-1 py-0.2 rounded">
+                            Today
                           </span>
                         )}
                       </div>
-                    </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Workforce Distribution by Entity */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-[#083E34]" />
+                    <span>Citadel Workforce Distribution</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Personnel distribution across Church, School of Government, and Commercial Holdings.
+                  </p>
+                </div>
+                <span className="text-xs font-mono font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+                  Total: {totalEmployeesDisplay} Staff
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <div className="flex justify-between text-xs mb-1 font-semibold">
+                    <span className="text-slate-700">Citadel Global Community Church (CGCC)</span>
+                    <span className="font-mono font-bold text-slate-900">82 Staff (57.0%)</span>
                   </div>
-                );
-              })}
+                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-[#083E34] rounded-full" style={{ width: '57%' }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs mb-1 font-semibold">
+                    <span className="text-slate-700">Citadel School of Government (CSOG)</span>
+                    <span className="font-mono font-bold text-slate-900">28 Staff (19.4%)</span>
+                  </div>
+                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-[#D97706] rounded-full" style={{ width: '19.4%' }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs mb-1 font-semibold">
+                    <span className="text-slate-700">Citadel Holdings (Commercial Units)</span>
+                    <span className="font-mono font-bold text-slate-900">34 Staff (23.6%)</span>
+                  </div>
+                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-600 rounded-full" style={{ width: '23.6%' }} />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <button
-            onClick={() => onNavigate('leave')}
-            className="mt-4 w-full py-2 text-xs font-semibold text-[#0A1E3F] hover:text-[#152B52] border border-slate-200 hover:border-slate-300 rounded-lg transition text-center"
-          >
-            Review All Governance Approvals →
-          </button>
-        </div>
+          {/* ======================================================== */}
+          {/* RIGHT MINOR COLUMN (4 OF 12 COLS - ~33% WIDTH)           */}
+          {/* ======================================================== */}
+          <div className="lg:col-span-4 space-y-5">
+            {/* Top Action Buttons matching reference positioning */}
+            <div className="flex items-center justify-end gap-2.5">
+              <button
+                onClick={handleExportReport}
+                data-testid="export-report-btn"
+                className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition"
+              >
+                <Download className="w-3.5 h-3.5 text-slate-600" />
+                <span>Export Report</span>
+              </button>
 
-        {/* Upcoming Birthdays Card */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-5 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <Cake className="w-4 h-4 text-pink-500" />
-                <h3 className="text-sm font-bold text-slate-900">Upcoming Birthdays</h3>
-              </div>
-              <span className="text-[10px] font-bold text-pink-700 bg-pink-50 px-2 py-0.5 rounded-full">
-                Citadel Community
-              </span>
+              <button
+                onClick={() => setIsQuickActionsOpen(true)}
+                data-testid="quick-actions-btn"
+                className="px-4 py-2 rounded-xl bg-[#083E34] hover:bg-[#052C25] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition active:scale-[0.98]"
+              >
+                <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+                <span>Quick Actions</span>
+              </button>
             </div>
 
-            <div className="mt-3 space-y-2.5">
-              {upcomingBirthdays.map((b) => {
-                const isWished = wishedBirthday[b.id];
-                return (
-                  <div
-                    key={b.id}
-                    className="p-3 rounded-lg border border-pink-100/70 bg-pink-50/30 flex items-center justify-between gap-2"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-pink-100 text-pink-700 font-bold flex items-center justify-center text-xs shrink-0">
-                        {b.name[0]}
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-slate-900">{b.name}</p>
-                        <p className="text-[10px] text-slate-500">
-                          {b.dept} • {b.entity}
-                        </p>
-                        <span className="text-[10px] font-bold text-pink-600 block mt-0.5">
-                          {b.date} • {b.milestone}
-                        </span>
-                      </div>
-                    </div>
+            {/* Leave Balance Card matching Hrivio reference design */}
+            <div
+              data-testid="leave-balance-card"
+              className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] space-y-4"
+            >
+              <div className="flex items-center gap-2 pb-1">
+                <FileText className="w-4 h-4 text-slate-700" />
+                <h3 className="text-sm font-bold text-slate-900">Leave Balance</h3>
+              </div>
 
-                    <button
-                      onClick={() => handleSendWish(b.id)}
-                      disabled={isWished}
-                      className={`px-2 py-1 rounded text-[10px] font-semibold flex items-center gap-1 transition shrink-0 ${
-                        isWished
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-white hover:bg-pink-100 text-pink-700 border border-pink-200'
+              {/* Semicircular Gauge Chart via ProgressRing component */}
+              <div className="my-2 flex flex-col items-center justify-center">
+                <ProgressRing
+                  value={65}
+                  max={100}
+                  label="65%"
+                  subtext="13 out of 20"
+                  type="semicircle"
+                  strokeColor="#083E34"
+                />
+              </div>
+
+              {/* Recent Leave Requests List matching reference design */}
+              <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs">
+                {liveLeaves.length > 0 ? (
+                  liveLeaves.slice(0, 3).map((lv) => {
+                    const statusType = lv.status === 'Approved' ? 'confirmed' : lv.status === 'Rejected' ? 'rejected' : 'pending';
+                    return (
+                      <div
+                        key={lv.id}
+                        onClick={() => onNavigate('leave')}
+                        className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition"
+                      >
+                        <span className="text-xs font-semibold text-slate-700">
+                          {lv.startDate ? new Date(lv.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Oct 28'}, ({lv.leaveType})
+                        </span>
+                        <StatusPill status={statusType} label={lv.status} size="sm" />
+                      </div>
+                    );
+                  })
+                ) : (
+                  <>
+                    <div
+                      onClick={() => onNavigate('leave')}
+                      className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition"
+                    >
+                      <span className="text-xs font-semibold text-slate-700">Oct 28, (Annual)</span>
+                      <StatusPill status="pending" label="Pending" size="sm" />
+                    </div>
+                    <div
+                      onClick={() => onNavigate('leave')}
+                      className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition"
+                    >
+                      <span className="text-xs font-semibold text-slate-700">Oct 25, (Casual)</span>
+                      <StatusPill status="confirmed" label="Confirmed" size="sm" />
+                    </div>
+                    <div
+                      onClick={() => onNavigate('leave')}
+                      className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition"
+                    >
+                      <span className="text-xs font-semibold text-slate-700">Oct 18, (Study)</span>
+                      <StatusPill status="rejected" label="Rejected" size="sm" />
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Schedule Card via ScheduleCalendar component */}
+            <ScheduleCalendar
+              onViewAll={() => onNavigate('calendar')}
+              onSelectEvent={(evt) => showToast(`Selected: ${evt.title} (${evt.time})`)}
+            />
+
+            {/* Upcoming Birthdays Card */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <Cake className="w-4 h-4 text-pink-500" />
+                  <h3 className="text-sm font-bold text-slate-900">Upcoming Birthdays</h3>
+                </div>
+                <span className="text-[10px] font-bold text-pink-700 bg-pink-50 px-2 py-0.5 rounded-full border border-pink-100">
+                  Citadel
+                </span>
+              </div>
+
+              <div className="space-y-2 mt-2">
+                {upcomingBirthdays.map((b) => {
+                  const isWished = wishedBirthday[b.id];
+                  return (
+                    <div
+                      key={b.id}
+                      className="p-2.5 rounded-xl border border-pink-100/80 bg-pink-50/30 flex items-center justify-between gap-2 text-xs"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-pink-100 text-pink-700 font-bold flex items-center justify-center text-[10px] shrink-0">
+                          {b.initials}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-900">{b.name}</p>
+                          <span className="text-[10px] text-pink-600 block">
+                            {b.date} • {b.milestone}
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleSendWish(b.id, b.name)}
+                        disabled={isWished}
+                        className={`px-2 py-1 rounded text-[11px] font-bold flex items-center gap-1 transition shrink-0 ${
+                          isWished
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-white hover:bg-pink-100 text-pink-700 border border-pink-200 shadow-2xs'
+                        }`}
+                      >
+                        {isWished ? 'Wished ✓' : 'Wish 🎉'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Pending Approvals Queue */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] space-y-3">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-[#083E34]" />
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Pending Approvals Queue
+                  </h3>
+                </div>
+                <span className="text-xs font-mono font-bold text-amber-800 bg-[#FFFBEB] border border-amber-200 px-2 py-0.5 rounded-full">
+                  {pendingActions.filter((a) => !resolvedActions[a.id]).length} Actions
+                </span>
+              </div>
+
+              <div className="divide-y divide-slate-100">
+                {pendingActions.map((act) => {
+                  const isResolved = resolvedActions[act.id];
+                  return (
+                    <div
+                      key={act.id}
+                      className={`py-3 flex items-center justify-between gap-3 text-xs ${
+                        isResolved ? 'opacity-40 line-through' : ''
                       }`}
                     >
-                      {isWished ? (
-                        <>
-                          <Check className="w-3 h-3" /> Wished
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-3 h-3" /> Wish
-                        </>
-                      )}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-900">{act.title}</span>
+                          <StatusPill status="high" label={act.priority} size="sm" />
+                        </div>
+                        <p className="text-xs text-slate-500 font-medium mt-0.5">{act.subtitle}</p>
+                      </div>
 
-          <div className="mt-4 p-3 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600">
-            <span className="font-semibold text-slate-800 block">Culture Milestone Notice:</span>
-            PCCM automatically schedules personalized congratulatory greetings across Citadel Slack/WhatsApp groups.
-          </div>
-        </div>
-
-        {/* Personnel on Leave */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-5 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="w-4 h-4 text-indigo-600" />
-                <h3 className="text-sm font-bold text-slate-900">Personnel on Leave</h3>
-              </div>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700">
-                4 Active
-              </span>
-            </div>
-
-            <div className="mt-3 space-y-2.5">
-              {employeesOnLeave.map((emp, i) => (
-                <div
-                  key={i}
-                  className="p-3 rounded-lg border border-slate-100 bg-slate-50 flex items-start justify-between gap-2"
-                >
-                  <div>
-                    <p className="text-xs font-semibold text-slate-800">{emp.name}</p>
-                    <p className="text-[10px] text-slate-500">
-                      {emp.role} • {emp.dept}
-                    </p>
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <span className="text-[9px] font-mono text-slate-600 bg-white px-1.5 py-0.5 rounded border border-slate-200">
-                        Resumes: {emp.until}
-                      </span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => handleResolveAction(act.id, act.title)}
+                          disabled={isResolved}
+                          className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                            isResolved
+                              ? 'bg-emerald-100 text-emerald-900'
+                              : 'bg-[#083E34] text-white hover:bg-[#052C25]'
+                          }`}
+                        >
+                          {isResolved ? 'Resolved ✓' : 'Approve'}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <span className="text-[9px] font-medium px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 shrink-0">
-                    {emp.type}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <button
-            onClick={() => onNavigate('leave')}
-            className="mt-4 w-full py-2 text-xs font-semibold text-[#0A1E3F] hover:text-[#152B52] border border-slate-200 hover:border-slate-300 rounded-lg transition text-center"
-          >
-            View Citadel Leave Calendar →
-          </button>
-        </div>
-      </div>
-
-      {/* 5. Recent Activity List */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-5">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900">Recent PCCM System Activity</h3>
-            <p className="text-xs text-slate-500">
-              Audited operational actions across personnel, time, and talent modules.
-            </p>
-          </div>
-          <button
-            onClick={() => onNavigate('audit-logs')}
-            className="text-xs text-[#0A1E3F] hover:text-[#152B52] font-semibold flex items-center gap-1"
-          >
-            <span>View Complete Audit Log</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="divide-y divide-slate-100 mt-2">
-          {recentActivities.map((act) => (
-            <div key={act.id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-3">
-                <span
-                  className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded ${
-                    act.tag === 'Leave'
-                      ? 'bg-indigo-100 text-indigo-800'
-                      : act.tag === 'Attendance'
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : act.tag === 'Performance'
-                      ? 'bg-purple-100 text-purple-800'
-                      : act.tag === 'Documents'
-                      ? 'bg-blue-100 text-blue-800'
-                      : 'bg-amber-100 text-amber-800'
-                  }`}
-                >
-                  {act.tag}
-                </span>
-                <div>
-                  <span className="font-semibold text-slate-900">{act.actor}</span>
-                  <span className="text-slate-600 ml-1.5">{act.action}:</span>
-                  <span className="text-slate-800 font-medium ml-1">{act.subject}</span>
-                </div>
+                  );
+                })}
               </div>
-              <span className="text-[11px] font-mono text-slate-400 shrink-0">{act.time}</span>
             </div>
-          ))}
+          </div>
         </div>
+
+        {/* Quick Actions Drawer / Modal */}
+        {isQuickActionsOpen && (
+          <div
+            data-testid="quick-actions-modal"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in"
+          >
+            <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
+              <div className="bg-[#083E34] text-white p-5 relative border-b border-emerald-800 shrink-0">
+                <button
+                  onClick={() => setIsQuickActionsOpen(false)}
+                  className="absolute top-4 right-4 text-emerald-200 hover:text-white p-1 rounded-lg hover:bg-white/10 transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-amber-300 fill-amber-300" />
+                  <span>Citadel People Hub — Quick Actions</span>
+                </h3>
+                <p className="text-xs text-emerald-100/80 mt-0.5">
+                  Frequently executed People, Culture & Operations administrative workflows.
+                </p>
+              </div>
+
+              <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs overflow-y-auto flex-1">
+                <button
+                  onClick={() => {
+                    setIsQuickActionsOpen(false);
+                    onOpenLeaveModal();
+                  }}
+                  className="p-3.5 rounded-xl border border-slate-200 hover:border-[#083E34] hover:bg-slate-50 transition text-left space-y-1 group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-800 flex items-center justify-center border border-emerald-200 group-hover:bg-[#083E34] group-hover:text-white transition">
+                    <CalendarDays className="w-4 h-4" />
+                  </div>
+                  <h4 className="font-bold text-slate-900">Apply for Leave</h4>
+                  <p className="text-xs text-slate-500 font-medium">Casual, Annual or Sick leave application</p>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsQuickActionsOpen(false);
+                    onOpenAddEmployee();
+                  }}
+                  className="p-3.5 rounded-xl border border-slate-200 hover:border-[#083E34] hover:bg-slate-50 transition text-left space-y-1 group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-800 flex items-center justify-center border border-emerald-200 group-hover:bg-[#083E34] group-hover:text-white transition">
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <h4 className="font-bold text-slate-900">Add New Employee</h4>
+                  <p className="text-xs text-slate-500 font-medium">PCCM 5-step personnel enrollment</p>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsQuickActionsOpen(false);
+                    onNavigate('attendance');
+                  }}
+                  className="p-3.5 rounded-xl border border-slate-200 hover:border-[#083E34] hover:bg-slate-50 transition text-left space-y-1 group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-800 flex items-center justify-center border border-sky-200 group-hover:bg-[#083E34] group-hover:text-white transition">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <h4 className="font-bold text-slate-900">Attendance Telemetry</h4>
+                  <p className="text-xs text-slate-500 font-medium">Biometric Gatehouse reader logs</p>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsQuickActionsOpen(false);
+                    onNavigate('documents');
+                  }}
+                  className="p-3.5 rounded-xl border border-slate-200 hover:border-[#083E34] hover:bg-slate-50 transition text-left space-y-1 group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-800 flex items-center justify-center border border-amber-200 group-hover:bg-[#083E34] group-hover:text-white transition">
+                    <Download className="w-4 h-4" />
+                  </div>
+                  <h4 className="font-bold text-slate-900">Upload Policy</h4>
+                  <p className="text-xs text-slate-500 font-medium">Publish handbook or code of conduct</p>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsQuickActionsOpen(false);
+                    setIsAddNoteModalOpen(true);
+                  }}
+                  className="p-3.5 rounded-xl border border-slate-200 hover:border-[#083E34] hover:bg-slate-50 transition text-left space-y-1 group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-800 flex items-center justify-center border border-purple-200 group-hover:bg-[#083E34] group-hover:text-white transition">
+                    <StickyNote className="w-4 h-4" />
+                  </div>
+                  <h4 className="font-bold text-slate-900">Add Team Note</h4>
+                  <p className="text-xs text-slate-500 font-medium">Share operational handover note</p>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsQuickActionsOpen(false);
+                    onNavigate('reports');
+                  }}
+                  className="p-3.5 rounded-xl border border-slate-200 hover:border-[#083E34] hover:bg-slate-50 transition text-left space-y-1 group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-800 flex items-center justify-center border border-emerald-200 group-hover:bg-[#083E34] group-hover:text-white transition">
+                    <FileSpreadsheet className="w-4 h-4" />
+                  </div>
+                  <h4 className="font-bold text-slate-900">Workforce Census</h4>
+                  <p className="text-xs text-slate-500 font-medium">Export census report in CSV/PDF</p>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Add Team Note Modal */}
+        {isAddNoteModalOpen && (
+          <div
+            data-testid="add-note-modal"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in"
+          >
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
+              <div className="bg-[#083E34] text-white p-5 relative border-b border-emerald-800 shrink-0">
+                <button
+                  onClick={() => setIsAddNoteModalOpen(false)}
+                  className="absolute top-4 right-4 text-emerald-200 hover:text-white p-1 rounded-lg hover:bg-white/10 transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <StickyNote className="w-4 h-4 text-amber-300" />
+                  <span>Add Team Note</span>
+                </h3>
+                <p className="text-xs text-emerald-100/80 mt-0.5">
+                  Share an operational update or handover task with the team.
+                </p>
+              </div>
+
+              <form onSubmit={handleAddNoteSubmit} className="p-5 space-y-4 text-xs overflow-y-auto flex-1">
+                <div>
+                  <label className="block text-slate-800 font-bold mb-1">Note Title *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Employee Onboarding"
+                    value={newNoteTitle}
+                    onChange={(e) => setNewNoteTitle(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-800 font-bold mb-1">Status Category</label>
+                  <select
+                    value={newNoteCategory}
+                    onChange={(e) => setNewNoteCategory(e.target.value as any)}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-bold focus:outline-none focus:border-[#083E34] bg-white"
+                  >
+                    <option value="Incoming">Incoming</option>
+                    <option value="Ongoing">Ongoing</option>
+                    <option value="In Progress">In Progress</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-800 font-bold mb-1">Description</label>
+                  <textarea
+                    rows={3}
+                    required
+                    placeholder="Describe the operational action item..."
+                    value={newNoteDesc}
+                    onChange={(e) => setNewNoteDesc(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-800 font-bold mb-1">Collaborators (Names)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Mia, Harper"
+                    value={newNoteCollab}
+                    onChange={(e) => setNewNoteCollab(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34]"
+                  />
+                </div>
+
+                <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddNoteModalOpen(false)}
+                    className="px-4 py-2 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 font-bold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-[#083E34] hover:bg-[#052C25] text-white font-bold rounded-xl transition shadow-xs"
+                  >
+                    Save Note
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
+    </ErrorBoundary>
   );
 };
+
+export default DashboardView;

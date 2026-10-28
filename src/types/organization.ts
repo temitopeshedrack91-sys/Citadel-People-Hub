@@ -28,3 +28,27 @@ export interface CitadelDepartment {
   isActive: boolean;
   employeeCount?: number;
 }
+
+export interface GroupExecutiveCouncilMember {
+  id: string;
+  name: string;
+  title: string;
+  portfolio: string;
+  entityScope: string;
+  email: string;
+  roleType: 'Business Head' | 'Shared Services Lead' | 'Executive Oversight';
+  reportingLine?: string;
+}
+
+export interface RolesGovernanceTier {
+  tierNumber: number;
+  roleName: string;
+  code: string;
+  gecStatus: string;
+  scopeOfAccess: string;
+  leaveApprovalAuthority: string;
+  attendanceAccess: string;
+  biometricDeviceManagement: string;
+  auditTrailAccess: string;
+}
+

@@ -1,49 +1,27 @@
 import React, { useState } from 'react';
-import {
-  Cpu,
-  Fingerprint,
-  Database,
-  Cloud,
-  CheckCircle2,
-  AlertCircle,
-  RefreshCw,
-  Server,
-  Lock,
-  ExternalLink,
-} from 'lucide-react';
+import { Cloud, Cpu, Database, Fingerprint, RefreshCw } from 'lucide-react';
 import { Badge } from '../common/Badge';
+import { isLaravelApiConfigured, requestLaravel } from '../../services/laravelClient';
 
 export const IntegrationsView: React.FC = () => {
-  const [testingBiometric, setTestingBiometric] = useState(false);
-  const [testingSupabase, setTestingSupabase] = useState(false);
-  const [testingM365, setTestingM365] = useState(false);
+  const [testingApi, setTestingApi] = useState(false);
+  const [apiStatus, setApiStatus] = useState<string | null>(null);
+  const hasLaravelApi = isLaravelApiConfigured();
 
-  const [biometricStatus, setBiometricStatus] = useState<string | null>(null);
-  const [supabaseStatus, setSupabaseStatus] = useState<string | null>(null);
-  const [m365Status, setM365Status] = useState<string | null>(null);
-
-  const testBiometric = () => {
-    setTestingBiometric(true);
-    setTimeout(() => {
-      setTestingBiometric(false);
-      setBiometricStatus('Connected: 3/3 ZKTeco Nodes responding on LAN. UDP Socket 4370 Verified.');
-    }, 800);
-  };
-
-  const testSupabase = () => {
-    setTestingSupabase(true);
-    setTimeout(() => {
-      setTestingSupabase(false);
-      setSupabaseStatus('Prototype Mode: Mock data layer active. Pre-configured for VITE_SUPABASE_URL.');
-    }, 800);
-  };
-
-  const testM365 = () => {
-    setTestingM365(true);
-    setTimeout(() => {
-      setTestingM365(false);
-      setM365Status('Ready: Azure AD App Registration schema verified (citadelcommunity.org).');
-    }, 800);
+  const testApi = async () => {
+    setTestingApi(true);
+    try {
+      const health = await requestLaravel<{ status: string }>('/health');
+      setApiStatus(
+        health.status === 'ok'
+          ? 'Laravel API is reachable. This health check does not verify database connectivity.'
+          : 'Laravel API returned an unexpected health response.'
+      );
+    } catch (error) {
+      setApiStatus(error instanceof Error ? `Laravel API check failed: ${error.message}` : 'Laravel API check failed.');
+    } finally {
+      setTestingApi(false);
+    }
   };
 
   return (
@@ -53,14 +31,10 @@ export const IntegrationsView: React.FC = () => {
           <Cpu className="w-5 h-5 text-[#0A1E3F]" />
           <span>Integrations & Cloud Infrastructure</span>
         </h2>
-        <p className="text-xs text-slate-500">
-          Biometric hardware hooks, Microsoft 365 ecosystem connectors, and Supabase PostgreSQL backend readiness.
-        </p>
+        <p className="text-xs text-slate-500">Laravel API connectivity and integration readiness.</p>
       </div>
 
-      {/* Integration Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* 1. Biometric Hardware */}
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -73,37 +47,26 @@ export const IntegrationsView: React.FC = () => {
                   <p className="text-[10px] text-slate-400">ZKTeco • RFID • TCP/UDP</p>
                 </div>
               </div>
-              <Badge variant="success">Online</Badge>
+              <Badge variant="warning">Not integrated</Badge>
             </div>
-
             <p className="text-xs text-slate-600 mt-3 leading-relaxed">
-              Real-time synchronization with on-premise biometric time clocks across CGCC reception, CSOG gate, and Holdings cafe.
+              Device synchronization is not connected to Laravel yet. No device ping is sent from this browser.
             </p>
-
             <div className="mt-3 bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-[11px] font-mono text-slate-700 space-y-1">
-              <div>Port: 4370 (ZKTeco Protocol)</div>
-              <div>Buffer: 50,000 logs</div>
-              <div>Sync Cadence: 30 seconds</div>
+              <div>Provider: not configured</div>
+              <div>Laravel integration: not implemented</div>
+              <div>Status: unavailable</div>
             </div>
-
-            {biometricStatus && (
-              <div className="mt-2.5 p-2 rounded bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800">
-                {biometricStatus}
-              </div>
-            )}
           </div>
-
           <button
-            onClick={testBiometric}
-            disabled={testingBiometric}
-            className="mt-4 w-full py-2 bg-slate-100 hover:bg-[#0A1E3F] text-slate-800 hover:text-amber-300 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition"
+            disabled
+            className="mt-4 w-full py-2 bg-slate-100 text-slate-500 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${testingBiometric ? 'animate-spin' : ''}`} />
-            <span>{testingBiometric ? 'Testing Telemetry...' : 'Test Device Ping'}</span>
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Device check unavailable</span>
           </button>
         </div>
 
-        {/* 2. Supabase PostgreSQL & Storage */}
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -112,41 +75,44 @@ export const IntegrationsView: React.FC = () => {
                   <Database className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-slate-900">Supabase Platform</h3>
-                  <p className="text-[10px] text-slate-400">PostgreSQL • Auth • RLS</p>
+                  <h3 className="text-xs font-bold text-slate-900">Laravel API & Supabase PostgreSQL</h3>
+                  <p className="text-[10px] text-slate-400">Laravel auth and API • Supabase database</p>
                 </div>
               </div>
-              <Badge variant="warning">Schema Ready</Badge>
+              <Badge variant={hasLaravelApi ? 'info' : 'warning'}>
+                {hasLaravelApi ? 'API configured' : 'API not configured'}
+              </Badge>
             </div>
-
             <p className="text-xs text-slate-600 mt-3 leading-relaxed">
-              Clean repository abstraction prepared for drop-in activation of Supabase PostgreSQL database, S3 document storage, and Row Level Security.
+              Laravel owns application authentication and data access. Supabase is used only as the PostgreSQL database.
             </p>
-
             <div className="mt-3 bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-[11px] font-mono text-slate-700 space-y-1">
-              <div>Adapter: /src/services/</div>
-              <div>RLS: Entity & Role Scoped</div>
-              <div>Storage: Private Documents</div>
+              <div>Application API: Laravel REST</div>
+              <div>Database: Supabase PostgreSQL</div>
+              <div>Storage: Laravel private disk</div>
             </div>
-
-            {supabaseStatus && (
-              <div className="mt-2.5 p-2 rounded bg-amber-50 border border-amber-200 text-[11px] text-amber-800">
-                {supabaseStatus}
+            {apiStatus && (
+              <div
+                className={`mt-2.5 p-2 rounded text-[11px] border ${
+                  apiStatus.includes('reachable')
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                    : 'bg-amber-50 border-amber-200 text-amber-800'
+                }`}
+              >
+                {apiStatus}
               </div>
             )}
           </div>
-
           <button
-            onClick={testSupabase}
-            disabled={testingSupabase}
-            className="mt-4 w-full py-2 bg-slate-100 hover:bg-[#0A1E3F] text-slate-800 hover:text-amber-300 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition"
+            onClick={testApi}
+            disabled={testingApi || !hasLaravelApi}
+            className="mt-4 w-full py-2 bg-slate-100 hover:bg-[#0A1E3F] text-slate-800 hover:text-amber-300 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${testingSupabase ? 'animate-spin' : ''}`} />
-            <span>{testingSupabase ? 'Verifying Adapter...' : 'Verify Schema Contracts'}</span>
+            <RefreshCw className={`w-3.5 h-3.5 ${testingApi ? 'animate-spin' : ''}`} />
+            <span>{testingApi ? 'Checking Laravel API...' : 'Check Laravel API'}</span>
           </button>
         </div>
 
-        {/* 3. Microsoft 365 & Azure AD */}
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -159,33 +125,26 @@ export const IntegrationsView: React.FC = () => {
                   <p className="text-[10px] text-slate-400">Outlook • SSO • Calendar</p>
                 </div>
               </div>
-              <Badge variant="info">Configured</Badge>
+              <Badge variant="warning">Not integrated</Badge>
             </div>
-
             <p className="text-xs text-slate-600 mt-3 leading-relaxed">
-              Citadel community domain federation, Single Sign-On (SSO) via Microsoft Entra ID, Outlook calendar synching, and staff email routing.
+              Microsoft Entra ID sign-in, Outlook calendar synchronization, and staff email routing are not connected to Laravel yet.
             </p>
-
             <div className="mt-3 bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-[11px] font-mono text-slate-700 space-y-1">
-              <div>Tenant: citadelcommunity.org</div>
-              <div>Graph API: User.Read, Calendars</div>
-              <div>Auth Flow: OAuth 2.0 PKCE</div>
+              <div>Provider: Microsoft Entra ID</div>
+              <div>Laravel integration: not configured</div>
+              <div>Credentials: server-side configuration required</div>
             </div>
-
-            {m365Status && (
-              <div className="mt-2.5 p-2 rounded bg-sky-50 border border-sky-200 text-[11px] text-sky-800">
-                {m365Status}
-              </div>
-            )}
+            <div className="mt-2.5 p-2 rounded bg-amber-50 border border-amber-200 text-[11px] text-amber-900">
+              Do not place Microsoft client secrets in frontend build variables.
+            </div>
           </div>
-
           <button
-            onClick={testM365}
-            disabled={testingM365}
-            className="mt-4 w-full py-2 bg-slate-100 hover:bg-[#0A1E3F] text-slate-800 hover:text-amber-300 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition"
+            disabled
+            className="mt-4 w-full py-2 bg-slate-100 text-slate-500 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${testingM365 ? 'animate-spin' : ''}`} />
-            <span>{testingM365 ? 'Verifying Tenant...' : 'Test Tenant SSO'}</span>
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>SSO check unavailable</span>
           </button>
         </div>
       </div>

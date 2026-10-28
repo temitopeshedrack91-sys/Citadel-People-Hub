@@ -1,20 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Bell,
   Building2,
   ChevronDown,
-  UserCheck,
-  Shield,
-  Menu,
-  X,
-  Sparkles,
   Search,
-  CheckCircle2,
-  Clock,
-  LogIn,
-  SlidersHorizontal,
+  Menu,
+  MessageSquare,
+  HelpCircle,
+  Command,
+  ChevronsRight,
 } from 'lucide-react';
-import { useAuth, PRESET_PERSONAS } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { PWAInstallButton } from '../pwa/PWAInstallButton';
 import { CITADEL_BRAND } from '../../theme/branding';
 import { CitadelLogo } from '../brand/CitadelLogo';
@@ -23,6 +19,8 @@ import { NavModule } from './Sidebar';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
+  isSidebarCollapsed?: boolean;
+  onToggleCollapse?: () => void;
   activeModuleTitle: string;
   activeModuleId: NavModule;
   onNavigate: (module: NavModule) => void;
@@ -30,6 +28,8 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   onToggleSidebar,
+  isSidebarCollapsed = false,
+  onToggleCollapse,
   activeModuleTitle,
   activeModuleId,
   onNavigate,
@@ -42,10 +42,11 @@ export const Header: React.FC<HeaderProps> = ({
     setSelectedEntityFilter,
   } = useAuth();
 
-  const [isPersonaMenuOpen, setIsPersonaMenuOpen] = useState(false);
   const [isEntityMenuOpen, setIsEntityMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const entities = [
     { id: 'all', name: 'All Citadel Entities', shortCode: 'All Entities' },
@@ -62,15 +63,15 @@ export const Header: React.FC<HeaderProps> = ({
       id: 'notif-1',
       title: 'New Leave Application',
       desc: 'Blessing Okafor submitted Casual Leave for 2 days.',
-      time: '10 mins ago',
+      time: '10m ago',
       unread: true,
       module: 'leave' as NavModule,
     },
     {
       id: 'notif-2',
       title: 'Attendance Anomaly',
-      desc: '3 staff members flagged late at Citadel Gatehouse biometrics.',
-      time: '45 mins ago',
+      desc: '3 staff members flagged at Citadel Gatehouse biometrics.',
+      time: '45m ago',
       unread: true,
       module: 'attendance' as NavModule,
     },
@@ -78,67 +79,131 @@ export const Header: React.FC<HeaderProps> = ({
       id: 'notif-3',
       title: 'Onboarding Milestone',
       desc: 'Engr. Daniel Alabi completed IT asset setup.',
-      time: '2 hours ago',
+      time: '2h ago',
       unread: false,
       module: 'onboarding' as NavModule,
     },
   ];
 
+  // Shortcut: Cmd+K or Ctrl+K focuses the search input matching Pillio reference
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      onNavigate('directory');
+    }
+  };
+
   return (
     <>
       <header
         id="citadel-hub-header"
-        className="bg-[#0A1E3F] text-white border-b border-slate-800 sticky top-0 z-40 shadow-md"
+        data-testid="citadel-header"
+        className="w-full bg-white border-b border-slate-200/90 sticky top-0 z-40 shadow-[0_1px_3px_rgba(15,23,42,0.02)]"
       >
-        <div className="px-3 sm:px-5 lg:px-6 h-16 flex items-center justify-between gap-3">
-          {/* Left: Mobile Toggle & Official Brand Logo */}
-          <div className="flex items-center gap-2 sm:gap-3">
+        <div className="w-full px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3 sm:gap-6">
+          {/* Left: Mobile Toggle & Brand Logo */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <button
               type="button"
               onClick={onToggleSidebar}
-              className="lg:hidden p-2 text-slate-300 hover:text-white rounded-lg hover:bg-slate-800 transition"
+              className="lg:hidden p-2 text-slate-500 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition shrink-0"
               title="Toggle Navigation Menu"
+              aria-label="Toggle Navigation Menu"
             >
               <Menu className="w-5 h-5" />
             </button>
 
-            {/* Official Citadel Logo Component */}
+            {/* Desktop Sidebar Collapse Toggle */}
+            {onToggleCollapse && (
+              <button
+                type="button"
+                id="btn-collapse-sidebar-header"
+                onClick={onToggleCollapse}
+                className="hidden lg:flex items-center justify-center w-8 h-8 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-slate-600 transition shrink-0 cursor-pointer"
+                title={isSidebarCollapsed ? "Expand Sidebar (Ctrl+B)" : "Collapse Sidebar (Ctrl+B)"}
+                aria-label={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+              >
+                {isSidebarCollapsed ? (
+                  <ChevronsRight className="w-4 h-4 text-slate-700" />
+                ) : (
+                  <Menu className="w-4 h-4 text-slate-700" />
+                )}
+              </button>
+            )}
+
+            {/* Brand Logo & Name */}
             <div
               onClick={() => onNavigate('dashboard')}
-              className="cursor-pointer hover:opacity-95 transition"
+              className="cursor-pointer hover:opacity-95 transition flex items-center gap-2.5 shrink-0"
               title="Citadel People Hub Dashboard"
             >
-              <CitadelLogo variant="hub" colorMode="dark" className="h-9 sm:h-10" />
-            </div>
-
-            {/* Breadcrumb Separator on Large screens */}
-            <div className="hidden xl:flex items-center gap-2 pl-4 border-l border-slate-700/80 text-xs text-slate-400">
-              <span className="text-slate-400 font-medium">Workspace</span>
-              <span>/</span>
-              <span className="text-amber-300 font-semibold">{activeModuleTitle}</span>
+              <div className="w-8 h-8 rounded-xl bg-[#083E34] text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0">
+                <CitadelLogo variant="mark" colorMode="dark" className="h-4" />
+              </div>
+              <div className="hidden min-[420px]:flex flex-col">
+                <span className="text-xs font-black text-slate-900 tracking-tight leading-none">
+                  Citadel
+                </span>
+                <span className="text-[10px] text-slate-400 font-medium mt-0.5">
+                  People Hub
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Center: Organization Entity Switcher */}
-          <div className="hidden md:flex items-center">
-            <div className="relative">
+          {/* Center: Global Search Bar matching Hrivio/Pillio layout */}
+          <form
+            onSubmit={handleSearchSubmit}
+            className="relative flex-1 max-w-md hidden sm:block mx-auto"
+          >
+            <Search className="w-4 h-4 absolute left-3.5 top-2.5 text-slate-400" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              data-testid="header-search-input"
+              placeholder="Search for employees, documents or resources..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-14 py-2 bg-slate-50/80 hover:bg-slate-50 border border-slate-200/90 rounded-full text-xs text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34] focus:bg-white focus:ring-1 focus:ring-[#083E34]/20 transition"
+            />
+            <div className="absolute right-3 top-2 flex items-center gap-0.5 text-[10px] font-bold text-slate-400 bg-white border border-slate-200 px-1.5 py-0.5 rounded-md pointer-events-none">
+              <Command className="w-2.5 h-2.5" />
+              <span>K</span>
+            </div>
+          </form>
+
+          {/* Right Group: Entity Selector + Action Icons + Profile Pill */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Entity Selector Filter */}
+            <div className="hidden md:flex items-center relative">
               <button
                 id="btn-entity-scope-filter"
                 type="button"
                 onClick={() => setIsEntityMenuOpen(!isEntityMenuOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/90 border border-slate-700 hover:border-[#C59B27] text-xs text-slate-200 transition shadow-inner"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-slate-300 text-xs text-slate-700 font-semibold transition"
               >
-                <Building2 className="w-3.5 h-3.5 text-[#C59B27]" />
-                <span className="truncate max-w-[190px] font-medium">{currentEntityName}</span>
+                <Building2 className="w-3.5 h-3.5 text-slate-500" />
+                <span className="truncate max-w-[140px] text-xs font-bold">{currentEntityName}</span>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
               </button>
 
               {isEntityMenuOpen && (
                 <div
-                  className="absolute left-0 mt-1.5 w-72 rounded-xl bg-white text-slate-900 shadow-2xl border border-slate-200 py-1.5 z-50 animate-fade-in"
+                  className="absolute right-0 top-full mt-2 w-72 rounded-2xl bg-white shadow-xl border border-slate-200 py-1.5 z-50 animate-fade-in"
                   onClick={() => setIsEntityMenuOpen(false)}
                 >
-                  <div className="px-3 py-1.5 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  <div className="px-3 py-1.5 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-wider">
                     Select Citadel Entity Scope
                   </div>
                   {entities.map((ent) => (
@@ -147,61 +212,50 @@ export const Header: React.FC<HeaderProps> = ({
                       onClick={() => setSelectedEntityFilter(ent.id)}
                       className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition ${
                         selectedEntityFilter === ent.id
-                          ? 'bg-amber-50 font-semibold text-[#0A1E3F]'
-                          : 'text-slate-700'
+                          ? 'bg-emerald-50/60 font-bold text-[#083E34]'
+                          : 'text-slate-700 font-medium'
                       }`}
                     >
                       <div className="flex flex-col">
-                        <span className="font-medium text-slate-900">{ent.name}</span>
+                        <span className="font-bold">{ent.name}</span>
                         {'shortCode' in ent && (
                           <span className="text-[10px] text-slate-400">{ent.shortCode}</span>
                         )}
                       </div>
                       {selectedEntityFilter === ent.id && (
-                        <span className="w-2 h-2 rounded-full bg-[#C59B27]"></span>
+                        <span className="w-2 h-2 rounded-full bg-[#083E34]" />
                       )}
                     </button>
                   ))}
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Right: Quick Search, Notifications, Persona / Auth Switcher, User Menu */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5">
-            {/* Quick Search Shortcut */}
-            <button
-              onClick={() => onNavigate('employees')}
-              className="hidden sm:flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-xs text-slate-300 transition"
-              title="Search Personnel"
-            >
-              <Search className="w-3.5 h-3.5 text-slate-400" />
-              <span className="hidden lg:inline text-[11px]">Search personnel...</span>
-            </button>
 
             {/* PWA Install Button */}
             <PWAInstallButton />
 
-            {/* Notifications Popover Trigger */}
+            {/* Notification Bell in Rounded Square Button matching Hrivio */}
             <div className="relative">
               <button
                 id="btn-header-notifications"
+                data-testid="header-notifications-btn"
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 relative transition"
+                className="w-9 h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center relative transition shadow-2xs"
                 title="Notifications"
+                aria-label="View notifications"
               >
-                <Bell className="w-4 h-4" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#C59B27] ring-2 ring-[#0A1E3F]"></span>
+                <Bell className="w-4 h-4 text-slate-600" />
+                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white" />
               </button>
 
               {isNotificationsOpen && (
                 <div
-                  className="absolute right-0 mt-2 w-80 rounded-xl bg-white text-slate-900 shadow-2xl border border-slate-200 overflow-hidden z-50 animate-fade-in"
+                  className="absolute right-0 top-full mt-2 w-80 rounded-2xl bg-white shadow-xl border border-slate-200 overflow-hidden z-50 animate-fade-in"
                   onClick={() => setIsNotificationsOpen(false)}
                 >
                   <div className="p-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-900">Notifications</span>
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
                       2 Unread
                     </span>
                   </div>
@@ -215,17 +269,17 @@ export const Header: React.FC<HeaderProps> = ({
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="font-semibold text-slate-800">{n.title}</span>
+                          <span className="font-bold text-slate-900">{n.title}</span>
                           <span className="text-[10px] text-slate-400">{n.time}</span>
                         </div>
-                        <p className="text-[11px] text-slate-600 mt-0.5">{n.desc}</p>
+                        <p className="text-xs text-slate-500 font-medium mt-0.5">{n.desc}</p>
                       </div>
                     ))}
                   </div>
-                  <div className="p-2 bg-slate-50 border-t border-slate-100 text-center">
+                  <div className="p-2.5 bg-slate-50 border-t border-slate-100 text-center">
                     <button
                       onClick={() => onNavigate('notifications')}
-                      className="text-xs text-[#0A1E3F] hover:text-[#152B52] font-semibold"
+                      className="text-xs text-[#083E34] hover:underline font-bold"
                     >
                       View All Notifications →
                     </button>
@@ -234,46 +288,51 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </div>
 
-            {/* Persona Switcher / Sign-In Modal Trigger */}
+            {/* Chat / Messages Button matching Hrivio */}
             <button
-              id="btn-header-auth-switch"
-              onClick={() => setIsLoginModalOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#C59B27]/15 hover:bg-[#C59B27]/25 border border-[#C59B27]/40 text-xs text-amber-300 transition"
-              title="Click to authenticate or test role permissions"
+              onClick={() => onNavigate('team-notes')}
+              className="w-9 h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hidden sm:flex items-center justify-center transition shadow-2xs"
+              title="Team Notes & Discussions"
+              aria-label="Team Notes"
             >
-              <UserCheck className="w-3.5 h-3.5 text-[#C59B27]" />
-              <span className="hidden sm:inline font-medium">{currentPersona.badgeLabel}</span>
-              <SlidersHorizontal className="w-3 h-3 text-amber-300/80" />
+              <MessageSquare className="w-4 h-4 text-slate-600" />
             </button>
 
-            {/* User Profile Mini Badge */}
+            {/* User Profile Pill matching Hrivio reference (Avatar + Name + Email + Chevron) */}
             <div
+              data-testid="header-user-profile-pill"
               onClick={() => setIsLoginModalOpen(true)}
-              className="flex items-center gap-2 pl-2 border-l border-slate-700 cursor-pointer hover:opacity-90 transition"
-              title="Click to view authenticated user profile or switch"
+              className="flex items-center gap-2.5 pl-2 sm:pl-3 border-l border-slate-200 cursor-pointer hover:opacity-90 transition group"
+              title="Switch role or manage session"
             >
-              <div className="w-8 h-8 rounded-full bg-[#C59B27] text-slate-950 font-extrabold flex items-center justify-center text-xs shadow-xs">
-                {currentUser.name
-                  .split(' ')
-                  .map((n) => n[0])
-                  .slice(0, 2)
-                  .join('')}
+              <div className="relative shrink-0">
+                <div className="w-8 h-8 rounded-full bg-[#083E34] text-white font-bold flex items-center justify-center text-xs shadow-xs">
+                  {currentUser.name
+                    .split(' ')
+                    .map((n) => n[0])
+                    .slice(0, 2)
+                    .join('')}
+                </div>
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
               </div>
-              <div className="hidden xl:block text-left">
-                <div className="text-xs font-semibold text-white leading-none">
+              <div className="hidden lg:block text-left">
+                <div className="text-xs font-bold text-slate-900 leading-tight">
                   {currentUser.name}
                 </div>
-                <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                  {currentUser.staffId}
+                <div className="text-[11px] text-slate-400 font-medium truncate max-w-[150px]">
+                  {currentUser.email}
                 </div>
               </div>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 transition shrink-0" />
             </div>
           </div>
         </div>
       </header>
 
-      {/* Branded Authentication & Role Switcher Modal */}
+      {/* Role & Persona Switcher Modal */}
       <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
     </>
   );
 };
+
+export default Header;

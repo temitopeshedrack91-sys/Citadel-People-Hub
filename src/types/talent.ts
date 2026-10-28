@@ -21,6 +21,18 @@ export interface RecruitmentRequisition {
   candidates?: any[];
 }
 
+export interface CitadelRecruitmentStage {
+  step: number;
+  stageName: string;
+  category: 'Request & Approval' | 'Sourcing' | 'Assessment' | 'Finalization';
+  description: string;
+  primaryActor: string;
+  keyRequirement: string;
+  slaDays: number;
+  interviewType?: 'Physical - Technical' | 'Virtual - Competency-Based' | 'Two-Stage (Physical + Virtual)' | 'None';
+}
+
+
 export interface PreOnboardingItem {
   id: string;
   candidateName: string;
@@ -35,12 +47,38 @@ export interface PreOnboardingItem {
   emailAccountCreated: boolean;
 }
 
+export type OnboardingDepartment = 'Manager' | 'PCCM' | 'IT' | 'Finance' | 'Mentor';
+export type OnboardingTimeline = 'Before Resumption' | 'Day 1' | 'Day 2' | 'Week 1' | '1st Month' | '90 Days';
+
+export interface OnboardingRequiredDoc {
+  id: string;
+  name: string;
+  isSubmitted: boolean;
+  submittedAt?: string;
+}
+
+export interface OnboardingOrientationItem {
+  id: string;
+  name: string;
+  isCompleted: boolean;
+}
+
+export interface OnboardingTeamRoster {
+  managerName: string;
+  pccmOfficerName: string;
+  itLeadName: string;
+  financeLeadName: string;
+  mentorBuddyName: string;
+}
+
 export interface OnboardingTask {
   id: string;
   title: string;
   description: string;
   category?: string;
-  assignedRole: 'PCCM' | 'Department Head' | 'Employee' | 'ICT';
+  department: OnboardingDepartment;
+  timeline: OnboardingTimeline;
+  assignedRole: 'PCCM' | 'Department Head' | 'Employee' | 'ICT' | 'Finance' | 'Mentor';
   responsibleRole?: string;
   assignedToName?: string;
   dueDate: string;
@@ -62,6 +100,9 @@ export interface OnboardingJourney {
   overallProgressPercent: number;
   status: 'In Progress' | 'Completed' | 'Delayed';
   tasks: OnboardingTask[];
+  requiredDocuments?: OnboardingRequiredDoc[];
+  orientationItems?: OnboardingOrientationItem[];
+  teamRoster?: OnboardingTeamRoster;
 }
 
 export interface PerformanceGoal {

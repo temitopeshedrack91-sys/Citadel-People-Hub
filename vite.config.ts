@@ -1,10 +1,16 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import {VitePWA} from 'vite-plugin-pwa';
 
-export default defineConfig(() => {
+export default defineConfig(({ mode, command }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  const apiBaseUrl = env.VITE_API_BASE_URL || process.env.VITE_API_BASE_URL;
+  if (command === 'build' && !apiBaseUrl?.trim()) {
+    throw new Error('VITE_API_BASE_URL must be set before building the production frontend.');
+  }
+
   return {
     plugins: [
       react(),

@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { Info, Database, X } from 'lucide-react';
+import { isLaravelApiConfigured } from '../../services/laravelClient';
 
 export const DemoDataBanner: React.FC = () => {
   const [isDismissed, setIsDismissed] = useState(false);
+  const dataMode = isLaravelApiConfigured()
+    ? 'Laravel API configured: connected modules use authenticated backend requests; reference-only screens may still show prototype content.'
+    : 'Development demo data active: records shown are local sample data and are not saved to Supabase.';
 
   if (isDismissed) return null;
 
@@ -14,10 +18,10 @@ export const DemoDataBanner: React.FC = () => {
       <div className="flex items-center gap-2.5 overflow-hidden">
         <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 font-semibold uppercase tracking-wider text-[10px] shrink-0 border border-amber-400/30">
           <Database className="w-3 h-3" />
-          <span>Stage 1 Prototype</span>
+          <span>{isLaravelApiConfigured() ? 'Laravel API' : 'Development Demo'}</span>
         </div>
         <p className="truncate text-slate-300">
-          <strong>Demonstration Data Active:</strong> The records shown are structured development sample data for CGCC, CSOG, and Citadel Holdings. All interfaces are pre-architected to seamlessly connect with Supabase PostgreSQL and Authentication.
+          <strong>Data mode:</strong> {dataMode}
         </p>
       </div>
       <button

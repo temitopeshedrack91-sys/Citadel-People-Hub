@@ -1,9 +1,10 @@
 /**
- * In-Memory Mock Repository Implementation
+ * Persistent Mock Repository Implementation
  * Citadel People Hub
  * 
  * Implements data access interfaces with realistic async delays,
- * state persistence during session, and automatic audit logging.
+ * persistent localStorage caching across browser sessions and reloads,
+ * and automatic audit logging.
  */
 
 import {
@@ -45,18 +46,47 @@ import {
   INITIAL_RECRUITMENT,
 } from '../data/mockData';
 
-// Simulated database state
-let entities = [...INITIAL_ENTITIES];
-let departments = [...INITIAL_DEPARTMENTS];
-let employees = [...INITIAL_EMPLOYEES];
-let leaveRequests = [...INITIAL_LEAVE_REQUESTS];
-let auditLogs = [...INITIAL_AUDIT_LOGS];
-let onboardingJourneys = [...INITIAL_ONBOARDING_JOURNEYS];
-let documents = [...INITIAL_DOCUMENTS];
-let notifications = [...INITIAL_NOTIFICATIONS];
-let requisitions = [...INITIAL_RECRUITMENT];
+// Persistent storage helpers
+const loadStorage = <T>(key: string, fallback: T): T => {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const raw = localStorage.getItem(`citadel_hub_${key}`);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+};
 
-const sleep = (ms = 80) => new Promise((resolve) => setTimeout(resolve, ms));
+const saveStorage = <T>(key: string, value: T): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(`citadel_hub_${key}`, JSON.stringify(value));
+  } catch (err) {
+    console.warn(`[Citadel Storage] Failed to persist ${key}:`, err);
+  }
+};
+
+// State initialized from localStorage or initial seed data
+let entities: CitadelEntity[] = loadStorage('entities', [...INITIAL_ENTITIES]);
+let departments: CitadelDepartment[] = loadStorage('departments', [...INITIAL_DEPARTMENTS]);
+let employees: Employee[] = loadStorage('employees', [...INITIAL_EMPLOYEES]);
+let leaveRequests: LeaveRequest[] = loadStorage('leaves', [...INITIAL_LEAVE_REQUESTS]);
+let auditLogs: AuditLogEntry[] = loadStorage('audit_logs', [...INITIAL_AUDIT_LOGS]);
+let rawOnboarding = loadStorage<OnboardingJourney[]>('onboarding', [...INITIAL_ONBOARDING_JOURNEYS]);
+let onboardingJourneys: OnboardingJourney[] =
+  rawOnboarding.length > 0 && rawOnboarding[0].tasks && rawOnboarding[0].tasks.length >= 15
+    ? rawOnboarding
+    : [...INITIAL_ONBOARDING_JOURNEYS];
+
+let rawDocs = loadStorage<HubDocument[]>('documents', [...INITIAL_DOCUMENTS]);
+let documents: HubDocument[] =
+  rawDocs.some((d) => d.id === 'doc-005')
+    ? rawDocs
+    : [...INITIAL_DOCUMENTS];
+let notifications: SystemNotification[] = loadStorage('notifications', [...INITIAL_NOTIFICATIONS]);
+let requisitions: RecruitmentRequisition[] = loadStorage('requisitions', [...INITIAL_RECRUITMENT]);
+
+const sleep = (ms = 60) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export class MockEmployeeRepository implements IEmployeeRepository {
   async getAll(filter?: { entityId?: string; departmentId?: string; search?: string }): Promise<Employee[]> {
@@ -93,6 +123,7 @@ export class MockEmployeeRepository implements IEmployeeRepository {
       id: `emp-${Date.now()}`,
     };
     employees.unshift(created);
+    saveStorage('employees', employees);
     return created;
   }
 
@@ -101,6 +132,7 @@ export class MockEmployeeRepository implements IEmployeeRepository {
     const index = employees.findIndex((e) => e.id === id);
     if (index === -1) throw new Error('Employee not found');
     employees[index] = { ...employees[index], ...updates };
+    saveStorage('employees', employees);
     return employees[index];
   }
 
@@ -108,6 +140,7 @@ export class MockEmployeeRepository implements IEmployeeRepository {
     await sleep();
     const initialLen = employees.length;
     employees = employees.filter((e) => e.id !== id);
+    saveStorage('employees', employees);
     return employees.length < initialLen;
   }
 }
@@ -133,6 +166,7 @@ export class MockOrganizationRepository implements IOrganizationRepository {
       id: `dept-${Date.now()}`,
     };
     departments.push(created);
+    saveStorage('departments', departments);
     return created;
   }
 
@@ -141,6 +175,7 @@ export class MockOrganizationRepository implements IOrganizationRepository {
     const index = departments.findIndex((d) => d.id === id);
     if (index === -1) throw new Error('Department not found');
     departments[index] = { ...departments[index], ...updates };
+    saveStorage('departments', departments);
     return departments[index];
   }
 
@@ -155,6 +190,7 @@ export class MockOrganizationRepository implements IOrganizationRepository {
       id: `entity-${Date.now()}`,
     };
     entities.push(created);
+    saveStorage('entities', entities);
     return created;
   }
 }
@@ -180,6 +216,7 @@ export class MockLeaveRepository implements ILeaveRepository {
       status: 'Submitted',
     };
     leaveRequests.unshift(newRequest);
+    saveStorage('leaves', leaveRequests);
     return newRequest;
   }
 
@@ -197,71 +234,73 @@ export class MockLeaveRepository implements ILeaveRepository {
       status,
       approverComments: comments || `Actioned by ${actorName}`,
     };
+    saveStorage('leaves', leaveRequests);
     return leaveRequests[index];
   }
 }
 
 export class MockAttendanceRepository implements IAttendanceRepository {
+  private attendanceLogs: AttendanceRecord[] = loadStorage('attendance_logs', [
+    {
+      id: 'att-1',
+      employeeId: 'emp-1',
+      employeeStaffId: 'CGCC/004',
+      employeeName: 'Dr. Bukola Adeleke',
+      entityName: 'Citadel Global Community Church (CGCC)',
+      departmentName: 'People, Culture & Change',
+      date: new Date().toISOString().split('T')[0],
+      clockInTime: '07:48 AM',
+      status: 'Present',
+      verificationSource: 'Biometric_ZKTeco',
+      deviceId: 'DEV-ZK-01',
+    },
+    {
+      id: 'att-2',
+      employeeId: 'emp-2',
+      employeeStaffId: 'CGCC/015',
+      employeeName: 'Femi Olatunji',
+      entityName: 'Citadel Global Community Church (CGCC)',
+      departmentName: 'ICT',
+      date: new Date().toISOString().split('T')[0],
+      clockInTime: '08:02 AM',
+      status: 'Present',
+      verificationSource: 'Biometric_ZKTeco',
+      deviceId: 'DEV-ZK-01',
+    },
+    {
+      id: 'att-3',
+      employeeId: 'emp-3',
+      employeeStaffId: 'CGCC/072',
+      employeeName: 'Blessing Okafor',
+      entityName: 'Citadel Global Community Church (CGCC)',
+      departmentName: 'People, Culture & Change',
+      date: new Date().toISOString().split('T')[0],
+      clockInTime: '08:24 AM',
+      status: 'Late',
+      verificationSource: 'Web_SelfService',
+      notes: 'Traffic delay on Third Mainland Bridge',
+    },
+    {
+      id: 'att-4',
+      employeeId: 'emp-6',
+      employeeStaffId: 'CH/018',
+      employeeName: 'Chef Kolawole Briggs',
+      entityName: 'Citadel Holdings',
+      departmentName: 'Cafe',
+      date: new Date().toISOString().split('T')[0],
+      status: 'On Leave',
+      verificationSource: 'Manual_PCCM',
+    },
+  ]);
+
   async getTodaySummary(): Promise<any> {
     await sleep();
     return { ...INITIAL_ATTENDANCE_SUMMARY };
   }
 
-  async getRecentLogs(limit = 10): Promise<AttendanceRecord[]> {
+  async getRecentLogs(limit = 20): Promise<AttendanceRecord[]> {
     await sleep();
-    const records: AttendanceRecord[] = [
-      {
-        id: 'att-1',
-        employeeId: 'emp-1',
-        employeeStaffId: 'CGCC/004',
-        employeeName: 'Dr. Bukola Adeleke',
-        entityName: 'Citadel Global Community Church (CGCC)',
-        departmentName: 'People, Culture & Change',
-        date: '2026-09-18',
-        clockInTime: '07:48 AM',
-        status: 'Present',
-        verificationSource: 'Biometric_ZKTeco',
-        deviceId: 'DEV-ZK-01',
-      },
-      {
-        id: 'att-2',
-        employeeId: 'emp-2',
-        employeeStaffId: 'CGCC/015',
-        employeeName: 'Femi Olatunji',
-        entityName: 'Citadel Global Community Church (CGCC)',
-        departmentName: 'ICT',
-        date: '2026-09-18',
-        clockInTime: '08:02 AM',
-        status: 'Present',
-        verificationSource: 'Biometric_ZKTeco',
-        deviceId: 'DEV-ZK-01',
-      },
-      {
-        id: 'att-3',
-        employeeId: 'emp-3',
-        employeeStaffId: 'CGCC/072',
-        employeeName: 'Blessing Okafor',
-        entityName: 'Citadel Global Community Church (CGCC)',
-        departmentName: 'People, Culture & Change',
-        date: '2026-09-18',
-        clockInTime: '08:24 AM',
-        status: 'Late',
-        verificationSource: 'Web_SelfService',
-        notes: 'Traffic delay on Third Mainland Bridge',
-      },
-      {
-        id: 'att-4',
-        employeeId: 'emp-6',
-        employeeStaffId: 'CH/018',
-        employeeName: 'Chef Kolawole Briggs',
-        entityName: 'Citadel Holdings',
-        departmentName: 'Cafe',
-        date: '2026-09-18',
-        status: 'On Leave',
-        verificationSource: 'Manual_PCCM',
-      },
-    ];
-    return records.slice(0, limit);
+    return this.attendanceLogs.slice(0, limit);
   }
 
   async recordClockIn(
@@ -286,6 +325,8 @@ export class MockAttendanceRepository implements IAttendanceRepository {
       status: 'Present',
       verificationSource: 'Web_SelfService',
     };
+    this.attendanceLogs.unshift(record);
+    saveStorage('attendance_logs', this.attendanceLogs);
     return record;
   }
 
@@ -293,7 +334,7 @@ export class MockAttendanceRepository implements IAttendanceRepository {
     await sleep();
     const now = new Date();
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    return {
+    const record = this.attendanceLogs.find((r) => r.id === recordId) || {
       id: recordId,
       employeeId: 'self',
       employeeStaffId: 'CGCC/SELF',
@@ -301,10 +342,13 @@ export class MockAttendanceRepository implements IAttendanceRepository {
       entityName: 'Citadel',
       departmentName: 'Department',
       date: now.toISOString().split('T')[0],
-      clockOutTime: timeStr,
-      status: 'Present',
-      verificationSource: 'Web_SelfService',
+      clockInTime: '08:00 AM',
+      status: 'Present' as const,
+      verificationSource: 'Web_SelfService' as const,
     };
+    record.clockOutTime = timeStr;
+    saveStorage('attendance_logs', this.attendanceLogs);
+    return record;
   }
 }
 
@@ -331,6 +375,7 @@ export class MockAuditRepository implements IAuditRepository {
       timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
     };
     auditLogs.unshift(created);
+    saveStorage('audit_logs', auditLogs);
     return created;
   }
 }
@@ -348,7 +393,7 @@ export class MockDocumentRepository implements IDocumentRepository {
     return result;
   }
 
-  async uploadDocument(doc: Omit<HubDocument, 'id' | 'uploadedDate'>): Promise<HubDocument> {
+  async uploadDocument(doc: Omit<HubDocument, 'id' | 'uploadedDate'>, _file?: File): Promise<HubDocument> {
     await sleep();
     const created: HubDocument = {
       ...doc,
@@ -356,6 +401,7 @@ export class MockDocumentRepository implements IDocumentRepository {
       uploadedDate: new Date().toISOString().split('T')[0],
     };
     documents.unshift(created);
+    saveStorage('documents', documents);
     return created;
   }
 }
@@ -369,11 +415,13 @@ export class MockNotificationRepository implements INotificationRepository {
   async markAsRead(id: string): Promise<void> {
     await sleep();
     notifications = notifications.map((n) => (n.id === id ? { ...n, isRead: true } : n));
+    saveStorage('notifications', notifications);
   }
 
   async markAllAsRead(): Promise<void> {
     await sleep();
     notifications = notifications.map((n) => ({ ...n, isRead: true }));
+    saveStorage('notifications', notifications);
   }
 }
 
@@ -411,6 +459,7 @@ export class MockTalentRepository implements ITalentRepository {
     }
 
     onboardingJourneys[jIndex] = { ...journey };
+    saveStorage('onboarding', onboardingJourneys);
     return journey;
   }
 

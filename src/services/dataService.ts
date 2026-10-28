@@ -1,24 +1,44 @@
 /**
  * Data Service Singleton Instances
  * Citadel People Hub
+ *
+ * Production data access goes through Laravel. Mock repositories are available
+ * only in development when no Laravel API URL is configured.
  */
 
 import {
-  MockEmployeeRepository,
-  MockOrganizationRepository,
-  MockLeaveRepository,
+  LaravelAttendanceRepository,
+  LaravelAuditRepository,
+  LaravelDocumentRepository,
+  LaravelEmployeeRepository,
+  LaravelLeaveRepository,
+  LaravelNotificationRepository,
+  LaravelOrganizationRepository,
+  LaravelTalentRepository,
+} from './laravelAdapter';
+import { isLaravelApiConfigured } from './laravelClient';
+import {
   MockAttendanceRepository,
   MockAuditRepository,
   MockDocumentRepository,
+  MockEmployeeRepository,
+  MockLeaveRepository,
   MockNotificationRepository,
+  MockOrganizationRepository,
   MockTalentRepository,
 } from './mockRepository';
 
-export const employeeRepository = new MockEmployeeRepository();
-export const organizationRepository = new MockOrganizationRepository();
-export const leaveRepository = new MockLeaveRepository();
-export const attendanceRepository = new MockAttendanceRepository();
-export const auditRepository = new MockAuditRepository();
-export const documentRepository = new MockDocumentRepository();
-export const notificationRepository = new MockNotificationRepository();
-export const talentRepository = new MockTalentRepository();
+const useLaravelApi = isLaravelApiConfigured();
+
+if (import.meta.env.PROD && !useLaravelApi) {
+  throw new Error('VITE_API_BASE_URL must be configured for production builds.');
+}
+
+export const employeeRepository = useLaravelApi ? new LaravelEmployeeRepository() : new MockEmployeeRepository();
+export const organizationRepository = useLaravelApi ? new LaravelOrganizationRepository() : new MockOrganizationRepository();
+export const leaveRepository = useLaravelApi ? new LaravelLeaveRepository() : new MockLeaveRepository();
+export const attendanceRepository = useLaravelApi ? new LaravelAttendanceRepository() : new MockAttendanceRepository();
+export const auditRepository = useLaravelApi ? new LaravelAuditRepository() : new MockAuditRepository();
+export const documentRepository = useLaravelApi ? new LaravelDocumentRepository() : new MockDocumentRepository();
+export const notificationRepository = useLaravelApi ? new LaravelNotificationRepository() : new MockNotificationRepository();
+export const talentRepository = useLaravelApi ? new LaravelTalentRepository() : new MockTalentRepository();

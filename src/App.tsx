@@ -8,6 +8,8 @@
  */
 
 import React, { useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { Col, Container, Row } from 'react-bootstrap';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Header } from './components/layout/Header';
 import { Sidebar, NavModule } from './components/layout/Sidebar';
@@ -30,10 +32,48 @@ import { NotificationsView } from './components/views/NotificationsView';
 import { IntegrationsView } from './components/views/IntegrationsView';
 import { SettingsView } from './components/views/SettingsView';
 import { AuditLogsView } from './components/views/AuditLogsView';
+import { OffboardingView } from './components/views/OffboardingView';
+import { AIAssistantView } from './components/views/AIAssistantView';
+import { ProjectsView } from './components/views/ProjectsView';
+import { TeamNotesView } from './components/views/TeamNotesView';
+import { LoginModal } from './components/auth/LoginModal';
 
 const MainAppLayout: React.FC = () => {
+  const { backendEnabled, isAuthenticated, currentRole, currentUser } = useAuth();
+  const shouldReduceMotion = useReducedMotion();
   const [currentModule, setCurrentModule] = useState<NavModule>('dashboard');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Desktop sidebar collapse state with localStorage persistence
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('citadel_sidebar_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleSidebarCollapse = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('citadel_sidebar_collapsed', String(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  // Keyboard shortcut: Ctrl+B or Cmd+B to toggle sidebar collapse
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        toggleSidebarCollapse();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Global modal triggers from Dashboard
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
@@ -42,33 +82,53 @@ const MainAppLayout: React.FC = () => {
   const getModuleTitle = (mod: NavModule): string => {
     switch (mod) {
       case 'dashboard':
-        return 'Overview Dashboard';
+        if (currentRole === 'EMPLOYEE') return 'My Employee Dashboard';
+        if (currentRole === 'DEPARTMENT_HEAD') return `${currentUser.departmentName || 'Department'} Dashboard`;
+        if (currentRole === 'BUSINESS_HEAD') return 'Executive Business Head Dashboard';
+        return 'Overview Dashboard (PCCM Super Admin)';
       case 'employees':
+        if (currentRole === 'EMPLOYEE') return 'My Profile & Team Records';
+        if (currentRole === 'DEPARTMENT_HEAD') return `${currentUser.departmentName || 'Department'} Team Records`;
+        if (currentRole === 'BUSINESS_HEAD') return 'Divisional Workforce Records';
         return 'Employee Records';
       case 'directory':
         return 'Corporate Directory';
       case 'leave':
-        return 'Leave Management';
+        if (currentRole === 'EMPLOYEE') return 'My Leave Requests & Quotas';
+        if (currentRole === 'DEPARTMENT_HEAD') return 'Department Leave Approvals';
+        if (currentRole === 'BUSINESS_HEAD') return 'Executive Leave Sign-Offs';
+        return 'Leave Management & Governance';
       case 'attendance':
+        if (currentRole === 'EMPLOYEE') return 'My Attendance & Biometric Status';
+        if (currentRole === 'DEPARTMENT_HEAD') return 'Department Attendance Adherence';
+        if (currentRole === 'BUSINESS_HEAD') return 'Divisional Attendance Analytics';
         return 'Attendance & Biometrics';
       case 'recruitment':
         return 'Recruitment & Pipelines';
       case 'onboarding':
-        return 'Onboarding Journeys';
+        return currentRole === 'EMPLOYEE' ? 'My Onboarding Tasks' : 'Onboarding Journeys';
+      case 'offboarding':
+        return 'Employee Lifecycle & Offboarding';
       case 'performance':
         return 'Performance & Appraisals';
       case 'documents':
         return 'Documents & Policies';
       case 'calendar':
-        return 'Citadel Calendar';
+        return 'Citadel Master Calendar';
       case 'reports':
         return 'Reports & Workforce Analytics';
       case 'notifications':
         return 'Notifications & Alerts';
       case 'integrations':
         return 'Integrations & Cloud';
+      case 'ai-assistant':
+        return 'AI Assistant & HR Automation';
       case 'settings':
         return 'Organization Settings';
+      case 'projects':
+        return 'Citadel People Hub • v3.2 release';
+      case 'team-notes':
+        return 'Team Notes & Operations';
       case 'audit-logs':
         return 'Compliance & Audit Trail';
       default:
@@ -115,6 +175,8 @@ const MainAppLayout: React.FC = () => {
         return <RecruitmentView />;
       case 'onboarding':
         return <OnboardingView />;
+      case 'offboarding':
+        return <OffboardingView />;
       case 'performance':
         return <PerformanceView />;
       case 'documents':
@@ -127,8 +189,14 @@ const MainAppLayout: React.FC = () => {
         return <NotificationsView />;
       case 'integrations':
         return <IntegrationsView />;
+      case 'ai-assistant':
+        return <AIAssistantView />;
       case 'settings':
         return <SettingsView />;
+      case 'projects':
+        return <ProjectsView />;
+      case 'team-notes':
+        return <TeamNotesView />;
       case 'audit-logs':
         return <AuditLogsView />;
       default:
@@ -142,34 +210,67 @@ const MainAppLayout: React.FC = () => {
     }
   };
 
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+  if (backendEnabled && !isAuthenticated) {
+    return <LoginModal isOpen onClose={() => {}} required />;
+  }
+
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col font-sans text-slate-800">
+    <div className="min-h-screen bg-[#F6F8FA] flex flex-col font-sans text-slate-800">
       {/* 1. Notice Banner: Indicating demo data and production Supabase architecture */}
       <DemoDataBanner />
 
-      {/* 2. Top Navigation Bar */}
+      {/* 2. Full-Width Top Navigation Bar: Spans top of screen, never covered by sidebar */}
       <Header
         activeModuleTitle={getModuleTitle(currentModule)}
         activeModuleId={currentModule}
         onNavigate={(mod) => setCurrentModule(mod)}
         onToggleSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+        isSidebarCollapsed={isSidebarCollapsed}
+        onToggleCollapse={toggleSidebarCollapse}
       />
 
-      {/* 3. Main Workspace */}
-      <div className="flex-1 flex">
-        {/* Role-Aware Sidebar */}
-        <Sidebar
+      {/* 3. Main Workspace: Natural Flex container for Sidebar & Main Content */}
+      <Container fluid className="p-0 flex-grow-1">
+      <Row className="g-0 flex-grow-1">
+        {/* Role-Aware Modern Sidebar: sits naturally below Header, never covering it */}
+        <Col xs="auto" className="p-0">
+          <Sidebar
           currentModule={currentModule}
           onSelectModule={(mod) => setCurrentModule(mod)}
           isOpenMobile={isMobileSidebarOpen}
           onCloseMobile={() => setIsMobileSidebarOpen(false)}
-        />
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={toggleSidebarCollapse}
+          onOpenAddEmployee={() => {
+            setCurrentModule('employees');
+            setIsAddEmployeeModalOpen(true);
+          }}
+          onOpenLoginModal={() => setIsLoginModalOpen(true)}
+          />
+        </Col>
 
-        {/* Dynamic View Area */}
-        <main className="flex-1 lg:pl-64 p-4 sm:p-6 max-w-7xl w-full mx-auto">
-          {renderActiveModule()}
+        {/* Dynamic View Area: sits naturally to the right of the sidebar with generous margins */}
+        <Col className="min-w-0">
+        <main className="w-full px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 min-w-0 overflow-x-hidden">
+          <div className="w-full max-w-[1720px] mx-auto min-w-0">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentModule}
+                initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: shouldReduceMotion ? 0 : -8 }}
+                transition={{ duration: shouldReduceMotion ? 0.01 : 0.22, ease: 'easeOut' }}
+              >
+                {renderActiveModule()}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </main>
-      </div>
+        </Col>
+      </Row>
+      </Container>
 
       {/* 4. PWA Offline Status Toast */}
       <OfflineIndicator />

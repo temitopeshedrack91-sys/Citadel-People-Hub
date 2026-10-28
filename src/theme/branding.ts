@@ -13,17 +13,18 @@ export const CITADEL_BRAND = {
   
   // Color Palette Tokens
   colors: {
-    // Citadel Royal Navy (Authority, Dignity, Enterprise)
-    primary: '#0A1E3F',
-    primaryLight: '#152B52',
-    primaryDark: '#061328',
+    // Primary Action: Deep Forest Green matching Hrivio/Citadel reference
+    primary: '#083E34',
+    primaryLight: '#0F5447',
+    primaryDark: '#052C25',
+    primarySubtle: '#EBF5F2',
     
-    // Citadel Heritage Gold (Excellence, Growth, Honor)
-    accent: '#C5A059',
-    accentLight: '#DFBF7F',
-    accentDark: '#A37E36',
+    // Accent: Warm Amber (Lightning bolt & alerts)
+    accent: '#F59E0B',
+    accentLight: '#FEF3C7',
+    accentDark: '#D97706',
     
-    // Supporting Citadel Neutrals
+    // Supporting Neutrals
     slate900: '#0F172A',
     slate800: '#1E293B',
     slate700: '#334155',
@@ -34,15 +35,15 @@ export const CITADEL_BRAND = {
     slate50: '#F8FAFC',
     pureWhite: '#FFFFFF',
 
-    // Semantic Status Colors
+    // Semantic Status Colors (Color + Text label pattern)
     status: {
-      success: '#059669', // Approved / Active / Cleared
+      success: '#059669', // Approved / Active / Confirmed
       successBg: '#ECFDF5',
-      warning: '#D97706', // Pending Review / In Progress
+      warning: '#D97706', // Pending / Away / Review
       warningBg: '#FFFBEB',
-      danger: '#E11D48',  // Rejected / Terminated / High Alert
-      dangerBg: '#FFF1F2',
-      info: '#0284C7',    // In Review / Notice
+      danger: '#DC2626',  // Rejected / High Alert / Cancelled
+      dangerBg: '#FEF2F2',
+      info: '#0284C7',    // Ongoing / In Review / Informational
       infoBg: '#F0F9FF',
     }
   },

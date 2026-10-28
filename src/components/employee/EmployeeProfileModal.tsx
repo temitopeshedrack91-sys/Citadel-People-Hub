@@ -99,7 +99,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               {/* Profile Avatar / Photo */}
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-[#C59B27] to-[#A67F1A] text-slate-950 font-black text-2xl flex items-center justify-center shadow-lg border-2 border-white/20 shrink-0">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[#b18a3b] text-white font-black text-2xl flex items-center justify-center shadow-lg border-2 border-white/20 shrink-0">
                 {employee.firstName[0]}
                 {employee.lastName[0]}
               </div>
@@ -718,7 +718,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
           {/* TAB 9: PERFORMANCE */}
           {activeTab === 'performance' && (
             <div className="space-y-6 animate-fade-in">
-              <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200 flex items-center justify-between">
+              <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 flex items-center justify-between">
                 <div>
                   <span className="text-[10px] text-amber-800 font-bold uppercase tracking-wider block">
                     Latest PCCM Performance Calibration
