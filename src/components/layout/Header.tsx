@@ -413,7 +413,6 @@ export const Header: React.FC<HeaderProps> = ({
       <ProfileEditModal
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
-        onOpenLoginModal={onOpenLoginModal}
       />
     </>
   );
