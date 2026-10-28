@@ -323,7 +323,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               data-testid="auth-tab-signin"
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 tab === 'signin'
-                  ? 'bg-[#083E34] text-[#FF9900] shadow-xs'
+                  ? 'bg-[#FF9900] text-slate-950 shadow-xs'
                   : 'text-slate-300 hover:text-white'
               }`}
             >
@@ -340,7 +340,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               data-testid="auth-tab-register"
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 tab === 'register'
-                  ? 'bg-[#083E34] text-[#FF9900] shadow-xs'
+                  ? 'bg-[#FF9900] text-slate-950 shadow-xs'
                   : 'text-slate-300 hover:text-white'
               }`}
             >
@@ -357,7 +357,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               data-testid="auth-tab-personas"
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 tab === 'personas'
-                  ? 'bg-[#083E34] text-[#FF9900] shadow-xs'
+                  ? 'bg-[#FF9900] text-slate-950 shadow-xs'
                   : 'text-slate-300 hover:text-white'
               }`}
             >
@@ -428,7 +428,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full rounded-xl bg-[#083E34] hover:bg-[#062f28] px-4 py-2.5 text-xs sm:text-sm font-bold text-[#FF9900] border border-[#FF9900]/30 disabled:opacity-60 cursor-pointer transition shadow-xs flex items-center justify-center gap-2"
+                  className="w-full rounded-xl bg-[#FF9900] hover:bg-[#E68A00] px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-950 border border-[#E68A00] disabled:opacity-60 cursor-pointer transition shadow-xs flex items-center justify-center gap-2"
                 >
                   <LogIn className="w-4 h-4" />
                   <span>{isSubmitting ? 'Authenticating...' : 'Sign In with Supabase'}</span>
@@ -584,7 +584,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full rounded-xl bg-[#083E34] hover:bg-[#062f28] px-4 py-2.5 text-xs sm:text-sm font-bold text-[#FF9900] border border-[#FF9900]/30 disabled:opacity-60 cursor-pointer transition shadow-xs flex items-center justify-center gap-2"
+                className="w-full rounded-xl bg-[#FF9900] hover:bg-[#E68A00] px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-950 border border-[#E68A00] disabled:opacity-60 cursor-pointer transition shadow-xs flex items-center justify-center gap-2"
               >
                 <UserPlus className="w-4 h-4" />
                 <span>{isSubmitting ? 'Creating Account...' : 'Register User on Supabase'}</span>
@@ -663,7 +663,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                           className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 self-start sm:self-auto cursor-pointer shadow-2xs ${
                             isCurrent
                               ? 'bg-emerald-600 text-white'
-                              : 'bg-[#083E34] hover:bg-[#062f28] text-[#FF9900] border border-[#FF9900]/30'
+                              : 'bg-[#FF9900] hover:bg-[#E68A00] text-slate-950 font-bold border border-[#E68A00]'
                           }`}
                         >
                           <LogIn className="w-3.5 h-3.5" />
@@ -766,7 +766,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           {!required && (
             <button
               onClick={onClose}
-              className="px-4 py-1.5 bg-[#083E34] text-white text-xs font-semibold rounded-xl hover:bg-[#062f28] transition cursor-pointer shadow-xs"
+              className="px-4 py-1.5 bg-[#FF9900] text-slate-950 text-xs font-bold rounded-xl hover:bg-[#E68A00] transition cursor-pointer shadow-xs"
             >
               Done
             </button>

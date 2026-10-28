@@ -783,7 +783,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
             )}
             <button
               onClick={onClose}
-              className="px-4 py-2 bg-[#083E34] text-white rounded-xl text-xs font-bold hover:bg-[#062f28] transition cursor-pointer shadow-xs active:scale-95"
+              className="px-4 py-2 bg-[#FF9900] text-slate-950 rounded-xl text-xs font-bold hover:bg-[#E68A00] transition cursor-pointer shadow-xs active:scale-95"
             >
               Close Dossier
             </button>

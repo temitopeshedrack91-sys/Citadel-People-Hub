@@ -669,7 +669,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
             onClick={() => setActiveCategory(cat)}
             className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
               activeCategory === cat
-                ? 'bg-[#083E34] text-white shadow-xs'
+                ? 'bg-[#FF9900] text-slate-950 shadow-xs'
                 : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
             }`}
           >
@@ -825,9 +825,9 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                   downloadScheduleIcs(selectedEventModal);
                   showToast(`Downloaded invite for "${selectedEventModal.title}"`);
                 }}
-                className="px-3.5 py-1.5 rounded-xl bg-[#083E34] hover:bg-[#052C25] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl bg-[#FF9900] hover:bg-[#E68A00] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
               >
-                <Download className="w-3.5 h-3.5 text-emerald-300" />
+                <Download className="w-3.5 h-3.5 text-slate-950 stroke-[2.5]" />
                 <span>Add to Outlook / Apple (.ics)</span>
               </button>
             </div>
@@ -938,7 +938,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-xl bg-[#083E34] hover:bg-[#052C25] text-white font-bold shadow-xs transition"
+                  className="px-4 py-1.5 rounded-xl bg-[#FF9900] hover:bg-[#E68A00] text-slate-950 font-bold shadow-xs transition"
                 >
                   Save Schedule
                 </button>

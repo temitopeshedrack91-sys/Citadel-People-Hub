@@ -330,7 +330,7 @@ export const AuthPage: React.FC = () => {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="e.g. Dr. Bukola Adeleke"
-                  className="w-full pl-10 pr-4 py-3 bg-[#EEF4FF] focus:bg-white border border-blue-100/90 focus:border-[#0026FE] rounded-xl text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0026FE]/15 transition"
+                  className="w-full pl-10 pr-4 py-3 bg-[#EEF4FF] focus:bg-white border border-blue-100/90 focus:border-slate-900 rounded-xl text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition"
                 />
               </div>
             </div>
@@ -349,7 +349,7 @@ export const AuthPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="vincentagber74@gmail.com"
-                className="w-full pl-10 pr-4 py-3 bg-[#EEF4FF] focus:bg-white border border-blue-100/90 focus:border-[#0026FE] rounded-xl text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0026FE]/15 transition"
+                className="w-full pl-10 pr-4 py-3 bg-[#EEF4FF] focus:bg-white border border-blue-100/90 focus:border-slate-900 rounded-xl text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition"
               />
             </div>
           </div>
@@ -364,7 +364,7 @@ export const AuthPage: React.FC = () => {
                 <select
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
-                  className="w-full py-2.5 px-3 bg-[#EEF4FF] focus:bg-white border border-blue-100/90 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#0026FE] cursor-pointer"
+                  className="w-full py-2.5 px-3 bg-[#EEF4FF] focus:bg-white border border-blue-100/90 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-slate-900 cursor-pointer"
                 >
                   <option value="People & Culture">People & Culture</option>
                   <option value="Technology & Systems">Technology & Systems</option>
@@ -381,7 +381,7 @@ export const AuthPage: React.FC = () => {
                 <select
                   value={registerRole}
                   onChange={(e) => setRegisterRole(e.target.value)}
-                  className="w-full py-2.5 px-3 bg-[#EEF4FF] focus:bg-white border border-blue-100/90 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#0026FE] cursor-pointer"
+                  className="w-full py-2.5 px-3 bg-[#EEF4FF] focus:bg-white border border-blue-100/90 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-slate-900 cursor-pointer"
                 >
                   <option value="EMPLOYEE">Staff / Employee</option>
                   <option value="DEPARTMENT_HEAD">Department Head</option>
@@ -405,7 +405,7 @@ export const AuthPage: React.FC = () => {
                     setSuccessMessage('Password reset link dispatched to your registered work email.');
                     setTimeout(() => setSuccessMessage(''), 4000);
                   }}
-                  className="text-xs font-bold text-[#0026FE] hover:underline cursor-pointer"
+                  className="text-xs font-bold text-orange-500 hover:text-orange-600 hover:underline cursor-pointer"
                 >
                   Forgot password?
                 </button>
@@ -420,7 +420,7 @@ export const AuthPage: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••••••"
-                className="w-full pl-10 pr-10 py-3 bg-[#EEF4FF] focus:bg-white border border-blue-100/90 focus:border-[#0026FE] rounded-xl text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0026FE]/15 transition"
+                className="w-full pl-10 pr-10 py-3 bg-[#EEF4FF] focus:bg-white border border-blue-100/90 focus:border-slate-900 rounded-xl text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition"
               />
               <button
                 type="button"
@@ -440,7 +440,7 @@ export const AuthPage: React.FC = () => {
               id="rememberDevice"
               checked={rememberDevice}
               onChange={(e) => setRememberDevice(e.target.checked)}
-              className="w-4 h-4 rounded text-[#0026FE] accent-[#0026FE] border-slate-300 focus:ring-[#0026FE] cursor-pointer"
+              className="w-4 h-4 rounded text-slate-950 accent-slate-950 border-slate-300 focus:ring-slate-900 cursor-pointer"
             />
             <label
               htmlFor="rememberDevice"
@@ -450,11 +450,11 @@ export const AuthPage: React.FC = () => {
             </label>
           </div>
 
-          {/* Primary Action Button matching Kelvora screenshot */}
+          {/* Primary Action Button matching user preference (Black background with sleek high contrast) */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-[#0026FE] hover:bg-[#0020E6] active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl transition flex items-center justify-center gap-2 text-xs sm:text-sm shadow-md cursor-pointer disabled:opacity-60"
+            className="w-full bg-slate-950 hover:bg-black active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl transition flex items-center justify-center gap-2 text-xs sm:text-sm shadow-md cursor-pointer disabled:opacity-60"
           >
             <span>
               {isSubmitting
@@ -476,7 +476,7 @@ export const AuthPage: React.FC = () => {
             className="w-full flex items-center justify-between text-left cursor-pointer group"
           >
             <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
-              <Fingerprint className="w-4 h-4 text-[#0026FE]" />
+              <Fingerprint className="w-4 h-4 text-orange-500" />
               <span>Demo Credentials (1-Click Fill)</span>
             </div>
             {isDemoAccordionOpen ? (
@@ -498,7 +498,7 @@ export const AuthPage: React.FC = () => {
                     onClick={() => handleSelectDemo(acc)}
                     className={`p-2.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between ${
                       isSelected
-                        ? 'border-[#0026FE] bg-blue-50/70 ring-1 ring-[#0026FE]/30 shadow-xs'
+                        ? 'border-slate-900 bg-slate-50 ring-1 ring-slate-900/20 shadow-xs'
                         : 'border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/80'
                     }`}
                   >
