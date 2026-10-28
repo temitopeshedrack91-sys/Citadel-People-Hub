@@ -48,19 +48,32 @@ export interface PreOnboardingItem {
 }
 
 export type OnboardingDepartment = 'Manager' | 'PCCM' | 'IT' | 'Finance' | 'Mentor';
-export type OnboardingTimeline = 'Before Resumption' | 'Day 1' | 'Day 2' | 'Week 1' | '1st Month' | '90 Days';
+export type OnboardingTimeline =
+  | 'Before Resumption'
+  | 'Day 1'
+  | 'Day 2'
+  | 'Week 1'
+  | '1st Two Weeks'
+  | '1st Three Weeks'
+  | '1st Month'
+  | '60 Days'
+  | '90 Days'
+  | 'Post-3-Months';
 
 export interface OnboardingRequiredDoc {
   id: string;
   name: string;
   isSubmitted: boolean;
   submittedAt?: string;
+  isConditional?: boolean;
+  conditionNote?: string;
 }
 
 export interface OnboardingOrientationItem {
   id: string;
   name: string;
   isCompleted: boolean;
+  category?: string;
 }
 
 export interface OnboardingTeamRoster {
@@ -84,6 +97,11 @@ export interface OnboardingTask {
   dueDate: string;
   isCompleted: boolean;
   completedAt?: string;
+  isConditional?: boolean;
+  conditionNote?: string;
+  requiresHrConfirmation?: boolean;
+  status?: 'Pending' | 'In Progress' | 'Completed' | 'Waived';
+  reminderSentAt?: string;
 }
 
 export interface OnboardingJourney {

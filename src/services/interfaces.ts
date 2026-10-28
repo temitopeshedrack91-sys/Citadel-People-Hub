@@ -19,6 +19,7 @@ import {
   HubDocument,
   SystemNotification,
   OnboardingJourney,
+  OnboardingTask,
   RecruitmentRequisition,
 } from '../types';
 
@@ -84,5 +85,9 @@ export interface INotificationRepository {
 export interface ITalentRepository {
   getOnboardingJourneys(): Promise<OnboardingJourney[]>;
   toggleTaskCompletion(journeyId: string, taskId: string, isCompleted: boolean): Promise<OnboardingJourney>;
+  createOnboardingTask?(journeyId: string, task: Omit<OnboardingTask, 'id' | 'isCompleted'>): Promise<OnboardingJourney>;
+  sendTaskReminder?(journeyId: string, taskId: string): Promise<boolean>;
+  toggleDocumentSubmission?(journeyId: string, docId: string, isSubmitted: boolean): Promise<OnboardingJourney>;
+  toggleOrientationItem?(journeyId: string, itemId: string, isCompleted: boolean): Promise<OnboardingJourney>;
   getRequisitions(): Promise<RecruitmentRequisition[]>;
 }

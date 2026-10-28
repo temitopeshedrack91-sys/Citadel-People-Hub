@@ -24,6 +24,8 @@ export interface TeamMember {
   avatarText: string;
   email: string;
   capacityHours: number; // default 40
+  supabaseId?: number | string;
+  staffId?: string;
 }
 
 export interface ChecklistItem {

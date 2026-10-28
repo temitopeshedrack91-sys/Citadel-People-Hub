@@ -31,6 +31,7 @@ import {
   HubDocument,
   SystemNotification,
   OnboardingJourney,
+  OnboardingTask,
   RecruitmentRequisition,
 } from '../types';
 import {
@@ -74,7 +75,7 @@ let leaveRequests: LeaveRequest[] = loadStorage('leaves', [...INITIAL_LEAVE_REQU
 let auditLogs: AuditLogEntry[] = loadStorage('audit_logs', [...INITIAL_AUDIT_LOGS]);
 let rawOnboarding = loadStorage<OnboardingJourney[]>('onboarding', [...INITIAL_ONBOARDING_JOURNEYS]);
 let onboardingJourneys: OnboardingJourney[] =
-  rawOnboarding.length > 0 && rawOnboarding[0].tasks && rawOnboarding[0].tasks.length >= 15
+  rawOnboarding.length > 0 && rawOnboarding[0].tasks && rawOnboarding[0].tasks.length >= 20
     ? rawOnboarding
     : [...INITIAL_ONBOARDING_JOURNEYS];
 
@@ -456,6 +457,85 @@ export class MockTalentRepository implements ITalentRepository {
       journey.status = 'Completed';
     } else {
       journey.status = 'In Progress';
+    }
+
+    onboardingJourneys[jIndex] = { ...journey };
+    saveStorage('onboarding', onboardingJourneys);
+    return journey;
+  }
+
+  async createOnboardingTask(
+    journeyId: string,
+    newTask: Omit<OnboardingTask, 'id' | 'isCompleted'>
+  ): Promise<OnboardingJourney> {
+    await sleep();
+    const jIndex = onboardingJourneys.findIndex((j) => j.id === journeyId);
+    if (jIndex === -1) throw new Error('Journey not found');
+    const journey = onboardingJourneys[jIndex];
+
+    const task: OnboardingTask = {
+      ...newTask,
+      id: `task-custom-${Date.now()}`,
+      isCompleted: false,
+    };
+
+    journey.tasks.push(task);
+    const completedCount = journey.tasks.filter((t) => t.isCompleted).length;
+    journey.overallProgressPercent = Math.round((completedCount / journey.tasks.length) * 100);
+
+    onboardingJourneys[jIndex] = { ...journey };
+    saveStorage('onboarding', onboardingJourneys);
+    return journey;
+  }
+
+  async sendTaskReminder(journeyId: string, taskId: string): Promise<boolean> {
+    await sleep();
+    const journey = onboardingJourneys.find((j) => j.id === journeyId);
+    if (!journey) return false;
+    const task = journey.tasks.find((t) => t.id === taskId);
+    if (!task) return false;
+
+    task.reminderSentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    saveStorage('onboarding', onboardingJourneys);
+    return true;
+  }
+
+  async toggleDocumentSubmission(
+    journeyId: string,
+    docId: string,
+    isSubmitted: boolean
+  ): Promise<OnboardingJourney> {
+    await sleep();
+    const jIndex = onboardingJourneys.findIndex((j) => j.id === journeyId);
+    if (jIndex === -1) throw new Error('Journey not found');
+    const journey = onboardingJourneys[jIndex];
+
+    if (!journey.requiredDocuments) journey.requiredDocuments = [];
+    const doc = journey.requiredDocuments.find((d) => d.id === docId);
+    if (doc) {
+      doc.isSubmitted = isSubmitted;
+      doc.submittedAt = isSubmitted ? new Date().toISOString().split('T')[0] : undefined;
+    }
+
+    onboardingJourneys[jIndex] = { ...journey };
+    saveStorage('onboarding', onboardingJourneys);
+    return journey;
+  }
+
+  async toggleOrientationItem(
+    journeyId: string,
+    itemId: string,
+    isCompleted: boolean
+  ): Promise<OnboardingJourney> {
+    await sleep();
+    const jIndex = onboardingJourneys.findIndex((j) => j.id === journeyId);
+    if (jIndex === -1) throw new Error('Journey not found');
+    const journey = onboardingJourneys[jIndex];
+
+    if (!journey.orientationItems) journey.orientationItems = [];
+    const item = journey.orientationItems.find((i) => i.id === itemId);
+    if (item) {
+      item.isCompleted = isCompleted;
     }
 
     onboardingJourneys[jIndex] = { ...journey };

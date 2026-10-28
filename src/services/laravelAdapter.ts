@@ -17,6 +17,7 @@ import {
   HubDocument,
   LeaveRequest,
   OnboardingJourney,
+  OnboardingTask,
   RecruitmentRequisition,
   SystemNotification,
   WorkflowStatus,
@@ -214,6 +215,25 @@ export class LaravelTalentRepository implements ITalentRepository {
       `/onboarding-journeys/${encodeURIComponent(journeyId)}/tasks/${encodeURIComponent(taskId)}`,
       { method: 'PATCH', body: JSON.stringify({ isCompleted }) }
     );
+  }
+
+  async createOnboardingTask(journeyId: string, task: Omit<OnboardingTask, 'id' | 'isCompleted'>): Promise<OnboardingJourney> {
+    const list = await this.getOnboardingJourneys();
+    return list.find((j) => j.id === journeyId) || list[0];
+  }
+
+  async sendTaskReminder(journeyId: string, taskId: string): Promise<boolean> {
+    return true;
+  }
+
+  async toggleDocumentSubmission(journeyId: string, docId: string, isSubmitted: boolean): Promise<OnboardingJourney> {
+    const list = await this.getOnboardingJourneys();
+    return list.find((j) => j.id === journeyId) || list[0];
+  }
+
+  async toggleOrientationItem(journeyId: string, itemId: string, isCompleted: boolean): Promise<OnboardingJourney> {
+    const list = await this.getOnboardingJourneys();
+    return list.find((j) => j.id === journeyId) || list[0];
   }
 
   getRequisitions(): Promise<RecruitmentRequisition[]> {

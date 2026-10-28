@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
 import {
   TrellisTask,
   TeamMember,
@@ -11,6 +11,7 @@ import {
 } from './types';
 import { initialTeamMembers, initialTasks } from './mockData';
 import { taskDbService } from '../../services/supabaseService';
+import { supabase } from '../../utils/supabase/client';
 
 interface CreateTaskInput {
   title: string;

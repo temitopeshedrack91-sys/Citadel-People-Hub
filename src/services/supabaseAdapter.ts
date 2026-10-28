@@ -27,6 +27,7 @@ import {
   SystemNotification,
   WorkflowStatus,
   OnboardingJourney,
+  OnboardingTask,
   RecruitmentRequisition,
   VerificationSource,
 } from '../types';
@@ -566,7 +567,34 @@ export class SupabaseTalentRepository implements ITalentRepository {
     return INITIAL_ONBOARDING_JOURNEYS;
   }
   async toggleTaskCompletion(journeyId: string, taskId: string, isCompleted: boolean): Promise<OnboardingJourney> {
-    return INITIAL_ONBOARDING_JOURNEYS[0];
+    const journey = INITIAL_ONBOARDING_JOURNEYS.find(j => j.id === journeyId) || INITIAL_ONBOARDING_JOURNEYS[0];
+    const task = journey.tasks.find(t => t.id === taskId);
+    if (task) {
+      task.isCompleted = isCompleted;
+      task.completedAt = isCompleted ? new Date().toISOString().split('T')[0] : undefined;
+    }
+    return journey;
+  }
+  async createOnboardingTask(journeyId: string, task: Omit<OnboardingTask, 'id' | 'isCompleted'>): Promise<OnboardingJourney> {
+    const journey = INITIAL_ONBOARDING_JOURNEYS.find(j => j.id === journeyId) || INITIAL_ONBOARDING_JOURNEYS[0];
+    const newTask: OnboardingTask = { ...task, id: `task-${Date.now()}`, isCompleted: false };
+    journey.tasks.push(newTask);
+    return journey;
+  }
+  async sendTaskReminder(journeyId: string, taskId: string): Promise<boolean> {
+    return true;
+  }
+  async toggleDocumentSubmission(journeyId: string, docId: string, isSubmitted: boolean): Promise<OnboardingJourney> {
+    const journey = INITIAL_ONBOARDING_JOURNEYS.find(j => j.id === journeyId) || INITIAL_ONBOARDING_JOURNEYS[0];
+    const doc = journey.requiredDocuments?.find(d => d.id === docId);
+    if (doc) doc.isSubmitted = isSubmitted;
+    return journey;
+  }
+  async toggleOrientationItem(journeyId: string, itemId: string, isCompleted: boolean): Promise<OnboardingJourney> {
+    const journey = INITIAL_ONBOARDING_JOURNEYS.find(j => j.id === journeyId) || INITIAL_ONBOARDING_JOURNEYS[0];
+    const item = journey.orientationItems?.find(i => i.id === itemId);
+    if (item) item.isCompleted = isCompleted;
+    return journey;
   }
   async getRequisitions(): Promise<RecruitmentRequisition[]> {
     return INITIAL_RECRUITMENT;
