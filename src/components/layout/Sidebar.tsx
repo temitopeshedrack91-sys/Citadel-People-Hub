@@ -111,7 +111,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           icon: CalendarDays,
           visible: canAccessModule(currentUser || currentRole, 'leave'),
           badge: '2',
-          badgeColor: 'bg-[#D4AF37]/20 text-[#D4AF37] border-[#D4AF37]/40',
+          badgeColor: 'bg-[#FF9900]/20 text-[#FF9900] border-[#FF9900]/40',
         },
         {
           id: 'projects' as NavModule,
@@ -319,14 +319,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         isCollapsed ? 'justify-center p-2.5' : 'justify-between px-3.5 py-2.5'
                       } ${
                         isActive
-                          ? 'bg-zinc-900 text-white font-bold ring-1 ring-[#D4AF37]/40 shadow-2xs border-l-2 border-[#D4AF37]'
+                          ? 'bg-zinc-900 text-white font-bold ring-1 ring-[#FF9900]/40 shadow-2xs border-l-2 border-[#FF9900]'
                           : 'text-zinc-400 font-medium hover:bg-zinc-900 hover:text-white'
                       }`}
                     >
                       <div className="flex items-center gap-3 truncate">
                         <Icon
                           className={`w-4 h-4 shrink-0 transition-colors ${
-                            isActive ? 'text-[#D4AF37]' : 'text-zinc-500 group-hover:text-white'
+                            isActive ? 'text-[#FF9900]' : 'text-zinc-500 group-hover:text-white'
                           }`}
                         />
                         {!isCollapsed && <span className="truncate">{item.label}</span>}
@@ -343,14 +343,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             </span>
                           )}
                           {isActive && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] shadow-[0_0_6px_#D4AF37]" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#FF9900] shadow-[0_0_6px_#FF9900]" />
                           )}
                         </div>
                       )}
 
                       {/* Collapsed View Dot for Badges */}
                       {isCollapsed && item.badge && !isActive && (
-                        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#D4AF37] ring-2 ring-black" />
+                        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#FF9900] ring-2 ring-black" />
                       )}
                     </button>
                   );
@@ -371,7 +371,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               }}
               data-testid="sidebar-add-employee-btn"
               title="Add New Employee"
-              className={`w-full bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 rounded-xl font-bold flex items-center justify-center gap-2 shadow-xs transition active:scale-[0.98] min-h-[42px] ${
+              className={`w-full bg-[#FF9900] hover:bg-[#FFAA2B] text-slate-950 rounded-xl font-bold flex items-center justify-center gap-2 shadow-xs transition active:scale-[0.98] min-h-[42px] ${
                 isCollapsed ? 'w-10 h-10 mx-auto p-0' : 'py-2 px-3 text-xs'
               }`}
             >

@@ -1,0 +1,9 @@
+version = 1
+
+[build]
+command = "npm run build"
+output = "dist"
+installCommand = "npm install"
+
+[routing]
+spa = true
