@@ -217,12 +217,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
   const [selectedEntityFilter, setSelectedEntityFilter] = useState<string>('all');
   const backendEnabled = isLaravelApiConfigured();
-  const [isAuthenticated, setIsAuthenticated] = useState(!backendEnabled);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    try {
+      if (localStorage.getItem('citadel_logged_out') === 'true') {
+        return false;
+      }
+    } catch {}
+    return true;
+  });
 
   // Check Supabase session on mount
   useEffect(() => {
     let isMounted = true;
     authService.getCurrentUser().then((user) => {
+      try {
+        if (localStorage.getItem('citadel_logged_out') === 'true') {
+          return;
+        }
+      } catch {}
       if (isMounted && user) {
         const matchingPersona = PRESET_PERSONAS.find((p) => p.user.email === user.email);
         if (matchingPersona) {
@@ -286,6 +298,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSelectedEntityFilter(found.user.entityId);
       }
     }
+    try {
+      localStorage.removeItem('citadel_logged_out');
+    } catch {}
+    setIsAuthenticated(true);
   };
 
   const register = async (email: string, password: string, name?: string, role: string = 'EMPLOYEE') => {
@@ -309,6 +325,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       badgeLabel: role.replaceAll('_', ' '),
       description: `Registered Supabase account: ${email}`,
     });
+    try {
+      localStorage.removeItem('citadel_logged_out');
+    } catch {}
     setIsAuthenticated(true);
   };
 
@@ -352,6 +371,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             description: `Authenticated Supabase account: ${cleanEmail}`,
           });
         }
+        try {
+          localStorage.removeItem('citadel_logged_out');
+        } catch {}
         setIsAuthenticated(true);
         return;
       }
@@ -408,6 +430,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    try {
+      localStorage.setItem('citadel_logged_out', 'true');
+    } catch {}
     try {
       await authService.signOut();
     } catch {}

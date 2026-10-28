@@ -238,7 +238,7 @@ const MainAppLayout: React.FC = () => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [loginModalTab, setLoginModalTab] = useState<'signin' | 'register' | 'personas'>('personas');
 
-  if (backendEnabled && !isAuthenticated) {
+  if (!isAuthenticated) {
     return <LoginModal isOpen onClose={() => {}} required initialTab="signin" />;
   }
 

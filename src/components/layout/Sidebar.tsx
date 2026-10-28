@@ -75,7 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenAddEmployee,
   onOpenLoginModal,
 }) => {
-  const { currentRole, permissions, currentPersona } = useAuth();
+  const { currentRole, permissions, currentPersona, logout } = useAuth();
 
   const isPCCM = currentRole === 'PCCM_SUPER_ADMIN';
   const isBizHead = currentRole === 'BUSINESS_HEAD';
@@ -372,28 +372,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </button>
           )}
 
-          {/* Switch Role / Login Button */}
+          {/* Logout Button */}
           <button
-            onClick={() => {
-              onOpenLoginModal?.();
+            onClick={async () => {
               onCloseMobile();
+              await logout();
             }}
-            data-testid="sidebar-switch-role-btn"
-            className={`w-full flex items-center text-xs text-slate-300 font-medium hover:text-white hover:bg-white/5 rounded-xl transition border border-white/10 min-h-[40px] ${
-              isCollapsed ? 'w-10 h-10 mx-auto justify-center p-0' : 'justify-between px-3 py-2'
+            data-testid="sidebar-logout-btn"
+            className={`w-full flex items-center text-xs font-semibold rounded-xl transition border min-h-[40px] group cursor-pointer ${
+              isCollapsed
+                ? 'w-10 h-10 mx-auto justify-center p-0 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border-white/10 hover:border-rose-500/30'
+                : 'justify-between px-3 py-2 text-slate-300 hover:text-rose-300 hover:bg-rose-500/10 border-white/10 hover:border-rose-500/30'
             }`}
-            title={`Account: ${currentPersona.badgeLabel} — Click to Sign In / Switch`}
+            title="Log out of Citadel People Hub"
           >
-            <div className="flex items-center gap-2 truncate">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <div className="flex items-center gap-2.5 truncate">
+              <LogOut className="w-4 h-4 text-slate-400 group-hover:text-rose-400 shrink-0 transition-colors" />
               {!isCollapsed && (
-                <span className="truncate text-[11px] font-semibold text-slate-300">
-                  {currentPersona.badgeLabel}
+                <span className="truncate text-xs font-bold text-slate-200 group-hover:text-rose-200 transition-colors">
+                  Logout
                 </span>
               )}
             </div>
             {!isCollapsed && (
-              <span className="text-[10px] text-slate-400 font-medium">Switch / Login</span>
+              <span className="text-[10px] text-slate-400 group-hover:text-rose-300 font-medium transition-colors">
+                Sign out
+              </span>
             )}
           </button>
 
