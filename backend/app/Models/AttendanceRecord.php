@@ -2,14 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AttendanceRecord extends Model
 {
-    use HasUuids;
-
     protected $fillable = [
         'employee_id', 'employee_staff_id', 'employee_name', 'entity_name', 'department_name',
         'date', 'clock_in_time', 'clock_out_time', 'duration_hours', 'status',
@@ -29,5 +26,24 @@ class AttendanceRecord extends Model
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $record) {
+            $hasClockIn = \Illuminate\Support\Facades\Schema::hasColumn('attendance_records', 'clock_in');
+            $hasClockOut = \Illuminate\Support\Facades\Schema::hasColumn('attendance_records', 'clock_out');
+
+            if ($hasClockIn && $record->clock_in_time && ! $record->clock_in) {
+                $record->clock_in = $record->clock_in_time;
+            } elseif ($hasClockIn && $record->clock_in && ! $record->clock_in_time) {
+                $record->clock_in_time = $record->clock_in;
+            }
+            if ($hasClockOut && $record->clock_out_time && ! $record->clock_out) {
+                $record->clock_out = $record->clock_out_time;
+            } elseif ($hasClockOut && $record->clock_out && ! $record->clock_out_time) {
+                $record->clock_out_time = $record->clock_out;
+            }
+        });
     }
 }

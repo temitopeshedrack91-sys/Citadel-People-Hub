@@ -43,6 +43,7 @@ class OrganizationController extends Controller
         ]);
         $entity = DB::transaction(function () use ($request, $data) {
             $entity = Entity::create([
+                'id' => strtoupper($data['shortCode']),
                 'name' => $data['name'],
                 'short_code' => strtoupper($data['shortCode']),
                 'description' => $data['description'] ?? null,
@@ -81,7 +82,7 @@ class OrganizationController extends Controller
     {
         $this->authorizeHr($request);
         $data = $request->validate([
-            'entityId' => ['required', 'uuid', 'exists:entities,id'],
+            'entityId' => ['required', 'string', 'exists:entities,id'],
             'name' => ['required', 'string', 'max:180'],
             'code' => ['required', 'string', 'max:30', 'alpha_dash'],
             'headOfDepartmentName' => ['nullable', 'string', 'max:180'],

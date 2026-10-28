@@ -9,6 +9,11 @@ class SystemNotification extends Model
 {
     use HasUuids;
 
+    protected $table = 'notifications';
+
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     protected $fillable = [
         'type', 'category', 'title', 'message', 'target_user_id', 'target_user_role',
         'action_url', 'read_at',

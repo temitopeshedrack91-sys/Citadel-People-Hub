@@ -43,7 +43,7 @@ class LeaveController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'employeeId' => ['required', 'uuid', 'exists:employees,id'],
+            'employeeId' => ['required', 'exists:employees,id'],
             'employeeStaffId' => ['required', 'string', 'max:50'],
             'employeeName' => ['required', 'string', 'max:180'],
             'entityName' => ['required', 'string', 'max:180'],
@@ -121,7 +121,7 @@ class LeaveController extends Controller
                 'PCCM_SUPER_ADMIN' => true,
                 default => false,
             };
-            $authorizedReviewer = $stageRole === $user->role && $stageScopeMatches;
+            $authorizedReviewer = ($stageRole === $user->role || $user->role === 'PCCM_SUPER_ADMIN') && $stageScopeMatches;
             $isRequester = $user->role === 'EMPLOYEE' && $employee->staff_id === $user->staff_id;
             $authorized = $data['status'] === 'Cancelled'
                 ? ($authorizedReviewer || $isRequester || $user->role === 'PCCM_SUPER_ADMIN')

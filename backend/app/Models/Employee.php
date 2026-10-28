@@ -2,14 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Employee extends Model
 {
-    use HasUuids;
-
     protected $fillable = [
         'staff_id', 'full_name', 'first_name', 'last_name', 'profile_photo', 'date_of_birth',
         'gender', 'phone', 'email', 'address', 'emergency_contact', 'next_of_kin', 'entity_id',
@@ -21,12 +18,12 @@ class Employee extends Model
     protected function casts(): array
     {
         return [
-            'date_of_birth' => 'encrypted',
-            'address' => 'encrypted',
-            'emergency_contact' => 'encrypted:array',
-            'next_of_kin' => 'encrypted:array',
-            'bank_payroll' => 'encrypted:array',
-            'pension_hmo' => 'encrypted:array',
+            'date_of_birth' => 'date:Y-m-d',
+            'address' => 'string',
+            'emergency_contact' => 'array',
+            'next_of_kin' => 'array',
+            'bank_payroll' => 'array',
+            'pension_hmo' => 'array',
             'qualifications' => 'array',
             'certifications' => 'array',
             'employment_date' => 'date:Y-m-d',

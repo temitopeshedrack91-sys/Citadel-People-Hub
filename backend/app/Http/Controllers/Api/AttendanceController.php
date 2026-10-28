@@ -28,7 +28,7 @@ class AttendanceController extends Controller
             $query->whereIn('employee_id', Employee::query()->select('id')->where('department_id', $user->department_id));
         } elseif ($user->role === 'SYSTEM_ADMIN') {
             $query->whereIn('employee_id', Employee::query()->select('id')->where('entity_id', $user->entity_id));
-        } else {
+        } elseif ($user->role !== 'PCCM_SUPER_ADMIN') {
             $query->where('employee_staff_id', $user->staff_id ?? '');
         }
         if (isset($filters['date'])) {
@@ -57,7 +57,7 @@ class AttendanceController extends Controller
     public function clockIn(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'employeeId' => ['required', 'uuid', 'exists:employees,id'],
+            'employeeId' => ['required', 'exists:employees,id'],
             'employeeName' => ['required', 'string', 'max:180'],
             'staffId' => ['required', 'string', 'max:50'],
             'entity' => ['required', 'string', 'max:180'],

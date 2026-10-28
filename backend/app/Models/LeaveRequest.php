@@ -2,14 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LeaveRequest extends Model
 {
-    use HasUuids;
-
     protected $fillable = [
         'employee_id', 'employee_staff_id', 'employee_name', 'entity_name', 'department_name',
         'leave_type', 'start_date', 'end_date', 'total_days', 'reason', 'relieving_staff_id',
@@ -30,5 +27,27 @@ class LeaveRequest extends Model
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $record) {
+            $hasType = \Illuminate\Support\Facades\Schema::hasColumn('leave_requests', 'type');
+            $hasDays = \Illuminate\Support\Facades\Schema::hasColumn('leave_requests', 'days_requested');
+
+            if ($hasType && $record->leave_type && ! $record->type) {
+                $record->type = $record->leave_type;
+            } elseif ($hasType && $record->type && ! $record->leave_type) {
+                $record->leave_type = $record->type;
+            }
+            if ($hasDays && $record->total_days && ! $record->days_requested) {
+                $record->days_requested = $record->total_days;
+            } elseif ($hasDays && $record->days_requested && ! $record->total_days) {
+                $record->total_days = $record->days_requested;
+            }
+            if ($record->created_at && ! $record->applied_date) {
+                $record->applied_date = $record->created_at;
+            }
+        });
     }
 }

@@ -25,7 +25,7 @@ return new class extends Migration
         }
 
         Schema::create('entities', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->string('id')->primary();
             $table->string('name');
             $table->string('short_code')->unique();
             $table->text('description')->nullable();
@@ -35,8 +35,8 @@ return new class extends Migration
         });
 
         Schema::create('departments', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->foreignUuid('entity_id')->constrained()->restrictOnDelete();
+            $table->id();
+            $table->string('entity_id')->constrained('entities')->restrictOnDelete();
             $table->string('name');
             $table->string('code');
             $table->string('head_of_department_name')->nullable();
@@ -50,14 +50,14 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->string('role')->default('EMPLOYEE')->index();
             $table->string('staff_id')->nullable()->unique();
-            $table->foreignUuid('entity_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignUuid('department_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('entity_id')->nullable()->constrained('entities')->nullOnDelete();
+            $table->foreignId('department_id')->nullable()->constrained('departments')->nullOnDelete();
             $table->string('job_title')->nullable();
             $table->boolean('is_active')->default(true);
         });
 
         Schema::create('employees', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->id();
             $table->string('staff_id')->unique();
             $table->string('full_name');
             $table->string('first_name');
@@ -70,14 +70,14 @@ return new class extends Migration
             $table->text('address')->nullable();
             $table->text('emergency_contact')->nullable();
             $table->text('next_of_kin')->nullable();
-            $table->foreignUuid('entity_id')->constrained()->restrictOnDelete();
-            $table->foreignUuid('department_id')->constrained()->restrictOnDelete();
+            $table->string('entity_id')->constrained('entities')->restrictOnDelete();
+            $table->foreignId('department_id')->constrained('departments')->restrictOnDelete();
             $table->string('job_title');
             $table->string('grade_level')->nullable();
             $table->string('employment_type')->nullable();
             $table->date('employment_date')->nullable();
             $table->date('confirmation_date')->nullable();
-            $table->uuid('manager_id')->nullable();
+            $table->string('manager_id')->nullable();
             $table->string('manager_name')->nullable();
             $table->string('contract_status')->nullable();
             $table->unsignedSmallInteger('years_of_service')->default(0);
@@ -92,8 +92,8 @@ return new class extends Migration
         });
 
         Schema::create('leave_requests', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->foreignUuid('employee_id')->constrained()->cascadeOnDelete();
+            $table->id();
+            $table->foreignId('employee_id')->constrained('employees')->cascadeOnDelete();
             $table->string('employee_staff_id');
             $table->string('employee_name');
             $table->string('entity_name');
@@ -116,8 +116,8 @@ return new class extends Migration
         });
 
         Schema::create('attendance_records', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->foreignUuid('employee_id')->constrained()->cascadeOnDelete();
+            $table->id();
+            $table->foreignId('employee_id')->constrained('employees')->cascadeOnDelete();
             $table->string('employee_staff_id');
             $table->string('employee_name');
             $table->string('entity_name');
@@ -134,8 +134,8 @@ return new class extends Migration
             $table->index(['employee_id', 'date']);
         });
 
-        Schema::create('hub_documents', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+        Schema::create('documents', function (Blueprint $table) {
+            $table->id();
             $table->string('title');
             $table->text('description')->nullable();
             $table->string('file_name');
@@ -153,7 +153,7 @@ return new class extends Migration
         });
 
         Schema::create('audit_logs', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->id();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('user_name');
             $table->string('user_role');
@@ -171,7 +171,7 @@ return new class extends Migration
             $table->index(['user_id', 'created_at']);
         });
 
-        Schema::create('system_notifications', function (Blueprint $table) {
+        Schema::create('notifications', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('type');
             $table->string('category')->nullable();

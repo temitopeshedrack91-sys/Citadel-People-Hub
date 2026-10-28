@@ -2,13 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class HubDocument extends Model
 {
-    use HasUuids;
+    protected $table = 'documents';
 
     protected $fillable = [
         'title', 'description', 'file_name', 'file_size', 'file_type', 'category',
