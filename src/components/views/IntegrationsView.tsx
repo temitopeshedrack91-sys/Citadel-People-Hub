@@ -106,7 +106,7 @@ export const IntegrationsView: React.FC = () => {
           <button
             onClick={testApi}
             disabled={testingApi || !hasLaravelApi}
-            className="mt-4 w-full py-2 bg-slate-100 hover:bg-[#D4AF37] text-slate-800 hover:text-slate-950 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer shadow-xs active:scale-95"
+            className="mt-4 w-full py-2 bg-slate-100 hover:bg-[#FF9900] text-slate-800 hover:text-slate-950 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer shadow-xs active:scale-95"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${testingApi ? 'animate-spin' : ''}`} />
             <span>{testingApi ? 'Checking Laravel API...' : 'Check Laravel API'}</span>
