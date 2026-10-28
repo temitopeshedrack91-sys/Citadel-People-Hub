@@ -162,7 +162,7 @@ export const TrellisHeader: React.FC = () => {
           <button
             onClick={() => setIsNewTaskModalOpen(true)}
             data-testid="trellis-new-task-btn"
-            className="px-3.5 py-2 rounded-xl bg-[#FF9900] hover:bg-[#FFAA2B] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#E68A00] transition active:scale-95 cursor-pointer min-h-[40px] sm:min-h-[36px]"
+            className="px-3.5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#C59B27] transition active:scale-95 cursor-pointer min-h-[40px] sm:min-h-[36px]"
           >
             <Plus className="w-3.5 h-3.5 text-slate-950 stroke-[2.5]" />
             <span className="font-bold">New task</span>
@@ -173,7 +173,7 @@ export const TrellisHeader: React.FC = () => {
       {/* Project Title, Subtitle, Sprint chip, & Key Metrics */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-1">
         <div className="flex items-start sm:items-center gap-3 min-w-0">
-          <div className="w-11 h-11 rounded-2xl bg-[#FF9900] flex items-center justify-center shrink-0 shadow-[0_2px_8px_rgba(255,153,0,0.25)] mt-0.5 sm:mt-0">
+          <div className="w-11 h-11 rounded-2xl bg-[#D4AF37] flex items-center justify-center shrink-0 shadow-[0_2px_8px_rgba(212,175,55,0.25)] mt-0.5 sm:mt-0">
             <Smartphone className="w-5 h-5 text-slate-900" />
           </div>
           <div className="min-w-0 flex-1">
@@ -253,7 +253,7 @@ export const TrellisHeader: React.FC = () => {
                   onClick={() => setActiveTab(tab.key)}
                   data-testid={`trellis-tab-${tab.key}`}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${isActive
-                    ? 'bg-[#FF9900] text-slate-950 shadow-xs'
+                    ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                 >

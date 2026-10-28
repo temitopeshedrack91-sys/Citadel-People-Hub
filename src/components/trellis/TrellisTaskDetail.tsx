@@ -383,7 +383,7 @@ export const TrellisTaskDetail: React.FC = () => {
             <button
               type="submit"
               data-testid="trellis-save-edit-btn"
-              className="px-5 py-2 rounded-xl bg-[#FF9900] hover:bg-[#FFAA2B] text-slate-950 text-xs font-bold transition shadow-xs min-h-[40px]"
+              className="px-5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold transition shadow-xs min-h-[40px]"
             >
               Save Changes
             </button>

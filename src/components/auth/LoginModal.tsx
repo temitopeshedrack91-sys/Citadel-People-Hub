@@ -339,7 +339,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               data-testid="auth-tab-signin"
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 tab === 'signin'
-                  ? 'bg-[#FF9900] text-slate-950 shadow-xs'
+                  ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
                   : 'text-slate-300 hover:text-white'
               }`}
             >
@@ -356,7 +356,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               data-testid="auth-tab-register"
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 tab === 'register'
-                  ? 'bg-[#FF9900] text-slate-950 shadow-xs'
+                  ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
                   : 'text-slate-300 hover:text-white'
               }`}
             >
@@ -373,7 +373,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               data-testid="auth-tab-personas"
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 tab === 'personas'
-                  ? 'bg-[#FF9900] text-slate-950 shadow-xs'
+                  ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
                   : 'text-slate-300 hover:text-white'
               }`}
             >
@@ -444,7 +444,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full rounded-xl bg-[#FF9900] hover:bg-[#FFAA2B] px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-950 border border-[#E68A00] disabled:opacity-60 cursor-pointer transition shadow-xs flex items-center justify-center gap-2"
+                  className="w-full rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-950 border border-[#C59B27] disabled:opacity-60 cursor-pointer transition shadow-xs flex items-center justify-center gap-2"
                 >
                   <LogIn className="w-4 h-4" />
                   <span>{isSubmitting ? 'Authenticating...' : 'Sign In with Supabase'}</span>
@@ -679,7 +679,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                           className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 self-start sm:self-auto cursor-pointer shadow-2xs ${
                             isCurrent
                               ? 'bg-emerald-600 text-white'
-                              : 'bg-[#FF9900] hover:bg-[#FFAA2B] text-slate-950 font-bold border border-[#E68A00]'
+                              : 'bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold border border-[#C59B27]'
                           }`}
                         >
                           <LogIn className="w-3.5 h-3.5" />

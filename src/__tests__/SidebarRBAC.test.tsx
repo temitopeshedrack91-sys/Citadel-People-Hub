@@ -82,12 +82,12 @@ describe('Sidebar RBAC & Visual Hierarchy (<Sidebar />)', () => {
       expect(aside).toHaveClass('border-zinc-800');
     });
 
-    it('applies high-contrast active styling with orange accent (#FF9900) to current item', () => {
+    it('applies high-contrast active styling with Citadel Classic Gold accent (#D4AF37) to current item', () => {
       renderSidebarWithRole('ADMIN', 'dashboard');
       const dashboardBtn = screen.getByTestId('nav-item-dashboard');
       expect(dashboardBtn).toHaveClass('bg-zinc-900');
       expect(dashboardBtn).toHaveClass('text-white');
-      expect(dashboardBtn).toHaveClass('border-[#FF9900]');
+      expect(dashboardBtn).toHaveClass('border-[#D4AF37]');
     });
 
     it('renders the logout button at the bottom and calls logout when clicked', () => {
