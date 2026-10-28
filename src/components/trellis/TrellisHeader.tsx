@@ -186,7 +186,7 @@ export const TrellisHeader: React.FC = () => {
               </span>
             </div>
             <p className="text-xs text-slate-500 font-medium mt-0.5 leading-relaxed">
-              Workforce Management &amp; Self-Service • iOS &amp; Android • ships Oct 30
+              Workforce Management
             </p>
           </div>
         </div>
