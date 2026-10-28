@@ -224,7 +224,7 @@ export const AttendanceView: React.FC = () => {
                     <CitadelLogo variant="mark" colorMode="dark" className="h-5" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-black tracking-tight">
+                    <h2 className="text-sm font-black tracking-tight text-white">
                       Biometric Attendance Import
                     </h2>
                     <p className="text-[11px] text-emerald-50/80 font-medium mt-0.5 max-w-2xl">
