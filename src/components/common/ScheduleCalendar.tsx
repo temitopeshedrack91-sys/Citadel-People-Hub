@@ -226,7 +226,56 @@ const citadelEvents: ScheduleEvent[] = [
     ],
   },
 
-  // Wednesday 28 October
+  // Wednesday 28 October (Today)
+  {
+    id: 'evt-1-d28',
+    dayNum: 28,
+    dateString: '2026-10-28',
+    time: '09:00 - 10:00',
+    tag: 'Marketing',
+    title: 'Marketing Sync',
+    channel: 'Google Meet',
+    category: 'Meeting',
+    description: 'Q4 marketing campaign performance sync, creative assets signoff, and outreach calendar.',
+    meetUrl: 'https://meet.google.com/ctd-mrkt-sync',
+    attendees: [
+      { initials: 'MA', bg: 'bg-emerald-600', name: 'Mia Anderson' },
+      { initials: 'NB', bg: 'bg-amber-600', name: 'Noah Bennett' },
+      { initials: 'CM', bg: 'bg-rose-600', name: 'Chloe Martin' },
+    ],
+  },
+  {
+    id: 'evt-2-d28',
+    dayNum: 28,
+    dateString: '2026-10-28',
+    time: '11:30 - 12:30',
+    tag: 'Project Lead',
+    title: 'Product Review',
+    channel: 'Citadel Workstation Room 2',
+    location: 'Citadel Workstation Room 2, Floor 3',
+    category: 'Meeting',
+    description: 'Deep dive into Citadel People Hub V2 release, attendance tracking logs, and leave approval UI.',
+    attendees: [
+      { initials: 'BA', bg: 'bg-[#083E34]', name: 'Dr. Bukola Adeleke' },
+      { initials: 'FO', bg: 'bg-indigo-600', name: 'Engr. Femi Olatunji' },
+    ],
+  },
+  {
+    id: 'evt-3-d28',
+    dayNum: 28,
+    dateString: '2026-10-28',
+    time: '14:00 - 15:30',
+    tag: 'Governance',
+    title: 'GEC Leadership Session',
+    channel: 'Citadel Executive Council Chamber',
+    location: 'Executive Council Chambers, PCCM Wing',
+    category: 'Events',
+    description: 'Institutional leadership alignment on stewardship, Q4 capital milestones, and administrative protocol.',
+    attendees: [
+      { initials: 'CI', bg: 'bg-slate-700', name: 'Pastor Christian Ike' },
+      { initials: 'BA', bg: 'bg-teal-700', name: 'Pastor Biola Adeyoola' },
+    ],
+  },
   {
     id: 'evt-6',
     dayNum: 28,
@@ -381,7 +430,8 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
   const [internalSelectedDay, setInternalSelectedDay] = useState<number>(() => {
     if (controlledSelectedDay !== undefined) return controlledSelectedDay;
     if (initialMonth === 'January 2026') return 16;
-    return 27;
+    const now = new Date();
+    return now.getDate();
   });
   const [activeCategory, setActiveCategory] = useState<'All' | 'Meeting' | 'Events' | 'Holidays'>('All');
   const [eventsList, setEventsList] = useState<ScheduleEvent[]>(propEvents || citadelEvents);
@@ -421,16 +471,34 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
   };
 
   const handlePrevMonth = () => {
-    setCurrentMonthDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+    setCurrentMonthDate((prev) => {
+      const nextMonth = new Date(prev.getFullYear(), prev.getMonth() - 1, 1);
+      const now = new Date();
+      if (nextMonth.getFullYear() === now.getFullYear() && nextMonth.getMonth() === now.getMonth()) {
+        setInternalSelectedDay(now.getDate());
+      } else {
+        setInternalSelectedDay(1);
+      }
+      return nextMonth;
+    });
   };
 
   const handleNextMonth = () => {
-    setCurrentMonthDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+    setCurrentMonthDate((prev) => {
+      const nextMonth = new Date(prev.getFullYear(), prev.getMonth() + 1, 1);
+      const now = new Date();
+      if (nextMonth.getFullYear() === now.getFullYear() && nextMonth.getMonth() === now.getMonth()) {
+        setInternalSelectedDay(now.getDate());
+      } else {
+        setInternalSelectedDay(1);
+      }
+      return nextMonth;
+    });
   };
 
   const handleJumpToToday = () => {
     const today = new Date();
-    setCurrentMonthDate(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
+    setCurrentMonthDate(new Date(today.getFullYear(), today.getMonth(), 1));
     handleDayClick(today.getDate());
   };
 

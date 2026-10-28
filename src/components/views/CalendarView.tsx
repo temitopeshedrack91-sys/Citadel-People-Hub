@@ -26,7 +26,10 @@ export interface CalendarEventItem {
 
 export const CalendarView: React.FC = () => {
   const { currentUser, currentRole } = useAuth();
-  const [currentMonthDate, setCurrentMonthDate] = useState<Date>(() => new Date(2026, 9, 1)); // October 2026
+  const [currentMonthDate, setCurrentMonthDate] = useState<Date>(() => {
+    const today = new Date();
+    return new Date(today.getFullYear(), today.getMonth(), 1);
+  });
   const [activeCategory, setActiveCategory] = useState('All');
   const [syncNotice, setSyncNotice] = useState<string | null>(null);
   const [filterByMonth, setFilterByMonth] = useState(false); // Default shows all upcoming, toggleable
@@ -136,7 +139,8 @@ export const CalendarView: React.FC = () => {
   };
 
   const handleResetToCurrentMonth = () => {
-    setCurrentMonthDate(new Date(2026, 9, 1));
+    const today = new Date();
+    setCurrentMonthDate(new Date(today.getFullYear(), today.getMonth(), 1));
   };
 
   const filteredEvents = allEvents.filter((e) => {
@@ -196,7 +200,9 @@ export const CalendarView: React.FC = () => {
     setTimeout(() => setSyncNotice(null), 4000);
   };
 
-  const isCurrentMonthActive = currentMonthKey === '2026-10';
+  const isCurrentMonthActive =
+    currentMonthDate.getFullYear() === new Date().getFullYear() &&
+    currentMonthDate.getMonth() === new Date().getMonth();
 
   return (
     <div className="space-y-6 font-sans animate-fade-in text-slate-900">
