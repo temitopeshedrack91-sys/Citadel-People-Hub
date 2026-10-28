@@ -5,7 +5,7 @@ export const TrellisDocs: React.FC = () => {
   const docs = [
     {
       id: 'doc-1',
-      title: 'Citadel People Hub Mobile App v3.2 Release Spec',
+      title: 'Citadel People Hub Mobile App Spec',
       author: 'Nadia Safitri',
       updated: 'Oct 18, 2026',
       summary: 'Specifications for biometric check-in, offline leave requests, and self-service approval integration.',
@@ -30,7 +30,7 @@ export const TrellisDocs: React.FC = () => {
     <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/50">
       <div className="flex items-center justify-between pb-2">
         <div>
-          <h3 className="text-sm font-black text-slate-900 tracking-tight">Citadel People Hub • v3.2 Documentation</h3>
+          <h3 className="text-sm font-black text-slate-900 tracking-tight">Citadel People Hub Documentation</h3>
           <p className="text-[11px] text-slate-400 font-medium">Sprint 14 HR specifications, biometric sync guides, and compliance standards</p>
         </div>
         <button className="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs hover:bg-slate-800">

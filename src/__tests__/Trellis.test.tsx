@@ -4,11 +4,11 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { TrellisProvider, useTrellis } from '../components/trellis/TrellisContext';
 import { TrellisApp } from '../components/trellis/TrellisApp';
 
-describe('Citadel People Hub • v3.2 release (Project Management Module)', () => {
+describe('Citadel People Hub (Project Management Module)', () => {
   it('renders the Citadel People Hub project board with 4 columns matching the screenshots', () => {
     render(<TrellisApp />);
 
-    expect(screen.getAllByText('Citadel People Hub • v3.2 release').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Citadel People Hub').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByTestId('trellis-column-to-do')).toBeInTheDocument();
     expect(screen.getByTestId('trellis-column-in-progress')).toBeInTheDocument();
     expect(screen.getByTestId('trellis-column-in-review')).toBeInTheDocument();

@@ -197,7 +197,7 @@ export const TrellisTimeline: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xs font-black text-slate-900 tracking-tight">Team workload</h3>
-              <p className="text-[10px] text-slate-400 font-medium">Citadel People Hub • v3.2 release</p>
+              <p className="text-[10px] text-slate-400 font-medium">Citadel People Hub</p>
             </div>
             <span className="text-[10px] font-semibold text-slate-400">this week, hours</span>
           </div>

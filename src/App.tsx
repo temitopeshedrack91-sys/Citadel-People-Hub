@@ -151,7 +151,7 @@ const MainAppLayout: React.FC = () => {
       case 'settings':
         return 'Settings';
       case 'projects':
-        return 'Citadel People Hub • v3.2 release';
+        return 'Citadel People Hub';
       case 'team-notes':
         return 'Team Notes';
       case 'audit-logs':

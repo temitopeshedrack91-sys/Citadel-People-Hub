@@ -50,7 +50,9 @@ export type NavModule =
   | 'integrations'
   | 'ai-assistant'
   | 'settings'
-  | 'audit-logs';
+  | 'audit-logs'
+  | 'approvals'
+  | 'birthdays';
 
 interface SidebarProps {
   currentModule: NavModule;
@@ -118,8 +120,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           label: 'Projects',
           icon: FolderTree,
           visible: true,
-          badge: 'v3.2',
-          badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
         },
       ],
     },

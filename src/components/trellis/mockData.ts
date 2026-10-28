@@ -254,7 +254,7 @@ export const initialTasks: TrellisTask[] = [
   },
   {
     id: 'PAS-226',
-    title: 'App Store screenshots for v3.2',
+    title: 'App Store screenshots',
     description: 'Create high-res iPhone 15 Pro mockups showcasing biometric attendance, leave approval, and staff directory.',
     status: 'In progress',
     labels: ['Marketing'],

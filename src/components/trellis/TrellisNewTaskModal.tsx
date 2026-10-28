@@ -86,7 +86,7 @@ export const TrellisNewTaskModal: React.FC = () => {
           <div>
             <h3 className="text-base font-black text-slate-900 tracking-tight">Create New Task</h3>
             <p className="text-xs text-slate-400 font-medium">
-              Citadel People Hub • v3.2 release (Sprint 14 • Ends Oct 30)
+              Citadel People Hub (Sprint 14 • Ends Oct 30)
             </p>
           </div>
           <button

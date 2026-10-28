@@ -639,7 +639,7 @@ export const TrellisTaskDetail: React.FC = () => {
           </h4>
           <div className="grid grid-cols-2 gap-2">
             <div className="h-20 bg-slate-100 rounded-xl border border-slate-200 flex flex-col items-center justify-center p-2 text-center text-[10px] text-slate-500 font-medium">
-              <span>citadel_mobile_mockup_v3.2.png</span>
+              <span>citadel_mobile_mockup.png</span>
               <span className="text-slate-400">1.4 MB</span>
             </div>
             <div className="h-20 bg-slate-900 rounded-xl flex flex-col items-center justify-center p-2 text-center text-[10px] text-amber-400 font-bold">

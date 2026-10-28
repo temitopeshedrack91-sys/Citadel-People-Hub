@@ -179,7 +179,7 @@ export const TrellisHeader: React.FC = () => {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-base sm:text-xl font-bold text-slate-900 tracking-tight leading-snug">
-                {myTasksMode ? 'My Assigned Tasks' : 'Citadel People Hub • v3.2 release'}
+                {myTasksMode ? 'My Assigned Tasks' : 'Citadel People Hub'}
               </h1>
               <span className="text-[11px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full shrink-0">
                 Sprint 14 • Ends Oct 30
