@@ -8,6 +8,8 @@ import {
   AlertCircle,
   MoreHorizontal,
   ChevronRight,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { useTrellis } from './TrellisContext';
 import { TrellisTask, TaskStatus, TaskLabel } from './types';
@@ -49,6 +51,8 @@ export const TrellisBoard: React.FC = () => {
     setSelectedTaskId,
     moveTaskStatus,
     setIsNewTaskModalOpen,
+    deleteTask,
+    setIsEditMode,
   } = useTrellis();
 
   // Filter tasks based on search, assignee, label, and myTasksMode
@@ -145,28 +149,58 @@ export const TrellisBoard: React.FC = () => {
                         }}
                         className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-[0_2px_8px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_22px_rgba(15,23,42,0.06)] hover:border-slate-300 transition-all duration-150 cursor-pointer space-y-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#083E34] focus-visible:ring-offset-2 select-none"
                       >
-                        {/* Labels row */}
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          {task.labels.map((lbl) => (
-                            <span
-                              key={lbl}
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
-                                labelColors[lbl] || 'bg-slate-100 text-slate-700'
-                              }`}
+                        {/* Top row: Labels & Quick Actions */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {task.labels.map((lbl) => (
+                              <span
+                                key={lbl}
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                                  labelColors[lbl] || 'bg-slate-100 text-slate-700'
+                                }`}
+                              >
+                                {lbl}
+                              </span>
+                            ))}
+                            {task.assignmentStatus === 'pending' && (
+                              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                                Pending
+                              </span>
+                            )}
+                            {task.assignmentStatus === 'declined' && (
+                              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                                Declined
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity shrink-0">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedTaskId(task.id);
+                                setIsEditMode(true);
+                              }}
+                              data-testid={`trellis-card-edit-${task.id}`}
+                              title="Edit task"
+                              className="p-1 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition"
                             >
-                              {lbl}
-                            </span>
-                          ))}
-                          {task.assignmentStatus === 'pending' && (
-                            <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
-                              Pending
-                            </span>
-                          )}
-                          {task.assignmentStatus === 'declined' && (
-                            <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
-                              Declined
-                            </span>
-                          )}
+                              <Pencil className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteTask(task.id);
+                              }}
+                              data-testid={`trellis-card-delete-${task.id}`}
+                              title="Delete task"
+                              className="p-1 rounded-md hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
                         </div>
 
                         {/* Title */}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTrellis } from './TrellisContext';
-import { Calendar, User, Clock, CheckCircle2 } from 'lucide-react';
+import { Calendar, User, Clock, CheckCircle2, Pencil, Trash2 } from 'lucide-react';
 import { TaskStatus } from './types';
 
 export const TrellisList: React.FC = () => {
@@ -13,6 +13,8 @@ export const TrellisList: React.FC = () => {
     selectedLabelFilter,
     searchQuery,
     setSelectedTaskId,
+    deleteTask,
+    setIsEditMode,
   } = useTrellis();
 
   const filteredTasks = tasks.filter((t) => {
@@ -101,6 +103,35 @@ export const TrellisList: React.FC = () => {
                           </span>
                         </div>
                       )}
+
+                      {/* Quick Edit & Delete Actions */}
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedTaskId(task.id);
+                            setIsEditMode(true);
+                          }}
+                          data-testid={`trellis-list-edit-${task.id}`}
+                          title="Edit task"
+                          className="p-1 rounded-md hover:bg-slate-200/80 text-slate-400 hover:text-slate-700 transition"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteTask(task.id);
+                          }}
+                          data-testid={`trellis-list-delete-${task.id}`}
+                          title="Delete task"
+                          className="p-1 rounded-md hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );

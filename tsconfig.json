@@ -23,5 +23,11 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "utils",
+    "src/utils/supabase/middleware.ts",
+    "src/utils/supabase/server.ts"
+  ]
 }

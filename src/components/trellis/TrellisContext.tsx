@@ -34,6 +34,9 @@ interface TrellisContextType {
   markAllNotificationsAsRead: () => void;
   createTask: (input: CreateTaskInput) => TrellisTask;
   updateTask: (taskId: string, updates: Partial<TrellisTask>) => void;
+  deleteTask: (taskId: string) => void;
+  isEditMode: boolean;
+  setIsEditMode: (val: boolean) => void;
   assignTask: (taskId: string, newAssigneeId: string) => void;
   acceptTask: (taskId: string) => void;
   declineTask: (taskId: string, reason?: string) => void;
@@ -112,6 +115,7 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
   const [isInboxOpen, setIsInboxOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [activeToast, setActiveToast] = useState<ActivityHistoryItem | null>(null);
   const [undoStack, setUndoStack] = useState<ActivityHistoryItem[]>([]);
 
@@ -233,6 +237,36 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
       prev.map((t) => (t.id === taskId ? { ...t, ...updates } : t))
     );
   }, []);
+
+  // Delete Task Flow with Undo Support
+  const deleteTask = useCallback(
+    (taskId: string) => {
+      const taskToDelete = tasks.find((t) => t.id === taskId);
+      if (!taskToDelete) return;
+
+      setTasks((prev) => prev.filter((t) => t.id !== taskId));
+      if (selectedTaskId === taskId) {
+        setSelectedTaskId(null);
+        setIsEditMode(false);
+      }
+
+      const toastItem: ActivityHistoryItem = {
+        id: `act-${Date.now()}`,
+        taskId,
+        taskTitle: taskToDelete.title,
+        previousStatus: taskToDelete.status,
+        newStatus: taskToDelete.status,
+        timestamp: Date.now(),
+        message: `Deleted task "${taskToDelete.title}"`,
+        taskBackup: taskToDelete,
+        actionType: 'delete',
+      };
+
+      setActiveToast(toastItem);
+      setUndoStack((prev) => [toastItem, ...prev]);
+    },
+    [tasks, selectedTaskId]
+  );
 
   // Reassignment Flow
   const assignTask = useCallback(
@@ -383,11 +417,15 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (undoStack.length === 0) return;
     const [lastAction, ...rest] = undoStack;
 
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === lastAction.taskId ? { ...t, status: lastAction.previousStatus } : t
-      )
-    );
+    if (lastAction.actionType === 'delete' && lastAction.taskBackup) {
+      setTasks((prev) => [lastAction.taskBackup!, ...prev]);
+    } else {
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === lastAction.taskId ? { ...t, status: lastAction.previousStatus } : t
+        )
+      );
+    }
 
     setUndoStack(rest);
     setActiveToast(null);
@@ -410,6 +448,9 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
         markAllNotificationsAsRead,
         createTask,
         updateTask,
+        deleteTask,
+        isEditMode,
+        setIsEditMode,
         assignTask,
         acceptTask,
         declineTask,

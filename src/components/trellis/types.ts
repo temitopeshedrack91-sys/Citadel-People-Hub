@@ -86,6 +86,8 @@ export interface ActivityHistoryItem {
   newStatus: TaskStatus;
   timestamp: number;
   message: string;
+  taskBackup?: TrellisTask;
+  actionType?: 'status_change' | 'delete';
 }
 
 export type ViewTab = 'board' | 'list' | 'timeline' | 'docs' | 'files';

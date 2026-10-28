@@ -71,6 +71,12 @@ export const TeamNotesView: React.FC = () => {
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 2500);
+  };
 
   // New Note
   const [newTitle, setNewTitle] = useState('');
@@ -360,6 +366,12 @@ export const TeamNotesView: React.FC = () => {
               </div>
             </form>
           </div>
+        </div>
+      )}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 animate-fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span>{toastMessage}</span>
         </div>
       )}
     </div>
