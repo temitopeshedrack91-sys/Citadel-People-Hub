@@ -380,23 +380,28 @@ Timestamp:     ${new Date().toLocaleString()}
 
               {/* File Attachment Input */}
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Select File (PDF, DOCX, XLSX)</label>
-                <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:border-[#083E34] transition cursor-pointer relative">
+                <label className="block text-slate-700 font-semibold mb-1">Select File (PDF, DOCX, XLSX) *</label>
+                <label
+                  htmlFor="document-file-input"
+                  className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:border-[#083E34] transition cursor-pointer relative block group"
+                >
                   <input
+                    id="document-file-input"
                     type="file"
                     onChange={handleFileChange}
-                    required
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg"
-                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
                   />
-                  <Upload className="w-6 h-6 mx-auto text-slate-400 mb-1" />
-                  <p className="text-slate-700 font-medium text-xs">
-                    {selectedFileName || 'Click to choose a file from your computer'}
-                  </p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">
-                    {selectedFileName ? `File Size: ${selectedFileSize}` : 'Supported: PDF, Word, Excel (Max 25MB)'}
-                  </p>
-                </div>
+                  <div className="pointer-events-none select-none">
+                    <Upload className="w-6 h-6 mx-auto text-slate-400 group-hover:text-[#083E34] mb-1 transition-colors" />
+                    <p className="text-slate-700 font-medium text-xs">
+                      {selectedFileName || 'Click to choose a file from your computer'}
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      {selectedFileName ? `File Size: ${selectedFileSize}` : 'Supported: PDF, Word, Excel (Max 25MB)'}
+                    </p>
+                  </div>
+                </label>
               </div>
 
               <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
