@@ -310,7 +310,7 @@ export const Header: React.FC<HeaderProps> = ({
                 data-testid="header-user-profile-pill"
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                 className="flex items-center gap-2 sm:gap-2.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl border border-slate-200/90 hover:bg-slate-50 cursor-pointer transition select-none"
-                title="Account Options & Switch User"
+                title="Account Options"
               >
                 <div className="relative shrink-0">
                   {currentUser.avatarUrl ? (
@@ -360,17 +360,6 @@ export const Header: React.FC<HeaderProps> = ({
                     className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 rounded-xl transition flex items-center gap-2 cursor-pointer"
                   >
                     <span>Edit Profile Details</span>
-                  </button>
-
-                  <button
-                    onClick={() => onOpenLoginModal?.()}
-                    data-testid="header-switch-account-btn"
-                    className="w-full text-left px-3 py-2 text-xs font-bold text-[#083E34] hover:bg-[#FFF8F0] rounded-xl transition flex items-center justify-between cursor-pointer"
-                  >
-                    <span>Switch User / 7 Demo Accounts</span>
-                    <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#FF9900]/20 text-[#D97706]">
-                      Demo
-                    </span>
                   </button>
 
                   <div className="my-1 border-t border-slate-100" />
