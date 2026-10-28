@@ -2,8 +2,7 @@
  * Data Service Singleton Instances
  * Citadel People Hub
  *
- * Production data access goes through Laravel. Mock repositories are available
- * only in development when no Laravel API URL is configured.
+ * Connected directly to Supabase PostgreSQL & Storage, with optional Laravel API adapter.
  */
 
 import {
@@ -18,27 +17,23 @@ import {
 } from './laravelAdapter';
 import { isLaravelApiConfigured } from './laravelClient';
 import {
-  MockAttendanceRepository,
-  MockAuditRepository,
-  MockDocumentRepository,
-  MockEmployeeRepository,
-  MockLeaveRepository,
-  MockNotificationRepository,
-  MockOrganizationRepository,
-  MockTalentRepository,
-} from './mockRepository';
+  SupabaseAttendanceRepository,
+  SupabaseAuditRepository,
+  SupabaseDocumentRepository,
+  SupabaseEmployeeRepository,
+  SupabaseLeaveRepository,
+  SupabaseNotificationRepository,
+  SupabaseOrganizationRepository,
+  SupabaseTalentRepository,
+} from './supabaseAdapter';
 
 const useLaravelApi = isLaravelApiConfigured();
 
-if (import.meta.env.PROD && !useLaravelApi) {
-  throw new Error('VITE_API_BASE_URL must be configured for production builds.');
-}
-
-export const employeeRepository = useLaravelApi ? new LaravelEmployeeRepository() : new MockEmployeeRepository();
-export const organizationRepository = useLaravelApi ? new LaravelOrganizationRepository() : new MockOrganizationRepository();
-export const leaveRepository = useLaravelApi ? new LaravelLeaveRepository() : new MockLeaveRepository();
-export const attendanceRepository = useLaravelApi ? new LaravelAttendanceRepository() : new MockAttendanceRepository();
-export const auditRepository = useLaravelApi ? new LaravelAuditRepository() : new MockAuditRepository();
-export const documentRepository = useLaravelApi ? new LaravelDocumentRepository() : new MockDocumentRepository();
-export const notificationRepository = useLaravelApi ? new LaravelNotificationRepository() : new MockNotificationRepository();
-export const talentRepository = useLaravelApi ? new LaravelTalentRepository() : new MockTalentRepository();
+export const employeeRepository = useLaravelApi ? new LaravelEmployeeRepository() : new SupabaseEmployeeRepository();
+export const organizationRepository = useLaravelApi ? new LaravelOrganizationRepository() : new SupabaseOrganizationRepository();
+export const leaveRepository = useLaravelApi ? new LaravelLeaveRepository() : new SupabaseLeaveRepository();
+export const attendanceRepository = useLaravelApi ? new LaravelAttendanceRepository() : new SupabaseAttendanceRepository();
+export const auditRepository = useLaravelApi ? new LaravelAuditRepository() : new SupabaseAuditRepository();
+export const documentRepository = useLaravelApi ? new LaravelDocumentRepository() : new SupabaseDocumentRepository();
+export const notificationRepository = useLaravelApi ? new LaravelNotificationRepository() : new SupabaseNotificationRepository();
+export const talentRepository = useLaravelApi ? new LaravelTalentRepository() : new SupabaseTalentRepository();

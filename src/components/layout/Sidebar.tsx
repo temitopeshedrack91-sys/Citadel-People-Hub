@@ -115,6 +115,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           badge: '2',
           badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
         },
+
+
         {
           id: 'projects' as NavModule,
           label: 'Projects',
@@ -370,7 +372,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </button>
           )}
 
-          {/* Persona Switcher / Role Chip */}
+          {/* Switch Role / Login Button */}
           <button
             onClick={() => {
               onOpenLoginModal?.();
@@ -380,7 +382,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className={`w-full flex items-center text-xs text-slate-300 font-medium hover:text-white hover:bg-white/5 rounded-xl transition border border-white/10 min-h-[40px] ${
               isCollapsed ? 'w-10 h-10 mx-auto justify-center p-0' : 'justify-between px-3 py-2'
             }`}
-            title={`Switch Role: ${currentPersona.badgeLabel}`}
+            title={`Account: ${currentPersona.badgeLabel} — Click to Sign In / Switch`}
           >
             <div className="flex items-center gap-2 truncate">
               <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -391,9 +393,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               )}
             </div>
             {!isCollapsed && (
-              <span className="text-[10px] text-slate-400 font-medium">Switch</span>
+              <span className="text-[10px] text-slate-400 font-medium">Switch / Login</span>
             )}
           </button>
+
         </div>
       </aside>
     </>

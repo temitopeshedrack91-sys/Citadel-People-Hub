@@ -7,8 +7,9 @@ import {VitePWA} from 'vite-plugin-pwa';
 export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const apiBaseUrl = env.VITE_API_BASE_URL || process.env.VITE_API_BASE_URL;
-  if (command === 'build' && !apiBaseUrl?.trim()) {
-    throw new Error('VITE_API_BASE_URL must be set before building the production frontend.');
+  const supabaseUrl = env.VITE_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (command === 'build' && !apiBaseUrl?.trim() && !supabaseUrl?.trim()) {
+    throw new Error('VITE_API_BASE_URL or Supabase configuration must be set before building the production frontend.');
   }
 
   return {

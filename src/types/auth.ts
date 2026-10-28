@@ -15,6 +15,9 @@ export interface User {
   staffId: string;
   name: string;
   email: string;
+  phone?: string;
+  location?: string;
+  bio?: string;
   role: UserRole;
   entityId: string;
   entityName: string;

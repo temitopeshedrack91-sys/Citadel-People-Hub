@@ -10,6 +10,7 @@ import {
   TaskLabel,
 } from './types';
 import { initialTeamMembers, initialTasks } from './mockData';
+import { taskDbService } from '../../services/supabaseService';
 
 interface CreateTaskInput {
   title: string;
@@ -119,6 +120,39 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [activeToast, setActiveToast] = useState<ActivityHistoryItem | null>(null);
   const [undoStack, setUndoStack] = useState<ActivityHistoryItem[]>([]);
 
+  // Fetch tasks from Supabase and subscribe to realtime changes
+  React.useEffect(() => {
+    let isMounted = true;
+    taskDbService
+      .fetchTasks()
+      .then((dbTasks) => {
+        if (isMounted && dbTasks.length > 0) {
+          setTasks(dbTasks);
+        }
+      })
+      .catch((err) => console.warn('Supabase fetch tasks error:', err));
+
+    const unsubscribe = taskDbService.subscribeToTasks((payload) => {
+      if (payload.eventType === 'INSERT') {
+        setTasks((prev) => {
+          if (prev.some((t) => t.id === payload.new.id)) return prev;
+          return [payload.new, ...prev];
+        });
+      } else if (payload.eventType === 'UPDATE') {
+        setTasks((prev) =>
+          prev.map((t) => (t.id === payload.new.id ? { ...t, ...payload.new } : t))
+        );
+      } else if (payload.eventType === 'DELETE') {
+        setTasks((prev) => prev.filter((t) => t.id !== payload.old.id));
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, []);
+
   // Listen for global open new task event
   React.useEffect(() => {
     const handleOpenModal = () => setIsNewTaskModalOpen(true);
@@ -210,6 +244,11 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       setTasks((prev) => [createdTask, ...prev]);
 
+      // Save to Supabase database
+      taskDbService.upsertTask(createdTask).catch((err) =>
+        console.warn('Supabase task save error:', err)
+      );
+
       // If assigned to someone else, send them a notification
       if (!isSelfAssignment) {
         const notif: TrellisNotification = {
@@ -233,9 +272,16 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
   );
 
   const updateTask = useCallback((taskId: string, updates: Partial<TrellisTask>) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, ...updates } : t))
-    );
+    setTasks((prev) => {
+      const updatedList = prev.map((t) => (t.id === taskId ? { ...t, ...updates } : t));
+      const target = updatedList.find((t) => t.id === taskId);
+      if (target) {
+        taskDbService.upsertTask(target).catch((err) =>
+          console.warn('Supabase updateTask error:', err)
+        );
+      }
+      return updatedList;
+    });
   }, []);
 
   // Delete Task Flow with Undo Support
@@ -249,6 +295,11 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setSelectedTaskId(null);
         setIsEditMode(false);
       }
+
+      // Delete from Supabase database
+      taskDbService.deleteTask(taskId).catch((err) =>
+        console.warn('Supabase deleteTask error:', err)
+      );
 
       const toastItem: ActivityHistoryItem = {
         id: `act-${Date.now()}`,
@@ -388,6 +439,11 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
         prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
       );
 
+      // Save updated status to Supabase
+      taskDbService
+        .upsertTask({ ...task, status: newStatus })
+        .catch((err) => console.warn('Supabase moveTaskStatus error:', err));
+
       // Target reviewer / assignee name for toast
       const reviewer = teamMembers.find((m) => m.id === task.reviewerId);
       const assignee = teamMembers.find((m) => m.id === task.assigneeId);
@@ -419,11 +475,21 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     if (lastAction.actionType === 'delete' && lastAction.taskBackup) {
       setTasks((prev) => [lastAction.taskBackup!, ...prev]);
+      taskDbService
+        .upsertTask(lastAction.taskBackup!)
+        .catch((err) => console.warn('Supabase undo restore error:', err));
     } else {
       setTasks((prev) =>
-        prev.map((t) =>
-          t.id === lastAction.taskId ? { ...t, status: lastAction.previousStatus } : t
-        )
+        prev.map((t) => {
+          if (t.id === lastAction.taskId) {
+            const reverted = { ...t, status: lastAction.previousStatus };
+            taskDbService
+              .upsertTask(reverted)
+              .catch((err) => console.warn('Supabase undo status error:', err));
+            return reverted;
+          }
+          return t;
+        })
       );
     }
 

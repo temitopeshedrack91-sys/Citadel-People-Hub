@@ -303,6 +303,9 @@ const MainAppLayout: React.FC = () => {
       </Row>
       </Container>
 
+      {/* Login & Role Switcher Modal */}
+      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+
       {/* 4. PWA Offline Status Toast */}
       <OfflineIndicator />
     </div>

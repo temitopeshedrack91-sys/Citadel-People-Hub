@@ -6,7 +6,6 @@ import {
   Search,
   Menu,
   MessageSquare,
-  HelpCircle,
   Command,
   ChevronsRight,
   Plus,
@@ -15,7 +14,7 @@ import { useAuth } from '../../context/AuthContext';
 import { PWAInstallButton } from '../pwa/PWAInstallButton';
 import { CITADEL_BRAND } from '../../theme/branding';
 import { CitadelLogo } from '../brand/CitadelLogo';
-import { LoginModal } from '../auth/LoginModal';
+import { ProfileEditModal } from '../profile/ProfileEditModal';
 import { NavModule } from './Sidebar';
 
 interface HeaderProps {
@@ -47,7 +46,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   const [isEntityMenuOpen, setIsEntityMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -301,14 +300,21 @@ export const Header: React.FC<HeaderProps> = ({
               <MessageSquare className="w-4 h-4 text-slate-600" />
             </button>
 
-            {/* User Profile Pill ("Dr. Bukola Adeleke") matching reference */}
+            {/* User Profile Pill ("Dr. Bukola Adeleke") — click to edit profile */}
             <div
               data-testid="header-user-profile-pill"
-              onClick={() => setIsLoginModalOpen(true)}
-              className="flex items-center gap-2 sm:gap-2.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl border border-slate-200/90 hover:bg-slate-50 cursor-pointer transition group"
-              title="Switch role or manage session"
+              onClick={() => setIsProfileOpen(true)}
+              className="flex items-center gap-2 sm:gap-2.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl border border-slate-200/90 hover:bg-slate-50 cursor-pointer transition"
+              title="Edit profile"
             >
               <div className="relative shrink-0">
+                {currentUser.avatarUrl ? (
+                  <img
+                    src={currentUser.avatarUrl}
+                    alt={currentUser.name}
+                    className="w-8 h-8 rounded-full object-cover shadow-xs"
+                  />
+                ) : (
                 <div className="w-8 h-8 rounded-full bg-[#083E34] text-white font-bold flex items-center justify-center text-xs shadow-xs">
                   {currentUser.name
                     .split(' ')
@@ -316,6 +322,7 @@ export const Header: React.FC<HeaderProps> = ({
                     .slice(0, 2)
                     .join('')}
                 </div>
+                )}
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
               </div>
               <div className="hidden sm:block text-left">
@@ -326,7 +333,6 @@ export const Header: React.FC<HeaderProps> = ({
                   {currentUser.jobTitle || 'PCCM Super Admin'}
                 </div>
               </div>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 transition shrink-0 hidden sm:block" />
             </div>
 
             {/* "New task" button beside user profile */}
@@ -353,8 +359,8 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </header>
 
-      {/* Role & Persona Switcher Modal */}
-      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+      {/* Profile Edit Modal */}
+      <ProfileEditModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
     </>
   );
 };
