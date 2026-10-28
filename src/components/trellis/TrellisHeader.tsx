@@ -162,9 +162,9 @@ export const TrellisHeader: React.FC = () => {
           <button
             onClick={() => setIsNewTaskModalOpen(true)}
             data-testid="trellis-new-task-btn"
-            className="px-3.5 py-2 rounded-xl bg-[#083E34] hover:bg-[#052C25] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer min-h-[40px] sm:min-h-[36px]"
+            className="px-3.5 py-2 rounded-xl bg-[#083E34] hover:bg-[#052C25] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#FF9900]/30 transition active:scale-95 cursor-pointer min-h-[40px] sm:min-h-[36px]"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5 text-[#FF9900]" />
             <span>New task</span>
           </button>
         </div>
@@ -173,7 +173,7 @@ export const TrellisHeader: React.FC = () => {
       {/* Project Title, Subtitle, Sprint chip, & Key Metrics */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-1">
         <div className="flex items-start sm:items-center gap-3 min-w-0">
-          <div className="w-11 h-11 rounded-2xl bg-amber-400 flex items-center justify-center shrink-0 shadow-xs mt-0.5 sm:mt-0">
+          <div className="w-11 h-11 rounded-2xl bg-[#FF9900] flex items-center justify-center shrink-0 shadow-[0_2px_8px_rgba(255,153,0,0.25)] mt-0.5 sm:mt-0">
             <Smartphone className="w-5 h-5 text-slate-900" />
           </div>
           <div className="min-w-0 flex-1">
@@ -181,7 +181,7 @@ export const TrellisHeader: React.FC = () => {
               <h1 className="text-base sm:text-xl font-bold text-slate-900 tracking-tight leading-snug">
                 {myTasksMode ? 'My Assigned Tasks' : 'Citadel People Hub'}
               </h1>
-              <span className="text-[11px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full shrink-0">
+              <span className="text-[11px] font-bold text-[#D97706] bg-[#FFF8F0] border border-[#FFE0B2] px-2 py-0.5 rounded-full shrink-0">
                 Sprint 14 • Ends Oct 30
               </span>
             </div>
@@ -272,7 +272,7 @@ export const TrellisHeader: React.FC = () => {
             <select
               value={selectedGroupFilter}
               onChange={(e) => setSelectedGroupFilter(e.target.value as any)}
-              className="w-full sm:w-auto min-h-[44px] px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-300 pr-8 appearance-none cursor-pointer"
+              className="w-full sm:w-auto min-h-[44px] px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-semibold focus:outline-none focus:border-[#FF9900] focus:ring-1 focus:ring-[#FF9900]/30 pr-8 appearance-none cursor-pointer"
             >
               <option value="Status">Group: Status</option>
               <option value="Assignee">Group: Assignee</option>
@@ -287,7 +287,7 @@ export const TrellisHeader: React.FC = () => {
               value={selectedAssigneeFilter}
               onChange={(e) => setSelectedAssigneeFilter(e.target.value)}
               data-testid="trellis-filter-assignee"
-              className="w-full sm:w-auto min-h-[44px] px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-300 pr-8 appearance-none cursor-pointer"
+              className="w-full sm:w-auto min-h-[44px] px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-semibold focus:outline-none focus:border-[#FF9900] focus:ring-1 focus:ring-[#FF9900]/30 pr-8 appearance-none cursor-pointer"
             >
               <option value="All">Assignee: All</option>
               {teamMembers.map((m) => (
@@ -304,7 +304,7 @@ export const TrellisHeader: React.FC = () => {
             <select
               value={selectedLabelFilter}
               onChange={(e) => setSelectedLabelFilter(e.target.value)}
-              className="w-full sm:w-auto min-h-[44px] px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-300 pr-8 appearance-none cursor-pointer"
+              className="w-full sm:w-auto min-h-[44px] px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-semibold focus:outline-none focus:border-[#FF9900] focus:ring-1 focus:ring-[#FF9900]/30 pr-8 appearance-none cursor-pointer"
             >
               <option value="All">Label: All</option>
               <option value="Feature">Feature</option>

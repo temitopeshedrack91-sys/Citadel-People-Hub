@@ -252,9 +252,9 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
             <button
               id="btn-add-employee-trigger"
               onClick={() => setShowAddModal(true)}
-              className="px-4 py-2 rounded-xl bg-[#083E34] hover:bg-[#052C25] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition"
+              className="px-4 py-2 rounded-xl bg-[#083E34] hover:bg-[#052C25] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#FF9900]/30 transition"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 text-[#FF9900]" />
               <span>Enroll Employee</span>
             </button>
           )}
@@ -275,7 +275,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-8 pr-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34]/20 outline-none transition"
+              className="w-full pl-8 pr-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-[#FF9900] focus:ring-1 focus:ring-[#FF9900]/25 outline-none transition"
             />
           </div>
 

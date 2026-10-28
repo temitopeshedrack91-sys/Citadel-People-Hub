@@ -444,9 +444,9 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
           <button
             onClick={() => setShowApplyModal(true)}
             data-testid="leave-apply-btn"
-            className="px-4 py-2.5 rounded-xl bg-[#083E34] hover:bg-[#062f28] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition active:scale-[0.98] shrink-0 min-h-[40px]"
+            className="px-4 py-2.5 rounded-xl bg-[#083E34] hover:bg-[#062f28] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#FF9900]/30 transition active:scale-[0.98] shrink-0 min-h-[40px]"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 text-[#FF9900]" />
             <span>Apply for Leave</span>
           </button>
         </div>
@@ -484,7 +484,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                 <X className="w-5 h-5" />
               </button>
               <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <CalendarDays className="w-4 h-4 text-emerald-300" />
+                <CalendarDays className="w-4 h-4 text-[#FF9900]" />
                 <span>Submit Leave Application</span>
               </h3>
               <p className="text-xs text-emerald-100/80 mt-0.5">

@@ -725,7 +725,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       <div className="mt-2 text-center">
                         <span className="text-xs font-bold text-slate-700 block">{d.day}</span>
                         {d.isToday && (
-                          <span className="text-[9px] font-black uppercase text-[#083E34] bg-emerald-50 px-1 py-0.2 rounded">
+                          <span className="text-[9px] font-black uppercase text-[#D97706] bg-[#FFF8F0] border border-[#FFE0B2] px-1 py-0.2 rounded">
                             Today
                           </span>
                         )}
@@ -805,9 +805,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <button
                 onClick={() => setIsQuickActionsOpen(true)}
                 data-testid="quick-actions-btn"
-                className="px-4 py-2 rounded-xl bg-[#083E34] hover:bg-[#052C25] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition active:scale-[0.98]"
+                className="px-4 py-2 rounded-xl bg-[#083E34] hover:bg-[#052C25] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#FF9900]/30 transition active:scale-[0.98]"
               >
-                <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+                <Zap className="w-3.5 h-3.5 text-[#FF9900] fill-[#FF9900]" />
                 <span>Quick Actions</span>
               </button>
             </div>
@@ -890,10 +890,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                 <div className="flex items-center gap-2">
-                  <Cake className="w-4 h-4 text-pink-500" />
+                  <Cake className="w-4 h-4 text-[#FF9900]" />
                   <h3 className="text-sm font-bold text-slate-900">Upcoming Birthdays</h3>
                 </div>
-                <span className="text-[10px] font-bold text-pink-700 bg-pink-50 px-2 py-0.5 rounded-full border border-pink-100">
+                <span className="text-[10px] font-bold text-[#D97706] bg-[#FFF8F0] px-2 py-0.5 rounded-full border border-[#FFE0B2]">
                   Citadel
                 </span>
               </div>
@@ -904,15 +904,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   return (
                     <div
                       key={b.id}
-                      className="p-2.5 rounded-xl border border-pink-100/80 bg-pink-50/30 flex items-center justify-between gap-2 text-xs"
+                      className="p-2.5 rounded-xl border border-[#FFE0B2]/60 bg-[#FFF8F0]/40 flex items-center justify-between gap-2 text-xs"
                     >
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-pink-100 text-pink-700 font-bold flex items-center justify-center text-[10px] shrink-0">
+                        <div className="w-7 h-7 rounded-full bg-[#FFF3E0] text-[#D97706] font-bold flex items-center justify-center text-[10px] shrink-0 border border-[#FFE0B2]">
                           {b.initials}
                         </div>
                         <div>
                           <p className="text-xs font-bold text-slate-900">{b.name}</p>
-                          <span className="text-[10px] text-pink-600 block">
+                          <span className="text-[10px] text-[#D97706] block">
                             {b.date} • {b.milestone}
                           </span>
                         </div>
@@ -924,7 +924,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         className={`px-2 py-1 rounded text-[11px] font-bold flex items-center gap-1 transition shrink-0 ${
                           isWished
                             ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-white hover:bg-pink-100 text-pink-700 border border-pink-200 shadow-2xs'
+                            : 'bg-white hover:bg-[#FFF3E0] text-[#D97706] border border-[#FFE0B2] shadow-2xs'
                         }`}
                       >
                         {isWished ? 'Wished' : 'Send Wish'}
@@ -944,7 +944,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     Pending Approvals Queue
                   </h3>
                 </div>
-                <span className="text-xs font-mono font-bold text-amber-800 bg-[#FFFBEB] border border-amber-200 px-2 py-0.5 rounded-full">
+                <span className="text-xs font-mono font-bold text-[#D97706] bg-[#FFF8F0] border border-[#FFE0B2] px-2 py-0.5 rounded-full">
                   {pendingActions.filter((a) => !resolvedActions[a.id]).length} Actions
                 </span>
               </div>

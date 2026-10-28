@@ -132,9 +132,9 @@ export const SettingsView: React.FC = () => {
         {activeTab === 'entities_depts' && (
           <button
             onClick={() => setShowAddDeptModal(true)}
-            className="px-3.5 py-2 rounded-xl bg-[#083E34] text-amber-300 hover:bg-[#062f28] text-xs font-black flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
+            className="px-3.5 py-2 rounded-xl bg-[#083E34] text-white hover:bg-[#062f28] text-xs font-black flex items-center gap-1.5 shadow-xs border border-[#FF9900]/30 transition active:scale-95 cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 text-[#FF9900]" />
             <span>Add Department</span>
           </button>
         )}
@@ -162,7 +162,7 @@ export const SettingsView: React.FC = () => {
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
           }`}
         >
-          <Users className="w-3.5 h-3.5 text-amber-500" />
+          <Users className="w-3.5 h-3.5 text-[#FF9900]" />
           <span>Group Executive Council (GEC) &amp; Shared Services (Sheet 3)</span>
         </button>
 
@@ -186,7 +186,7 @@ export const SettingsView: React.FC = () => {
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
           }`}
         >
-          <CheckCircle2 className="w-3.5 h-3.5 text-amber-500" />
+          <CheckCircle2 className="w-3.5 h-3.5 text-[#FF9900]" />
           <span>V1 Requirements</span>
         </button>
       </div>

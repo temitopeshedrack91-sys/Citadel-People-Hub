@@ -32,7 +32,7 @@ export const NotificationsView: React.FC = () => {
       case 'Leave':
         return <CalendarDays className="w-4 h-4 text-emerald-700" />;
       case 'Onboarding':
-        return <UserPlus className="w-4 h-4 text-amber-700" />;
+        return <UserPlus className="w-4 h-4 text-[#FF9900]" />;
       case 'Hardware':
         return <AlertCircle className="w-4 h-4 text-rose-600" />;
       default:
@@ -82,7 +82,7 @@ export const NotificationsView: React.FC = () => {
           >
             {tab}
             {tab === 'Unread' && (
-              <span className="ml-1.5 px-1.5 py-0.2 rounded-full bg-amber-400 text-[#083E34] text-[10px] font-black">
+              <span className="ml-1.5 px-1.5 py-0.2 rounded-full bg-[#FF9900] text-black text-[10px] font-black">
                 {notifications.filter((n) => !n.isRead).length}
               </span>
             )}

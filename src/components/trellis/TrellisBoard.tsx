@@ -22,10 +22,10 @@ const labelColors: Record<TaskLabel, string> = {
   Design: 'bg-indigo-100 text-indigo-700 border-indigo-200/60',
   Tech: 'bg-emerald-100 text-emerald-700 border-emerald-200/60',
   Onboarding: 'bg-sky-100 text-sky-700 border-sky-200/60',
-  Marketing: 'bg-amber-100 text-amber-700 border-amber-200/60',
+  Marketing: 'bg-[#FFF3E0] text-[#D97706] border-[#FFE0B2]',
   Data: 'bg-teal-100 text-teal-700 border-teal-200/60',
   Content: 'bg-orange-100 text-orange-700 border-orange-200/60',
-  'Design system': 'bg-amber-100 text-amber-800 border-amber-200/60',
+  'Design system': 'bg-[#FFF8F0] text-[#D97706] border-[#FFE0B2]',
 };
 
 const columnConfigs: {
@@ -34,7 +34,7 @@ const columnConfigs: {
   dotColor: string;
 }[] = [
   { status: 'To do', label: 'To do', dotColor: 'bg-slate-400' },
-  { status: 'In progress', label: 'In progress', dotColor: 'bg-amber-500' },
+  { status: 'In progress', label: 'In progress', dotColor: 'bg-[#FF9900]' },
   { status: 'In review', label: 'In review', dotColor: 'bg-purple-600' },
   { status: 'Done', label: 'Done', dotColor: 'bg-emerald-600' },
 ];

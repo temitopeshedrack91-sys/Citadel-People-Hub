@@ -167,9 +167,9 @@ export const ReportsView: React.FC = () => {
           </button>
           <button
             onClick={handlePrintPDF}
-            className="px-3.5 py-2 rounded-xl bg-[#083E34] text-white hover:bg-[#062f28] text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer active:scale-95 min-h-[38px]"
+            className="px-3.5 py-2 rounded-xl bg-[#083E34] text-white hover:bg-[#062f28] text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#FF9900]/30 transition cursor-pointer active:scale-95 min-h-[38px]"
           >
-            <Printer className="w-4 h-4" />
+            <Printer className="w-4 h-4 text-[#FF9900]" />
             <span>Print Report</span>
           </button>
         </div>
@@ -201,9 +201,9 @@ export const ReportsView: React.FC = () => {
                 {cgccStaff.filter((e) => e.contractStatus !== 'Permanent').length}
               </span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <span>Active Leave Requests:</span>
-              <span className="font-extrabold text-amber-900">
+              <span className="font-extrabold text-[#D97706] bg-[#FFF8F0] border border-[#FFE0B2] px-2 py-0.5 rounded-full text-[11px]">
                 {leaves.filter((l) => l.entityName.includes('CGCC') && l.status === 'Submitted').length} pending
               </span>
             </div>

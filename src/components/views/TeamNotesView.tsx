@@ -263,9 +263,9 @@ export const TeamNotesView: React.FC = () => {
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="px-3.5 py-2 rounded-xl bg-[#083E34] hover:bg-[#062f28] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer min-h-[38px] shrink-0"
+          className="px-3.5 py-2 rounded-xl bg-[#083E34] hover:bg-[#062f28] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#FF9900]/30 transition active:scale-95 cursor-pointer min-h-[38px] shrink-0"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4 text-[#FF9900]" />
           <span>New note</span>
         </button>
       </div>

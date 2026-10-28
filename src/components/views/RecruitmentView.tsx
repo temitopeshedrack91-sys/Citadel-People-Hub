@@ -48,9 +48,9 @@ export const RecruitmentView: React.FC = () => {
 
         <button
           onClick={() => {}}
-          className="px-3.5 py-2 rounded-xl bg-[#083E34] text-amber-300 hover:bg-[#062f28] text-xs font-black flex items-center gap-1.5 shadow-xs transition cursor-pointer active:scale-95"
+          className="px-3.5 py-2 rounded-xl bg-[#083E34] text-white hover:bg-[#062f28] text-xs font-black flex items-center gap-1.5 shadow-xs border border-[#FF9900]/30 transition cursor-pointer active:scale-95"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4 text-[#FF9900]" />
           <span>New Requisition</span>
         </button>
       </div>
@@ -77,7 +77,7 @@ export const RecruitmentView: React.FC = () => {
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
           }`}
         >
-          <Layers className="w-3.5 h-3.5 text-amber-500" />
+          <Layers className="w-3.5 h-3.5 text-[#FF9900]" />
           <span>Official 10-Stage Recruitment Framework (Sheet 8)</span>
         </button>
       </div>

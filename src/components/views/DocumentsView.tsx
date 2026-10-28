@@ -201,9 +201,9 @@ Timestamp:     ${new Date().toLocaleString()}
         {permissions.canManageDocuments && (
           <button
             onClick={() => setIsUploadModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-[#083E34] text-white hover:bg-[#062f28] text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer active:scale-95 min-h-[38px]"
+            className="px-3.5 py-2 rounded-xl bg-[#083E34] text-white hover:bg-[#062f28] text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#FF9900]/30 transition cursor-pointer active:scale-95 min-h-[38px]"
           >
-            <Upload className="w-4 h-4" />
+            <Upload className="w-4 h-4 text-[#FF9900]" />
             <span>Upload document</span>
           </button>
         )}
@@ -218,7 +218,7 @@ Timestamp:     ${new Date().toLocaleString()}
             placeholder="Search document title, category, or policy..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34]"
+            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#FF9900] focus:ring-1 focus:ring-[#FF9900]/25"
           />
         </div>
 
@@ -254,7 +254,7 @@ Timestamp:     ${new Date().toLocaleString()}
                 <div className="flex items-center gap-1.5 flex-wrap justify-end">
                   <Badge variant="citadel">{doc.category}</Badge>
                   {doc.accessLevel === 'PCCM_Only' && (
-                    <span className="p-1 rounded-md bg-amber-50 text-amber-800 border border-amber-200" title="Restricted to PCCM">
+                    <span className="p-1 rounded-md bg-[#FFF8F0] text-[#D97706] border border-[#FFE0B2]" title="Restricted to PCCM">
                       <Lock className="w-3 h-3" />
                     </span>
                   )}

@@ -527,7 +527,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
             onClick={() => setIsAddModalOpen(true)}
             data-testid="schedule-add-event-btn"
             title="Schedule new event"
-            className="p-1 rounded-lg text-slate-500 hover:text-[#083E34] hover:bg-slate-100 transition"
+            className="p-1 rounded-lg text-slate-500 hover:text-[#FF9900] hover:bg-slate-100 transition"
           >
             <Plus className="w-3.5 h-3.5" />
           </button>
@@ -591,7 +591,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
               onClick={() => handleDayClick(d.num)}
               className={`py-2 px-1 rounded-xl text-center transition-all duration-150 flex flex-col items-center relative cursor-pointer ${
                 isSelected
-                  ? 'bg-[#083E34] text-white shadow-xs font-bold ring-2 ring-[#083E34]/20'
+                  ? 'bg-[#083E34] text-white shadow-xs font-bold ring-2 ring-[#FF9900]/40'
                   : 'bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold'
               }`}
             >
@@ -600,7 +600,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
               </span>
               <span className="text-xs font-bold mt-0.5">{d.num}</span>
               {d.isToday && !isSelected && (
-                <span className="w-1 h-1 rounded-full bg-emerald-600 mt-0.5" title="Today" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#FF9900] mt-0.5" title="Today" />
               )}
             </button>
           );

@@ -152,7 +152,7 @@ export const AttendanceView: React.FC = () => {
               : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
           }`}
         >
-          <Building className="w-4 h-4 text-amber-500" />
+          <Building className="w-4 h-4 text-[#FF9900]" />
           <span>Shift Schedules &amp; Policies</span>
         </button>
       </div>
@@ -192,7 +192,7 @@ export const AttendanceView: React.FC = () => {
               className={`px-5 py-2.5 rounded-xl font-bold text-xs transition flex items-center gap-2 shadow-xs active:scale-[0.98] cursor-pointer ${
                 clockedIn
                   ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
-                  : 'bg-[#083E34] hover:bg-[#052C25] text-white'
+                  : 'bg-[#083E34] hover:bg-[#052C25] text-white border border-[#FF9900]/30'
               }`}
             >
               {clockedIn ? (
@@ -202,7 +202,7 @@ export const AttendanceView: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <LogIn className="w-4 h-4 text-emerald-300" />
+                  <LogIn className="w-4 h-4 text-[#FF9900]" />
                   <span>Record Clock-In (Web Portal)</span>
                 </>
               )}
@@ -213,7 +213,7 @@ export const AttendanceView: React.FC = () => {
           <div className="bg-slate-900 text-white rounded-xl p-4 border border-slate-800">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2">
-                <Cpu className="w-4 h-4 text-amber-400" />
+                <Cpu className="w-4 h-4 text-[#FF9900]" />
                 <h4 className="text-xs font-bold text-slate-100">
                   Citadel Biometric Hardware Nodes (ZKTeco Live Status)
                 </h4>
