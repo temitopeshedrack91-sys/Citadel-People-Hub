@@ -127,3 +127,4 @@ To add a new role (e.g., `'FINANCE_OFFICER'`):
    ```bash
    npx vitest run src/__tests__/rbac.test.ts src/__tests__/SidebarRBAC.test.tsx
    ```
+
