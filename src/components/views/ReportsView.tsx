@@ -167,10 +167,10 @@ export const ReportsView: React.FC = () => {
           </button>
           <button
             onClick={handlePrintPDF}
-            className="px-3.5 py-2 rounded-xl bg-[#083E34] text-white hover:bg-[#062f28] text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#FF9900]/30 transition cursor-pointer active:scale-95 min-h-[38px]"
+            className="px-3.5 py-2 rounded-xl bg-[#FF9900] text-slate-950 hover:bg-[#E68A00] text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#E68A00] transition cursor-pointer active:scale-95 min-h-[38px]"
           >
-            <Printer className="w-4 h-4 text-[#FF9900]" />
-            <span>Print Report</span>
+            <Printer className="w-4 h-4 text-slate-950 stroke-[2.5]" />
+            <span className="font-bold">Print Report</span>
           </button>
         </div>
       </div>

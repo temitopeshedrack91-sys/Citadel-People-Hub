@@ -121,7 +121,7 @@ export function ListDetailLayout<T = any>({
                     onClick={() => onFilterTabChange?.(tab.id)}
                     className={`px-2.5 py-1 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 shrink-0 cursor-pointer ${
                       isActive
-                        ? 'bg-[#083E34] text-white shadow-xs'
+                        ? 'bg-[#FF9900] text-slate-950 shadow-xs'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900'
                     }`}
                   >
@@ -130,7 +130,7 @@ export function ListDetailLayout<T = any>({
                       <span
                         className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                           isActive
-                            ? 'bg-white/20 text-white'
+                            ? 'bg-slate-950/15 text-slate-950'
                             : 'bg-slate-200 text-slate-700'
                         }`}
                       >

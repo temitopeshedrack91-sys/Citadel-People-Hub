@@ -224,7 +224,7 @@ export const TrellisNewTaskModal: React.FC = () => {
             <button
               type="submit"
               data-testid="trellis-submit-new-task"
-              className="px-5 py-2.5 rounded-xl bg-[#083E34] hover:bg-[#052C25] text-white font-bold shadow-xs transition active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#083E34] focus-visible:ring-offset-2"
+              className="px-5 py-2.5 rounded-xl bg-[#FF9900] hover:bg-[#E68A00] text-slate-950 font-bold shadow-xs transition active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF9900] focus-visible:ring-offset-2"
             >
               Create & Assign Task
             </button>

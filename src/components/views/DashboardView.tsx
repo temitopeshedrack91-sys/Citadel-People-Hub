@@ -805,10 +805,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <button
                 onClick={() => setIsQuickActionsOpen(true)}
                 data-testid="quick-actions-btn"
-                className="px-4 py-2 rounded-xl bg-[#083E34] hover:bg-[#052C25] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#FF9900]/30 transition active:scale-[0.98]"
+                className="px-4 py-2 rounded-xl bg-[#FF9900] hover:bg-[#E68A00] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#E68A00] transition active:scale-[0.98]"
               >
-                <Zap className="w-3.5 h-3.5 text-[#FF9900] fill-[#FF9900]" />
-                <span>Quick Actions</span>
+                <Zap className="w-3.5 h-3.5 text-slate-950 fill-slate-950" />
+                <span className="font-bold">Quick Actions</span>
               </button>
             </div>
 
@@ -1182,7 +1182,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 bg-[#083E34] hover:bg-[#052C25] text-white font-bold rounded-xl transition shadow-xs"
+                    className="px-5 py-2 bg-[#FF9900] hover:bg-[#E68A00] text-slate-950 font-bold rounded-xl transition shadow-xs"
                   >
                     Save Note
                   </button>

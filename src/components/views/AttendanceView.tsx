@@ -134,11 +134,11 @@ export const AttendanceView: React.FC = () => {
           onClick={() => setActiveTab('live_logs')}
           className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 min-h-[40px] shrink-0 cursor-pointer ${
             activeTab === 'live_logs'
-              ? 'bg-[#083E34] text-white shadow-xs'
+              ? 'bg-[#FF9900] text-slate-950 shadow-xs border border-[#E68A00]'
               : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
           }`}
         >
-          <Clock className="w-4 h-4" />
+          <Clock className={`w-4 h-4 ${activeTab === 'live_logs' ? 'text-slate-950' : 'text-slate-500'}`} />
           <span>Live Check-ins</span>
         </button>
 
@@ -148,11 +148,11 @@ export const AttendanceView: React.FC = () => {
           onClick={() => setActiveTab('schedules')}
           className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 min-h-[40px] shrink-0 cursor-pointer ${
             activeTab === 'schedules'
-              ? 'bg-[#083E34] text-white shadow-xs'
+              ? 'bg-[#FF9900] text-slate-950 shadow-xs border border-[#E68A00]'
               : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
           }`}
         >
-          <Building className="w-4 h-4 text-[#FF9900]" />
+          <Building className={`w-4 h-4 ${activeTab === 'schedules' ? 'text-slate-950' : 'text-[#FF9900]'}`} />
           <span>Shift Schedules &amp; Policies</span>
         </button>
       </div>
@@ -192,7 +192,7 @@ export const AttendanceView: React.FC = () => {
               className={`px-5 py-2.5 rounded-xl font-bold text-xs transition flex items-center gap-2 shadow-xs active:scale-[0.98] cursor-pointer ${
                 clockedIn
                   ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
-                  : 'bg-[#083E34] hover:bg-[#052C25] text-white border border-[#FF9900]/30'
+                  : 'bg-[#FF9900] hover:bg-[#E68A00] text-slate-950 border border-[#E68A00]'
               }`}
             >
               {clockedIn ? (
@@ -202,7 +202,7 @@ export const AttendanceView: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <LogIn className="w-4 h-4 text-[#FF9900]" />
+                  <LogIn className="w-4 h-4 text-slate-950" />
                   <span>Record Clock-In (Web Portal)</span>
                 </>
               )}

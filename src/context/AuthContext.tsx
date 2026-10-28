@@ -222,8 +222,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (localStorage.getItem('citadel_logged_out') === 'true') {
         return false;
       }
+      return localStorage.getItem('citadel_authenticated') === 'true';
     } catch {}
-    return true;
+    return false;
   });
 
   // Check Supabase session on mount
@@ -259,12 +260,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             description: `Authenticated user (${user.email}) via Supabase`,
           });
         }
+        try {
+          localStorage.setItem('citadel_authenticated', 'true');
+          localStorage.removeItem('citadel_logged_out');
+        } catch {}
         setIsAuthenticated(true);
       }
     });
 
     const { data: authListener } = authService.onAuthStateChange((user) => {
       if (user) {
+        try {
+          localStorage.setItem('citadel_authenticated', 'true');
+          localStorage.removeItem('citadel_logged_out');
+        } catch {}
         setIsAuthenticated(true);
       }
     });
@@ -300,6 +309,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     try {
       localStorage.removeItem('citadel_logged_out');
+      localStorage.setItem('citadel_authenticated', 'true');
     } catch {}
     setIsAuthenticated(true);
   };
@@ -327,6 +337,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     try {
       localStorage.removeItem('citadel_logged_out');
+      localStorage.setItem('citadel_authenticated', 'true');
     } catch {}
     setIsAuthenticated(true);
   };
@@ -373,6 +384,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         try {
           localStorage.removeItem('citadel_logged_out');
+          localStorage.setItem('citadel_authenticated', 'true');
         } catch {}
         setIsAuthenticated(true);
         return;
@@ -426,12 +438,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       description: `Authenticated account: ${response.user.email}`,
     });
     setSelectedEntityFilter(response.user.entityId || 'all');
+    try {
+      localStorage.removeItem('citadel_logged_out');
+      localStorage.setItem('citadel_authenticated', 'true');
+    } catch {}
     setIsAuthenticated(true);
   };
 
   const logout = async () => {
     try {
       localStorage.setItem('citadel_logged_out', 'true');
+      localStorage.removeItem('citadel_authenticated');
     } catch {}
     try {
       await authService.signOut();

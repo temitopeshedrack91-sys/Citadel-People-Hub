@@ -48,10 +48,10 @@ export const RecruitmentView: React.FC = () => {
 
         <button
           onClick={() => {}}
-          className="px-3.5 py-2 rounded-xl bg-[#083E34] text-white hover:bg-[#062f28] text-xs font-black flex items-center gap-1.5 shadow-xs border border-[#FF9900]/30 transition cursor-pointer active:scale-95"
+          className="px-3.5 py-2 rounded-xl bg-[#FF9900] text-slate-950 hover:bg-[#E68A00] text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#E68A00] transition cursor-pointer active:scale-95"
         >
-          <Plus className="w-4 h-4 text-[#FF9900]" />
-          <span>New Requisition</span>
+          <Plus className="w-4 h-4 text-slate-950 stroke-[2.5]" />
+          <span className="font-bold">New Requisition</span>
         </button>
       </div>
 
@@ -61,7 +61,7 @@ export const RecruitmentView: React.FC = () => {
           onClick={() => setActiveTab('requisitions')}
           className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
             activeTab === 'requisitions'
-              ? 'bg-[#083E34] text-white shadow-xs'
+              ? 'bg-[#FF9900] text-slate-950 shadow-xs'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
           }`}
         >
@@ -73,7 +73,7 @@ export const RecruitmentView: React.FC = () => {
           onClick={() => setActiveTab('sop_stages')}
           className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
             activeTab === 'sop_stages'
-              ? 'bg-[#083E34] text-white shadow-xs'
+              ? 'bg-[#FF9900] text-slate-950 shadow-xs'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
           }`}
         >

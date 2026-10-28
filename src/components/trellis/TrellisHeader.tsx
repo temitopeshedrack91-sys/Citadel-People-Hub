@@ -162,10 +162,10 @@ export const TrellisHeader: React.FC = () => {
           <button
             onClick={() => setIsNewTaskModalOpen(true)}
             data-testid="trellis-new-task-btn"
-            className="px-3.5 py-2 rounded-xl bg-[#083E34] hover:bg-[#052C25] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#FF9900]/30 transition active:scale-95 cursor-pointer min-h-[40px] sm:min-h-[36px]"
+            className="px-3.5 py-2 rounded-xl bg-[#FF9900] hover:bg-[#E68A00] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#E68A00] transition active:scale-95 cursor-pointer min-h-[40px] sm:min-h-[36px]"
           >
-            <Plus className="w-3.5 h-3.5 text-[#FF9900]" />
-            <span>New task</span>
+            <Plus className="w-3.5 h-3.5 text-slate-950 stroke-[2.5]" />
+            <span className="font-bold">New task</span>
           </button>
         </div>
       </div>
@@ -253,7 +253,7 @@ export const TrellisHeader: React.FC = () => {
                   onClick={() => setActiveTab(tab.key)}
                   data-testid={`trellis-tab-${tab.key}`}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${isActive
-                    ? 'bg-[#083E34] text-white shadow-xs'
+                    ? 'bg-[#FF9900] text-slate-950 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                 >

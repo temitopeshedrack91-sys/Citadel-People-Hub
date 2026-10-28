@@ -307,9 +307,9 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
               <button
                 onClick={() => handleApprove(req.id, req.employeeName)}
                 data-testid="leave-approve-btn"
-                className="px-4 py-2 rounded-xl bg-[#083E34] hover:bg-[#052C25] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition"
+                className="px-4 py-2 rounded-xl bg-[#FF9900] hover:bg-[#E68A00] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#E68A00] transition"
               >
-                <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                <CheckCircle2 className="w-4 h-4 text-slate-950" />
                 <span>Approve Request</span>
               </button>
             </div>
@@ -444,10 +444,10 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
           <button
             onClick={() => setShowApplyModal(true)}
             data-testid="leave-apply-btn"
-            className="px-4 py-2.5 rounded-xl bg-[#083E34] hover:bg-[#062f28] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#FF9900]/30 transition active:scale-[0.98] shrink-0 min-h-[40px]"
+            className="px-4 py-2.5 rounded-xl bg-[#FF9900] hover:bg-[#E68A00] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#E68A00] transition active:scale-[0.98] shrink-0 min-h-[40px]"
           >
-            <Plus className="w-4 h-4 text-[#FF9900]" />
-            <span>Apply for Leave</span>
+            <Plus className="w-4 h-4 text-slate-950 stroke-[2.5]" />
+            <span className="font-bold">Apply for Leave</span>
           </button>
         </div>
       </div>
@@ -568,7 +568,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 bg-[#083E34] hover:bg-[#052C25] text-white font-bold rounded-xl transition shadow-xs"
+                  className="px-5 py-2 bg-[#FF9900] hover:bg-[#E68A00] text-slate-950 font-bold rounded-xl transition shadow-xs"
                 >
                   {isSubmitting ? 'Submitting...' : 'Submit Application'}
                 </button>

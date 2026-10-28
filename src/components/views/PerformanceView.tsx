@@ -64,7 +64,7 @@ export const PerformanceView: React.FC = () => {
           <button
             onClick={() => setActiveTab('kpi')}
             className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
-              activeTab === 'kpi' ? 'bg-[#083E34] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              activeTab === 'kpi' ? 'bg-[#FF9900] text-slate-950 shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Objectives & OKRs
@@ -72,7 +72,7 @@ export const PerformanceView: React.FC = () => {
           <button
             onClick={() => setActiveTab('reviews')}
             className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
-              activeTab === 'reviews' ? 'bg-[#083E34] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              activeTab === 'reviews' ? 'bg-[#FF9900] text-slate-950 shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Review Cycles

@@ -168,7 +168,7 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 text-xs font-bold text-white bg-[#083E34] hover:bg-[#062f28] rounded-xl transition disabled:opacity-50 cursor-pointer shadow-xs active:scale-95"
+              className="px-4 py-2 text-xs font-bold text-slate-950 bg-[#FF9900] hover:bg-[#E68A00] rounded-xl transition disabled:opacity-50 cursor-pointer shadow-xs active:scale-95"
             >
               {isSubmitting ? 'Recording Action...' : `Confirm ${selectedAction}`}
             </button>

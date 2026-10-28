@@ -262,7 +262,7 @@ export const CalendarView: React.FC = () => {
             onClick={() => setFilterByMonth((prev) => !prev)}
             className={`px-3 py-2 rounded-xl text-xs font-bold border transition shadow-2xs ${
               filterByMonth
-                ? 'bg-[#083E34] text-white border-[#083E34]'
+                ? 'bg-[#FF9900] text-slate-950 border-[#E68A00]'
                 : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
             }`}
           >
@@ -281,7 +281,7 @@ export const CalendarView: React.FC = () => {
             onClick={() => setActiveCategory(cat)}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
               activeCategory === cat
-                ? 'bg-[#083E34] text-white shadow-xs'
+                ? 'bg-[#FF9900] text-slate-950 shadow-xs'
                 : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900'
             }`}
           >

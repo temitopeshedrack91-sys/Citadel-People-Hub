@@ -37,6 +37,7 @@ import { AIAssistantView } from './components/views/AIAssistantView';
 import { ProjectsView } from './components/views/ProjectsView';
 import { TeamNotesView } from './components/views/TeamNotesView';
 import { LoginModal } from './components/auth/LoginModal';
+import { AuthPage } from './components/auth/AuthPage';
 
 const VALID_MODULES: NavModule[] = [
   'dashboard', 'employees', 'directory', 'leave', 'attendance', 'projects',
@@ -239,7 +240,7 @@ const MainAppLayout: React.FC = () => {
   const [loginModalTab, setLoginModalTab] = useState<'signin' | 'register' | 'personas'>('personas');
 
   if (!isAuthenticated) {
-    return <LoginModal isOpen onClose={() => {}} required initialTab="signin" />;
+    return <AuthPage />;
   }
 
   return (
