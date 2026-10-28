@@ -12,7 +12,31 @@ export interface AuthUser {
 }
 
 export const authService = {
-  async signUp(email: string, password: string, fullName?: string, role: string = 'Employee') {
+  async signUp(email: string, password: string, fullName?: string, role: string = 'EMPLOYEE') {
+    // Direct stored procedure: confirms email, creates user & profile, avoids email rate limits
+    try {
+      const { data: rpcData, error: rpcError } = await supabase.rpc('register_user', {
+        p_email: email.trim().toLowerCase(),
+        p_password: password,
+        p_full_name: fullName?.trim() || email.split('@')[0],
+        p_role: role,
+      });
+
+      if (!rpcError && rpcData) {
+        // Auto-login to obtain active session
+        const signInRes = await supabase.auth.signInWithPassword({
+          email: email.trim().toLowerCase(),
+          password,
+        });
+        return signInRes.data;
+      }
+      if (rpcError) {
+        console.warn('RPC register warning:', rpcError.message);
+      }
+    } catch (rpcErr) {
+      console.warn('RPC register fallback to standard signUp:', rpcErr);
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,

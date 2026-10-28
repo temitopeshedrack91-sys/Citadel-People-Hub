@@ -1,5 +1,23 @@
 import React, { useState } from 'react';
-import { Shield, UserCheck, CheckCircle2, Lock, X, Building, ArrowRight, Sparkles, UserPlus, LogIn } from 'lucide-react';
+import {
+  Shield,
+  UserCheck,
+  CheckCircle2,
+  Lock,
+  X,
+  Building,
+  ArrowRight,
+  Sparkles,
+  UserPlus,
+  LogIn,
+  Copy,
+  Check,
+  Key,
+  ShieldCheck,
+  Users,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 import { useAuth, PRESET_PERSONAS } from '../../context/AuthContext';
 import { CitadelLogo } from '../brand/CitadelLogo';
 import { UserRole } from '../../types';
@@ -8,20 +26,182 @@ interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   required?: boolean;
+  initialTab?: 'signin' | 'register' | 'personas';
 }
 
-export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, required = false }) => {
+const DEMO_CREDENTIALS: {
+  email: string;
+  name: string;
+  role: UserRole;
+  roleLabel: string;
+  jobTitle: string;
+  department: string;
+  password: string;
+  color: string;
+  permissions: string[];
+}[] = [
+  {
+    email: 'dr.adeleke@citadel.ng',
+    name: 'Dr. Bukola Adeleke',
+    role: 'PCCM_SUPER_ADMIN',
+    roleLabel: 'PCCM Super Admin',
+    jobTitle: 'Chief People Officer',
+    department: 'People & Culture',
+    password: 'Password123!',
+    color: 'bg-[#083E34] text-amber-300',
+    permissions: [
+      'Full cross-entity administration',
+      'Confidential salary & sensitive records',
+      'Staff enrollment & dossier exports',
+      'Leave policy rules & approvals',
+      'Full compliance audit trail access',
+    ],
+  },
+  {
+    email: 'femi.olatunji@citadel.ng',
+    name: 'Engr. Femi Olatunji',
+    role: 'SYSTEM_ADMIN',
+    roleLabel: 'Head of Technology',
+    jobTitle: 'Head of Technology & Systems',
+    department: 'Technology & Systems',
+    password: 'Password123!',
+    color: 'bg-blue-600 text-white',
+    permissions: [
+      'Biometric hardware & terminal telemetry',
+      'API endpoints & integration nodes',
+      'System & technical audit logs',
+      'Technology department approvals',
+    ],
+  },
+  {
+    email: 'pastor.bakare@citadel.ng',
+    name: 'Pastor Tunde Bakare',
+    role: 'BUSINESS_HEAD',
+    roleLabel: 'Business Head',
+    jobTitle: 'President & General Overseer',
+    department: 'Pastoral & Ministry Operations',
+    password: 'Password123!',
+    color: 'bg-[#D97706] text-white',
+    permissions: [
+      'Group Executive Council oversight',
+      'Executive performance & board reviews',
+      'Strategic workforce report exports',
+      'Entity-level sign-offs',
+    ],
+  },
+  {
+    email: 'nadia@citadel.ng',
+    name: 'Nadia Safitri',
+    role: 'EMPLOYEE',
+    roleLabel: 'Lead Product Designer',
+    jobTitle: 'Lead Product Designer',
+    department: 'Technology & Systems',
+    password: 'Password123!',
+    color: 'bg-amber-500 text-slate-900',
+    permissions: [
+      'Employee self-service portal',
+      'Projects Kanban board collaboration',
+      'Leave application submissions',
+      'Attendance biometric clock-ins',
+    ],
+  },
+  {
+    email: 'bayu@citadel.ng',
+    name: 'Bayu Wirawan',
+    role: 'EMPLOYEE',
+    roleLabel: 'Senior Android Engineer',
+    jobTitle: 'Senior Android Engineer',
+    department: 'Technology & Systems',
+    password: 'Password123!',
+    color: 'bg-emerald-600 text-white',
+    permissions: [
+      'Employee self-service portal',
+      'Sprint 14 task ownership & updates',
+      'Leave requests & balance tracking',
+      'Gatehouse biometric check-ins',
+    ],
+  },
+  {
+    email: 'sinta@citadel.ng',
+    name: 'Sinta Lubis',
+    role: 'EMPLOYEE',
+    roleLabel: 'QA & Review Lead',
+    jobTitle: 'QA & Review Lead',
+    department: 'Technology & Systems',
+    password: 'Password123!',
+    color: 'bg-purple-600 text-white',
+    permissions: [
+      'Employee self-service portal',
+      'Task QA review & verification',
+      'Bug reporting & project boards',
+      'Attendance clock-in & self-service',
+    ],
+  },
+  {
+    email: 'jonathan@citadel.ng',
+    name: 'Jonathan Tan',
+    role: 'EMPLOYEE',
+    roleLabel: 'Backend Systems Lead',
+    jobTitle: 'Backend & Offline Systems Lead',
+    department: 'Technology & Systems',
+    password: 'Password123!',
+    color: 'bg-cyan-600 text-white',
+    permissions: [
+      'Employee self-service portal',
+      'Supabase database tasks & syncing',
+      'Shift schedules & leave requests',
+      'Team notes & handovers',
+    ],
+  },
+  {
+    email: 'raka@citadel.ng',
+    name: 'Raka Aditya',
+    role: 'EMPLOYEE',
+    roleLabel: 'Data & Growth Analyst',
+    jobTitle: 'Data & Growth Analyst',
+    department: 'People & Culture',
+    password: 'Password123!',
+    color: 'bg-orange-500 text-white',
+    permissions: [
+      'Employee self-service portal',
+      'People analytics & census reports',
+      'Leave applications & balances',
+      'Staff directory & presence monitoring',
+    ],
+  },
+];
+
+export const LoginModal: React.FC<LoginModalProps> = ({
+  isOpen,
+  onClose,
+  required = false,
+  initialTab = 'signin',
+}) => {
   const { currentPersona, switchPersona, isAuthenticated, login, register, logout } = useAuth();
-  const [tab, setTab] = useState<'signin' | 'register' | 'personas'>('signin');
+  const [tab, setTab] = useState<'signin' | 'register' | 'personas'>(initialTab);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>('EMPLOYEE');
+  const [showPassword, setShowPassword] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
+
+  const handleCopy = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  const handleQuickFill = (cred: (typeof DEMO_CREDENTIALS)[0]) => {
+    setEmail(cred.email);
+    setPassword(cred.password);
+    setErrorMessage('');
+  };
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -31,12 +211,16 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
     try {
       await login(email, password);
       setPassword('');
-      setSuccessMessage('Successfully signed in to Supabase!');
+      setSuccessMessage(`Signed in as ${email}!`);
       setTimeout(() => {
         onClose();
       }, 700);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to sign in. Please verify your credentials.');
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Unable to sign in. Please verify your email and password.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -50,12 +234,36 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
     try {
       await register(email, password, name, role);
       setPassword('');
-      setSuccessMessage('Account registered successfully on Supabase!');
+      setSuccessMessage(`Account created for ${name || email}! Signed in to Supabase.`);
       setTimeout(() => {
         onClose();
-      }, 700);
+      }, 800);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Registration failed. Please try again.');
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Registration failed. Please try again.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDirectDemoSignIn = async (cred: (typeof DEMO_CREDENTIALS)[0]) => {
+    setIsSubmitting(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+    try {
+      await login(cred.email, cred.password);
+      setSuccessMessage(`Signed in as ${cred.name} (${cred.roleLabel})!`);
+      setTimeout(() => {
+        onClose();
+      }, 600);
+    } catch (error) {
+      // If network fails, switch via local persona
+      switchPersona(cred.role);
+      setSuccessMessage(`Switched to ${cred.name} (${cred.roleLabel})`);
+      setTimeout(() => {
+        onClose();
+      }, 600);
     } finally {
       setIsSubmitting(false);
     }
@@ -74,19 +282,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
     }
   };
 
-  const handleSelectPersona = (persona: (typeof PRESET_PERSONAS)[0]) => {
-    switchPersona(persona.user.id);
-    setSuccessMessage(`Switched to ${persona.user.name}`);
-    setTimeout(() => {
-      onClose();
-    }, 400);
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#04241e]/80 backdrop-blur-xs p-4 overflow-y-auto animate-fade-in">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#04241e]/80 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in">
+      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-4 sm:my-6 flex flex-col max-h-[92vh]">
         {/* Modal Branded Header */}
-        <div className="bg-[#083E34] text-white p-6 relative border-b border-emerald-900/30">
+        <div className="bg-[#083E34] text-white p-5 sm:p-6 relative border-b border-emerald-900/40 shrink-0">
           {!required && (
             <button
               onClick={onClose}
@@ -98,16 +298,16 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
           )}
 
           {/* Official Citadel Logo */}
-          <div className="flex justify-center mb-3">
-            <CitadelLogo variant="hub" colorMode="dark" className="h-10" />
+          <div className="flex justify-center mb-2.5">
+            <CitadelLogo variant="hub" colorMode="dark" className="h-9 sm:h-10" />
           </div>
 
           <div className="text-center max-w-md mx-auto">
-            <h2 className="text-lg font-bold text-white tracking-wide">
+            <h2 className="text-base sm:text-lg font-bold text-white tracking-wide">
               Citadel People Hub
             </h2>
-            <p className="text-xs text-amber-200/80 mt-0.5 font-medium">
-              Connected to Supabase PostgreSQL & Auth
+            <p className="text-xs text-[#FF9900] mt-0.5 font-medium">
+              Supabase Auth &bull; 7 Demo Users &bull; Role-Based Access Control (RBAC)
             </p>
           </div>
 
@@ -115,9 +315,16 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
           <div className="flex items-center justify-center gap-1.5 mt-4 bg-[#052C25] p-1 rounded-xl">
             <button
               type="button"
-              onClick={() => { setTab('signin'); setErrorMessage(''); setSuccessMessage(''); }}
+              onClick={() => {
+                setTab('signin');
+                setErrorMessage('');
+                setSuccessMessage('');
+              }}
+              data-testid="auth-tab-signin"
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
-                tab === 'signin' ? 'bg-[#083E34] text-amber-300 shadow-xs' : 'text-slate-300 hover:text-white'
+                tab === 'signin'
+                  ? 'bg-[#083E34] text-[#FF9900] shadow-xs'
+                  : 'text-slate-300 hover:text-white'
               }`}
             >
               <LogIn className="w-3.5 h-3.5" />
@@ -125,9 +332,16 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
             </button>
             <button
               type="button"
-              onClick={() => { setTab('register'); setErrorMessage(''); setSuccessMessage(''); }}
+              onClick={() => {
+                setTab('register');
+                setErrorMessage('');
+                setSuccessMessage('');
+              }}
+              data-testid="auth-tab-register"
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
-                tab === 'register' ? 'bg-[#083E34] text-amber-300 shadow-xs' : 'text-slate-300 hover:text-white'
+                tab === 'register'
+                  ? 'bg-[#083E34] text-[#FF9900] shadow-xs'
+                  : 'text-slate-300 hover:text-white'
               }`}
             >
               <UserPlus className="w-3.5 h-3.5" />
@@ -135,98 +349,168 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
             </button>
             <button
               type="button"
-              onClick={() => { setTab('personas'); setErrorMessage(''); setSuccessMessage(''); }}
+              onClick={() => {
+                setTab('personas');
+                setErrorMessage('');
+                setSuccessMessage('');
+              }}
+              data-testid="auth-tab-personas"
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
-                tab === 'personas' ? 'bg-[#083E34] text-amber-300 shadow-xs' : 'text-slate-300 hover:text-white'
+                tab === 'personas'
+                  ? 'bg-[#083E34] text-[#FF9900] shadow-xs'
+                  : 'text-slate-300 hover:text-white'
               }`}
             >
               <UserCheck className="w-3.5 h-3.5" />
-              <span>Demo Roles</span>
+              <span>Demo Users &amp; Roles</span>
             </button>
           </div>
         </div>
 
-        {/* Modal Body */}
-        <div className="p-6">
+        {/* Modal Scrollable Body */}
+        <div className="p-5 sm:p-6 overflow-y-auto flex-1 custom-scrollbar">
           {successMessage && (
-            <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-bold text-emerald-800 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-bold text-emerald-800 flex items-center gap-2 animate-fade-in">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>{successMessage}</span>
             </div>
           )}
 
           {errorMessage && (
-            <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-700">
+            <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-700 animate-fade-in">
               {errorMessage}
             </div>
           )}
 
-          {/* SIGN IN TAB */}
+          {/* ======================================================== */}
+          {/* TAB 1: SIGN IN                                           */}
+          {/* ======================================================== */}
           {tab === 'signin' && (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="mb-1 block text-xs font-bold text-slate-700">Work Email</label>
-                <input
-                  type="email"
-                  required
-                  placeholder="e.g. b.adeleke@citadelcommunity.org"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-[#083E34] focus:outline-none"
-                />
-              </div>
+            <div className="space-y-5">
+              <form onSubmit={handleLogin} className="space-y-3.5">
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-slate-700">Work Email</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="e.g. dr.adeleke@citadel.ng"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#FF9900] focus:ring-1 focus:ring-[#FF9900]/30 focus:outline-none"
+                  />
+                </div>
 
-              <div>
-                <label className="mb-1 block text-xs font-bold text-slate-700">Password</label>
-                <input
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-[#083E34] focus:outline-none"
-                />
-              </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-700">Password</label>
+                    <span className="text-[11px] text-slate-400">Default: Password123!</span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 pr-10 text-xs sm:text-sm text-slate-900 focus:border-[#FF9900] focus:ring-1 focus:ring-[#FF9900]/30 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      title="Toggle password"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full rounded-xl bg-[#083E34] px-4 py-2.5 text-sm font-bold text-amber-300 hover:bg-[#062f28] disabled:opacity-60 cursor-pointer transition shadow-xs"
-              >
-                {isSubmitting ? 'Signing in...' : 'Sign In with Supabase'}
-              </button>
-            </form>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full rounded-xl bg-[#083E34] hover:bg-[#062f28] px-4 py-2.5 text-xs sm:text-sm font-bold text-[#FF9900] border border-[#FF9900]/30 disabled:opacity-60 cursor-pointer transition shadow-xs flex items-center justify-center gap-2"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>{isSubmitting ? 'Authenticating...' : 'Sign In with Supabase'}</span>
+                </button>
+              </form>
+
+              {/* Quick Demo Fill Selector */}
+              <div className="pt-4 border-t border-slate-100 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#FF9900]" />
+                    <span>Quick Fill Demo Credentials</span>
+                  </span>
+                  <span className="text-[10px] text-slate-400">Click to fill email &amp; password</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {DEMO_CREDENTIALS.map((cred) => (
+                    <button
+                      key={cred.email}
+                      type="button"
+                      onClick={() => handleQuickFill(cred)}
+                      className="p-2.5 rounded-xl border border-slate-200 hover:border-[#FF9900] hover:bg-[#FFF8F0]/40 text-left transition flex items-center gap-2.5 group cursor-pointer"
+                    >
+                      <div
+                        className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-[10px] shrink-0 ${cred.color}`}
+                      >
+                        {cred.name
+                          .split(' ')
+                          .map((n) => n[0])
+                          .slice(0, 2)
+                          .join('')}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="font-bold text-slate-900 text-xs truncate group-hover:text-[#083E34]">
+                            {cred.name}
+                          </span>
+                          <span className="text-[9px] font-extrabold px-1 rounded bg-slate-100 text-slate-700 shrink-0">
+                            {cred.roleLabel.split(' ')[0]}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-400 font-mono truncate">{cred.email}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           )}
 
-          {/* REGISTER TAB */}
+          {/* ======================================================== */}
+          {/* TAB 2: REGISTER NEW USER                                  */}
+          {/* ======================================================== */}
           {tab === 'register' && (
             <form onSubmit={handleRegister} className="space-y-4">
               <div>
-                <label className="mb-1 block text-xs font-bold text-slate-700">Full Name</label>
+                <label className="mb-1 block text-xs font-bold text-slate-700">Full Name *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Pastor David Adeleke"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-[#083E34] focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#FF9900] focus:ring-1 focus:ring-[#FF9900]/30 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-bold text-slate-700">Work Email</label>
+                <label className="mb-1 block text-xs font-bold text-slate-700">Work Email *</label>
                 <input
                   type="email"
                   required
-                  placeholder="e.g. d.adeleke@citadelcommunity.org"
+                  placeholder="e.g. david.adeleke@citadel.ng"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-[#083E34] focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#FF9900] focus:ring-1 focus:ring-[#FF9900]/30 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-bold text-slate-700">Password</label>
+                <label className="mb-1 block text-xs font-bold text-slate-700">Password *</label>
                 <input
                   type="password"
                   required
@@ -234,79 +518,229 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
                   placeholder="At least 6 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-[#083E34] focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#FF9900] focus:ring-1 focus:ring-[#FF9900]/30 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-bold text-slate-700">Role</label>
+                <label className="mb-1 block text-xs font-bold text-slate-700">Role Designation *</label>
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value as UserRole)}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-[#083E34] focus:outline-none cursor-pointer"
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#FF9900] focus:ring-1 focus:ring-[#FF9900]/30 focus:outline-none cursor-pointer"
                 >
-                  <option value="EMPLOYEE">Employee / Staff Member</option>
-                  <option value="DEPARTMENT_HEAD">Department Head</option>
-                  <option value="BUSINESS_HEAD">Business Head</option>
-                  <option value="PCCM_SUPER_ADMIN">PCCM Super Admin</option>
+                  <option value="EMPLOYEE">Employee / Staff Member (Self-Service)</option>
+                  <option value="DEPARTMENT_HEAD">Department Head (Team Reviews &amp; Leaves)</option>
+                  <option value="BUSINESS_HEAD">Business Head (Executive Oversight)</option>
+                  <option value="SYSTEM_ADMIN">System Admin (Hardware &amp; Technical Nodes)</option>
+                  <option value="PCCM_SUPER_ADMIN">PCCM Super Admin (Full Governance)</option>
                 </select>
+              </div>
+
+              {/* Role Permissions Live Preview */}
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5">
+                <span className="font-bold text-slate-800 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#FF9900]" />
+                  <span>Permissions granted for {role.replaceAll('_', ' ')}:</span>
+                </span>
+                <ul className="text-[11px] text-slate-600 space-y-1 pl-4 list-disc">
+                  {role === 'PCCM_SUPER_ADMIN' && (
+                    <>
+                      <li>Primary HR super admin with full cross-entity access.</li>
+                      <li>Can view and edit sensitive staff salaries and contracts.</li>
+                      <li>Can approve leave policies, create staff, and view audit trail.</li>
+                    </>
+                  )}
+                  {role === 'BUSINESS_HEAD' && (
+                    <>
+                      <li>Executive entity access across Church, CSOG, and Holdings.</li>
+                      <li>Can approve staff leaves and export executive census reports.</li>
+                      <li>Performance and milestone reviews.</li>
+                    </>
+                  )}
+                  {role === 'DEPARTMENT_HEAD' && (
+                    <>
+                      <li>Line-manager access for assigned department members.</li>
+                      <li>Can approve leave requests and perform onboarding milestones.</li>
+                      <li>Department performance appraisals and shift schedules.</li>
+                    </>
+                  )}
+                  {role === 'SYSTEM_ADMIN' && (
+                    <>
+                      <li>Technical integrations, biometric devices, and API credentials.</li>
+                      <li>View all employee records and full compliance audit logs.</li>
+                    </>
+                  )}
+                  {role === 'EMPLOYEE' && (
+                    <>
+                      <li>Employee self-service clock-in, leave requests, and profile.</li>
+                      <li>Projects Kanban board task collaborator and reviewer.</li>
+                      <li>Staff directory lookup and public policy document vault.</li>
+                    </>
+                  )}
+                </ul>
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full rounded-xl bg-[#083E34] px-4 py-2.5 text-sm font-bold text-amber-300 hover:bg-[#062f28] disabled:opacity-60 cursor-pointer transition shadow-xs"
+                className="w-full rounded-xl bg-[#083E34] hover:bg-[#062f28] px-4 py-2.5 text-xs sm:text-sm font-bold text-[#FF9900] border border-[#FF9900]/30 disabled:opacity-60 cursor-pointer transition shadow-xs flex items-center justify-center gap-2"
               >
-                {isSubmitting ? 'Registering...' : 'Create Account on Supabase'}
+                <UserPlus className="w-4 h-4" />
+                <span>{isSubmitting ? 'Creating Account...' : 'Register User on Supabase'}</span>
               </button>
             </form>
           )}
 
-          {/* DEMO PERSONAS TAB */}
+          {/* ======================================================== */}
+          {/* TAB 3: DEMO USERS (7+ ACCOUNTS WITH ROLE PERMISSIONS)    */}
+          {/* ======================================================== */}
           {tab === 'personas' && (
-            <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
-              {PRESET_PERSONAS.map((persona) => {
-                const isSelected = currentPersona.user.id === persona.user.id;
-                return (
-                  <button
-                    key={persona.user.id}
-                    type="button"
-                    onClick={() => handleSelectPersona(persona)}
-                    className={`w-full text-left p-3 rounded-xl border transition cursor-pointer flex items-center justify-between gap-3 ${
-                      isSelected
-                        ? 'border-amber-400 bg-amber-50/70 ring-1 ring-amber-400'
-                        : 'border-slate-200 bg-white hover:bg-slate-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 bg-[#083E34] text-amber-300">
-                        {persona.user.name.split(' ').map((n) => n[0]).slice(0, 2).join('')}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-slate-900 text-xs truncate">
-                            {persona.user.name}
-                          </span>
-                          <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-amber-100 text-amber-900">
-                            {persona.badgeLabel}
-                          </span>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between pb-1">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900">
+                    Citadel People Hub Demo Accounts (All 7 Users)
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Pre-provisioned in Supabase PostgreSQL &bull; Click to sign in or copy credentials.
+                  </p>
+                </div>
+                <span className="text-[10px] font-mono font-bold bg-[#FFF8F0] text-[#D97706] border border-[#FFE0B2] px-2 py-0.5 rounded-full">
+                  Password: Password123!
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {DEMO_CREDENTIALS.map((cred) => {
+                  const isCurrent = currentPersona.user.email.toLowerCase() === cred.email.toLowerCase();
+                  return (
+                    <div
+                      key={cred.email}
+                      className={`p-3.5 rounded-2xl border transition space-y-2.5 ${
+                        isCurrent
+                          ? 'border-[#FF9900] bg-[#FFF8F0]/50 ring-1 ring-[#FF9900]/30'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      {/* User Top Row: Avatar, Name, Role & 1-Click Sign-In */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs ${cred.color}`}
+                          >
+                            {cred.name
+                              .split(' ')
+                              .map((n) => n[0])
+                              .slice(0, 2)
+                              .join('')}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="text-xs font-bold text-slate-900 leading-none">
+                                {cred.name}
+                              </h4>
+                              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                                {cred.roleLabel}
+                              </span>
+                              {isCurrent && (
+                                <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800">
+                                  Active Session
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-500 mt-1 font-medium">
+                              {cred.jobTitle} &bull; {cred.department}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-[11px] text-slate-500 truncate">{persona.user.jobTitle}</p>
+
+                        {/* Sign In Button */}
+                        <button
+                          type="button"
+                          onClick={() => handleDirectDemoSignIn(cred)}
+                          disabled={isSubmitting}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 self-start sm:self-auto cursor-pointer shadow-2xs ${
+                            isCurrent
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-[#083E34] hover:bg-[#062f28] text-[#FF9900] border border-[#FF9900]/30'
+                          }`}
+                        >
+                          <LogIn className="w-3.5 h-3.5" />
+                          <span>{isCurrent ? 'Current User' : 'Sign In As'}</span>
+                        </button>
+                      </div>
+
+                      {/* Credentials Strip */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                        <div className="flex items-center justify-between font-mono text-[11px]">
+                          <span className="text-slate-400">Email:</span>
+                          <div className="flex items-center gap-1">
+                            <span className="font-semibold text-slate-800">{cred.email}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(cred.email, `${cred.email}-email`)}
+                              className="p-1 text-slate-400 hover:text-slate-700 rounded transition"
+                              title="Copy email"
+                            >
+                              {copiedKey === `${cred.email}-email` ? (
+                                <Check className="w-3 h-3 text-emerald-600" />
+                              ) : (
+                                <Copy className="w-3 h-3" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between font-mono text-[11px]">
+                          <span className="text-slate-400">Password:</span>
+                          <div className="flex items-center gap-1">
+                            <span className="font-semibold text-slate-800">{cred.password}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(cred.password, `${cred.email}-pwd`)}
+                              className="p-1 text-slate-400 hover:text-slate-700 rounded transition"
+                              title="Copy password"
+                            >
+                              {copiedKey === `${cred.email}-pwd` ? (
+                                <Check className="w-3 h-3 text-emerald-600" />
+                              ) : (
+                                <Copy className="w-3 h-3" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Role-Based Permissions Checklist */}
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
+                          Role-Based Access Permissions:
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {cred.permissions.map((perm, idx) => (
+                            <span
+                              key={idx}
+                              className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 flex items-center gap-1"
+                            >
+                              <CheckCircle2 className="w-2.5 h-2.5 text-[#083E34]" />
+                              <span>{perm}</span>
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                    {isSelected && (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    )}
-                  </button>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
 
           {/* Current Status Footer Info */}
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-            <span className="text-slate-500 font-medium truncate max-w-[260px]">
-              Active: <strong className="text-slate-800">{currentPersona.user.name}</strong> ({currentPersona.badgeLabel})
+          <div className="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span className="text-slate-500 font-medium truncate max-w-[280px]">
+              Active: <strong className="text-slate-900">{currentPersona.user.name}</strong> (
+              {currentPersona.badgeLabel})
             </span>
             {isAuthenticated && (
               <button
@@ -322,14 +756,17 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, require
         </div>
 
         {/* Modal Bottom Bar */}
-        <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-          <span className="text-[10px] text-slate-500 font-mono">
-            czbwedtrnzlfpdbzlnim.supabase.co
-          </span>
+        <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] text-slate-500 font-mono">
+              czbwedtrnzlfpdbzlnim.supabase.co
+            </span>
+          </div>
           {!required && (
             <button
               onClick={onClose}
-              className="px-3.5 py-1.5 bg-[#083E34] text-white text-xs font-semibold rounded-xl hover:bg-[#062f28] transition cursor-pointer shadow-xs"
+              className="px-4 py-1.5 bg-[#083E34] text-white text-xs font-semibold rounded-xl hover:bg-[#062f28] transition cursor-pointer shadow-xs"
             >
               Done
             </button>

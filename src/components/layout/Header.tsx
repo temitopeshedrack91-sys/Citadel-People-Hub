@@ -25,6 +25,7 @@ interface HeaderProps {
   activeModuleId: NavModule;
   onNavigate: (module: NavModule) => void;
   onOpenNewTask?: () => void;
+  onOpenLoginModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -35,6 +36,7 @@ export const Header: React.FC<HeaderProps> = ({
   activeModuleId,
   onNavigate,
   onOpenNewTask,
+  onOpenLoginModal,
 }) => {
   const {
     currentUser,
@@ -42,11 +44,13 @@ export const Header: React.FC<HeaderProps> = ({
     currentPersona,
     selectedEntityFilter,
     setSelectedEntityFilter,
+    logout,
   } = useAuth();
 
   const [isEntityMenuOpen, setIsEntityMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -300,39 +304,85 @@ export const Header: React.FC<HeaderProps> = ({
               <MessageSquare className="w-4 h-4 text-slate-600" />
             </button>
 
-            {/* User Profile Pill ("Dr. Bukola Adeleke") — click to edit profile */}
-            <div
-              data-testid="header-user-profile-pill"
-              onClick={() => setIsProfileOpen(true)}
-              className="flex items-center gap-2 sm:gap-2.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl border border-slate-200/90 hover:bg-slate-50 cursor-pointer transition"
-              title="Edit profile"
-            >
-              <div className="relative shrink-0">
-                {currentUser.avatarUrl ? (
-                  <img
-                    src={currentUser.avatarUrl}
-                    alt={currentUser.name}
-                    className="w-8 h-8 rounded-full object-cover shadow-xs"
-                  />
-                ) : (
-                <div className="w-8 h-8 rounded-full bg-[#083E34] text-white font-bold flex items-center justify-center text-xs shadow-xs">
-                  {currentUser.name
-                    .split(' ')
-                    .map((n) => n[0])
-                    .slice(0, 2)
-                    .join('')}
+            {/* User Profile Pill ("Dr. Bukola Adeleke") with Account Menu */}
+            <div className="relative">
+              <div
+                data-testid="header-user-profile-pill"
+                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                className="flex items-center gap-2 sm:gap-2.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl border border-slate-200/90 hover:bg-slate-50 cursor-pointer transition select-none"
+                title="Account Options & Switch User"
+              >
+                <div className="relative shrink-0">
+                  {currentUser.avatarUrl ? (
+                    <img
+                      src={currentUser.avatarUrl}
+                      alt={currentUser.name}
+                      className="w-8 h-8 rounded-full object-cover shadow-xs"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-[#083E34] text-white font-bold flex items-center justify-center text-xs shadow-xs">
+                      {currentUser.name
+                        .split(' ')
+                        .map((n) => n[0])
+                        .slice(0, 2)
+                        .join('')}
+                    </div>
+                  )}
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
                 </div>
-                )}
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+                <div className="hidden sm:block text-left">
+                  <div className="text-xs font-bold text-slate-900 leading-tight flex items-center gap-1">
+                    <span>{currentUser.name}</span>
+                    <ChevronDown className="w-3 h-3 text-slate-400" />
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-medium truncate max-w-[130px]">
+                    {currentUser.jobTitle || 'PCCM Super Admin'}
+                  </div>
+                </div>
               </div>
-              <div className="hidden sm:block text-left">
-                <div className="text-xs font-bold text-slate-900 leading-tight">
-                  {currentUser.name}
+
+              {/* Account Dropdown Menu */}
+              {isProfileMenuOpen && (
+                <div
+                  className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-50 animate-fade-in"
+                  onClick={() => setIsProfileMenuOpen(false)}
+                >
+                  <div className="p-3 border-b border-slate-100 bg-slate-50/70 rounded-xl mb-1">
+                    <p className="text-xs font-bold text-slate-900 leading-none">{currentUser.name}</p>
+                    <p className="text-[11px] text-slate-500 mt-1 truncate font-mono">{currentUser.email}</p>
+                    <span className="inline-block mt-1.5 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FFF8F0] text-[#D97706] border border-[#FFE0B2]">
+                      {currentPersona.badgeLabel}
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => setIsProfileOpen(true)}
+                    className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 rounded-xl transition flex items-center gap-2 cursor-pointer"
+                  >
+                    <span>Edit Profile Details</span>
+                  </button>
+
+                  <button
+                    onClick={() => onOpenLoginModal?.()}
+                    data-testid="header-switch-account-btn"
+                    className="w-full text-left px-3 py-2 text-xs font-bold text-[#083E34] hover:bg-[#FFF8F0] rounded-xl transition flex items-center justify-between cursor-pointer"
+                  >
+                    <span>Switch User / 7 Demo Accounts</span>
+                    <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#FF9900]/20 text-[#D97706]">
+                      Demo
+                    </span>
+                  </button>
+
+                  <div className="my-1 border-t border-slate-100" />
+
+                  <button
+                    onClick={() => logout()}
+                    className="w-full text-left px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
+                  >
+                    <span>Sign Out</span>
+                  </button>
                 </div>
-                <div className="text-[10px] text-slate-500 font-medium truncate max-w-[130px]">
-                  {currentUser.jobTitle || 'PCCM Super Admin'}
-                </div>
-              </div>
+              )}
             </div>
 
             {/* "New task" button beside user profile */}
@@ -360,7 +410,11 @@ export const Header: React.FC<HeaderProps> = ({
       </header>
 
       {/* Profile Edit Modal */}
-      <ProfileEditModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
+      <ProfileEditModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        onOpenLoginModal={onOpenLoginModal}
+      />
     </>
   );
 };

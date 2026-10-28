@@ -236,15 +236,21 @@ const MainAppLayout: React.FC = () => {
   };
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [loginModalTab, setLoginModalTab] = useState<'signin' | 'register' | 'personas'>('personas');
 
   if (backendEnabled && !isAuthenticated) {
-    return <LoginModal isOpen onClose={() => {}} required />;
+    return <LoginModal isOpen onClose={() => {}} required initialTab="signin" />;
   }
 
   return (
     <div className="min-h-screen bg-[#F6F8FA] flex flex-col font-sans text-slate-800">
       {/* 1. Notice Banner: Indicating demo data and production Supabase architecture */}
-      <DemoDataBanner />
+      <DemoDataBanner
+        onOpenDemoUsers={() => {
+          setLoginModalTab('personas');
+          setIsLoginModalOpen(true);
+        }}
+      />
 
       {/* 2. Full-Width Top Navigation Bar: Spans top of screen, never covered by sidebar */}
       <Header
@@ -259,6 +265,10 @@ const MainAppLayout: React.FC = () => {
           setTimeout(() => {
             window.dispatchEvent(new CustomEvent('trellis-open-new-task'));
           }, 60);
+        }}
+        onOpenLoginModal={() => {
+          setLoginModalTab('personas');
+          setIsLoginModalOpen(true);
         }}
       />
 
@@ -278,7 +288,10 @@ const MainAppLayout: React.FC = () => {
             setCurrentModule('employees');
             setIsAddEmployeeModalOpen(true);
           }}
-          onOpenLoginModal={() => setIsLoginModalOpen(true)}
+          onOpenLoginModal={() => {
+            setLoginModalTab('personas');
+            setIsLoginModalOpen(true);
+          }}
           />
         </Col>
 
@@ -304,7 +317,11 @@ const MainAppLayout: React.FC = () => {
       </Container>
 
       {/* Login & Role Switcher Modal */}
-      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        initialTab={loginModalTab}
+      />
 
       {/* 4. PWA Offline Status Toast */}
       <OfflineIndicator />

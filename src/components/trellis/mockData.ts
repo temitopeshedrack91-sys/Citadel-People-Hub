@@ -61,6 +61,30 @@ export const initialTeamMembers: TeamMember[] = [
     email: 'raka@citadel.ng',
     capacityHours: 40,
   },
+  {
+    id: 'user-adeleke',
+    supabaseId: 2,
+    staffId: 'CGCC-001',
+    name: 'Dr. Bukola Adeleke',
+    initials: 'BA',
+    role: 'Chief People Officer',
+    avatarBg: 'bg-[#083E34]',
+    avatarText: 'text-amber-300',
+    email: 'dr.adeleke@citadel.ng',
+    capacityHours: 40,
+  },
+  {
+    id: 'user-femi',
+    supabaseId: 4,
+    staffId: 'CGCC-002',
+    name: 'Engr. Femi Olatunji',
+    initials: 'FO',
+    role: 'Head of Technology',
+    avatarBg: 'bg-blue-600',
+    avatarText: 'text-white',
+    email: 'femi.olatunji@citadel.ng',
+    capacityHours: 40,
+  },
 ];
 
 export const initialTasks: TrellisTask[] = [

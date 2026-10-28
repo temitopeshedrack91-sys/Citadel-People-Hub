@@ -261,22 +261,6 @@ const citadelEvents: ScheduleEvent[] = [
     ],
   },
   {
-    id: 'evt-3-d28',
-    dayNum: 28,
-    dateString: '2026-10-28',
-    time: '14:00 - 15:30',
-    tag: 'Governance',
-    title: 'GEC Leadership Session',
-    channel: 'Citadel Executive Council Chamber',
-    location: 'Executive Council Chambers, PCCM Wing',
-    category: 'Events',
-    description: 'Institutional leadership alignment on stewardship, Q4 capital milestones, and administrative protocol.',
-    attendees: [
-      { initials: 'CI', bg: 'bg-slate-700', name: 'Pastor Christian Ike' },
-      { initials: 'BA', bg: 'bg-teal-700', name: 'Pastor Biola Adeyoola' },
-    ],
-  },
-  {
     id: 'evt-6',
     dayNum: 28,
     dateString: '2026-10-28',
@@ -430,8 +414,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
   const [internalSelectedDay, setInternalSelectedDay] = useState<number>(() => {
     if (controlledSelectedDay !== undefined) return controlledSelectedDay;
     if (initialMonth === 'January 2026') return 16;
-    const now = new Date();
-    return now.getDate();
+    return 27;
   });
   const [activeCategory, setActiveCategory] = useState<'All' | 'Meeting' | 'Events' | 'Holidays'>('All');
   const [eventsList, setEventsList] = useState<ScheduleEvent[]>(propEvents || citadelEvents);

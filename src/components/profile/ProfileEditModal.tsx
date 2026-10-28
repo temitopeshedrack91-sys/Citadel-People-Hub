@@ -20,9 +20,10 @@ import { useAuth } from '../../context/AuthContext';
 interface ProfileEditModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenLoginModal?: () => void;
 }
 
-export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose }) => {
+export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose, onOpenLoginModal }) => {
   const { currentUser, updateProfile } = useAuth();
 
   const [name, setName] = useState(currentUser.name);
@@ -216,12 +217,26 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
 
         {/* Footer */}
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition cursor-pointer"
-          >
-            Cancel
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition cursor-pointer"
+            >
+              Cancel
+            </button>
+            {onOpenLoginModal && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenLoginModal();
+                }}
+                className="text-xs text-[#083E34] hover:underline font-bold"
+              >
+                Switch Account (7 Demo Users)
+              </button>
+            )}
+          </div>
           <button
             onClick={handleSave}
             disabled={isSaved}

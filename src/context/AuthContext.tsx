@@ -22,15 +22,15 @@ export const PRESET_PERSONAS: PersonaOption[] = [
   {
     user: {
       id: 'emp-1',
-      staffId: 'CGCC/004',
+      staffId: 'CGCC-001',
       name: 'Dr. Bukola Adeleke',
-      email: 'b.adeleke@citadelcommunity.org',
+      email: 'dr.adeleke@citadel.ng',
       role: 'PCCM_SUPER_ADMIN',
-      entityId: 'entity-cgcc',
-      entityName: 'Citadel Global Community Church (CGCC)',
+      entityId: 'CGCC',
+      entityName: 'Citadel Global Community Church',
       departmentId: 'dept-cgcc-pccm',
-      departmentName: 'People, Culture & Change',
-      jobTitle: 'People, Culture & Change Manager (PCCM)',
+      departmentName: 'People & Culture',
+      jobTitle: 'Chief People Officer',
       avatarUrl: '',
       permissions: ['*'],
     },
@@ -38,7 +38,145 @@ export const PRESET_PERSONAS: PersonaOption[] = [
     description: 'Primary HR Admin & GEC custodian with cross-entity governance across CGCC, CSOG, and Holdings.',
   },
 
+  // 2. Head of Technology & Systems (Line Manager / System Admin)
+  {
+    user: {
+      id: 'emp-2',
+      staffId: 'CGCC-002',
+      name: 'Engr. Femi Olatunji',
+      email: 'femi.olatunji@citadel.ng',
+      role: 'SYSTEM_ADMIN',
+      entityId: 'CGCC',
+      entityName: 'Citadel Global Community Church',
+      departmentId: 'dept-cgcc-tech',
+      departmentName: 'Technology & Systems',
+      jobTitle: 'Head of Technology',
+      avatarUrl: '',
+      permissions: ['*'],
+    },
+    badgeLabel: 'Head of Technology',
+    description: 'Technical Systems Administrator and Line Manager. Biometric hardware sync, API gateways, and department approvals.',
+  },
 
+  // 3. Business Head (Group Executive Council / Leadership)
+  {
+    user: {
+      id: 'emp-0',
+      staffId: 'CGCC-000',
+      name: 'Pastor Tunde Bakare',
+      email: 'pastor.bakare@citadel.ng',
+      role: 'BUSINESS_HEAD',
+      entityId: 'CGCC',
+      entityName: 'Citadel Global Community Church',
+      departmentId: 'dept-cgcc-pastoral',
+      departmentName: 'Pastoral & Ministry Operations',
+      jobTitle: 'President & General Overseer',
+      avatarUrl: '',
+      permissions: ['*'],
+    },
+    badgeLabel: 'Business Head',
+    description: 'Group Executive Council leadership. High-level entity oversight, strategic report exports, and executive sign-offs.',
+  },
+
+  // 4. Lead Product Designer (Kanban Team Lead)
+  {
+    user: {
+      id: 'emp-3',
+      staffId: 'CGCC-003',
+      name: 'Nadia Safitri',
+      email: 'nadia@citadel.ng',
+      role: 'EMPLOYEE',
+      entityId: 'CGCC',
+      entityName: 'Citadel Global Community Church',
+      departmentId: 'dept-cgcc-tech',
+      departmentName: 'Technology & Systems',
+      jobTitle: 'Lead Product Designer',
+      avatarUrl: '',
+      permissions: ['self_service'],
+    },
+    badgeLabel: 'Product Designer',
+    description: 'UI/UX design lead for Citadel People Hub. Project board collaborator, tasks management, and employee self-service.',
+  },
+
+  // 5. Senior Android Engineer (Sprint Engineer)
+  {
+    user: {
+      id: 'emp-4',
+      staffId: 'CGCC-004',
+      name: 'Bayu Wirawan',
+      email: 'bayu@citadel.ng',
+      role: 'EMPLOYEE',
+      entityId: 'CGCC',
+      entityName: 'Citadel Global Community Church',
+      departmentId: 'dept-cgcc-tech',
+      departmentName: 'Technology & Systems',
+      jobTitle: 'Senior Android Engineer',
+      avatarUrl: '',
+      permissions: ['self_service'],
+    },
+    badgeLabel: 'Senior Android Engineer',
+    description: 'Mobile platform engineer. Sprint task tracking, shift check-ins, and leave requests.',
+  },
+
+  // 6. QA & Review Lead (Quality Assurance)
+  {
+    user: {
+      id: 'emp-5',
+      staffId: 'CGCC-005',
+      name: 'Sinta Lubis',
+      email: 'sinta@citadel.ng',
+      role: 'EMPLOYEE',
+      entityId: 'CGCC',
+      entityName: 'Citadel Global Community Church',
+      departmentId: 'dept-cgcc-tech',
+      departmentName: 'Technology & Systems',
+      jobTitle: 'QA & Review Lead',
+      avatarUrl: '',
+      permissions: ['self_service'],
+    },
+    badgeLabel: 'QA & Review Lead',
+    description: 'Quality assurance and review lead. Sprint task verification, bug reporting, and leave management.',
+  },
+
+  // 7. Backend & Offline Systems Lead (Architecture)
+  {
+    user: {
+      id: 'emp-6',
+      staffId: 'CGCC-006',
+      name: 'Jonathan Tan',
+      email: 'jonathan@citadel.ng',
+      role: 'EMPLOYEE',
+      entityId: 'CGCC',
+      entityName: 'Citadel Global Community Church',
+      departmentId: 'dept-cgcc-tech',
+      departmentName: 'Technology & Systems',
+      jobTitle: 'Backend & Offline Systems Lead',
+      avatarUrl: '',
+      permissions: ['self_service'],
+    },
+    badgeLabel: 'Backend Lead',
+    description: 'Core platform architect for Supabase PostgreSQL syncing, offline cache, and API resilience.',
+  },
+
+  // 8. Data & Growth Analyst (People & Culture Intelligence)
+  {
+    user: {
+      id: 'emp-7',
+      staffId: 'CGCC-007',
+      name: 'Raka Aditya',
+      email: 'raka@citadel.ng',
+      role: 'EMPLOYEE',
+      entityId: 'CGCC',
+      entityName: 'Citadel Global Community Church',
+      departmentId: 'dept-cgcc-pccm',
+      departmentName: 'People & Culture',
+      jobTitle: 'Data & Growth Analyst',
+      avatarUrl: '',
+      permissions: ['self_service'],
+    },
+    badgeLabel: 'Data Analyst',
+    description: 'Workforce analytics, headcount telemetry, and employee self-service.',
+  },
 ];
 
 interface AuthContextType {
@@ -151,18 +289,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const register = async (email: string, password: string, name?: string, role: string = 'EMPLOYEE') => {
-    await authService.signUp(email, password, name, role);
+    const signupData = await authService.signUp(email, password, name, role);
+    const userId = signupData?.user?.id || `usr-${Date.now()}`;
     const user: User = {
-      id: `usr-${Date.now()}`,
+      id: userId,
       staffId: 'CGCC-NEW',
       name: name || email.split('@')[0],
-      email,
+      email: email.trim().toLowerCase(),
       role: (role as UserRole) || 'EMPLOYEE',
-      entityId: 'entity-cgcc',
-      entityName: 'Citadel Global Community Church (CGCC)',
+      entityId: 'CGCC',
+      entityName: 'Citadel Global Community Church',
       departmentId: 'dept-cgcc-pccm',
-      departmentName: 'People, Culture & Change',
-      jobTitle: role,
+      departmentName: 'People & Culture',
+      jobTitle: role.replaceAll('_', ' '),
       permissions: ['*'],
     };
     setCurrentPersona({
@@ -174,31 +313,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = async (email: string, password: string) => {
+    const cleanEmail = email.trim().toLowerCase();
     // Try Supabase Auth first
     try {
-      const { user: supaUser } = await authService.signIn(email, password);
+      const { user: supaUser } = await authService.signIn(cleanEmail, password);
       if (supaUser) {
-        const matching = PRESET_PERSONAS.find((p) => p.user.email === email);
+        const matching = PRESET_PERSONAS.find(
+          (p) =>
+            p.user.email.toLowerCase() === cleanEmail ||
+            (cleanEmail === 'dr.adeleke@citadel.ng' && p.user.email.includes('adeleke')) ||
+            (cleanEmail.startsWith('b.adeleke') && p.user.email.includes('adeleke'))
+        );
         if (matching) {
           setCurrentPersona(matching);
+          if (matching.user.role === 'PCCM_SUPER_ADMIN') {
+            setSelectedEntityFilter('all');
+          } else if (matching.user.entityId) {
+            setSelectedEntityFilter(matching.user.entityId);
+          }
         } else {
+          const userMeta = supaUser.user_metadata || {};
           const user: User = {
             id: supaUser.id,
-            staffId: 'CGCC-APP',
-            name: supaUser.user_metadata?.full_name || email.split('@')[0],
-            email: supaUser.email || email,
-            role: supaUser.user_metadata?.role || 'EMPLOYEE',
-            entityId: 'entity-cgcc',
-            entityName: 'Citadel Global Community Church (CGCC)',
-            departmentId: 'dept-cgcc-pccm',
-            departmentName: 'People, Culture & Change',
-            jobTitle: supaUser.user_metadata?.role || 'Citadel Staff',
+            staffId: userMeta.staff_id || 'CGCC-APP',
+            name: userMeta.full_name || email.split('@')[0],
+            email: supaUser.email || cleanEmail,
+            role: (userMeta.role as UserRole) || 'EMPLOYEE',
+            entityId: userMeta.entity_id || 'CGCC',
+            entityName: userMeta.entity_name || 'Citadel Global Community Church',
+            departmentId: userMeta.department || 'People & Culture',
+            departmentName: userMeta.department || 'People & Culture',
+            jobTitle: userMeta.job_title || userMeta.role || 'Citadel Staff',
             permissions: [],
           };
           setCurrentPersona({
             user,
-            badgeLabel: (supaUser.user_metadata?.role || 'EMPLOYEE').replaceAll('_', ' '),
-            description: `Authenticated Supabase account: ${email}`,
+            badgeLabel: (userMeta.role || 'EMPLOYEE').replaceAll('_', ' '),
+            description: `Authenticated Supabase account: ${cleanEmail}`,
           });
         }
         setIsAuthenticated(true);
