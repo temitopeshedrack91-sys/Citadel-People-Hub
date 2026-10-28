@@ -3,7 +3,7 @@
 -- that currently exist in the Laravel backend.
 
 -- Users (Supabase Auth already creates a "auth.users" table, but we keep a profile table)
-create table public.profiles (
+create table if not exists public.profiles (
   id uuid primary key references auth.users (id),
   full_name text,
   role text,
@@ -12,7 +12,7 @@ create table public.profiles (
 );
 
 -- Departments
-create table public.departments (
+create table if not exists public.departments (
   id bigserial primary key,
   name text not null,
   description text,
@@ -21,7 +21,7 @@ create table public.departments (
 );
 
 -- Organizations (if you have multi‑tenant)
-create table public.organizations (
+create table if not exists public.organizations (
   id bigserial primary key,
   name text not null,
   domain text,
@@ -30,7 +30,7 @@ create table public.organizations (
 );
 
 -- Employees – link to a user (optional) and a department
-create table public.employees (
+create table if not exists public.employees (
   id bigserial primary key,
   user_id uuid references auth.users (id),
   department_id bigint references public.departments (id),
@@ -44,7 +44,7 @@ create table public.employees (
 );
 
 -- Attendance records
-create table public.attendance_records (
+create table if not exists public.attendance_records (
   id bigserial primary key,
   employee_id bigint references public.employees (id),
   clock_in timestamp with time zone not null,
@@ -54,7 +54,7 @@ create table public.attendance_records (
 );
 
 -- Leave requests
-create table public.leave_requests (
+create table if not exists public.leave_requests (
   id bigserial primary key,
   employee_id bigint references public.employees (id),
   start_date date not null,
@@ -67,7 +67,7 @@ create table public.leave_requests (
 );
 
 -- Audit logs
-create table public.audit_logs (
+create table if not exists public.audit_logs (
   id bigserial primary key,
   actor_id uuid references auth.users (id),
   action text not null,
@@ -78,7 +78,7 @@ create table public.audit_logs (
 );
 
 -- Documents – files stored in Supabase Storage
-create table public.documents (
+create table if not exists public.documents (
   id bigserial primary key,
   employee_id bigint references public.employees (id),
   storage_path text not null,
@@ -88,7 +88,7 @@ create table public.documents (
 );
 
 -- Simple todos table used by the demo page
-create table public.todos (
+create table if not exists public.todos (
   id bigserial primary key,
   name text not null,
   completed boolean default false,
@@ -108,12 +108,11 @@ alter table public.documents enable row level security;
 alter table public.todos enable row level security;
 
 -- Policies – allow authenticated users to read/write their own data (simplified)
+drop policy if exists "allow select all" on public.todos;
 create policy "allow select all" on public.todos for select using (true);
+drop policy if exists "allow insert" on public.todos;
 create policy "allow insert" on public.todos for insert with check (true);
+drop policy if exists "allow update" on public.todos;
 create policy "allow update" on public.todos for update using (true);
+drop policy if exists "allow delete" on public.todos;
 create policy "allow delete" on public.todos for delete using (true);
-
--- You can add more granular policies for the other tables as needed.
-
--- Storage bucket creation is done via CLI (see instructions below).
-
