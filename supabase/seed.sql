@@ -11,6 +11,13 @@ VALUES
 ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
 
 -- 2. DEPARTMENTS
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'departments_name_key') THEN
+    ALTER TABLE public.departments ADD CONSTRAINT departments_name_key UNIQUE (name);
+  END IF;
+END $$;
+
 INSERT INTO public.departments (name, code, description, hod_name, hod_email)
 VALUES
   ('People & Culture', 'HR', 'HR, Talent Development, and Staff Welfare', 'Dr. Bukola Adeleke', 'hr@citadel.ng'),
@@ -18,7 +25,11 @@ VALUES
   ('Pastoral & Ministry Operations', 'MIN', 'Pastoral care, service coordination, and protocol', 'Pastor S. Adeleke', 'pastoral@citadel.ng'),
   ('Finance & Treasury', 'FIN', 'Payroll, reconciliation, and audit management', 'Mrs. Yewande Daniels', 'finance@citadel.ng'),
   ('Media & Communications', 'MEDIA', 'Broadcast, publications, and external comms', 'Mr. David Adeleke', 'media@citadel.ng')
-ON CONFLICT DO NOTHING;
+ON CONFLICT (name) DO UPDATE SET
+  code = EXCLUDED.code,
+  description = EXCLUDED.description,
+  hod_name = EXCLUDED.hod_name,
+  hod_email = EXCLUDED.hod_email;
 
 -- 3. EMPLOYEES
 INSERT INTO public.employees (staff_id, first_name, last_name, email, phone, gender, job_title, position, department_name, entity_name, status, employment_type, avatar_bg, avatar_text)
@@ -33,6 +44,12 @@ VALUES
 ON CONFLICT (email) DO UPDATE SET 
   job_title = EXCLUDED.job_title,
   staff_id = EXCLUDED.staff_id;
+
+-- Link department_id in employees where matching
+UPDATE public.employees e
+SET department_id = d.id
+FROM public.departments d
+WHERE e.department_name = d.name AND e.department_id IS NULL;
 
 -- 4. TRELLIS TASKS (Matching Projects Kanban Board)
 INSERT INTO public.tasks (id, title, description, status, labels, due_date, due_tag, assignee_id, assigner_id, assignment_status, reviewer_id, hours, pr_tag, progress_fraction, checklist, comments)
@@ -52,7 +69,20 @@ VALUES
   ('PAS-230', 'Upgrade to React Native 0.81', 'Upgrade React Native runtime for Hermes engine performance and new architecture support.', 'Done', ARRAY['Tech'], 'Oct 15', NULL, 'user-jonathan', 'user-bayu', 'accepted', NULL, 16, NULL, NULL, '[]'::jsonb, '[]'::jsonb)
 ON CONFLICT (id) DO UPDATE SET
   title = EXCLUDED.title,
+  description = EXCLUDED.description,
   status = EXCLUDED.status,
+  labels = EXCLUDED.labels,
+  due_date = EXCLUDED.due_date,
+  due_tag = EXCLUDED.due_tag,
+  assignee_id = EXCLUDED.assignee_id,
+  assigner_id = EXCLUDED.assigner_id,
+  assignment_status = EXCLUDED.assignment_status,
+  reviewer_id = EXCLUDED.reviewer_id,
+  hours = EXCLUDED.hours,
+  pr_tag = EXCLUDED.pr_tag,
+  progress_fraction = EXCLUDED.progress_fraction,
+  checklist = EXCLUDED.checklist,
+  comments = EXCLUDED.comments,
   updated_at = NOW();
 
 -- 5. DOCUMENTS
@@ -71,3 +101,37 @@ VALUES
   ('All-Hands Governance & Ministry Review', 'Quarterly review of ministry KPIs, community development, and school expansion', NOW() + INTERVAL '4 days', NOW() + INTERVAL '4 days 2 hours', 'Executive Boardroom & Online', 'Meeting'),
   ('CSOG Leadership Cohort Orientation', 'Orientation for incoming public administration leadership cohort', NOW() + INTERVAL '7 days', NOW() + INTERVAL '7 days 4 hours', 'CSOG Hall A', 'Training')
 ON CONFLICT DO NOTHING;
+
+-- Ensure realtime publication includes all domain tables
+DO $$
+BEGIN
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.entities;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.departments;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.employees;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.tasks;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.documents;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.events;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+END $$;
