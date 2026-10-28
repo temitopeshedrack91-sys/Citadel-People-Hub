@@ -228,7 +228,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
             className={`px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs transition cursor-pointer ${
               isSaved
                 ? 'bg-emerald-600 text-white'
-                : 'bg-[#FF9900] text-slate-950 hover:bg-[#E68A00] font-bold active:scale-[0.97]'
+                : 'bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] font-bold active:scale-[0.97]'
             }`}
           >
             {isSaved ? (

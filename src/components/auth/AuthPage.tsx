@@ -405,7 +405,7 @@ export const AuthPage: React.FC = () => {
                     setSuccessMessage('Password reset link dispatched to your registered work email.');
                     setTimeout(() => setSuccessMessage(''), 4000);
                   }}
-                  className="text-xs font-bold text-orange-500 hover:text-orange-600 hover:underline cursor-pointer"
+                  className="text-xs font-bold text-[#C59B27] hover:text-[#B8860B] hover:underline cursor-pointer"
                 >
                   Forgot password?
                 </button>
@@ -476,7 +476,7 @@ export const AuthPage: React.FC = () => {
             className="w-full flex items-center justify-between text-left cursor-pointer group"
           >
             <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
-              <Fingerprint className="w-4 h-4 text-orange-500" />
+              <Fingerprint className="w-4 h-4 text-[#D4AF37]" />
               <span>Demo Credentials (1-Click Fill)</span>
             </div>
             {isDemoAccordionOpen ? (

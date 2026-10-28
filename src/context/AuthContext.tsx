@@ -10,6 +10,7 @@ import React, { createContext, useContext, useState, useMemo, useEffect } from '
 import { User, UserRole, RolePermissions } from '../types';
 import { isLaravelApiConfigured, requestLaravel, setLaravelAccessToken } from '../services/laravelClient';
 import { authService } from '../services/supabaseService';
+import { getRolePermissions } from '../utils/rbac';
 
 export interface PersonaOption {
   user: User;
@@ -177,6 +178,26 @@ export const PRESET_PERSONAS: PersonaOption[] = [
     badgeLabel: 'Data Analyst',
     description: 'Workforce analytics, headcount telemetry, and employee self-service.',
   },
+
+  // 9. Read-Only Viewer / External Auditor
+  {
+    user: {
+      id: 'emp-8',
+      staffId: 'CGCC-008',
+      name: 'Grace Okafor',
+      email: 'grace.okafor@citadel.ng',
+      role: 'VIEWER',
+      entityId: 'CGCC',
+      entityName: 'Citadel Global Community Church',
+      departmentId: 'dept-cgcc-audit',
+      departmentName: 'Audit & Governance',
+      jobTitle: 'Compliance Auditor (Viewer)',
+      avatarUrl: '',
+      permissions: ['read_only'],
+    },
+    badgeLabel: 'Read-Only Viewer',
+    description: 'Read-only compliance auditor. Public directory, documents, reports, and calendar with zero mutation privileges.',
+  },
 ];
 
 interface AuthContextType {
@@ -196,6 +217,8 @@ interface AuthContextType {
   canAccessAuditLogs: boolean;
   canManageEntities: boolean;
   canApproveLeave: boolean;
+  canManageSettings: boolean;
+  isReadOnly: boolean;
   updateProfile: (updates: Partial<Pick<User, 'name' | 'email' | 'phone' | 'location' | 'bio' | 'avatarUrl'>>) => void;
 }
 
@@ -477,21 +500,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const permissions = useMemo<RolePermissions>(() => {
-    const role = currentPersona.user.role;
-    return {
-      canManageEmployees: role === 'PCCM_SUPER_ADMIN',
-      canViewAllEmployees: role === 'PCCM_SUPER_ADMIN' || role === 'SYSTEM_ADMIN',
-      canViewSensitiveData: role === 'PCCM_SUPER_ADMIN', // Sensitive salaries/bank accounts strictly restricted to PCCM!
-      canManageEntitiesAndDepts: role === 'PCCM_SUPER_ADMIN',
-      canApproveLeave: role === 'PCCM_SUPER_ADMIN' || role === 'BUSINESS_HEAD' || role === 'DEPARTMENT_HEAD',
-      canManageLeavePolicies: role === 'PCCM_SUPER_ADMIN',
-      canViewAuditLogs: role === 'PCCM_SUPER_ADMIN' || role === 'SYSTEM_ADMIN',
-      canManageOnboarding: role === 'PCCM_SUPER_ADMIN' || role === 'DEPARTMENT_HEAD',
-      canManagePerformance: role === 'PCCM_SUPER_ADMIN' || role === 'BUSINESS_HEAD' || role === 'DEPARTMENT_HEAD',
-      canManageDocuments: role === 'PCCM_SUPER_ADMIN',
-      canConfigureIntegrations: role === 'PCCM_SUPER_ADMIN' || role === 'SYSTEM_ADMIN',
-      canExportReports: role === 'PCCM_SUPER_ADMIN' || role === 'BUSINESS_HEAD',
-    };
+    return getRolePermissions(currentPersona.user.role);
   }, [currentPersona.user.role]);
 
   const value = {
@@ -511,6 +520,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     canAccessAuditLogs: permissions.canViewAuditLogs,
     canManageEntities: permissions.canManageEntitiesAndDepts,
     canApproveLeave: permissions.canApproveLeave,
+    canManageSettings: permissions.canManageSettings,
+    isReadOnly: permissions.isReadOnly,
     updateProfile,
   };
 

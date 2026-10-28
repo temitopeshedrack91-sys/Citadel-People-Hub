@@ -201,7 +201,7 @@ Timestamp:     ${new Date().toLocaleString()}
         {permissions.canManageDocuments && (
           <button
             onClick={() => setIsUploadModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-[#FF9900] text-slate-950 hover:bg-[#E68A00] text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#E68A00] transition cursor-pointer active:scale-95 min-h-[38px]"
+            className="px-3.5 py-2 rounded-xl bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#C59B27] transition cursor-pointer active:scale-95 min-h-[38px]"
           >
             <Upload className="w-4 h-4 text-slate-950 stroke-[2.5]" />
             <span className="font-bold">Upload document</span>
@@ -218,7 +218,7 @@ Timestamp:     ${new Date().toLocaleString()}
             placeholder="Search document title, category, or policy..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#FF9900] focus:ring-1 focus:ring-[#FF9900]/25"
+            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/25"
           />
         </div>
 
@@ -229,7 +229,7 @@ Timestamp:     ${new Date().toLocaleString()}
               onClick={() => setCategoryFilter(cat)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition shrink-0 cursor-pointer ${
                 categoryFilter === cat
-                  ? 'bg-[#FF9900] text-slate-950 shadow-xs'
+                  ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
                   : 'text-black hover:bg-slate-100'
               }`}
             >
@@ -254,7 +254,7 @@ Timestamp:     ${new Date().toLocaleString()}
                 <div className="flex items-center gap-1.5 flex-wrap justify-end">
                   <Badge variant="citadel">{doc.category}</Badge>
                   {doc.accessLevel === 'PCCM_Only' && (
-                    <span className="p-1 rounded-md bg-[#FFF8F0] text-[#D97706] border border-[#FFE0B2]" title="Restricted to PCCM">
+                    <span className="p-1 rounded-md bg-[#FAF5EB] text-[#D97706] border border-[#F2E4B8]" title="Restricted to PCCM">
                       <Lock className="w-3 h-3" />
                     </span>
                   )}
@@ -410,7 +410,7 @@ Timestamp:     ${new Date().toLocaleString()}
                 <button
                   type="submit"
                   disabled={isUploading}
-                  className="px-5 py-2 bg-[#FF9900] text-slate-950 font-bold rounded-xl hover:bg-[#E68A00] transition shadow-xs cursor-pointer active:scale-95"
+                  className="px-5 py-2 bg-[#D4AF37] text-slate-950 font-bold rounded-xl hover:bg-[#C59B27] transition shadow-xs cursor-pointer active:scale-95"
                 >
                   {isUploading ? 'Publishing...' : 'Save & Publish Document'}
                 </button>

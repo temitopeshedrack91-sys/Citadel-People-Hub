@@ -92,8 +92,8 @@ export const TrellisTimeline: React.FC = () => {
       barLabel: 'Screens',
       startDay: 23,
       endDay: 28,
-      color: 'bg-orange-100 text-orange-800 border-orange-200',
-      dotColor: 'bg-orange-500',
+      color: 'bg-amber-100 text-amber-900 border-amber-200',
+      dotColor: 'bg-[#D4AF37]',
     },
   ];
 

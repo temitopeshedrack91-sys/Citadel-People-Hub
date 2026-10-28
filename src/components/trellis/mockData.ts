@@ -56,7 +56,7 @@ export const initialTeamMembers: TeamMember[] = [
     name: 'Raka Aditya',
     initials: 'RA',
     role: 'Data Analyst',
-    avatarBg: 'bg-orange-500',
+    avatarBg: 'bg-[#D4AF37]',
     avatarText: 'text-white',
     email: 'raka@citadel.ng',
     capacityHours: 40,

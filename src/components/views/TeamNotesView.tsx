@@ -263,7 +263,7 @@ export const TeamNotesView: React.FC = () => {
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="px-3.5 py-2 rounded-xl bg-[#FF9900] hover:bg-[#E68A00] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#E68A00] transition active:scale-95 cursor-pointer min-h-[38px] shrink-0"
+          className="px-3.5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#C59B27] transition active:scale-95 cursor-pointer min-h-[38px] shrink-0"
         >
           <Plus className="w-4 h-4 text-slate-950 stroke-[2.5]" />
           <span className="font-bold">New note</span>
@@ -359,7 +359,7 @@ export const TeamNotesView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#FF9900] hover:bg-[#E68A00] text-slate-950 font-bold rounded-xl transition shadow-xs"
+                  className="px-5 py-2 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold rounded-xl transition shadow-xs"
                 >
                   Save Note
                 </button>

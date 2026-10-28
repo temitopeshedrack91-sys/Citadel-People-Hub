@@ -38,6 +38,8 @@ import { ProjectsView } from './components/views/ProjectsView';
 import { TeamNotesView } from './components/views/TeamNotesView';
 import { LoginModal } from './components/auth/LoginModal';
 import { AuthPage } from './components/auth/AuthPage';
+import { AccessDeniedView } from './components/common/AccessDeniedView';
+import { checkRouteAccess } from './utils/rbac';
 
 const VALID_MODULES: NavModule[] = [
   'dashboard', 'employees', 'directory', 'leave', 'attendance', 'projects',
@@ -163,6 +165,23 @@ const MainAppLayout: React.FC = () => {
   };
 
   const renderActiveModule = () => {
+    // 1. Centralized Route Guard: verifies module authorization based on user role
+    const accessCheck = checkRouteAccess(currentUser, currentModule);
+    if (!accessCheck.allowed) {
+      return (
+        <AccessDeniedView
+          module={currentModule}
+          status={accessCheck.status === 401 ? 401 : 403}
+          reason={accessCheck.reason}
+          onNavigateHome={() => setCurrentModule('dashboard')}
+          onOpenLogin={() => {
+            setLoginModalTab('signin');
+            setIsLoginModalOpen(true);
+          }}
+        />
+      );
+    }
+
     switch (currentModule) {
       case 'dashboard':
         return (

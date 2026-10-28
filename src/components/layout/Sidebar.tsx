@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { CitadelLogo } from '../brand/CitadelLogo';
+import { canAccessModule, canPerformAction } from '../../utils/rbac';
 
 export type NavModule =
   | 'dashboard'
@@ -75,14 +76,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenAddEmployee,
   onOpenLoginModal,
 }) => {
-  const { currentRole, permissions, currentPersona, logout } = useAuth();
+  const { currentRole, currentUser, currentPersona, logout } = useAuth();
 
-  const isPCCM = currentRole === 'PCCM_SUPER_ADMIN';
-  const isBizHead = currentRole === 'BUSINESS_HEAD';
-  const isDeptHead = currentRole === 'DEPARTMENT_HEAD';
-  const isEmployee = currentRole === 'EMPLOYEE';
+  const canManageEmployees = canPerformAction(currentUser, 'manage_employees').allowed;
 
-  // Navigation structured into MENU, OPERATIONS, and SUPPORT matching reference designs
+  // Navigation structured into MENU, OPERATIONS, and SUPPORT with centralized RBAC visibility
   const navSections = [
     {
       label: 'MENU',
@@ -91,37 +89,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
           id: 'dashboard' as NavModule,
           label: 'Dashboard',
           icon: LayoutDashboard,
-          visible: true,
+          visible: canAccessModule(currentUser || currentRole, 'dashboard'),
         },
         {
           id: 'employees' as NavModule,
           label: 'Employees',
           icon: Users,
-          visible: true,
+          visible: canAccessModule(currentUser || currentRole, 'employees'),
         },
         {
           id: 'attendance' as NavModule,
           label: 'Attendance',
           icon: Clock,
-          visible: true,
+          visible: canAccessModule(currentUser || currentRole, 'attendance'),
           badge: 'Live',
-          badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+          badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
         },
         {
           id: 'leave' as NavModule,
           label: 'Leave',
           icon: CalendarDays,
-          visible: true,
+          visible: canAccessModule(currentUser || currentRole, 'leave'),
           badge: '2',
-          badgeColor: 'bg-[#FF9900]/20 text-[#FF9900] border-[#FF9900]/40',
+          badgeColor: 'bg-[#D4AF37]/20 text-[#D4AF37] border-[#D4AF37]/40',
         },
-
-
         {
           id: 'projects' as NavModule,
           label: 'Projects',
           icon: FolderTree,
-          visible: true,
+          visible: canAccessModule(currentUser || currentRole, 'projects'),
         },
       ],
     },
@@ -132,66 +128,78 @@ export const Sidebar: React.FC<SidebarProps> = ({
           id: 'calendar' as NavModule,
           label: 'Calendar',
           icon: Calendar,
-          visible: true,
+          visible: canAccessModule(currentUser || currentRole, 'calendar'),
         },
         {
           id: 'team-notes' as NavModule,
           label: 'Team Notes',
           icon: StickyNote,
-          visible: true,
+          visible: canAccessModule(currentUser || currentRole, 'team-notes'),
         },
         {
           id: 'directory' as NavModule,
           label: 'Directory',
           icon: Contact,
-          visible: true,
+          visible: canAccessModule(currentUser || currentRole, 'directory'),
+        },
+        {
+          id: 'recruitment' as NavModule,
+          label: 'Recruitment',
+          icon: Briefcase,
+          visible: canAccessModule(currentUser || currentRole, 'recruitment'),
         },
         {
           id: 'onboarding' as NavModule,
           label: 'Onboarding',
           icon: UserPlus,
-          visible: true,
+          visible: canAccessModule(currentUser || currentRole, 'onboarding'),
+        },
+        {
+          id: 'offboarding' as NavModule,
+          label: 'Offboarding',
+          icon: UserRoundX,
+          visible: canAccessModule(currentUser || currentRole, 'offboarding'),
         },
         {
           id: 'documents' as NavModule,
           label: 'Documents',
           icon: FileText,
-          visible: true,
+          visible: canAccessModule(currentUser || currentRole, 'documents'),
         },
         {
           id: 'performance' as NavModule,
           label: 'Performance',
           icon: Award,
-          visible: true,
+          visible: canAccessModule(currentUser || currentRole, 'performance'),
         },
         {
           id: 'reports' as NavModule,
           label: 'Reports',
           icon: BarChart3,
-          visible: true,
+          visible: canAccessModule(currentUser || currentRole, 'reports'),
         },
       ],
     },
     {
-      label: 'SUPPORT',
+      label: 'SUPPORT & GOVERNANCE',
       items: [
         {
           id: 'settings' as NavModule,
           label: 'Settings',
           icon: Settings,
-          visible: true,
+          visible: canAccessModule(currentUser || currentRole, 'settings'),
         },
         {
           id: 'ai-assistant' as NavModule,
           label: 'Help & Assistant',
           icon: HelpCircle,
-          visible: true,
+          visible: canAccessModule(currentUser || currentRole, 'ai-assistant'),
         },
         {
           id: 'audit-logs' as NavModule,
           label: 'Audit Trail',
           icon: ShieldCheck,
-          visible: true,
+          visible: canAccessModule(currentUser || currentRole, 'audit-logs'),
         },
       ],
     },
@@ -203,16 +211,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {isOpenMobile && (
         <div
           data-testid="sidebar-mobile-backdrop"
-          className="fixed inset-0 z-40 bg-black/60 lg:hidden backdrop-blur-xs transition-opacity"
+          className="fixed inset-0 z-40 bg-black/80 lg:hidden backdrop-blur-xs transition-opacity"
           onClick={onCloseMobile}
         />
       )}
 
-      {/* Dark Sidebar Container */}
+      {/* Black Sidebar Container */}
       <aside
         id="citadel-hub-sidebar"
         data-testid="citadel-sidebar"
-        className={`bg-[#06241E] border-r border-[#0D342C] text-slate-200 flex flex-col shrink-0 transition-all duration-300 ease-in-out ${
+        className={`bg-black border-r border-zinc-800 text-zinc-200 flex flex-col shrink-0 transition-all duration-300 ease-in-out ${
           isCollapsed ? 'lg:w-20' : 'lg:w-64'
         } ${
           isOpenMobile
@@ -221,23 +229,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }`}
       >
         {/* Mobile Header */}
-        <div className="h-16 px-4 border-b border-[#0D342C] flex items-center justify-between bg-[#06241E] shrink-0 lg:hidden">
+        <div className="h-16 px-4 border-b border-zinc-800 flex items-center justify-between bg-black shrink-0 lg:hidden">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-white/10 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0 ring-1 ring-white/10">
+            <div className="w-8 h-8 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0 ring-1 ring-zinc-700">
               <CitadelLogo variant="mark" colorMode="dark" className="h-4" />
             </div>
             <div className="flex flex-col">
               <span className="text-xs font-bold text-white tracking-tight leading-none">
                 Citadel People Hub
               </span>
-              <span className="text-[10px] text-emerald-300/70 font-medium mt-0.5">
+              <span className="text-[10px] text-zinc-400 font-medium mt-0.5">
                 Workforce Management
               </span>
             </div>
           </div>
           <button
             onClick={onCloseMobile}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition"
+            className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition"
             aria-label="Close sidebar"
           >
             <X className="w-5 h-5" />
@@ -246,19 +254,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Desktop Quick Collapse Bar */}
         <div
-          className={`hidden lg:flex items-center border-b border-[#0D342C] shrink-0 ${
+          className={`hidden lg:flex items-center border-b border-zinc-800 bg-black shrink-0 ${
             isCollapsed ? 'py-3 px-2 justify-center' : 'py-2.5 px-4 justify-between'
           }`}
         >
           {!isCollapsed ? (
             <>
-              <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+              <span className="text-[10px] font-bold uppercase text-zinc-400 tracking-wider">
                 Workforce Management
               </span>
               <button
                 type="button"
                 onClick={onToggleCollapse}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 transition cursor-pointer"
                 title="Collapse Sidebar (Ctrl+B)"
                 aria-label="Collapse Sidebar"
               >
@@ -269,17 +277,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               type="button"
               onClick={onToggleCollapse}
-              className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition group cursor-pointer"
+              className="w-9 h-9 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 flex items-center justify-center text-zinc-300 hover:text-white transition group cursor-pointer"
               title="Expand Sidebar (Ctrl+B)"
               aria-label="Expand Sidebar"
             >
-              <ChevronsRight className="w-4 h-4 text-slate-300 group-hover:text-white transition" />
+              <ChevronsRight className="w-4 h-4 text-zinc-400 group-hover:text-white transition" />
             </button>
           )}
         </div>
 
         {/* Navigation List with Sleek Custom Scrollbar */}
-        <nav className={`flex-1 overflow-y-auto custom-scrollbar min-h-0 space-y-4 py-3 ${isCollapsed ? 'px-2' : 'px-3.5'}`}>
+        <nav className={`flex-1 overflow-y-auto custom-scrollbar min-h-0 space-y-4 py-3 bg-black ${isCollapsed ? 'px-2' : 'px-3.5'}`}>
           {navSections.map((section, idx) => {
             const visibleItems = section.items.filter((item) => item.visible);
             if (visibleItems.length === 0) return null;
@@ -287,11 +295,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             return (
               <div key={idx} className="space-y-1">
                 {!isCollapsed ? (
-                  <div className="px-3 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  <div className="px-3 pb-1 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
                     {section.label}
                   </div>
                 ) : (
-                  <div className="my-1 border-t border-white/10" />
+                  <div className="my-1 border-t border-zinc-800" />
                 )}
 
                 {visibleItems.map((item) => {
@@ -311,14 +319,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         isCollapsed ? 'justify-center p-2.5' : 'justify-between px-3.5 py-2.5'
                       } ${
                         isActive
-                          ? 'bg-white/12 text-white font-bold ring-1 ring-[#FF9900]/30 shadow-2xs border-l-2 border-[#FF9900]'
-                          : 'text-slate-300 font-medium hover:bg-white/5 hover:text-white'
+                          ? 'bg-zinc-900 text-white font-bold ring-1 ring-[#D4AF37]/40 shadow-2xs border-l-2 border-[#D4AF37]'
+                          : 'text-zinc-400 font-medium hover:bg-zinc-900 hover:text-white'
                       }`}
                     >
                       <div className="flex items-center gap-3 truncate">
                         <Icon
                           className={`w-4 h-4 shrink-0 transition-colors ${
-                            isActive ? 'text-[#FF9900]' : 'text-slate-400 group-hover:text-white'
+                            isActive ? 'text-[#D4AF37]' : 'text-zinc-500 group-hover:text-white'
                           }`}
                         />
                         {!isCollapsed && <span className="truncate">{item.label}</span>}
@@ -335,14 +343,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             </span>
                           )}
                           {isActive && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#FF9900] shadow-[0_0_6px_#FF9900]" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] shadow-[0_0_6px_#D4AF37]" />
                           )}
                         </div>
                       )}
 
                       {/* Collapsed View Dot for Badges */}
                       {isCollapsed && item.badge && !isActive && (
-                        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#FF9900] ring-2 ring-[#06241E]" />
+                        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#D4AF37] ring-2 ring-black" />
                       )}
                     </button>
                   );
@@ -353,9 +361,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
 
         {/* Bottom Actions Area */}
-        <div className={`border-t border-[#0D342C] bg-[#06241E] space-y-2 shrink-0 ${isCollapsed ? 'p-2' : 'p-3.5'}`}>
-          {/* Prominent + Add New Employee Button */}
-          {isPCCM && (
+        <div className={`border-t border-zinc-800 bg-black space-y-2 shrink-0 ${isCollapsed ? 'p-2' : 'p-3.5'}`}>
+          {/* Prominent + Add New Employee Button (Restricted to Admin & HR Staff) */}
+          {canManageEmployees && (
             <button
               onClick={() => {
                 onOpenAddEmployee?.();
@@ -363,11 +371,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               }}
               data-testid="sidebar-add-employee-btn"
               title="Add New Employee"
-              className={`w-full bg-[#0A473C] hover:bg-[#0d594b] text-white rounded-xl font-bold flex items-center justify-center gap-2 border border-emerald-500/20 shadow-xs transition active:scale-[0.98] min-h-[42px] ${
+              className={`w-full bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 rounded-xl font-bold flex items-center justify-center gap-2 shadow-xs transition active:scale-[0.98] min-h-[42px] ${
                 isCollapsed ? 'w-10 h-10 mx-auto p-0' : 'py-2 px-3 text-xs'
               }`}
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 stroke-[2.5]" />
               {!isCollapsed && <span>Add Employee</span>}
             </button>
           )}
@@ -381,26 +389,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
             data-testid="sidebar-logout-btn"
             className={`w-full flex items-center text-xs font-semibold rounded-xl transition border min-h-[40px] group cursor-pointer ${
               isCollapsed
-                ? 'w-10 h-10 mx-auto justify-center p-0 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border-white/10 hover:border-rose-500/30'
-                : 'justify-between px-3 py-2 text-slate-300 hover:text-rose-300 hover:bg-rose-500/10 border-white/10 hover:border-rose-500/30'
+                ? 'w-10 h-10 mx-auto justify-center p-0 text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 border-zinc-800 hover:border-rose-500/30'
+                : 'justify-between px-3 py-2 text-zinc-300 hover:text-rose-300 hover:bg-rose-500/10 border-zinc-800 hover:border-rose-500/30'
             }`}
             title="Log out of Citadel People Hub"
           >
             <div className="flex items-center gap-2.5 truncate">
-              <LogOut className="w-4 h-4 text-slate-400 group-hover:text-rose-400 shrink-0 transition-colors" />
+              <LogOut className="w-4 h-4 text-zinc-500 group-hover:text-rose-400 shrink-0 transition-colors" />
               {!isCollapsed && (
-                <span className="truncate text-xs font-bold text-slate-200 group-hover:text-rose-200 transition-colors">
+                <span className="truncate text-xs font-bold text-zinc-200 group-hover:text-rose-200 transition-colors">
                   Logout
                 </span>
               )}
             </div>
             {!isCollapsed && (
-              <span className="text-[10px] text-slate-400 group-hover:text-rose-300 font-medium transition-colors">
+              <span className="text-[10px] text-zinc-500 group-hover:text-rose-300 font-medium transition-colors">
                 Sign out
               </span>
             )}
           </button>
-
         </div>
       </aside>
     </>

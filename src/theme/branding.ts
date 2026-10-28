@@ -19,16 +19,16 @@ export const CITADEL_BRAND = {
     primaryDark: '#052C25',
     primarySubtle: '#EBF5F2',
     
-    // Accent: Warm Amber & Citadel Gold (Official Church brand color from Onboarding SOP)
-    accent: '#FF9900',
-    accentLight: '#FFF8F0',
-    accentDark: '#D97706',
-    gold: '#FF9900',
-    goldLight: '#FFF8F0',
-    goldHover: '#FFAA2B',
-    goldDark: '#D97706',
-    goldBorder: '#FFE0B2',
-    citadelOrange: '#FF9900',
+    // Accent: Pure Citadel Gold (Official Church brand color from Onboarding SOP)
+    accent: '#D4AF37',
+    accentLight: '#FAF5EB',
+    accentDark: '#B8860B',
+    gold: '#D4AF37',
+    goldLight: '#FAF5EB',
+    goldHover: '#C59B27',
+    goldDark: '#B8860B',
+    goldBorder: '#F2E4B8',
+    citadelGold: '#D4AF37',
     
     // Supporting Neutrals
     slate900: '#0F172A',

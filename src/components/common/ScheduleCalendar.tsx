@@ -578,7 +578,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
             onClick={() => setIsAddModalOpen(true)}
             data-testid="schedule-add-event-btn"
             title="Schedule new event"
-            className="p-1 rounded-lg text-slate-500 hover:text-[#FF9900] hover:bg-slate-100 transition"
+            className="p-1 rounded-lg text-slate-500 hover:text-[#D4AF37] hover:bg-slate-100 transition"
           >
             <Plus className="w-3.5 h-3.5" />
           </button>
@@ -642,7 +642,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
               onClick={() => handleDayClick(d.num)}
               className={`py-2 px-1 rounded-xl text-center transition-all duration-150 flex flex-col items-center relative cursor-pointer ${
                 isSelected
-                  ? 'bg-[#083E34] text-white shadow-xs font-bold ring-2 ring-[#FF9900]/40'
+                  ? 'bg-[#083E34] text-white shadow-xs font-bold ring-2 ring-[#D4AF37]/40'
                   : 'bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold'
               }`}
             >
@@ -651,7 +651,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
               </span>
               <span className="text-xs font-bold mt-0.5">{d.num}</span>
               {d.isToday && !isSelected && (
-                <span className="w-1.5 h-1.5 rounded-full bg-[#FF9900] mt-0.5" title="Today" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mt-0.5" title="Today" />
               )}
             </button>
           );
@@ -669,7 +669,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
             onClick={() => setActiveCategory(cat)}
             className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
               activeCategory === cat
-                ? 'bg-[#FF9900] text-slate-950 shadow-xs'
+                ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
                 : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
             }`}
           >
@@ -825,7 +825,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                   downloadScheduleIcs(selectedEventModal);
                   showToast(`Downloaded invite for "${selectedEventModal.title}"`);
                 }}
-                className="px-3.5 py-1.5 rounded-xl bg-[#FF9900] hover:bg-[#E68A00] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5 text-slate-950 stroke-[2.5]" />
                 <span>Add to Outlook / Apple (.ics)</span>
@@ -938,7 +938,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-xl bg-[#FF9900] hover:bg-[#E68A00] text-slate-950 font-bold shadow-xs transition"
+                  className="px-4 py-1.5 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold shadow-xs transition"
                 >
                   Save Schedule
                 </button>

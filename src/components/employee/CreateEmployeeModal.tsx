@@ -799,7 +799,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="px-4 py-2 bg-[#FF9900] hover:bg-[#E68A00] text-slate-950 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs active:scale-95"
+                  className="px-4 py-2 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs active:scale-95"
                 >
                   <span>Continue</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -808,7 +808,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 bg-[#FF9900] hover:bg-[#E68A00] text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition"
+                  className="px-5 py-2 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition"
                 >
                   {isSubmitting ? (
                     'Enrolling Record...'

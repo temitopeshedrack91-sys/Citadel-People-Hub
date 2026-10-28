@@ -186,7 +186,7 @@ export const DirectoryView: React.FC = () => {
             </a>
             <button
               onClick={() => showToast(`Workforce Dossier for ${emp.fullName} generated (PDF).`)}
-              className="px-3.5 py-2 rounded-xl bg-[#FF9900] hover:bg-[#E68A00] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#E68A00] transition"
+              className="px-3.5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#C59B27] transition"
             >
               <Download className="w-3.5 h-3.5 text-slate-950 stroke-[2.5]" />
               <span className="font-bold">Export Dossier</span>

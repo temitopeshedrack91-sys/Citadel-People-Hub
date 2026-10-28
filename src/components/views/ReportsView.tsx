@@ -167,7 +167,7 @@ export const ReportsView: React.FC = () => {
           </button>
           <button
             onClick={handlePrintPDF}
-            className="px-3.5 py-2 rounded-xl bg-[#FF9900] text-slate-950 hover:bg-[#E68A00] text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#E68A00] transition cursor-pointer active:scale-95 min-h-[38px]"
+            className="px-3.5 py-2 rounded-xl bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#C59B27] transition cursor-pointer active:scale-95 min-h-[38px]"
           >
             <Printer className="w-4 h-4 text-slate-950 stroke-[2.5]" />
             <span className="font-bold">Print Report</span>
@@ -203,7 +203,7 @@ export const ReportsView: React.FC = () => {
             </div>
             <div className="flex justify-between items-center">
               <span>Active Leave Requests:</span>
-              <span className="font-extrabold text-[#D97706] bg-[#FFF8F0] border border-[#FFE0B2] px-2 py-0.5 rounded-full text-[11px]">
+              <span className="font-extrabold text-[#D97706] bg-[#FAF5EB] border border-[#F2E4B8] px-2 py-0.5 rounded-full text-[11px]">
                 {leaves.filter((l) => l.entityName.includes('CGCC') && l.status === 'Submitted').length} pending
               </span>
             </div>

@@ -132,7 +132,7 @@ export const SettingsView: React.FC = () => {
         {activeTab === 'entities_depts' && (
           <button
             onClick={() => setShowAddDeptModal(true)}
-            className="px-3.5 py-2 rounded-xl bg-[#FF9900] text-slate-950 hover:bg-[#E68A00] text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#E68A00] transition active:scale-95 cursor-pointer"
+            className="px-3.5 py-2 rounded-xl bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#C59B27] transition active:scale-95 cursor-pointer"
           >
             <Plus className="w-4 h-4 text-slate-950 stroke-[2.5]" />
             <span className="font-bold">Add Department</span>
@@ -146,7 +146,7 @@ export const SettingsView: React.FC = () => {
           onClick={() => setActiveTab('entities_depts')}
           className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
             activeTab === 'entities_depts'
-              ? 'bg-[#FF9900] text-slate-950 shadow-xs'
+              ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
           }`}
         >
@@ -158,11 +158,11 @@ export const SettingsView: React.FC = () => {
           onClick={() => setActiveTab('gec_roster')}
           className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
             activeTab === 'gec_roster'
-              ? 'bg-[#FF9900] text-slate-950 shadow-xs'
+              ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
           }`}
         >
-          <Users className={`w-3.5 h-3.5 ${activeTab === 'gec_roster' ? 'text-slate-950' : 'text-[#FF9900]'}`} />
+          <Users className={`w-3.5 h-3.5 ${activeTab === 'gec_roster' ? 'text-slate-950' : 'text-[#D4AF37]'}`} />
           <span>Group Executive Council (GEC) &amp; Shared Services (Sheet 3)</span>
         </button>
 
@@ -170,7 +170,7 @@ export const SettingsView: React.FC = () => {
           onClick={() => setActiveTab('roles_matrix')}
           className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
             activeTab === 'roles_matrix'
-              ? 'bg-[#FF9900] text-slate-950 shadow-xs'
+              ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
           }`}
         >
@@ -182,11 +182,11 @@ export const SettingsView: React.FC = () => {
           onClick={() => setActiveTab('requirements_form')}
           className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
             activeTab === 'requirements_form'
-              ? 'bg-[#FF9900] text-slate-950 shadow-xs'
+              ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
           }`}
         >
-          <CheckCircle2 className={`w-3.5 h-3.5 ${activeTab === 'requirements_form' ? 'text-slate-950' : 'text-[#FF9900]'}`} />
+          <CheckCircle2 className={`w-3.5 h-3.5 ${activeTab === 'requirements_form' ? 'text-slate-950' : 'text-[#D4AF37]'}`} />
           <span>V1 Requirements</span>
         </button>
       </div>
@@ -709,7 +709,7 @@ export const SettingsView: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 bg-[#FF9900] text-slate-950 rounded-xl hover:bg-[#E68A00] font-bold shadow-xs transition active:scale-95 cursor-pointer"
+                  className="px-4 py-2 bg-[#D4AF37] text-slate-950 rounded-xl hover:bg-[#C59B27] font-bold shadow-xs transition active:scale-95 cursor-pointer"
                 >
                   {isSubmitting ? 'Saving...' : 'Add Department'}
                 </button>

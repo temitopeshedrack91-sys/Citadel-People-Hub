@@ -161,7 +161,7 @@ const DEMO_CREDENTIALS: {
     jobTitle: 'Data & Growth Analyst',
     department: 'People & Culture',
     password: 'Password123!',
-    color: 'bg-orange-500 text-white',
+    color: 'bg-[#D4AF37] text-white',
     permissions: [
       'Employee self-service portal',
       'People analytics & census reports',
@@ -306,7 +306,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             <h2 className="text-base sm:text-lg font-bold text-white tracking-wide">
               Citadel People Hub
             </h2>
-            <p className="text-xs text-[#FF9900] mt-0.5 font-medium">
+            <p className="text-xs text-[#D4AF37] mt-0.5 font-medium">
               Supabase Auth &bull; 7 Demo Users &bull; Role-Based Access Control (RBAC)
             </p>
           </div>
@@ -323,7 +323,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               data-testid="auth-tab-signin"
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 tab === 'signin'
-                  ? 'bg-[#FF9900] text-slate-950 shadow-xs'
+                  ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
                   : 'text-slate-300 hover:text-white'
               }`}
             >
@@ -340,7 +340,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               data-testid="auth-tab-register"
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 tab === 'register'
-                  ? 'bg-[#FF9900] text-slate-950 shadow-xs'
+                  ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
                   : 'text-slate-300 hover:text-white'
               }`}
             >
@@ -357,7 +357,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               data-testid="auth-tab-personas"
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 tab === 'personas'
-                  ? 'bg-[#FF9900] text-slate-950 shadow-xs'
+                  ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
                   : 'text-slate-300 hover:text-white'
               }`}
             >
@@ -396,7 +396,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                     placeholder="e.g. dr.adeleke@citadel.ng"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#FF9900] focus:ring-1 focus:ring-[#FF9900]/30 focus:outline-none"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 focus:outline-none"
                   />
                 </div>
 
@@ -412,7 +412,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 px-3 py-2 pr-10 text-xs sm:text-sm text-slate-900 focus:border-[#FF9900] focus:ring-1 focus:ring-[#FF9900]/30 focus:outline-none"
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 pr-10 text-xs sm:text-sm text-slate-900 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 focus:outline-none"
                     />
                     <button
                       type="button"
@@ -428,7 +428,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full rounded-xl bg-[#FF9900] hover:bg-[#E68A00] px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-950 border border-[#E68A00] disabled:opacity-60 cursor-pointer transition shadow-xs flex items-center justify-center gap-2"
+                  className="w-full rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-950 border border-[#C59B27] disabled:opacity-60 cursor-pointer transition shadow-xs flex items-center justify-center gap-2"
                 >
                   <LogIn className="w-4 h-4" />
                   <span>{isSubmitting ? 'Authenticating...' : 'Sign In with Supabase'}</span>
@@ -439,7 +439,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               <div className="pt-4 border-t border-slate-100 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[#FF9900]" />
+                    <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
                     <span>Quick Fill Demo Credentials</span>
                   </span>
                   <span className="text-[10px] text-slate-400">Click to fill email &amp; password</span>
@@ -451,7 +451,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                       key={cred.email}
                       type="button"
                       onClick={() => handleQuickFill(cred)}
-                      className="p-2.5 rounded-xl border border-slate-200 hover:border-[#FF9900] hover:bg-[#FFF8F0]/40 text-left transition flex items-center gap-2.5 group cursor-pointer"
+                      className="p-2.5 rounded-xl border border-slate-200 hover:border-[#D4AF37] hover:bg-[#FAF5EB]/40 text-left transition flex items-center gap-2.5 group cursor-pointer"
                     >
                       <div
                         className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-[10px] shrink-0 ${cred.color}`}
@@ -493,7 +493,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   placeholder="e.g. Pastor David Adeleke"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#FF9900] focus:ring-1 focus:ring-[#FF9900]/30 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 focus:outline-none"
                 />
               </div>
 
@@ -505,7 +505,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   placeholder="e.g. david.adeleke@citadel.ng"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#FF9900] focus:ring-1 focus:ring-[#FF9900]/30 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 focus:outline-none"
                 />
               </div>
 
@@ -518,7 +518,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   placeholder="At least 6 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#FF9900] focus:ring-1 focus:ring-[#FF9900]/30 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 focus:outline-none"
                 />
               </div>
 
@@ -527,7 +527,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value as UserRole)}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#FF9900] focus:ring-1 focus:ring-[#FF9900]/30 focus:outline-none cursor-pointer"
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 focus:outline-none cursor-pointer"
                 >
                   <option value="EMPLOYEE">Employee / Staff Member (Self-Service)</option>
                   <option value="DEPARTMENT_HEAD">Department Head (Team Reviews &amp; Leaves)</option>
@@ -540,7 +540,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               {/* Role Permissions Live Preview */}
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5">
                 <span className="font-bold text-slate-800 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#FF9900]" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" />
                   <span>Permissions granted for {role.replaceAll('_', ' ')}:</span>
                 </span>
                 <ul className="text-[11px] text-slate-600 space-y-1 pl-4 list-disc">
@@ -584,7 +584,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full rounded-xl bg-[#FF9900] hover:bg-[#E68A00] px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-950 border border-[#E68A00] disabled:opacity-60 cursor-pointer transition shadow-xs flex items-center justify-center gap-2"
+                className="w-full rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-950 border border-[#C59B27] disabled:opacity-60 cursor-pointer transition shadow-xs flex items-center justify-center gap-2"
               >
                 <UserPlus className="w-4 h-4" />
                 <span>{isSubmitting ? 'Creating Account...' : 'Register User on Supabase'}</span>
@@ -606,7 +606,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                     Pre-provisioned in Supabase PostgreSQL &bull; Click to sign in or copy credentials.
                   </p>
                 </div>
-                <span className="text-[10px] font-mono font-bold bg-[#FFF8F0] text-[#D97706] border border-[#FFE0B2] px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-mono font-bold bg-[#FAF5EB] text-[#D97706] border border-[#F2E4B8] px-2 py-0.5 rounded-full">
                   Password: Password123!
                 </span>
               </div>
@@ -619,7 +619,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                       key={cred.email}
                       className={`p-3.5 rounded-2xl border transition space-y-2.5 ${
                         isCurrent
-                          ? 'border-[#FF9900] bg-[#FFF8F0]/50 ring-1 ring-[#FF9900]/30'
+                          ? 'border-[#D4AF37] bg-[#FAF5EB]/50 ring-1 ring-[#D4AF37]/30'
                           : 'border-slate-200 bg-white hover:border-slate-300'
                       }`}
                     >
@@ -663,7 +663,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                           className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 self-start sm:self-auto cursor-pointer shadow-2xs ${
                             isCurrent
                               ? 'bg-emerald-600 text-white'
-                              : 'bg-[#FF9900] hover:bg-[#E68A00] text-slate-950 font-bold border border-[#E68A00]'
+                              : 'bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold border border-[#C59B27]'
                           }`}
                         >
                           <LogIn className="w-3.5 h-3.5" />
@@ -766,7 +766,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           {!required && (
             <button
               onClick={onClose}
-              className="px-4 py-1.5 bg-[#FF9900] text-slate-950 text-xs font-bold rounded-xl hover:bg-[#E68A00] transition cursor-pointer shadow-xs"
+              className="px-4 py-1.5 bg-[#D4AF37] text-slate-950 text-xs font-bold rounded-xl hover:bg-[#C59B27] transition cursor-pointer shadow-xs"
             >
               Done
             </button>

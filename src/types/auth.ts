@@ -4,11 +4,14 @@
  */
 
 export type UserRole =
-  | 'PCCM_SUPER_ADMIN'   // People, Culture & Change Manager (Super Admin - primary HR admin)
-  | 'BUSINESS_HEAD'       // Entity-scoped executive
-  | 'DEPARTMENT_HEAD'     // Department/Team-scoped leader
-  | 'EMPLOYEE'            // Self-service access
-  | 'SYSTEM_ADMIN';       // Technical administration (no automatic HR sensitive data access)
+  | 'ADMIN'              // System Administrator (full access to all modules and system settings)
+  | 'HR_STAFF'           // HR Staff / Manager (cross-department HR access, no system settings)
+  | 'EMPLOYEE'           // Self-service employee (department-scoped records only)
+  | 'VIEWER'             // Read-only auditor / viewer (view access, zero mutations)
+  | 'PCCM_SUPER_ADMIN'   // Legacy: People, Culture & Change Manager (Super Admin - primary HR admin)
+  | 'BUSINESS_HEAD'      // Legacy: Entity-scoped executive
+  | 'DEPARTMENT_HEAD'    // Legacy: Department/Team-scoped leader
+  | 'SYSTEM_ADMIN';      // Legacy: Technical administration (maps to Admin)
 
 export interface User {
   id: string;
@@ -41,4 +44,6 @@ export interface RolePermissions {
   canManageDocuments: boolean;
   canConfigureIntegrations: boolean;
   canExportReports: boolean;
+  canManageSettings: boolean;
+  isReadOnly: boolean;
 }

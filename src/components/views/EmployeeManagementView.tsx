@@ -252,7 +252,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
             <button
               id="btn-add-employee-trigger"
               onClick={() => setShowAddModal(true)}
-              className="px-4 py-2 rounded-xl bg-[#FF9900] hover:bg-[#E68A00] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#E68A00] transition"
+              className="px-4 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#C59B27] transition"
             >
               <Plus className="w-4 h-4 text-slate-950 stroke-[2.5]" />
               <span className="font-bold">Enroll Employee</span>
@@ -275,7 +275,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-8 pr-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-[#FF9900] focus:ring-1 focus:ring-[#FF9900]/25 outline-none transition"
+              className="w-full pl-8 pr-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/25 outline-none transition"
             />
           </div>
 
@@ -631,7 +631,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 onClick={() => setCurrentPage(pNum)}
                 className={`w-7 h-7 rounded text-xs font-bold transition ${
                   currentPage === pNum
-                    ? 'bg-[#FF9900] text-slate-950 shadow-xs'
+                    ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
                     : 'border border-slate-200 hover:bg-slate-100 text-slate-700'
                 }`}
               >

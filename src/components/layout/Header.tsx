@@ -181,7 +181,7 @@ export const Header: React.FC<HeaderProps> = ({
               placeholder="Search for employees, documents or resources..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-14 py-2 bg-slate-50/80 hover:bg-slate-50 border border-slate-200/90 rounded-full text-xs text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#FF9900] focus:bg-white focus:ring-1 focus:ring-[#FF9900]/30 transition"
+              className="w-full pl-9 pr-14 py-2 bg-slate-50/80 hover:bg-slate-50 border border-slate-200/90 rounded-full text-xs text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#D4AF37] focus:bg-white focus:ring-1 focus:ring-[#D4AF37]/30 transition"
             />
             <div className="absolute right-3 top-2 flex items-center gap-0.5 text-[10px] font-bold text-slate-400 bg-white border border-slate-200 px-1.5 py-0.5 rounded-md pointer-events-none">
               <Command className="w-2.5 h-2.5" />
@@ -218,7 +218,7 @@ export const Header: React.FC<HeaderProps> = ({
                       onClick={() => setSelectedEntityFilter(ent.id)}
                       className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition ${
                         selectedEntityFilter === ent.id
-                          ? 'bg-[#FFF8F0] font-bold text-[#D97706]'
+                          ? 'bg-[#FAF5EB] font-bold text-[#D97706]'
                           : 'text-slate-700 font-medium'
                       }`}
                     >
@@ -229,7 +229,7 @@ export const Header: React.FC<HeaderProps> = ({
                         )}
                       </div>
                       {selectedEntityFilter === ent.id && (
-                        <span className="w-2 h-2 rounded-full bg-[#FF9900]" />
+                        <span className="w-2 h-2 rounded-full bg-[#D4AF37]" />
                       )}
                     </button>
                   ))}
@@ -251,7 +251,7 @@ export const Header: React.FC<HeaderProps> = ({
                 aria-label="View notifications"
               >
                 <Bell className="w-4 h-4 text-slate-600" />
-                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#FF9900] ring-2 ring-white" />
+                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#D4AF37] ring-2 ring-white" />
               </button>
 
               {isNotificationsOpen && (
@@ -261,7 +261,7 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <div className="p-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-900">Notifications</span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFF3E0] text-[#D97706] border border-[#FFE0B2]">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFF3E0] text-[#D97706] border border-[#F2E4B8]">
                       2 Unread
                     </span>
                   </div>
@@ -350,7 +350,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <div className="p-3 border-b border-slate-100 bg-slate-50/70 rounded-xl mb-1">
                     <p className="text-xs font-bold text-slate-900 leading-none">{currentUser.name}</p>
                     <p className="text-[11px] text-slate-500 mt-1 truncate font-mono">{currentUser.email}</p>
-                    <span className="inline-block mt-1.5 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FFF8F0] text-[#D97706] border border-[#FFE0B2]">
+                    <span className="inline-block mt-1.5 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FAF5EB] text-[#D97706] border border-[#F2E4B8]">
                       {currentPersona.badgeLabel}
                     </span>
                   </div>
@@ -388,7 +388,7 @@ export const Header: React.FC<HeaderProps> = ({
                 }
               }}
               data-testid="header-new-task-btn"
-              className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-[#FF9900] hover:bg-[#E68A00] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#E68A00] transition active:scale-95 cursor-pointer shrink-0 min-h-[36px] sm:min-h-[38px]"
+              className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#C59B27] transition active:scale-95 cursor-pointer shrink-0 min-h-[36px] sm:min-h-[38px]"
               title="Create New Task"
             >
               <Plus className="w-3.5 h-3.5 text-slate-950 stroke-[2.5]" />

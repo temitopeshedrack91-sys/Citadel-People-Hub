@@ -121,7 +121,7 @@ export function ListDetailLayout<T = any>({
                     onClick={() => onFilterTabChange?.(tab.id)}
                     className={`px-2.5 py-1 rounded-lg text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5 shrink-0 cursor-pointer ${
                       isActive
-                        ? 'bg-[#FF9900] text-slate-950 shadow-xs'
+                        ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900'
                     }`}
                   >

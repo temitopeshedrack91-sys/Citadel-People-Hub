@@ -20,7 +20,7 @@ export const DemoDataBanner: React.FC<DemoDataBannerProps> = () => {
       className="bg-slate-900 text-slate-100 px-3 sm:px-6 py-2 text-xs border-b border-slate-800 flex items-center justify-between gap-3"
     >
       <div className="flex items-center gap-2.5 overflow-hidden">
-        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FF9900]/20 text-[#FF9900] font-bold uppercase tracking-wider text-[10px] shrink-0 border border-[#FF9900]/40">
+        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#D4AF37]/20 text-[#D4AF37] font-bold uppercase tracking-wider text-[10px] shrink-0 border border-[#D4AF37]/40">
           <Database className="w-3 h-3" />
           <span>Supabase Live</span>
         </div>
