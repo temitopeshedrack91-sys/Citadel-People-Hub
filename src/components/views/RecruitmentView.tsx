@@ -15,23 +15,59 @@ import {
   Clock,
   ShieldCheck,
   Info,
+  X,
 } from 'lucide-react';
-import { RecruitmentRequisition } from '../../types';
-import { talentRepository } from '../../services';
+import { RecruitmentRequisition, CitadelEntity, CitadelDepartment, Employee } from '../../types';
+import { talentRepository, organizationRepository, employeeRepository } from '../../services';
 import { Badge } from '../common/Badge';
-import { CITADEL_RECRUITMENT_STAGES } from '../../data/mockData';
+import {
+  CITADEL_RECRUITMENT_STAGES,
+  INITIAL_ENTITIES,
+  INITIAL_DEPARTMENTS,
+  INITIAL_EMPLOYEES,
+} from '../../data/mockData';
+import { CreateRequisitionModal } from '../recruitment/CreateRequisitionModal';
 
 export const RecruitmentView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'requisitions' | 'sop_stages'>('requisitions');
   const [requisitions, setRequisitions] = useState<RecruitmentRequisition[]>([]);
+  const [entities, setEntities] = useState<CitadelEntity[]>(INITIAL_ENTITIES);
+  const [departments, setDepartments] = useState<CitadelDepartment[]>(INITIAL_DEPARTMENTS);
+  const [employees, setEmployees] = useState<Employee[]>(INITIAL_EMPLOYEES);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [successBanner, setSuccessBanner] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      const list = await talentRepository.getRequisitions();
-      setRequisitions(list);
+      try {
+        const [reqList, entList, deptList, empList] = await Promise.all([
+          talentRepository.getRequisitions().catch(() => []),
+          organizationRepository.getEntities().catch(() => INITIAL_ENTITIES),
+          organizationRepository.getDepartments().catch(() => INITIAL_DEPARTMENTS),
+          employeeRepository.getAll().catch(() => INITIAL_EMPLOYEES),
+        ]);
+
+        if (reqList && reqList.length > 0) setRequisitions(reqList);
+        if (entList && entList.length > 0) setEntities(entList);
+        if (deptList && deptList.length > 0) setDepartments(deptList);
+        if (empList && empList.length > 0) setEmployees(empList);
+      } catch (err) {
+        console.warn('Failed to load recruitment view data, using defaults:', err);
+      }
     };
     fetchData();
   }, []);
+
+  const handleRequisitionCreated = (newReq: RecruitmentRequisition) => {
+    setRequisitions((prev) => [newReq, ...prev]);
+    setActiveTab('requisitions');
+    setSuccessBanner(
+      `Requisition "${newReq.requisitionCode} - ${newReq.jobTitle}" created and submitted for PCCM headcount approval!`
+    );
+    setTimeout(() => {
+      setSuccessBanner(null);
+    }, 6000);
+  };
 
   return (
     <div className="space-y-5">
@@ -47,13 +83,29 @@ export const RecruitmentView: React.FC = () => {
         </div>
 
         <button
-          onClick={() => {}}
+          onClick={() => setIsCreateModalOpen(true)}
           className="px-3.5 py-2 rounded-xl bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#C59B27] transition cursor-pointer active:scale-95"
         >
           <Plus className="w-4 h-4 text-slate-950 stroke-[2.5]" />
           <span className="font-bold">New Requisition</span>
         </button>
       </div>
+
+      {/* Success Notification Banner */}
+      {successBanner && (
+        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center justify-between animate-fade-in shadow-xs">
+          <div className="flex items-center gap-2 font-semibold">
+            <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+            <span>{successBanner}</span>
+          </div>
+          <button
+            onClick={() => setSuccessBanner(null)}
+            className="p-1 text-emerald-600 hover:text-emerald-900 transition rounded cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Sub Tabs */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 custom-scrollbar scroll-smooth" role="tablist">
@@ -83,116 +135,147 @@ export const RecruitmentView: React.FC = () => {
       </div>
 
       {activeTab === 'requisitions' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {requisitions.map((req) => {
-            const hiringMgr = (req as any).hiringManager || 'Dr. Bukola Adeleke';
-            const targetDt = (req as any).targetDate || (req as any).targetHiringDate || '2026-11-30';
-            const candidates = req.candidates || [];
+        requisitions.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {requisitions.map((req) => {
+              const hiringMgr = (req as any).hiringManager || 'Dr. Bukola Adeleke';
+              const targetDt = (req as any).targetDate || (req as any).targetHiringDate || '2026-11-30';
+              const candidates = req.candidates || [];
 
-            return (
-              <div
-                key={req.id}
-                className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] flex flex-col justify-between hover:border-slate-300 transition group"
-              >
-                <div>
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#083E34] transition">{req.jobTitle}</h3>
-                      <p className="text-xs text-[#083E34] font-semibold mt-0.5">
-                        {req.departmentName} ({req.entityName})
-                      </p>
+              return (
+                <div
+                  key={req.id}
+                  className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] flex flex-col justify-between hover:border-slate-300 transition group"
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                            {req.requisitionCode}
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-400">
+                            {req.employmentType || 'Full-Time'}
+                          </span>
+                        </div>
+                        <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#083E34] transition mt-1">
+                          {req.jobTitle}
+                        </h3>
+                        <p className="text-xs text-[#083E34] font-semibold mt-0.5">
+                          {req.departmentName} ({req.entityName})
+                        </p>
+                      </div>
+                      <Badge variant={req.status === 'Open' ? 'success' : req.status === 'Interviewing' ? 'warning' : 'neutral'}>
+                        {req.status}
+                      </Badge>
                     </div>
-                    <Badge variant={req.status === 'Open' ? 'success' : 'neutral'}>
-                      {req.status}
-                    </Badge>
-                  </div>
 
-                  <div className="mt-3.5 grid grid-cols-2 gap-2 text-xs bg-slate-50/80 p-3 rounded-xl border border-slate-100">
-                    <div>
-                      <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Open Positions:</span>
-                      <span className="font-bold text-slate-800">{req.openPositions} Opening(s)</span>
+                    <div className="mt-3.5 grid grid-cols-2 gap-2 text-xs bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+                      <div>
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Open Positions:</span>
+                        <span className="font-bold text-slate-800">{req.openPositions} Opening(s)</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Hiring Manager:</span>
+                        <span className="font-bold text-slate-800">{hiringMgr}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Target Date:</span>
+                        <span className="font-bold text-slate-800 font-mono">{targetDt}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Applicants:</span>
+                        <span className="font-bold text-slate-800">{req.applicantsCount} in pipeline</span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Hiring Manager:</span>
-                      <span className="font-bold text-slate-800">{hiringMgr}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Target Date:</span>
-                      <span className="font-bold text-slate-800 font-mono">{targetDt}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Applicants:</span>
-                      <span className="font-bold text-slate-800">{req.applicantsCount} in pipeline</span>
-                    </div>
-                  </div>
 
-                  {/* Candidate Pipeline Tracker */}
-                  <div className="mt-4">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-2">
-                      Active Candidates in 10-Stage Pipeline
-                    </span>
-                    {candidates.length > 0 ? (
-                      <div className="space-y-1.5">
-                        {candidates.map((cand: any) => (
-                          <div
-                            key={cand.id}
-                            className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 bg-white text-xs hover:bg-slate-50 transition"
-                          >
-                            <div>
-                              <span className="font-bold text-slate-900 block">{cand.name}</span>
-                              <span className="text-[10px] text-slate-400 font-mono">
-                                Applied: {cand.appliedDate}
+                    {/* Candidate Pipeline Tracker */}
+                    <div className="mt-4">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-2">
+                        Active Candidates in 10-Stage Pipeline
+                      </span>
+                      {candidates.length > 0 ? (
+                        <div className="space-y-1.5">
+                          {candidates.map((cand: any) => (
+                            <div
+                              key={cand.id}
+                              className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 bg-white text-xs hover:bg-slate-50 transition"
+                            >
+                              <div>
+                                <span className="font-bold text-slate-900 block">{cand.name}</span>
+                                <span className="text-[10px] text-slate-400 font-mono">
+                                  Applied: {cand.appliedDate}
+                                </span>
+                              </div>
+                              <span
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                  cand.stage === 'Pre-Onboarding'
+                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                    : cand.stage === 'Offer Extended'
+                                    ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                                }`}
+                              >
+                                {cand.stage}
                               </span>
                             </div>
-                            <span
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                                cand.stage === 'Pre-Onboarding'
-                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                                  : cand.stage === 'Offer Extended'
-                                  ? 'bg-amber-50 text-amber-800 border-amber-200'
-                                  : 'bg-slate-100 text-slate-700 border-slate-200'
-                              }`}
-                            >
-                              {cand.stage}
-                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-3 rounded-xl bg-slate-50/50 border border-slate-100 text-xs">
+                          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600 mb-1.5">
+                            <span>Sourcing &amp; Screening Active</span>
+                            <span className="text-emerald-700 font-bold">{req.applicantsCount} Resumes</span>
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="p-3 rounded-xl bg-slate-50/50 border border-slate-100 text-xs">
-                        <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600 mb-1.5">
-                          <span>Sourcing &amp; Screening Active</span>
-                          <span className="text-emerald-700 font-bold">{req.applicantsCount} Resumes</span>
+                          <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden flex">
+                            <div className="bg-[#083E34] h-full" style={{ width: '45%' }} />
+                            <div className="bg-amber-500 h-full" style={{ width: '30%' }} />
+                            <div className="bg-emerald-500 h-full" style={{ width: '15%' }} />
+                          </div>
+                          <div className="flex justify-between text-[10px] text-slate-400 font-medium mt-1">
+                            <span>Screening (60%)</span>
+                            <span>Interviewing (30%)</span>
+                            <span>Offer (10%)</span>
+                          </div>
                         </div>
-                        <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden flex">
-                          <div className="bg-[#083E34] h-full" style={{ width: '45%' }} />
-                          <div className="bg-amber-500 h-full" style={{ width: '30%' }} />
-                          <div className="bg-emerald-500 h-full" style={{ width: '15%' }} />
-                        </div>
-                        <div className="flex justify-between text-[10px] text-slate-400 font-medium mt-1">
-                          <span>Screening (60%)</span>
-                          <span>Interviewing (30%)</span>
-                          <span>Offer (10%)</span>
-                        </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-[11px] text-slate-400 font-medium">PCCM Recruitment Engine</span>
+                    <button
+                      onClick={() => alert(`Reviewing candidate profiles for ${req.jobTitle}`)}
+                      className="text-xs font-bold text-[#083E34] hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>View All Candidates</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
-
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-[11px] text-slate-400 font-medium">PCCM Recruitment Engine</span>
-                  <button
-                    onClick={() => alert(`Reviewing candidate profiles for ${req.jobTitle}`)}
-                    className="text-xs font-bold text-[#083E34] hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>View All Candidates</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 shadow-xs space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+              <Briefcase className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">No Requisitions Found</h3>
+              <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                No active hiring requisitions currently match your criteria. Create a new requisition to start the hiring pipeline.
+              </p>
+            </div>
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="px-4 py-2 rounded-xl bg-[#083E34] text-white hover:bg-[#062d26] text-xs font-bold inline-flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create First Requisition</span>
+            </button>
+          </div>
+        )
       ) : (
         /* 10-Stage Recruitment Framework from Sheet 8 */
         <div className="space-y-5">
@@ -328,6 +411,15 @@ export const RecruitmentView: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Create Requisition Modal with Chevron Stepper */}
+      <CreateRequisitionModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={handleRequisitionCreated}
+        entities={entities}
+        departments={departments}
+        employees={employees}
+      />
     </div>
   );
 };

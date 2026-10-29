@@ -271,6 +271,18 @@ export class LaravelTalentRepository implements ITalentRepository {
     }
   }
 
+  async createRequisition(requisition: RecruitmentRequisition): Promise<RecruitmentRequisition> {
+    try {
+      return await requestLaravelData('/requisitions', {
+        method: 'POST',
+        body: JSON.stringify(requisition),
+      });
+    } catch {
+      INITIAL_RECRUITMENT.unshift(requisition);
+      return requisition;
+    }
+  }
+
   async createOnboardingJourney(journey: OnboardingJourney): Promise<OnboardingJourney> {
     try {
       return await requestLaravelData('/onboarding-journeys', {

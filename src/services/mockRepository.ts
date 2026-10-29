@@ -554,6 +554,13 @@ export class MockTalentRepository implements ITalentRepository {
     return [...requisitions];
   }
 
+  async createRequisition(requisition: RecruitmentRequisition): Promise<RecruitmentRequisition> {
+    await sleep();
+    requisitions = [requisition, ...requisitions];
+    saveStorage('requisitions', requisitions);
+    return requisition;
+  }
+
   async createOnboardingJourney(journey: OnboardingJourney): Promise<OnboardingJourney> {
     await sleep();
     onboardingJourneys = [journey, ...onboardingJourneys];

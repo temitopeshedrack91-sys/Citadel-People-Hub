@@ -601,6 +601,10 @@ export class SupabaseTalentRepository implements ITalentRepository {
   async getRequisitions(): Promise<RecruitmentRequisition[]> {
     return INITIAL_RECRUITMENT;
   }
+  async createRequisition(requisition: RecruitmentRequisition): Promise<RecruitmentRequisition> {
+    INITIAL_RECRUITMENT.unshift(requisition);
+    return requisition;
+  }
   async createOnboardingJourney(journey: OnboardingJourney): Promise<OnboardingJourney> {
     INITIAL_ONBOARDING_JOURNEYS.unshift(journey);
     return journey;
