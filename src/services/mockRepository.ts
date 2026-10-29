@@ -32,6 +32,7 @@ import {
   SystemNotification,
   OnboardingJourney,
   OnboardingTask,
+  OnboardingChecklistTemplate,
   RecruitmentRequisition,
 } from '../types';
 import {
@@ -42,6 +43,7 @@ import {
   INITIAL_ATTENDANCE_SUMMARY,
   INITIAL_AUDIT_LOGS,
   INITIAL_ONBOARDING_JOURNEYS,
+  DEFAULT_CHECKLIST_TEMPLATES,
   INITIAL_DOCUMENTS,
   INITIAL_NOTIFICATIONS,
   INITIAL_RECRUITMENT,
@@ -75,9 +77,13 @@ let leaveRequests: LeaveRequest[] = loadStorage('leaves', [...INITIAL_LEAVE_REQU
 let auditLogs: AuditLogEntry[] = loadStorage('audit_logs', [...INITIAL_AUDIT_LOGS]);
 let rawOnboarding = loadStorage<OnboardingJourney[]>('onboarding', [...INITIAL_ONBOARDING_JOURNEYS]);
 let onboardingJourneys: OnboardingJourney[] =
-  rawOnboarding.length > 0 && rawOnboarding[0].tasks && rawOnboarding[0].tasks.length >= 20
+  rawOnboarding.length > 0 && rawOnboarding.some((j) => j.id === 'onboard-samuel')
     ? rawOnboarding
     : [...INITIAL_ONBOARDING_JOURNEYS];
+let checklistTemplates: OnboardingChecklistTemplate[] = loadStorage<OnboardingChecklistTemplate[]>(
+  'checklist_templates',
+  [...DEFAULT_CHECKLIST_TEMPLATES]
+);
 
 let rawDocs = loadStorage<HubDocument[]>('documents', [...INITIAL_DOCUMENTS]);
 let documents: HubDocument[] =
@@ -546,5 +552,24 @@ export class MockTalentRepository implements ITalentRepository {
   async getRequisitions(): Promise<RecruitmentRequisition[]> {
     await sleep();
     return [...requisitions];
+  }
+
+  async createOnboardingJourney(journey: OnboardingJourney): Promise<OnboardingJourney> {
+    await sleep();
+    onboardingJourneys = [journey, ...onboardingJourneys];
+    saveStorage('onboarding', onboardingJourneys);
+    return journey;
+  }
+
+  async getChecklistTemplates(): Promise<OnboardingChecklistTemplate[]> {
+    await sleep();
+    return [...checklistTemplates];
+  }
+
+  async createChecklistTemplate(template: OnboardingChecklistTemplate): Promise<OnboardingChecklistTemplate> {
+    await sleep();
+    checklistTemplates = [template, ...checklistTemplates];
+    saveStorage('checklist_templates', checklistTemplates);
+    return template;
   }
 }

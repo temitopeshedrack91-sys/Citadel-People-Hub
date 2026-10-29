@@ -20,6 +20,7 @@ import {
   SystemNotification,
   OnboardingJourney,
   OnboardingTask,
+  OnboardingChecklistTemplate,
   RecruitmentRequisition,
 } from '../types';
 
@@ -90,4 +91,7 @@ export interface ITalentRepository {
   toggleDocumentSubmission?(journeyId: string, docId: string, isSubmitted: boolean): Promise<OnboardingJourney>;
   toggleOrientationItem?(journeyId: string, itemId: string, isCompleted: boolean): Promise<OnboardingJourney>;
   getRequisitions(): Promise<RecruitmentRequisition[]>;
+  createOnboardingJourney?(journey: OnboardingJourney): Promise<OnboardingJourney>;
+  getChecklistTemplates?(): Promise<OnboardingChecklistTemplate[]>;
+  createChecklistTemplate?(template: OnboardingChecklistTemplate): Promise<OnboardingChecklistTemplate>;
 }

@@ -104,6 +104,18 @@ export interface OnboardingTask {
   reminderSentAt?: string;
 }
 
+export interface OnboardingChecklistTemplate {
+  id: string;
+  title: string;
+  description: string;
+  category: 'General' | 'Pastoral & Ministry' | 'Operations & Facilities' | 'Legal & Corporate' | 'ICT & Systems';
+  targetAudience: string;
+  duration: string;
+  taskCount: number;
+  tasks?: OnboardingTask[];
+  createdAt?: string;
+}
+
 export interface OnboardingJourney {
   id: string;
   employeeId: string;
@@ -113,6 +125,9 @@ export interface OnboardingJourney {
   entityName: string;
   departmentName: string;
   startDate: string;
+  checklistId?: string;
+  checklistTitle?: string;
+  avatarUrl?: string;
   mentorName?: string;
   mentorBuddyName?: string;
   overallProgressPercent: number;

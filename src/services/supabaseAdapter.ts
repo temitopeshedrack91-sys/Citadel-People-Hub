@@ -28,6 +28,7 @@ import {
   WorkflowStatus,
   OnboardingJourney,
   OnboardingTask,
+  OnboardingChecklistTemplate,
   RecruitmentRequisition,
   VerificationSource,
 } from '../types';
@@ -41,6 +42,7 @@ import {
   INITIAL_DOCUMENTS,
   INITIAL_NOTIFICATIONS,
   INITIAL_ONBOARDING_JOURNEYS,
+  DEFAULT_CHECKLIST_TEMPLATES,
   INITIAL_RECRUITMENT,
 } from '../data/mockData';
 
@@ -598,5 +600,16 @@ export class SupabaseTalentRepository implements ITalentRepository {
   }
   async getRequisitions(): Promise<RecruitmentRequisition[]> {
     return INITIAL_RECRUITMENT;
+  }
+  async createOnboardingJourney(journey: OnboardingJourney): Promise<OnboardingJourney> {
+    INITIAL_ONBOARDING_JOURNEYS.unshift(journey);
+    return journey;
+  }
+  async getChecklistTemplates(): Promise<OnboardingChecklistTemplate[]> {
+    return DEFAULT_CHECKLIST_TEMPLATES;
+  }
+  async createChecklistTemplate(template: OnboardingChecklistTemplate): Promise<OnboardingChecklistTemplate> {
+    DEFAULT_CHECKLIST_TEMPLATES.unshift(template);
+    return template;
   }
 }

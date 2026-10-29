@@ -31,14 +31,23 @@ import {
   Printer,
   Sparkles,
   Info,
+  MoreHorizontal,
+  RotateCw,
+  ArrowLeft,
+  ExternalLink,
+  Layers,
+  ListChecks,
 } from 'lucide-react';
 import {
   OnboardingJourney,
   OnboardingDepartment,
   OnboardingTimeline,
   OnboardingTask,
+  OnboardingChecklistTemplate,
+  Employee,
 } from '../../types';
-import { talentRepository, auditRepository } from '../../services';
+import { talentRepository, employeeRepository, auditRepository } from '../../services';
+import { DEFAULT_CHECKLIST_TEMPLATES, createCitadelOnboardingTasks } from '../../data/mockData';
 import { useAuth } from '../../context/AuthContext';
 
 export const OnboardingView: React.FC = () => {
@@ -48,7 +57,28 @@ export const OnboardingView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
     'schedule' | 'milestones' | 'documents' | 'orientation' | 'accountability' | 'welcome-email'
   >('schedule');
+  const [mainTab, setMainTab] = useState<'employee_onboardings' | 'onboarding_checklists'>('employee_onboardings');
+  const [onboardingViewMode, setOnboardingViewMode] = useState<'roster' | 'detail'>('roster');
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
+  const [checklistFilter, setChecklistFilter] = useState<string>('All');
+  const [checklistTemplates, setChecklistTemplates] = useState<OnboardingChecklistTemplate[]>(DEFAULT_CHECKLIST_TEMPLATES);
+  const [employeesList, setEmployeesList] = useState<Employee[]>([]);
+  const [isStartOnboardingModalOpen, setIsStartOnboardingModalOpen] = useState(false);
+  const [isAddChecklistModalOpen, setIsAddChecklistModalOpen] = useState(false);
+  const [actionMenuOpenId, setActionMenuOpenId] = useState<string | null>(null);
+
+  // Start Onboarding Form state
+  const [startEmployeeId, setStartEmployeeId] = useState('');
+  const [startChecklistId, setStartChecklistId] = useState('');
+  const [startDateInput, setStartDateInput] = useState('2026-10-29');
+
+  // Add Checklist Template Form state
+  const [newChecklistTitle, setNewChecklistTitle] = useState('');
+  const [newChecklistCategory, setNewChecklistCategory] = useState<OnboardingChecklistTemplate['category']>('General');
+  const [newChecklistTarget, setNewChecklistTarget] = useState('');
+  const [newChecklistDuration, setNewChecklistDuration] = useState('1 Month');
+  const [newChecklistDesc, setNewChecklistDesc] = useState('');
+
   const [departmentFilter, setDepartmentFilter] = useState<'All' | OnboardingDepartment>('All');
   const [timelineFilter, setTimelineFilter] = useState<'All' | string>('All');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Completed' | 'Flagged'>('All');
@@ -75,11 +105,31 @@ export const OnboardingView: React.FC = () => {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  const formatDateDisplay = (dateStr?: string) => {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length === 3 && parts[0].length === 4) {
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    return dateStr;
+  };
+
   const loadData = async () => {
-    const list = await talentRepository.getOnboardingJourneys();
-    setJourneys(list);
-    if (list.length > 0 && !list.find((j) => j.id === selectedJourneyId)) {
-      setSelectedJourneyId(list[0].id);
+    try {
+      const [list, emps, tpls] = await Promise.all([
+        talentRepository.getOnboardingJourneys(),
+        employeeRepository.getAll(),
+        talentRepository.getChecklistTemplates ? talentRepository.getChecklistTemplates() : Promise.resolve(DEFAULT_CHECKLIST_TEMPLATES),
+      ]);
+      setJourneys(list);
+      setEmployeesList(emps || []);
+      setChecklistTemplates(tpls && tpls.length > 0 ? tpls : DEFAULT_CHECKLIST_TEMPLATES);
+      if (list.length > 0 && !list.find((j) => j.id === selectedJourneyId)) {
+        setSelectedJourneyId(list[0].id);
+      }
+    } catch {
+      const list = await talentRepository.getOnboardingJourneys();
+      setJourneys(list);
     }
   };
 
@@ -199,6 +249,179 @@ export const OnboardingView: React.FC = () => {
     showToast('New onboarding task created successfully.');
   };
 
+  const handleSaveNewOnboarding = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!startEmployeeId || !startChecklistId) {
+      showToast('Please select both an employee and a checklist.');
+      return;
+    }
+
+    const employee = employeesList.find((e) => e.id === startEmployeeId);
+    const template = checklistTemplates.find((t) => t.id === startChecklistId);
+    if (!employee || !template) return;
+
+    const newJourney: OnboardingJourney = {
+      id: `onboard-${Date.now()}`,
+      employeeId: employee.id,
+      employeeName: employee.fullName,
+      staffId: employee.staffId,
+      jobTitle: employee.jobTitle,
+      entityName: employee.entityName,
+      departmentName: employee.departmentName,
+      startDate: startDateInput || '2026-10-29',
+      checklistId: template.id,
+      checklistTitle: template.title,
+      overallProgressPercent: 0,
+      status: 'In Progress',
+      avatarUrl: (employee as any).avatarUrl,
+      mentorName: employee.managerName || 'Assigned Lead',
+      mentorBuddyName: 'Assigned Buddy',
+      teamRoster: {
+        managerName: employee.managerName || 'Assigned Lead',
+        pccmOfficerName: 'Dr. Bukola Adeleke',
+        itLeadName: 'Femi Olatunji',
+        financeLeadName: 'Kemi Adebayo',
+        mentorBuddyName: 'Assigned Buddy',
+      },
+      requiredDocuments: [
+        { id: 'doc-bio', name: 'Employee Bio-Data Form', isSubmitted: true, submittedAt: startDateInput },
+        { id: 'doc-emg', name: 'Emergency Contact Information', isSubmitted: true, submittedAt: startDateInput },
+        { id: 'doc-ben', name: 'Benefits Enrollment Paperwork (HMO / Pension)', isSubmitted: false },
+        { id: 'doc-pay', name: 'Payroll & Bank Account Details', isSubmitted: false },
+        { id: 'doc-nda', name: 'Non-Disclosure & Confidentiality Agreement (NDA)', isSubmitted: false },
+        { id: 'doc-hbk', name: 'Employee Handbook & Code of Conduct Sign-off', isSubmitted: false },
+        { id: 'doc-sop', name: 'Standard Operating Procedure (SOP) Manual Acknowledgement', isSubmitted: false },
+      ],
+      orientationItems: [
+        { id: 'ori-tour', name: 'Show new hires office space, parking spots & break room', isCompleted: false },
+        { id: 'ori-id', name: 'Create Employee ID & Biometric Access Pass', isCompleted: false },
+        { id: 'ori-desk', name: 'Set up work space, computer, phone, and supplies', isCompleted: false },
+        { id: 'ori-gift', name: 'Place Citadel Welcome Gift (Swag Mug, T-Shirt, Stationery) on desk', isCompleted: false },
+      ],
+      tasks: (template.tasks && template.tasks.length > 0)
+        ? template.tasks.map((t, idx) => ({ ...t, id: `task-${Date.now()}-${idx}` }))
+        : createCitadelOnboardingTasks(
+            employee.fullName,
+            employee.managerName || 'Assigned Lead',
+            'Dr. Bukola Adeleke',
+            'Femi Olatunji',
+            'Kemi Adebayo',
+            'Assigned Buddy',
+            'new'
+          ),
+    };
+
+    if (talentRepository.createOnboardingJourney) {
+      await talentRepository.createOnboardingJourney(newJourney);
+    }
+
+    setJourneys([newJourney, ...journeys]);
+    setSelectedJourneyId(newJourney.id);
+    setIsStartOnboardingModalOpen(false);
+    setStartEmployeeId('');
+    setStartChecklistId('');
+    setMainTab('employee_onboardings');
+    setOnboardingViewMode('roster');
+
+    await auditRepository.logAction({
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userRole: currentRole,
+      module: 'Talent & Onboarding',
+      action: 'Initiated Onboarding Journey',
+      recordAffectedId: newJourney.id,
+      recordAffectedTitle: `Onboarding for ${newJourney.employeeName} (${newJourney.checklistTitle})`,
+      newValue: 'In Progress',
+      severity: 'Info',
+    });
+
+    showToast(`Onboarding journey initiated for ${newJourney.employeeName}.`);
+  };
+
+  const handleSaveNewChecklist = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newChecklistTitle.trim()) {
+      showToast('Please provide a title for the checklist template.');
+      return;
+    }
+
+    const template: OnboardingChecklistTemplate = {
+      id: `template-${Date.now()}`,
+      title: newChecklistTitle.trim(),
+      category: newChecklistCategory,
+      targetAudience: newChecklistTarget.trim() || 'All New Staff',
+      duration: newChecklistDuration.trim() || '1 Month',
+      taskCount: 6,
+      description: newChecklistDesc.trim() || 'Departmental onboarding and compliance checklist template.',
+      createdAt: new Date().toISOString().split('T')[0],
+      tasks: [
+        {
+          id: `t-${Date.now()}-1`,
+          title: 'Initial Welcome & Workspace Setup',
+          description: 'Introduce new hire to team members, set up workstation and communication tools.',
+          department: 'Manager',
+          timeline: 'Day 1',
+          assignedRole: 'Department Head',
+          dueDate: 'Day 1',
+          isCompleted: false,
+        },
+        {
+          id: `t-${Date.now()}-2`,
+          title: 'Core Tools & System Credentials Provisioning',
+          description: 'Provision role-based software access, security tokens, and corporate directory.',
+          department: 'IT',
+          timeline: 'Week 1',
+          assignedRole: 'ICT',
+          dueDate: 'Week 1',
+          isCompleted: false,
+        },
+      ],
+    };
+
+    if (talentRepository.createChecklistTemplate) {
+      await talentRepository.createChecklistTemplate(template);
+    }
+
+    const updated = [template, ...checklistTemplates];
+    setChecklistTemplates(updated);
+
+    if (isStartOnboardingModalOpen) {
+      setStartChecklistId(template.id);
+    }
+
+    setNewChecklistTitle('');
+    setNewChecklistTarget('');
+    setNewChecklistDesc('');
+    setIsAddChecklistModalOpen(false);
+
+    await auditRepository.logAction({
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userRole: currentRole,
+      module: 'Talent & Onboarding',
+      action: 'Created Checklist Template',
+      recordAffectedId: template.id,
+      recordAffectedTitle: template.title,
+      newValue: template.category,
+      severity: 'Info',
+    });
+
+    showToast(`Checklist "${template.title}" created successfully.`);
+  };
+
+  const handleToggleJourneyStatus = (journeyId: string) => {
+    const updated = journeys.map((j) => {
+      if (j.id === journeyId) {
+        const nextStatus: 'In Progress' | 'Completed' = j.status === 'Completed' ? 'In Progress' : 'Completed';
+        const nextPercent = nextStatus === 'Completed' ? 100 : j.overallProgressPercent;
+        return { ...j, status: nextStatus, overallProgressPercent: nextPercent };
+      }
+      return j;
+    });
+    setJourneys(updated);
+    showToast('Onboarding status updated.');
+  };
+
   // Filter tasks based on Department, Timeline, Status, and Search
   const filteredTasks = (currentJourney?.tasks || []).filter((task) => {
     if (departmentFilter !== 'All' && task.department !== departmentFilter) return false;
@@ -259,62 +482,475 @@ export const OnboardingView: React.FC = () => {
         </div>
       )}
 
-      {/* Official CGCC Brand Banner: Pure Black & Citadel Classic Gold (#D4AF37) */}
-      <div className="bg-[#111111] text-white rounded-2xl p-5 border-2 border-black shadow-md flex flex-col lg:flex-row lg:items-center justify-between gap-5 relative overflow-hidden">
-        {/* Subtle Gold Glow Accent */}
-        <div className="absolute -right-16 -top-16 w-48 h-48 bg-[#D4AF37]/15 rounded-full blur-2xl pointer-events-none" />
+      {/* Top Navigation & Action Header (Matching Screenshot 2) */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        {/* Primary Action Buttons */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            onClick={() => setIsStartOnboardingModalOpen(true)}
+            className="px-4 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-[#DFC15D] text-black font-black text-xs sm:text-sm transition flex items-center gap-2 shadow-xs cursor-pointer active:scale-95"
+            title="Start new employee onboarding"
+          >
+            <Plus className="w-4 h-4 stroke-[3]" />
+            <span>Start Onboarding</span>
+          </button>
 
-        <div className="flex items-start sm:items-center gap-4 relative z-10">
-          <div className="w-12 h-12 rounded-xl bg-[#D4AF37] text-white flex items-center justify-center font-black shrink-0 shadow-md">
-            <FileCheck2 className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[10px] uppercase tracking-wider text-black font-black bg-[#D4AF37] px-2.5 py-0.5 rounded shadow-xs">
-                CGCC Standard Operating Procedure
-              </span>
-              <span className="text-xs text-slate-300 font-semibold">• Dated 30 March 2024</span>
-              <span className="text-xs text-[#D4AF37] font-bold">• 3-Month Probation Cycle</span>
-            </div>
-            <h1 className="text-lg sm:text-xl font-black text-white tracking-tight mt-1">
-              The Citadel Global Community Church — Onboarding Checklist &amp; Schedule
-            </h1>
-            <p className="text-xs text-slate-300 mt-0.5 max-w-2xl font-medium">
-              Three-month structured induction across Unit Managers, People, Culture &amp; Change (HR), IT, Finance &amp; Accounts, and Onboarding Buddies. Prepared by Sussan Afuwape.
-            </p>
-          </div>
+          <button
+            onClick={() => {
+              setMainTab('onboarding_checklists');
+              setOnboardingViewMode('roster');
+            }}
+            className={`px-4 py-2.5 rounded-xl border text-xs sm:text-sm font-bold transition flex items-center gap-2 shadow-2xs cursor-pointer active:scale-95 ${
+              mainTab === 'onboarding_checklists'
+                ? 'bg-slate-900 text-white border-slate-900'
+                : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300'
+            }`}
+            title="Manage onboarding checklist templates"
+          >
+            <ListChecks className="w-4 h-4 text-[#D4AF37]" />
+            <span>Onboarding Checklists</span>
+          </button>
         </div>
 
-        {/* Top Action Bar */}
-        <div className="flex flex-wrap items-center gap-2 relative z-10">
+        {/* Segmented View Switcher (Screenshot 2 Top Right) */}
+        <div className="bg-slate-100 p-1 rounded-xl flex items-center gap-1 border border-slate-200 self-start sm:self-auto">
           <button
-            onClick={() => setIsNewTaskModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#DFC15D] text-black font-black text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95 min-h-[38px]"
-            title="Create an onboarding task from the checklist"
+            onClick={() => {
+              setMainTab('employee_onboardings');
+            }}
+            className={`px-3.5 py-2 rounded-lg text-xs font-black transition flex items-center gap-2 cursor-pointer ${
+              mainTab === 'employee_onboardings'
+                ? 'bg-black text-white shadow-xs'
+                : 'text-slate-600 hover:text-black font-semibold'
+            }`}
           >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Add Task</span>
+            <Users className="w-3.5 h-3.5 text-[#D4AF37]" />
+            <span>Employee Onboardings</span>
           </button>
-
           <button
-            onClick={handleSendBulkReminders}
-            className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition flex items-center gap-1.5 cursor-pointer active:scale-95 min-h-[38px]"
-            title="Send reminders for pending onboarding obligations"
+            onClick={() => {
+              setMainTab('onboarding_checklists');
+            }}
+            className={`px-3.5 py-2 rounded-lg text-xs font-black transition flex items-center gap-2 cursor-pointer ${
+              mainTab === 'onboarding_checklists'
+                ? 'bg-black text-white shadow-xs'
+                : 'text-slate-600 hover:text-black font-semibold'
+            }`}
           >
-            <Bell className="w-4 h-4 text-[#D4AF37]" />
-            <span>Send Reminders</span>
-          </button>
-
-          <button
-            onClick={() => setIsSopModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-[#D4AF37] font-bold text-xs border border-[#D4AF37]/40 transition flex items-center gap-1.5 cursor-pointer active:scale-95 min-h-[38px]"
-            title="View original 30 March 2024 SOP document"
-          >
-            <Eye className="w-4 h-4" />
-            <span>View SOP Guide</span>
+            <Clock className="w-3.5 h-3.5 text-[#D4AF37]" />
+            <span>Onboarding Checklists</span>
           </button>
         </div>
       </div>
+
+      {/* =========================================================================
+          VIEW 1: EMPLOYEE ONBOARDINGS ROSTER TABLE & KPIS (Screenshot 2)
+         ========================================================================= */}
+      {mainTab === 'employee_onboardings' && onboardingViewMode === 'roster' && (
+        <div className="space-y-6">
+          {/* 4 Summary Metric KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Card 1: Total Onboardings */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs flex items-center justify-between">
+              <div>
+                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  TOTAL ONBOARDINGS
+                </div>
+                <div className="text-2xl font-black text-slate-900 mt-1">
+                  {journeys.length}
+                </div>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-[#D4AF37]/15 text-[#D4AF37] flex items-center justify-center font-bold">
+                <Users className="w-6 h-6" />
+              </div>
+            </div>
+
+            {/* Card 2: In Progress */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs flex items-center justify-between">
+              <div>
+                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  IN PROGRESS
+                </div>
+                <div className="text-2xl font-black text-slate-900 mt-1">
+                  {journeys.filter((j) => j.status === 'In Progress').length}
+                </div>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-[#D4AF37] text-white flex items-center justify-center font-bold shadow-xs">
+                <RotateCw className="w-5 h-5 animate-spin-slow" />
+              </div>
+            </div>
+
+            {/* Card 3: Completed */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs flex items-center justify-between">
+              <div>
+                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  COMPLETED
+                </div>
+                <div className="text-2xl font-black text-slate-900 mt-1">
+                  {journeys.filter((j) => j.status === 'Completed').length}
+                </div>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center font-bold">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+            </div>
+
+            {/* Card 4: Onboarding Checklists */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs flex items-center justify-between">
+              <div>
+                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  ONBOARDING CHECKLISTS
+                </div>
+                <div className="text-2xl font-black text-slate-900 mt-1">
+                  {checklistTemplates.length}
+                </div>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold shadow-xs">
+                <Check className="w-6 h-6 stroke-[3]" />
+              </div>
+            </div>
+          </div>
+
+          {/* Employee Onboardings Table */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[760px]">
+                <thead>
+                  <tr className="border-b border-slate-200/80 bg-slate-50/60 text-slate-500 text-xs font-bold">
+                    <th className="py-3.5 px-4 w-12 text-slate-400 font-semibold">#</th>
+                    <th className="py-3.5 px-4 font-semibold">Employee</th>
+                    <th className="py-3.5 px-4 font-semibold">Checklist</th>
+                    <th className="py-3.5 px-4 font-semibold">Progress</th>
+                    <th className="py-3.5 px-4 font-semibold">Status</th>
+                    <th className="py-3.5 px-4 font-semibold">Start Date</th>
+                    <th className="py-3.5 px-4 text-right font-semibold">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {journeys.map((j, idx) => {
+                    const completedCount = (j.tasks || []).filter((t) => t.isCompleted).length;
+                    const totalCount = (j.tasks || []).length || 1;
+                    return (
+                      <tr
+                        key={j.id}
+                        onClick={() => {
+                          setSelectedJourneyId(j.id);
+                          setOnboardingViewMode('detail');
+                        }}
+                        className="hover:bg-slate-50/70 transition cursor-pointer group"
+                      >
+                        {/* Column 1: Index */}
+                        <td className="py-4 px-4 text-xs font-semibold text-slate-400">
+                          {idx + 1}
+                        </td>
+
+                        {/* Column 2: Employee */}
+                        <td className="py-4 px-4">
+                          <div className="flex items-center gap-3">
+                            {j.avatarUrl ? (
+                              <img
+                                src={j.avatarUrl}
+                                alt={j.employeeName}
+                                className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0 shadow-2xs"
+                              />
+                            ) : (
+                              <div className="w-9 h-9 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-xs shrink-0">
+                                <Users className="w-4 h-4 text-slate-400" />
+                              </div>
+                            )}
+                            <div className="truncate">
+                              <div className="font-bold text-slate-900 text-sm group-hover:text-[#D4AF37] transition truncate">
+                                {j.employeeName}
+                              </div>
+                              {j.jobTitle && (
+                                <div className="text-xs text-slate-500 font-medium truncate">
+                                  {j.jobTitle}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Column 3: Checklist */}
+                        <td className="py-4 px-4">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold bg-slate-50 border border-slate-200/80 text-slate-700 shadow-2xs max-w-[300px] truncate">
+                            <FileText className="w-3.5 h-3.5 text-[#2563EB] shrink-0" />
+                            <span className="truncate">{j.checklistTitle || 'CGCC Standard 3-Month Induction Checklist'}</span>
+                          </span>
+                        </td>
+
+                        {/* Column 4: Progress */}
+                        <td className="py-4 px-4">
+                          <div className="flex items-center gap-3 min-w-[150px]">
+                            <div className="w-24 bg-slate-100 rounded-full h-1.5 overflow-hidden border border-slate-200 shrink-0">
+                              <div
+                                className="bg-[#2563EB] h-1.5 rounded-full transition-all duration-300"
+                                style={{ width: `${j.overallProgressPercent}%` }}
+                              />
+                            </div>
+                            <span className="text-xs font-semibold text-slate-600 shrink-0">
+                              {completedCount}/{totalCount} ({j.overallProgressPercent}%)
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Column 5: Status */}
+                        <td className="py-4 px-4">
+                          {j.status === 'Completed' ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-600 text-white shadow-2xs">
+                              <Check className="w-3 h-3 stroke-[3]" />
+                              <span>Completed</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold bg-[#0D9488] text-white shadow-2xs">
+                              <RotateCw className="w-3 h-3 animate-spin-slow" />
+                              <span>In Progress</span>
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Column 6: Start Date */}
+                        <td className="py-4 px-4 text-xs font-medium text-slate-700">
+                          {formatDateDisplay(j.startDate)}
+                        </td>
+
+                        {/* Column 7: Action */}
+                        <td className="py-4 px-4 text-right">
+                          <div className="relative inline-block text-right">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActionMenuOpenId(actionMenuOpenId === j.id ? null : j.id);
+                              }}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                              title="Actions"
+                            >
+                              <MoreHorizontal className="w-4 h-4" />
+                            </button>
+                            {actionMenuOpenId === j.id && (
+                              <div
+                                onClick={(e) => e.stopPropagation()}
+                                className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-40 animate-fade-in text-left"
+                              >
+                                <button
+                                  onClick={() => {
+                                    setSelectedJourneyId(j.id);
+                                    setOnboardingViewMode('detail');
+                                    setActionMenuOpenId(null);
+                                  }}
+                                  className="w-full px-3.5 py-2 text-xs font-bold text-slate-800 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
+                                >
+                                  <Eye className="w-3.5 h-3.5 text-[#D4AF37]" />
+                                  <span>View Detailed Schedule</span>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    showToast(`Reminders sent for ${j.employeeName}'s pending tasks.`);
+                                    setActionMenuOpenId(null);
+                                  }}
+                                  className="w-full px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
+                                >
+                                  <Bell className="w-3.5 h-3.5 text-slate-500" />
+                                  <span>Send Reminders</span>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleToggleJourneyStatus(j.id);
+                                    setActionMenuOpenId(null);
+                                  }}
+                                  className="w-full px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer border-t border-slate-100"
+                                >
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                  <span>{j.status === 'Completed' ? 'Mark as In Progress' : 'Mark as Completed'}</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          VIEW 2: ONBOARDING CHECKLISTS TEMPLATES LIBRARY
+         ========================================================================= */}
+      {mainTab === 'onboarding_checklists' && (
+        <div className="space-y-6">
+          {/* Header Card */}
+          <div className="bg-[#111111] text-white rounded-2xl p-5 border-2 border-black shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-[#D4AF37] text-black flex items-center justify-center font-bold shrink-0">
+                <ListChecks className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-lg font-black text-white">Onboarding Checklist Templates</h2>
+                <p className="text-xs text-slate-300">
+                  Standardized induction workflows, statutory compliance packs, and departmental checklists.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setIsAddChecklistModalOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-[#DFC15D] text-black font-black text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>Add Checklist Template</span>
+            </button>
+          </div>
+
+          {/* Category Filter Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
+            {['All', 'General', 'ICT & Systems', 'Legal & Corporate', 'Pastoral & Ministry', 'Operations & Facilities'].map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setChecklistFilter(cat)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer shrink-0 ${
+                  checklistFilter === cat
+                    ? 'bg-black text-white'
+                    : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* Templates Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {checklistTemplates
+              .filter((tpl) => checklistFilter === 'All' || tpl.category === checklistFilter)
+              .map((tpl) => (
+                <div
+                  key={tpl.id}
+                  className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs hover:shadow-md transition flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] uppercase tracking-wider font-black px-2.5 py-0.5 rounded-md bg-[#D4AF37]/20 text-black border border-[#D4AF37]/40">
+                        {tpl.category}
+                      </span>
+                      <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                        {tpl.duration}
+                      </span>
+                    </div>
+
+                    <h3 className="text-base font-black text-slate-900 mt-3">{tpl.title}</h3>
+                    <p className="text-xs text-slate-600 font-medium mt-1.5 leading-relaxed line-clamp-3">
+                      {tpl.description}
+                    </p>
+
+                    <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-600 space-y-1">
+                      <div className="flex items-center justify-between font-semibold">
+                        <span>Target:</span>
+                        <strong className="text-black">{tpl.targetAudience}</strong>
+                      </div>
+                      <div className="flex items-center justify-between font-semibold">
+                        <span>Induction Tasks:</span>
+                        <strong className="text-black">{tpl.taskCount} tasks</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 pt-3 border-t border-slate-100 flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setStartChecklistId(tpl.id);
+                        setIsStartOnboardingModalOpen(true);
+                      }}
+                      className="w-full px-3 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#DFC15D] text-black font-black text-xs transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-2xs"
+                    >
+                      <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                      <span>Use for Onboarding</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          VIEW 3: DETAILED 30 MARCH 2024 CGCC ONBOARDING JOURNEY & SCHEDULE
+         ========================================================================= */}
+      {mainTab === 'employee_onboardings' && onboardingViewMode === 'detail' && (
+        <div className="space-y-6">
+          {/* Top Return Breadcrumb */}
+          <div className="flex items-center justify-between pb-1">
+            <button
+              onClick={() => setOnboardingViewMode('roster')}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold transition shadow-2xs cursor-pointer active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4 text-slate-600" />
+              <span>Back to Employee Onboardings</span>
+            </button>
+            <div className="text-xs text-slate-500 font-semibold">
+              Viewing induction journey for <strong className="text-black">{currentJourney.employeeName}</strong>
+            </div>
+          </div>
+
+          {/* Official CGCC Brand Banner: Pure Black & Citadel Classic Gold (#D4AF37) */}
+          <div className="bg-[#111111] text-white rounded-2xl p-5 border-2 border-black shadow-md flex flex-col lg:flex-row lg:items-center justify-between gap-5 relative overflow-hidden">
+            {/* Subtle Gold Glow Accent */}
+            <div className="absolute -right-16 -top-16 w-48 h-48 bg-[#D4AF37]/15 rounded-full blur-2xl pointer-events-none" />
+
+            <div className="flex items-start sm:items-center gap-4 relative z-10">
+              <div className="w-12 h-12 rounded-xl bg-[#D4AF37] text-white flex items-center justify-center font-black shrink-0 shadow-md">
+                <FileCheck2 className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[10px] uppercase tracking-wider text-black font-black bg-[#D4AF37] px-2.5 py-0.5 rounded shadow-xs">
+                    CGCC Standard Operating Procedure
+                  </span>
+                  <span className="text-xs text-slate-300 font-semibold">• Dated 30 March 2024</span>
+                  <span className="text-xs text-[#D4AF37] font-bold">• 3-Month Probation Cycle</span>
+                </div>
+                <h1 className="text-lg sm:text-xl font-black text-white tracking-tight mt-1">
+                  The Citadel Global Community Church — Onboarding Checklist &amp; Schedule
+                </h1>
+                <p className="text-xs text-slate-300 mt-0.5 max-w-2xl font-medium">
+                  Three-month structured induction across Unit Managers, People, Culture &amp; Change (HR), IT, Finance &amp; Accounts, and Onboarding Buddies. Prepared by Sussan Afuwape.
+                </p>
+              </div>
+            </div>
+
+            {/* Top Action Bar */}
+            <div className="flex flex-wrap items-center gap-2 relative z-10">
+              <button
+                onClick={() => setIsNewTaskModalOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#DFC15D] text-black font-black text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95 min-h-[38px]"
+                title="Create an onboarding task from the checklist"
+              >
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <span>Add Task</span>
+              </button>
+
+              <button
+                onClick={handleSendBulkReminders}
+                className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition flex items-center gap-1.5 cursor-pointer active:scale-95 min-h-[38px]"
+                title="Send reminders for pending onboarding obligations"
+              >
+                <Bell className="w-4 h-4 text-[#D4AF37]" />
+                <span>Send Reminders</span>
+              </button>
+
+              <button
+                onClick={() => setIsSopModalOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-[#D4AF37] font-bold text-xs border border-[#D4AF37]/40 transition flex items-center gap-1.5 cursor-pointer active:scale-95 min-h-[38px]"
+                title="View original 30 March 2024 SOP document"
+              >
+                <Eye className="w-4 h-4" />
+                <span>View SOP Guide</span>
+              </button>
+            </div>
+          </div>
 
       {/* New Hire Journey Selector Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
@@ -1361,6 +1997,225 @@ export const OnboardingView: React.FC = () => {
             <div className="whitespace-pre-wrap text-sm leading-7 text-slate-800 font-medium">
               {welcomeEmailTemplate || 'No template available.'}
             </div>
+          </div>
+        </div>
+      )}
+        </div>
+      )}
+
+      {/* =========================================================================
+          MODAL: START ONBOARDING (Matching Screenshot 1)
+         ========================================================================= */}
+      {isStartOnboardingModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900">Start Onboarding</h3>
+              <button
+                onClick={() => setIsStartOnboardingModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleSaveNewOnboarding} className="p-6 space-y-4">
+              {/* Employee Field */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Employee <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={startEmployeeId}
+                  onChange={(e) => setStartEmployeeId(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] bg-white cursor-pointer"
+                  required
+                >
+                  <option value="">--</option>
+                  {employeesList.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.fullName} ({emp.staffId} - {emp.jobTitle})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Checklist Field */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-slate-700">
+                    Checklist <span className="text-red-500">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddChecklistModalOpen(true)}
+                    className="text-xs font-bold text-[#0284C7] hover:text-[#0369A1] flex items-center gap-1 cursor-pointer transition"
+                  >
+                    <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                    <span>Add Checklist</span>
+                  </button>
+                </div>
+                <select
+                  value={startChecklistId}
+                  onChange={(e) => setStartChecklistId(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] bg-white cursor-pointer"
+                  required
+                >
+                  <option value="">-- Select Checklist --</option>
+                  {checklistTemplates.map((tpl) => (
+                    <option key={tpl.id} value={tpl.id}>
+                      {tpl.title} ({tpl.duration} • {tpl.category})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Start Date Field */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Start Date <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={startDateInput}
+                  onChange={(e) => setStartDateInput(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] bg-white"
+                  required
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3 pt-3">
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-md bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs flex items-center gap-2 shadow-xs cursor-pointer active:scale-95 transition"
+                >
+                  <Check className="w-4 h-4 stroke-[2.5]" />
+                  <span>Save</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsStartOnboardingModalOpen(false)}
+                  className="text-xs font-semibold text-slate-500 hover:text-slate-800 px-3 py-2 cursor-pointer transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          MODAL: ADD ONBOARDING CHECKLIST TEMPLATE
+         ========================================================================= */}
+      {isAddChecklistModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900">Add Onboarding Checklist</h3>
+              <button
+                onClick={() => setIsAddChecklistModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveNewChecklist} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Checklist Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newChecklistTitle}
+                  onChange={(e) => setNewChecklistTitle(e.target.value)}
+                  placeholder="e.g., Slack and Virtual Office Navigation"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] bg-white"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Category <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={newChecklistCategory}
+                    onChange={(e) => setNewChecklistCategory(e.target.value as any)}
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] bg-white cursor-pointer"
+                  >
+                    <option value="General">General</option>
+                    <option value="ICT & Systems">ICT & Systems</option>
+                    <option value="Legal & Corporate">Legal & Corporate</option>
+                    <option value="Pastoral & Ministry">Pastoral & Ministry</option>
+                    <option value="Operations & Facilities">Operations & Facilities</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Duration <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newChecklistDuration}
+                    onChange={(e) => setNewChecklistDuration(e.target.value)}
+                    placeholder="e.g. 2 Weeks, 1 Month, 3 Months"
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] bg-white"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Target Audience <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newChecklistTarget}
+                  onChange={(e) => setNewChecklistTarget(e.target.value)}
+                  placeholder="e.g., Legal Associates, Hybrid & Remote Staff"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] bg-white"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Description
+                </label>
+                <textarea
+                  value={newChecklistDesc}
+                  onChange={(e) => setNewChecklistDesc(e.target.value)}
+                  rows={3}
+                  placeholder="Outline the scope and mandatory procedures in this induction checklist..."
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] bg-white resize-none"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-3">
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-md bg-[#D4AF37] hover:bg-[#DFC15D] text-black font-black text-xs flex items-center gap-2 shadow-xs cursor-pointer active:scale-95 transition"
+                >
+                  <Check className="w-4 h-4 stroke-[2.5]" />
+                  <span>Save Checklist</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAddChecklistModalOpen(false)}
+                  className="text-xs font-semibold text-slate-500 hover:text-slate-800 px-3 py-2 cursor-pointer transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

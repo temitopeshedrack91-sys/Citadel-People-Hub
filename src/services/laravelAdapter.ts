@@ -18,6 +18,7 @@ import {
   LeaveRequest,
   OnboardingJourney,
   OnboardingTask,
+  OnboardingChecklistTemplate,
   RecruitmentRequisition,
   SystemNotification,
   WorkflowStatus,
@@ -238,5 +239,23 @@ export class LaravelTalentRepository implements ITalentRepository {
 
   getRequisitions(): Promise<RecruitmentRequisition[]> {
     return requestLaravelData('/requisitions');
+  }
+
+  createOnboardingJourney(journey: OnboardingJourney): Promise<OnboardingJourney> {
+    return requestLaravelData('/onboarding-journeys', {
+      method: 'POST',
+      body: JSON.stringify(journey),
+    });
+  }
+
+  getChecklistTemplates(): Promise<OnboardingChecklistTemplate[]> {
+    return requestLaravelData('/checklist-templates');
+  }
+
+  createChecklistTemplate(template: OnboardingChecklistTemplate): Promise<OnboardingChecklistTemplate> {
+    return requestLaravelData('/checklist-templates', {
+      method: 'POST',
+      body: JSON.stringify(template),
+    });
   }
 }
