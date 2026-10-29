@@ -34,6 +34,7 @@ import {
   MoreHorizontal,
   RotateCw,
   ArrowLeft,
+  ArrowRight,
   ChevronDown,
   ExternalLink,
   Layers,
@@ -55,6 +56,7 @@ import {
   INITIAL_ONBOARDING_JOURNEYS,
 } from '../../data/mockData';
 import { useAuth } from '../../context/AuthContext';
+import { ChevronStepper } from '../common/ChevronStepper';
 
 export const OnboardingView: React.FC = () => {
   const { currentUser, currentRole } = useAuth();
@@ -77,6 +79,8 @@ export const OnboardingView: React.FC = () => {
   const [startEmployeeId, setStartEmployeeId] = useState('');
   const [startChecklistId, setStartChecklistId] = useState('');
   const [startDateInput, setStartDateInput] = useState('2026-10-29');
+  const [startOnboardingStep, setStartOnboardingStep] = useState<number>(1);
+  const [selectedMilestonePhase, setSelectedMilestonePhase] = useState<number>(0);
 
   // Add Checklist Template Form state
   const [newChecklistTitle, setNewChecklistTitle] = useState('');
@@ -508,6 +512,7 @@ export const OnboardingView: React.FC = () => {
             onClick={() => {
               setStartEmployeeId('');
               setStartChecklistId('');
+              setStartOnboardingStep(1);
               setIsStartOnboardingModalOpen(true);
             }}
             className="px-4 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-[#DFC15D] text-black font-black text-xs sm:text-sm transition flex items-center gap-2 shadow-xs cursor-pointer active:scale-95"
@@ -885,6 +890,7 @@ export const OnboardingView: React.FC = () => {
                       onClick={() => {
                         setStartChecklistId(tpl.id);
                         setStartEmployeeId('');
+                        setStartOnboardingStep(1);
                         setIsStartOnboardingModalOpen(true);
                       }}
                       className="w-full px-3 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#DFC15D] text-black font-black text-xs transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-2xs"
@@ -1557,6 +1563,23 @@ export const OnboardingView: React.FC = () => {
             </p>
           </div>
 
+          {/* Horizontal Chevron Timeline Pipeline (User's Marked Concept) */}
+          <div className="py-1">
+            <ChevronStepper
+              steps={[
+                { id: 0, title: 'Pre-Boarding', subtitle: 'Before Resumption' },
+                { id: 1, title: 'Day 1 & 2', subtitle: 'Welcome & Orientation' },
+                { id: 2, title: 'Week 1', subtitle: 'Core Systems' },
+                { id: 3, title: 'Month 1', subtitle: '30-Day Check-in' },
+                { id: 4, title: 'Month 2', subtitle: '60-Day Progress' },
+                { id: 5, title: 'Month 3', subtitle: '90-Day Confirmation' },
+              ]}
+              currentStep={selectedMilestonePhase + 1}
+              onStepClick={(step) => setSelectedMilestonePhase(step - 1)}
+              variant="numbered"
+            />
+          </div>
+
           <div className="space-y-4">
             {/* Phase 0: Before Resumption */}
             <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
@@ -2027,118 +2050,364 @@ export const OnboardingView: React.FC = () => {
       )}
 
       {/* =========================================================================
-          MODAL: START ONBOARDING (Matching Screenshot 1)
+          MODAL: START ONBOARDING WIZARD (Chevron Stepper: Select > Details > Verify > Finish)
          ========================================================================= */}
       {isStartOnboardingModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/70 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[92vh]">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-900">Start Onboarding</h3>
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70 shrink-0">
+              <div>
+                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                  <UserPlus className="w-5 h-5 text-[#2563EB]" />
+                  <span>Start Employee Onboarding</span>
+                </h3>
+                <p className="text-xs text-slate-500 font-medium">
+                  Follow the 4-step wizard to assign a standardized induction checklist and support team.
+                </p>
+              </div>
               <button
                 onClick={() => setIsStartOnboardingModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200 transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Modal Form */}
-            <form onSubmit={handleSaveNewOnboarding} className="p-6 space-y-4">
-              {/* Employee Field */}
-              <div>
-                <label htmlFor="start-employee-select" className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Employee <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <select
-                    id="start-employee-select"
-                    name="employee"
-                    value={startEmployeeId}
-                    onChange={(e) => setStartEmployeeId(e.target.value)}
-                    className="w-full appearance-none px-3.5 py-2.5 pr-10 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] bg-white cursor-pointer"
-                    required
-                  >
-                    <option value="">-- Select Employee --</option>
-                    {(employeesList && employeesList.length > 0 ? employeesList : INITIAL_EMPLOYEES).map((emp) => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.fullName} ({emp.staffId} • {emp.jobTitle})
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            {/* Chevron Stepper Nav */}
+            <div className="bg-slate-100 border-b border-slate-200 px-4 py-2 shrink-0">
+              <ChevronStepper
+                steps={[
+                  { id: 1, title: 'Select', subtitle: 'Employee' },
+                  { id: 2, title: 'Details', subtitle: 'Checklist' },
+                  { id: 3, title: 'Verify', subtitle: 'Schedule & Team' },
+                  { id: 4, title: 'Finish', subtitle: 'Review & Launch' },
+                ]}
+                currentStep={startOnboardingStep}
+                onStepClick={(step) => {
+                  if (step === 1) setStartOnboardingStep(1);
+                  if (step === 2 && startEmployeeId) setStartOnboardingStep(2);
+                  if (step === 3 && startEmployeeId && startChecklistId) setStartOnboardingStep(3);
+                  if (step === 4 && startEmployeeId && startChecklistId) setStartOnboardingStep(4);
+                }}
+                variant="numbered"
+              />
+            </div>
+
+            {/* Modal Wizard Body */}
+            <div className="p-6 overflow-y-auto flex-1 space-y-4">
+              {/* STEP 1: SELECT EMPLOYEE */}
+              {startOnboardingStep === 1 && (
+                <div className="space-y-4 animate-fade-in">
+                  <div>
+                    <label htmlFor="start-employee-select" className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Choose Employee to Onboard <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        id="start-employee-select"
+                        name="employee"
+                        value={startEmployeeId}
+                        onChange={(e) => setStartEmployeeId(e.target.value)}
+                        className="w-full appearance-none px-3.5 py-2.5 pr-10 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] bg-white cursor-pointer"
+                        required
+                      >
+                        <option value="">-- Select Employee --</option>
+                        {(employeesList && employeesList.length > 0 ? employeesList : INITIAL_EMPLOYEES).map((emp) => (
+                          <option key={emp.id} value={emp.id}>
+                            {emp.fullName} ({emp.staffId} • {emp.jobTitle})
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {/* Selected Employee Preview Card */}
+                  {(() => {
+                    const selectedEmp = (employeesList && employeesList.length > 0 ? employeesList : INITIAL_EMPLOYEES).find((e) => e.id === startEmployeeId);
+                    if (!selectedEmp) {
+                      return (
+                        <div className="rounded-xl border border-dashed border-slate-300 p-5 text-center bg-slate-50 text-slate-500">
+                          <Users className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                          <p className="text-xs font-semibold">Select an employee from the dropdown above to view profile details.</p>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xl bg-slate-200 border border-slate-300 flex items-center justify-center font-black text-slate-700 text-sm shrink-0">
+                            {selectedEmp.fullName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-sm font-black text-slate-900">{selectedEmp.fullName}</h4>
+                              <span className="font-mono text-xs font-bold text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">
+                                {selectedEmp.staffId}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-600 font-medium">
+                              {selectedEmp.jobTitle} &middot; {selectedEmp.departmentName}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/80 text-xs">
+                          <div>
+                            <span className="text-slate-400 font-semibold block text-[10px] uppercase">Entity</span>
+                            <span className="text-slate-800 font-bold">{selectedEmp.entityName}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 font-semibold block text-[10px] uppercase">Manager / Lead</span>
+                            <span className="text-slate-800 font-bold">{selectedEmp.managerName || 'Assigned Lead'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
+              )}
+
+              {/* STEP 2: DETAILS (CHECKLIST TEMPLATE) */}
+              {startOnboardingStep === 2 && (
+                <div className="space-y-4 animate-fade-in">
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label htmlFor="start-checklist-select" className="text-xs font-bold text-slate-700">
+                        Select Checklist Template <span className="text-red-500">*</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setIsAddChecklistModalOpen(true)}
+                        className="text-xs font-bold text-[#0284C7] hover:text-[#0369A1] flex items-center gap-1 cursor-pointer transition"
+                      >
+                        <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                        <span>Add Checklist</span>
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <select
+                        id="start-checklist-select"
+                        name="checklist"
+                        value={startChecklistId}
+                        onChange={(e) => setStartChecklistId(e.target.value)}
+                        className="w-full appearance-none px-3.5 py-2.5 pr-10 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] bg-white cursor-pointer"
+                        required
+                      >
+                        <option value="">-- Select Checklist --</option>
+                        {(checklistTemplates && checklistTemplates.length > 0 ? checklistTemplates : DEFAULT_CHECKLIST_TEMPLATES).map((tpl) => (
+                          <option key={tpl.id} value={tpl.id}>
+                            {tpl.title} ({tpl.duration})
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {/* Selected Checklist Template Preview */}
+                  {(() => {
+                    const selectedTpl = (checklistTemplates && checklistTemplates.length > 0 ? checklistTemplates : DEFAULT_CHECKLIST_TEMPLATES).find((t) => t.id === startChecklistId);
+                    if (!selectedTpl) {
+                      return (
+                        <div className="rounded-xl border border-dashed border-slate-300 p-5 text-center bg-slate-50 text-slate-500">
+                          <FileText className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                          <p className="text-xs font-semibold">Choose an onboarding checklist template from the dropdown above.</p>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] uppercase tracking-wider font-black px-2.5 py-0.5 rounded-md bg-[#D4AF37]/20 text-black border border-[#D4AF37]/40">
+                            {selectedTpl.category}
+                          </span>
+                          <span className="text-xs font-mono font-bold text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">
+                            {selectedTpl.duration}
+                          </span>
+                        </div>
+
+                        <div>
+                          <h4 className="text-sm font-black text-slate-900">{selectedTpl.title}</h4>
+                          <p className="text-xs text-slate-600 font-medium mt-1 leading-relaxed">
+                            {selectedTpl.description}
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/80 text-xs">
+                          <div>
+                            <span className="text-slate-400 font-semibold block text-[10px] uppercase">Target Audience</span>
+                            <span className="text-slate-800 font-bold">{selectedTpl.targetAudience}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 font-semibold block text-[10px] uppercase">Induction Tasks</span>
+                            <span className="text-slate-800 font-bold">{selectedTpl.taskCount || selectedTpl.tasks?.length || 6} Tasks Queued</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {/* STEP 3: VERIFY (SCHEDULE & TEAM) */}
+              {startOnboardingStep === 3 && (
+                <div className="space-y-4 animate-fade-in">
+                  <div>
+                    <label htmlFor="start-date-input" className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Resumption / Start Date <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="start-date-input"
+                      name="startDate"
+                      type="date"
+                      value={startDateInput}
+                      onChange={(e) => setStartDateInput(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] bg-white"
+                      required
+                    />
+                  </div>
+
+                  {/* Team Roster Grid */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Assigned Induction Team
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                      <div className="p-3 rounded-lg border border-slate-200 bg-white">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Unit Manager</span>
+                        <span className="font-bold text-slate-900 block mt-0.5">
+                          {((employeesList && employeesList.length > 0 ? employeesList : INITIAL_EMPLOYEES).find((e) => e.id === startEmployeeId))?.managerName || 'Assigned Lead'}
+                        </span>
+                      </div>
+                      <div className="p-3 rounded-lg border border-slate-200 bg-white">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">PCCM (HR) Lead</span>
+                        <span className="font-bold text-slate-900 block mt-0.5">Dr. Bukola Adeleke</span>
+                      </div>
+                      <div className="p-3 rounded-lg border border-slate-200 bg-white">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">ICT / Systems Lead</span>
+                        <span className="font-bold text-slate-900 block mt-0.5">Engr. Femi Olatunji</span>
+                      </div>
+                      <div className="p-3 rounded-lg border border-slate-200 bg-white">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Assigned Buddy</span>
+                        <span className="font-bold text-slate-900 block mt-0.5">Assigned Buddy</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Compliance Documentation Notice */}
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 flex items-start gap-2.5">
+                    <ShieldCheck className="w-4 h-4 text-[#083E34] shrink-0 mt-0.5" />
+                    <p className="text-[11px] text-slate-600 font-medium">
+                      Standard statutory compliance forms (Bio-Data, Emergency Contacts, NDA, Employee Handbook, SOP Manual) will be queued automatically upon launch.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 4: FINISH (REVIEW & LAUNCH) */}
+              {startOnboardingStep === 4 && (
+                <div className="space-y-4 animate-fade-in">
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
+                    <div className="flex items-center gap-2 text-emerald-900 font-black text-xs">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>Ready to Initiate Onboarding</span>
+                    </div>
+                    <p className="text-xs text-emerald-800 font-medium mt-1">
+                      Review the onboarding parameters below before launching the official 3-month induction schedule.
+                    </p>
+                  </div>
+
+                  {(() => {
+                    const emp = (employeesList && employeesList.length > 0 ? employeesList : INITIAL_EMPLOYEES).find((e) => e.id === startEmployeeId);
+                    const tpl = (checklistTemplates && checklistTemplates.length > 0 ? checklistTemplates : DEFAULT_CHECKLIST_TEMPLATES).find((t) => t.id === startChecklistId);
+                    return (
+                      <div className="border border-slate-200 rounded-xl bg-white p-4 space-y-3 text-xs">
+                        <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                          <span className="text-slate-500 font-semibold">Staff Member:</span>
+                          <span className="font-bold text-slate-900">{emp?.fullName || '—'} ({emp?.staffId})</span>
+                        </div>
+                        <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                          <span className="text-slate-500 font-semibold">Entity & Department:</span>
+                          <span className="font-bold text-slate-900">{emp?.entityName} &middot; {emp?.departmentName}</span>
+                        </div>
+                        <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                          <span className="text-slate-500 font-semibold">Induction Checklist:</span>
+                          <span className="font-bold text-slate-900">{tpl?.title} ({tpl?.duration})</span>
+                        </div>
+                        <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                          <span className="text-slate-500 font-semibold">Official Resumption Date:</span>
+                          <span className="font-bold text-slate-900">{startDateInput}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500 font-semibold">Initial Tasks Queued:</span>
+                          <span className="font-bold text-slate-900">{tpl?.taskCount || 6} Tasks</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Wizard Navigation Footer */}
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  if (startOnboardingStep > 1) {
+                    setStartOnboardingStep(startOnboardingStep - 1);
+                  } else {
+                    setIsStartOnboardingModalOpen(false);
+                  }
+                }}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition cursor-pointer flex items-center gap-1.5"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>{startOnboardingStep === 1 ? 'Cancel' : 'Back'}</span>
+              </button>
+
+              <div className="text-xs text-slate-500 font-bold">
+                Step <span className="text-black font-black">{startOnboardingStep}</span> of 4
               </div>
 
-              {/* Checklist Field */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label htmlFor="start-checklist-select" className="text-xs font-bold text-slate-700">
-                    Checklist <span className="text-red-500">*</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setIsAddChecklistModalOpen(true)}
-                    className="text-xs font-bold text-[#0284C7] hover:text-[#0369A1] flex items-center gap-1 cursor-pointer transition"
-                  >
-                    <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                    <span>Add Checklist</span>
-                  </button>
-                </div>
-                <div className="relative">
-                  <select
-                    id="start-checklist-select"
-                    name="checklist"
-                    value={startChecklistId}
-                    onChange={(e) => setStartChecklistId(e.target.value)}
-                    className="w-full appearance-none px-3.5 py-2.5 pr-10 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] bg-white cursor-pointer"
-                    required
-                  >
-                    <option value="">-- Select Checklist --</option>
-                    {(checklistTemplates && checklistTemplates.length > 0 ? checklistTemplates : DEFAULT_CHECKLIST_TEMPLATES).map((tpl) => (
-                      <option key={tpl.id} value={tpl.id}>
-                        {tpl.title} ({tpl.duration})
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Start Date Field */}
-              <div>
-                <label htmlFor="start-date-input" className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Start Date <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="start-date-input"
-                  name="startDate"
-                  type="date"
-                  value={startDateInput}
-                  onChange={(e) => setStartDateInput(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] bg-white"
-                  required
-                />
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-3 pt-3">
+              {startOnboardingStep < 4 ? (
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={() => {
+                    if (startOnboardingStep === 1) {
+                      if (!startEmployeeId) {
+                        showToast('Please select an employee first.');
+                        return;
+                      }
+                      setStartOnboardingStep(2);
+                    } else if (startOnboardingStep === 2) {
+                      if (!startChecklistId) {
+                        showToast('Please choose a checklist template.');
+                        return;
+                      }
+                      setStartOnboardingStep(3);
+                    } else if (startOnboardingStep === 3) {
+                      setStartOnboardingStep(4);
+                    }
+                  }}
+                  className="px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs flex items-center gap-2 shadow-xs cursor-pointer active:scale-95 transition"
+                >
+                  <span>Next Step</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSaveNewOnboarding}
                   className="px-6 py-2.5 rounded-md bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs flex items-center gap-2 shadow-xs cursor-pointer active:scale-95 transition"
                 >
                   <Check className="w-4 h-4 stroke-[2.5]" />
-                  <span>Save</span>
+                  <span>Launch Onboarding Journey</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setIsStartOnboardingModalOpen(false)}
-                  className="text-xs font-semibold text-slate-500 hover:text-slate-800 px-3 py-2 cursor-pointer transition"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+              )}
+            </div>
           </div>
         </div>
       )}

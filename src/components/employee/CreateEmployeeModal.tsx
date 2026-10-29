@@ -21,6 +21,7 @@ import {
 import { Employee, CitadelEntity, CitadelDepartment, EmployeeStatus, EmploymentType } from '../../types';
 import { employeeRepository, auditRepository } from '../../services';
 import { useAuth } from '../../context/AuthContext';
+import { ChevronStepper } from '../common/ChevronStepper';
 
 interface CreateEmployeeModalProps {
   isOpen: boolean;
@@ -257,24 +258,22 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
             Sectioned personnel onboarding wizard with automatic credential indexing.
           </p>
 
-          {/* Stepper Progress Bar */}
-          <div className="grid grid-cols-5 gap-1.5 mt-5">
-            {steps.map((s) => (
-              <div key={s.num} className="space-y-1">
-                <div
-                  className={`h-1.5 rounded-full transition ${
-                    s.num <= currentStep ? 'bg-[#C59B27]' : 'bg-slate-700'
-                  }`}
-                />
-                <span
-                  className={`text-[9px] block truncate font-medium ${
-                    s.num === currentStep ? 'text-amber-300 font-bold' : 'text-slate-400'
-                  }`}
-                >
-                  {s.num}. {s.title}
-                </span>
-              </div>
-            ))}
+          {/* Chevron Stepper Progress Bar */}
+          <div className="mt-4 pt-1">
+            <ChevronStepper
+              steps={[
+                { id: 1, title: 'Personal', subtitle: 'Identity & Contacts' },
+                { id: 2, title: 'Placement', subtitle: 'Entity & Role' },
+                { id: 3, title: 'Emergency', subtitle: 'Next of Kin' },
+                { id: 4, title: 'Credentials', subtitle: 'Qualifications' },
+                { id: 5, title: 'Finance', subtitle: 'Payroll & HMO' },
+              ]}
+              currentStep={currentStep}
+              onStepClick={(step) => {
+                if (step < currentStep) setCurrentStep(step);
+              }}
+              variant="numbered"
+            />
           </div>
         </div>
 
