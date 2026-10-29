@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Entity extends Model
 {
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = ['id', 'name', 'short_code', 'description', 'head_of_entity', 'is_active'];
@@ -26,7 +28,7 @@ class Entity extends Model
     {
         static::creating(function (self $entity) {
             if (! $entity->id) {
-                $entity->id = strtoupper($entity->short_code ?: (string) \Illuminate\Support\Str::uuid());
+                $entity->id = strtoupper($entity->short_code ?: (string) Str::uuid());
             }
         });
     }

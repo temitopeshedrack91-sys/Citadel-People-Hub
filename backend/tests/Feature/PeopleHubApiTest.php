@@ -6,6 +6,7 @@ use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Entity;
 use App\Models\HubDocument;
+use App\Models\LeaveCategory;
 use App\Models\LeaveRequest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -332,5 +333,29 @@ class PeopleHubApiTest extends TestCase
 
         $this->assertFalse($account->fresh()->is_active);
         $this->assertDatabaseCount('personal_access_tokens', 0);
+    }
+
+    public function test_user_can_view_leave_categories_and_balances(): void
+    {
+        $category = LeaveCategory::create([
+            'name' => 'Annual Leave',
+            'code' => 'ANNUAL',
+            'is_paid' => true,
+            'is_active' => true,
+        ]);
+
+        $category->policies()->create([
+            'name' => 'Standard Annual 2026',
+            'days_allowed' => 25,
+            'effective_year' => 2026,
+            'is_active' => true,
+        ]);
+
+        $user = User::factory()->create(['role' => 'EMPLOYEE']);
+
+        $this->actingAs($user)
+            ->getJson('/api/v1/leave/categories')
+            ->assertOk()
+            ->assertJsonPath('data.0.code', 'ANNUAL');
     }
 }

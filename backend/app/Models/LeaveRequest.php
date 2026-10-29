@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Schema;
 
 class LeaveRequest extends Model
 {
@@ -32,8 +33,8 @@ class LeaveRequest extends Model
     protected static function booted(): void
     {
         static::saving(function (self $record) {
-            $hasType = \Illuminate\Support\Facades\Schema::hasColumn('leave_requests', 'type');
-            $hasDays = \Illuminate\Support\Facades\Schema::hasColumn('leave_requests', 'days_requested');
+            $hasType = Schema::hasColumn('leave_requests', 'type');
+            $hasDays = Schema::hasColumn('leave_requests', 'days_requested');
 
             if ($hasType && $record->leave_type && ! $record->type) {
                 $record->type = $record->leave_type;

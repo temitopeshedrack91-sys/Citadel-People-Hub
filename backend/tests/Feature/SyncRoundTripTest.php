@@ -2,11 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\AuditLog;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Entity;
-use App\Models\LeaveRequest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -17,7 +15,9 @@ class SyncRoundTripTest extends TestCase
     use RefreshDatabase;
 
     private Entity $entity;
+
     private Department $department;
+
     private User $adminUser;
 
     protected function setUp(): void

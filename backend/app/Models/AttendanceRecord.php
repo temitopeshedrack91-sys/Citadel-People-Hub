@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Schema;
 
 class AttendanceRecord extends Model
 {
@@ -31,8 +32,8 @@ class AttendanceRecord extends Model
     protected static function booted(): void
     {
         static::saving(function (self $record) {
-            $hasClockIn = \Illuminate\Support\Facades\Schema::hasColumn('attendance_records', 'clock_in');
-            $hasClockOut = \Illuminate\Support\Facades\Schema::hasColumn('attendance_records', 'clock_out');
+            $hasClockIn = Schema::hasColumn('attendance_records', 'clock_in');
+            $hasClockOut = Schema::hasColumn('attendance_records', 'clock_out');
 
             if ($hasClockIn && $record->clock_in_time && ! $record->clock_in) {
                 $record->clock_in = $record->clock_in_time;

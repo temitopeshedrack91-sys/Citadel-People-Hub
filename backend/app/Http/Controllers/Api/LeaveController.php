@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
+use App\Models\EmployeeLeaveBalance;
+use App\Models\LeaveCategory;
 use App\Models\LeaveRequest as LeaveRecord;
 use App\Support\AuditLogger;
 use Illuminate\Http\JsonResponse;
@@ -166,6 +168,33 @@ class LeaveController extends Controller
         });
 
         return response()->json(['data' => $this->present($updated)]);
+    }
+
+    public function categories(): JsonResponse
+    {
+        $categories = LeaveCategory::query()
+            ->where('is_active', true)
+            ->with(['policies' => fn ($q) => $q->where('is_active', true)])
+            ->get();
+
+        return response()->json(['data' => $categories]);
+    }
+
+    public function balances(Request $request, ?string $employeeId = null): JsonResponse
+    {
+        $user = $request->user();
+        $targetEmployeeId = $employeeId;
+        if (! $targetEmployeeId && $user->role === 'EMPLOYEE') {
+            $emp = Employee::query()->where('staff_id', $user->staff_id)->first();
+            $targetEmployeeId = $emp?->id;
+        }
+
+        $query = EmployeeLeaveBalance::query()->with(['category', 'employee:id,staff_id,full_name']);
+        if ($targetEmployeeId) {
+            $query->where('employee_id', $targetEmployeeId);
+        }
+
+        return response()->json(['data' => $query->get()]);
     }
 
     private function ensureCanViewEmployee(Request $request, Employee $employee): void

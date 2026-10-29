@@ -12,6 +12,7 @@ class SystemNotification extends Model
     protected $table = 'notifications';
 
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
