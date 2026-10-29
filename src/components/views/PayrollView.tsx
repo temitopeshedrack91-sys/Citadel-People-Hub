@@ -399,8 +399,8 @@ export const PayrollView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-[#083E34] text-[#D4AF37] flex items-center justify-center shadow-md">
-              <Banknote className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-[#D4AF37] text-slate-950 flex items-center justify-center shadow-md border border-[#C59B27]">
+              <Banknote className="w-5 h-5 text-slate-950" />
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight text-slate-900">
@@ -420,9 +420,9 @@ export const PayrollView: React.FC = () => {
               setWizardStep(1);
               setIsPayRunModalOpen(true);
             }}
-            className="flex items-center gap-2 bg-[#083E34] hover:bg-[#062c25] text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-all active:scale-[0.98]"
+            className="flex items-center gap-2 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 px-4 py-2 rounded-xl text-xs font-bold shadow-xs border border-[#C59B27] transition-all active:scale-[0.98] cursor-pointer"
           >
-            <Plus className="w-4 h-4 text-[#D4AF37]" />
+            <Plus className="w-4 h-4 text-slate-950" />
             <span>Generate Pay Run</span>
           </button>
 
@@ -524,17 +524,17 @@ export const PayrollView: React.FC = () => {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key as TabKey)}
-                className={`py-3 px-3 sm:px-4 text-xs font-bold rounded-lg transition-colors whitespace-nowrap flex items-center gap-2 ${
+                className={`py-3 px-3 sm:px-4 text-xs font-bold rounded-lg transition-colors whitespace-nowrap flex items-center gap-2 cursor-pointer ${
                   isActive
-                    ? 'bg-[#083E34] text-white shadow-xs'
+                    ? 'bg-[#D4AF37] text-slate-950 shadow-xs border border-[#C59B27]'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
                 <span>{tab.label}</span>
                 {typeof tab.count === 'number' && (
                   <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                      isActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                    className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
+                      isActive ? 'bg-slate-950/15 text-slate-950' : 'bg-slate-200 text-slate-700'
                     }`}
                   >
                     {tab.count}
@@ -557,7 +557,7 @@ export const PayrollView: React.FC = () => {
                 placeholder="Search pay run number or title..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#083E34]/30"
+                className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30 focus:border-[#D4AF37]"
               />
             </div>
 
@@ -566,9 +566,9 @@ export const PayrollView: React.FC = () => {
                 setWizardStep(1);
                 setIsPayRunModalOpen(true);
               }}
-              className="flex items-center gap-1.5 bg-[#083E34] hover:bg-[#062c25] text-white px-3.5 py-2 rounded-xl text-xs font-semibold shadow-xs"
+              className="flex items-center gap-1.5 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold border border-[#C59B27] px-3.5 py-2 rounded-xl text-xs shadow-xs transition cursor-pointer active:scale-95"
             >
-              <Plus className="w-4 h-4 text-[#D4AF37]" />
+              <Plus className="w-4 h-4 text-slate-950" />
               <span>New Pay Run</span>
             </button>
           </div>
@@ -637,7 +637,7 @@ export const PayrollView: React.FC = () => {
                             {run.status === 'draft' && (
                               <button
                                 onClick={() => handleFinalizeRun(run.id)}
-                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold shadow-xs transition-colors"
+                                className="px-2.5 py-1 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 border border-[#C59B27] rounded-lg text-[11px] font-bold shadow-xs transition-colors cursor-pointer"
                               >
                                 Finalize & Approve
                               </button>
@@ -673,9 +673,9 @@ export const PayrollView: React.FC = () => {
             </p>
             <button
               onClick={() => setIsTemplateModalOpen(true)}
-              className="flex items-center gap-1.5 bg-[#083E34] hover:bg-[#062c25] text-white px-3.5 py-2 rounded-xl text-xs font-semibold shadow-xs"
+              className="flex items-center gap-1.5 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold border border-[#C59B27] px-3.5 py-2 rounded-xl text-xs shadow-xs transition cursor-pointer active:scale-95"
             >
-              <Plus className="w-4 h-4 text-[#D4AF37]" />
+              <Plus className="w-4 h-4 text-slate-950" />
               <span>Create Structure</span>
             </button>
           </div>
@@ -748,7 +748,7 @@ export const PayrollView: React.FC = () => {
                       });
                       setIsAssignmentModalOpen(true);
                     }}
-                    className="text-xs font-bold text-[#083E34] hover:underline"
+                    className="text-xs font-bold text-[#D4AF37] hover:underline cursor-pointer"
                   >
                     Assign Staff →
                   </button>
@@ -768,9 +768,9 @@ export const PayrollView: React.FC = () => {
             </p>
             <button
               onClick={() => setIsAssignmentModalOpen(true)}
-              className="flex items-center gap-1.5 bg-[#083E34] hover:bg-[#062c25] text-white px-3.5 py-2 rounded-xl text-xs font-semibold shadow-xs"
+              className="flex items-center gap-1.5 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold border border-[#C59B27] px-3.5 py-2 rounded-xl text-xs shadow-xs transition cursor-pointer active:scale-95"
             >
-              <Plus className="w-4 h-4 text-[#D4AF37]" />
+              <Plus className="w-4 h-4 text-slate-950" />
               <span>Assign Structure</span>
             </button>
           </div>
@@ -910,7 +910,7 @@ export const PayrollView: React.FC = () => {
                         <td className="py-3.5 px-4 text-right">
                           <button
                             onClick={() => setSelectedPayslip(item)}
-                            className="px-2.5 py-1 bg-slate-100 hover:bg-[#083E34] hover:text-white text-slate-700 font-bold rounded-lg text-[11px] transition-colors"
+                            className="px-2.5 py-1 bg-slate-100 hover:bg-[#D4AF37] hover:text-slate-950 text-slate-700 font-bold rounded-lg text-[11px] transition-colors cursor-pointer"
                           >
                             Inspect Slip
                           </button>
@@ -933,9 +933,9 @@ export const PayrollView: React.FC = () => {
             </p>
             <button
               onClick={() => setIsLoanModalOpen(true)}
-              className="flex items-center gap-1.5 bg-[#083E34] hover:bg-[#062c25] text-white px-3.5 py-2 rounded-xl text-xs font-semibold shadow-xs"
+              className="flex items-center gap-1.5 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold border border-[#C59B27] px-3.5 py-2 rounded-xl text-xs shadow-xs transition cursor-pointer active:scale-95"
             >
-              <Plus className="w-4 h-4 text-[#D4AF37]" />
+              <Plus className="w-4 h-4 text-slate-950" />
               <span>Issue Staff Loan</span>
             </button>
           </div>
@@ -1004,7 +1004,7 @@ export const PayrollView: React.FC = () => {
                         {loan.status === 'pending' && (
                           <button
                             onClick={() => handleApproveLoan(loan.id)}
-                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold shadow-xs transition-colors"
+                            className="px-2.5 py-1 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 border border-[#C59B27] rounded-lg text-[11px] font-bold shadow-xs transition-colors cursor-pointer"
                           >
                             Approve
                           </button>
@@ -1244,8 +1244,8 @@ export const PayrollView: React.FC = () => {
             {/* Step 4: Finish & Confirm */}
             {wizardStep === 4 && (
               <div className="space-y-4 animate-fade-in text-xs text-center py-4">
-                <div className="w-12 h-12 rounded-full bg-emerald-100 text-[#083E34] flex items-center justify-center mx-auto mb-2">
-                  <Check className="w-6 h-6 stroke-[3]" />
+                <div className="w-12 h-12 rounded-full bg-[#D4AF37]/20 text-slate-950 flex items-center justify-center mx-auto mb-2 border border-[#D4AF37]">
+                  <Check className="w-6 h-6 stroke-[3] text-slate-950" />
                 </div>
                 <h3 className="text-base font-bold text-slate-900">Ready to Generate Draft Pay Run</h3>
                 <p className="text-slate-500 max-w-sm mx-auto leading-relaxed">
@@ -1263,7 +1263,7 @@ export const PayrollView: React.FC = () => {
                   if (wizardStep > 1) setWizardStep(wizardStep - 1);
                   else setIsPayRunModalOpen(false);
                 }}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors"
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
               >
                 {wizardStep > 1 ? '← Back' : 'Cancel'}
               </button>
@@ -1272,18 +1272,18 @@ export const PayrollView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setWizardStep(wizardStep + 1)}
-                  className="px-5 py-2 bg-[#083E34] hover:bg-[#062c25] text-white font-bold rounded-xl text-xs flex items-center gap-1 shadow-sm transition-all"
+                  className="px-5 py-2 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold border border-[#C59B27] rounded-xl text-xs flex items-center gap-1 shadow-xs transition-all cursor-pointer active:scale-95"
                 >
                   <span>Next Step</span>
-                  <ChevronRight className="w-4 h-4 text-[#D4AF37]" />
+                  <ChevronRight className="w-4 h-4 text-slate-950" />
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={handleGeneratePayRun}
-                  className="px-6 py-2.5 bg-[#083E34] hover:bg-[#062c25] text-white font-black rounded-xl text-xs shadow-md transition-all flex items-center gap-2"
+                  className="px-6 py-2.5 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-black border border-[#C59B27] rounded-xl text-xs shadow-sm transition-all flex items-center gap-2 cursor-pointer active:scale-95"
                 >
-                  <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />
+                  <CheckCircle2 className="w-4 h-4 text-slate-950" />
                   <span>Generate Pay Run Draft</span>
                 </button>
               )}
@@ -1355,7 +1355,7 @@ export const PayrollView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#083E34] hover:bg-[#062c25] text-white font-bold rounded-xl shadow-xs"
+                  className="px-5 py-2 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold border border-[#C59B27] rounded-xl shadow-xs cursor-pointer active:scale-95 transition"
                 >
                   Save Structure
                 </button>
@@ -1462,7 +1462,7 @@ export const PayrollView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#083E34] hover:bg-[#062c25] text-white font-bold rounded-xl shadow-xs"
+                  className="px-5 py-2 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold border border-[#C59B27] rounded-xl shadow-xs cursor-pointer active:scale-95 transition"
                 >
                   Confirm Assignment
                 </button>
@@ -1575,7 +1575,7 @@ export const PayrollView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#083E34] hover:bg-[#062c25] text-white font-bold rounded-xl shadow-xs"
+                  className="px-5 py-2 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold border border-[#C59B27] rounded-xl shadow-xs cursor-pointer active:scale-95 transition"
                 >
                   Submit Application
                 </button>
@@ -1718,9 +1718,9 @@ export const PayrollView: React.FC = () => {
               <div className="flex justify-end pt-2 border-t border-slate-100">
                 <button
                   onClick={() => handleMarkPayslipPaid(selectedPayslip)}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-xs"
+                  className="px-4 py-2 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold border border-[#C59B27] rounded-xl text-xs flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95 transition"
                 >
-                  <CheckCircle2 className="w-4 h-4" />
+                  <CheckCircle2 className="w-4 h-4 text-slate-950" />
                   <span>Mark as Disbursed & Paid</span>
                 </button>
               </div>

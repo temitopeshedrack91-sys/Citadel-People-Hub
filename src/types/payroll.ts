@@ -225,3 +225,4 @@ export interface PayrollOverviewStats {
   totalOutstandingLoanBalance: number;
   providentFundReservePool: number;
 }
+

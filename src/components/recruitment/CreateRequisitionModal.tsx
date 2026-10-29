@@ -619,7 +619,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
               <button
                 type="button"
                 onClick={handleNext}
-                className="px-4 py-2 rounded-xl bg-[#083E34] text-white hover:bg-[#062d26] text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer active:scale-95"
+                className="px-4 py-2 rounded-xl bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] border border-[#C59B27] text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer active:scale-95"
               >
                 <span>Continue</span>
                 <ArrowRight className="w-3.5 h-3.5" />

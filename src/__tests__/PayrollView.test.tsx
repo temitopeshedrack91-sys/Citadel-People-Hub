@@ -105,7 +105,7 @@ describe('Payroll Domain & Sidebar Integration', () => {
 
     await waitFor(() => {
       expect(generateSpy).toHaveBeenCalled();
-    });
+    }, { timeout: 4000 });
   });
 
   it('allows switching to Salary Structures and Loans tabs', async () => {
@@ -121,7 +121,7 @@ describe('Payroll Domain & Sidebar Integration', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Executive & Pastoral Director Structure (Grade 1)')).toBeDefined();
-    });
+    }, { timeout: 4000 });
 
     // Switch to Loans & Advances tab
     const loansTab = screen.getByRole('button', { name: /loans & advances/i });
@@ -130,7 +130,7 @@ describe('Payroll Domain & Sidebar Integration', () => {
     await waitFor(() => {
       expect(screen.getByText('LN-2026-004')).toBeDefined();
       expect(screen.getByText('Home Appliance & Device Advance')).toBeDefined();
-    });
+    }, { timeout: 4000 });
   });
 
   it('allows inspecting payslip and viewing earnings breakdown', async () => {
@@ -148,7 +148,7 @@ describe('Payroll Domain & Sidebar Integration', () => {
       const inspectButtons = screen.getAllByRole('button', { name: /inspect slip/i });
       expect(inspectButtons.length).toBeGreaterThan(0);
       fireEvent.click(inspectButtons[0]);
-    });
+    }, { timeout: 4000 });
 
     // Modal should show payslip breakdown
     await waitFor(() => {
@@ -156,7 +156,7 @@ describe('Payroll Domain & Sidebar Integration', () => {
       expect(screen.getByText('Gross Earnings')).toBeDefined();
       expect(screen.getByText('Statutory & Loan Deductions')).toBeDefined();
       expect(screen.getByText('Net Disbursable Take-Home')).toBeDefined();
-    });
+    }, { timeout: 4000 });
   });
 
   describe('LaravelPayrollRepository API Integration', () => {

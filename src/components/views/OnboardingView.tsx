@@ -2392,7 +2392,7 @@ export const OnboardingView: React.FC = () => {
                       setStartOnboardingStep(4);
                     }
                   }}
-                  className="px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs flex items-center gap-2 shadow-xs cursor-pointer active:scale-95 transition"
+                  className="px-5 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 border border-[#C59B27] font-bold text-xs flex items-center gap-2 shadow-xs cursor-pointer active:scale-95 transition"
                 >
                   <span>Next Step</span>
                   <ArrowRight className="w-4 h-4" />
@@ -2401,7 +2401,7 @@ export const OnboardingView: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleSaveNewOnboarding}
-                  className="px-6 py-2.5 rounded-md bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs flex items-center gap-2 shadow-xs cursor-pointer active:scale-95 transition"
+                  className="px-6 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 border border-[#C59B27] font-bold text-xs flex items-center gap-2 shadow-xs cursor-pointer active:scale-95 transition"
                 >
                   <Check className="w-4 h-4 stroke-[2.5]" />
                   <span>Launch Onboarding Journey</span>

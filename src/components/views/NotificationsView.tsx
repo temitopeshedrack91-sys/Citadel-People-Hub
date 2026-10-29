@@ -76,7 +76,7 @@ export const NotificationsView: React.FC = () => {
             onClick={() => setFilter(tab)}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
               filter === tab
-                ? 'bg-[#083E34] text-white shadow-xs'
+                ? 'bg-[#D4AF37] text-slate-950 font-bold border border-[#C59B27] shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
