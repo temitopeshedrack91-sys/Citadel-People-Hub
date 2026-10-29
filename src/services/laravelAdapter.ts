@@ -7,6 +7,7 @@ import {
   INotificationRepository,
   IOrganizationRepository,
   ITalentRepository,
+  IPayrollRepository,
 } from './interfaces';
 import {
   AttendanceRecord,
@@ -22,6 +23,13 @@ import {
   RecruitmentRequisition,
   SystemNotification,
   WorkflowStatus,
+  SalaryTemplate,
+  EmployeeSalaryAssignment,
+  PayrollRun,
+  PayrollItem,
+  EmployeeLoan,
+  EmployeeDeduction,
+  EmployeeProvidentFund,
 } from '../types';
 import { LaravelApiError, requestLaravel, requestLaravelData } from './laravelClient';
 import {
@@ -30,6 +38,14 @@ import {
   DEFAULT_CHECKLIST_TEMPLATES,
   INITIAL_RECRUITMENT,
 } from '../data/mockData';
+import {
+  INITIAL_SALARY_TEMPLATES,
+  INITIAL_PAYROLL_ASSIGNMENTS,
+  INITIAL_PAYROLL_RUNS,
+  INITIAL_EMPLOYEE_LOANS,
+  INITIAL_EMPLOYEE_DEDUCTIONS,
+  INITIAL_PROVIDENT_FUNDS,
+} from '../data/mockPayrollData';
 
 export class LaravelEmployeeRepository implements IEmployeeRepository {
   async getAll(filter?: { entityId?: string; departmentId?: string; search?: string }): Promise<Employee[]> {
@@ -316,3 +332,340 @@ export class LaravelTalentRepository implements ITalentRepository {
     }
   }
 }
+
+export class LaravelPayrollRepository implements IPayrollRepository {
+  async getSalaryTemplates(): Promise<SalaryTemplate[]> {
+    try {
+      const res = await requestLaravelData<SalaryTemplate[]>('/payroll/templates');
+      return res && res.length > 0 ? res : INITIAL_SALARY_TEMPLATES;
+    } catch {
+      return INITIAL_SALARY_TEMPLATES;
+    }
+  }
+
+  async createSalaryTemplate(template: Omit<SalaryTemplate, 'id' | 'created_at' | 'updated_at'>): Promise<SalaryTemplate> {
+    try {
+      return await requestLaravelData<SalaryTemplate>('/payroll/templates', {
+        method: 'POST',
+        body: JSON.stringify(template),
+      });
+    } catch {
+      const newTemplate: SalaryTemplate = {
+        ...template,
+        id: `st-${Date.now()}`,
+        created_at: new Date().toISOString(),
+      };
+      INITIAL_SALARY_TEMPLATES.unshift(newTemplate);
+      return newTemplate;
+    }
+  }
+
+  async getAssignments(): Promise<EmployeeSalaryAssignment[]> {
+    try {
+      const res = await requestLaravelData<EmployeeSalaryAssignment[]>('/payroll/assignments');
+      return res && res.length > 0 ? res : INITIAL_PAYROLL_ASSIGNMENTS;
+    } catch {
+      return INITIAL_PAYROLL_ASSIGNMENTS;
+    }
+  }
+
+  async assignSalaryTemplate(assignment: {
+    employee_id: string;
+    salary_template_id: string;
+    effective_date: string;
+    override_basic_salary?: number | null;
+    custom_allowances?: any[];
+    custom_deductions?: any[];
+    notes?: string;
+  }): Promise<EmployeeSalaryAssignment> {
+    try {
+      return await requestLaravelData<EmployeeSalaryAssignment>('/payroll/assignments', {
+        method: 'POST',
+        body: JSON.stringify(assignment),
+      });
+    } catch {
+      const matchedTemplate = INITIAL_SALARY_TEMPLATES.find((t) => t.id === assignment.salary_template_id);
+      const matchedEmployee = INITIAL_EMPLOYEES.find((e) => e.id === assignment.employee_id);
+      const newAssignment: EmployeeSalaryAssignment = {
+        id: `assign-${Date.now()}`,
+        employee_id: assignment.employee_id,
+        salary_template_id: assignment.salary_template_id,
+        salary_template: matchedTemplate,
+        employee: matchedEmployee
+          ? {
+              id: matchedEmployee.id,
+              name: `${matchedEmployee.firstName} ${matchedEmployee.lastName}`,
+              staff_id: matchedEmployee.staffId,
+              department_name: matchedEmployee.departmentName,
+              job_title: matchedEmployee.jobTitle,
+            }
+          : undefined,
+        effective_date: assignment.effective_date,
+        override_basic_salary: assignment.override_basic_salary,
+        custom_allowances: assignment.custom_allowances,
+        custom_deductions: assignment.custom_deductions,
+        is_active: true,
+        notes: assignment.notes,
+        created_at: new Date().toISOString(),
+      };
+      INITIAL_PAYROLL_ASSIGNMENTS.unshift(newAssignment);
+      return newAssignment;
+    }
+  }
+
+  async getPayrollRuns(): Promise<PayrollRun[]> {
+    try {
+      const res = await requestLaravelData<PayrollRun[]>('/payroll/runs');
+      return res && res.length > 0 ? res : INITIAL_PAYROLL_RUNS;
+    } catch {
+      return INITIAL_PAYROLL_RUNS;
+    }
+  }
+
+  async getPayrollRun(id: string): Promise<PayrollRun> {
+    try {
+      return await requestLaravelData<PayrollRun>(`/payroll/runs/${encodeURIComponent(id)}`);
+    } catch {
+      const match = INITIAL_PAYROLL_RUNS.find((r) => r.id === id);
+      if (match) return match;
+      throw new Error(`Payroll run ${id} not found.`);
+    }
+  }
+
+  async generatePayrollRun(data: {
+    title?: string;
+    period_start: string;
+    period_end: string;
+    pay_date?: string;
+    notes?: string;
+  }): Promise<PayrollRun> {
+    try {
+      return await requestLaravelData<PayrollRun>('/payroll/runs', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    } catch {
+      const newRun: PayrollRun = {
+        id: `run-${Date.now()}`,
+        run_number: `PR-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${Math.floor(100 + Math.random() * 900)}`,
+        title: data.title || `Payroll Run for ${data.period_start} to ${data.period_end}`,
+        period_start: data.period_start,
+        period_end: data.period_end,
+        pay_date: data.pay_date || new Date().toISOString().split('T')[0],
+        status: 'draft',
+        currency: 'NGN',
+        total_basic: 1690000,
+        total_allowance: 975000,
+        total_gross: 2665000,
+        total_deduction: 423000,
+        total_net: 2242000,
+        notes: data.notes,
+        created_at: new Date().toISOString(),
+      };
+      INITIAL_PAYROLL_RUNS.unshift(newRun);
+      return newRun;
+    }
+  }
+
+  async finalizePayrollRun(id: string): Promise<PayrollRun> {
+    try {
+      return await requestLaravelData<PayrollRun>(`/payroll/runs/${encodeURIComponent(id)}/finalize`, {
+        method: 'POST',
+      });
+    } catch {
+      const match = INITIAL_PAYROLL_RUNS.find((r) => r.id === id);
+      if (match) {
+        match.status = 'approved';
+        return match;
+      }
+      throw new Error(`Payroll run ${id} not found.`);
+    }
+  }
+
+  async getPayslip(id: string): Promise<PayrollItem> {
+    try {
+      return await requestLaravelData<PayrollItem>(`/payroll/payslips/${encodeURIComponent(id)}`);
+    } catch {
+      const allItems = INITIAL_PAYROLL_RUNS.flatMap((r) => r.items || []);
+      const item = allItems.find((i) => i.id === id);
+      if (item) return item;
+      throw new Error(`Payslip ${id} not found.`);
+    }
+  }
+
+  async markPayslipPaid(id: string, paymentMethod?: string): Promise<PayrollItem> {
+    try {
+      return await requestLaravelData<PayrollItem>(`/payroll/payslips/${encodeURIComponent(id)}/paid`, {
+        method: 'PATCH',
+        body: JSON.stringify({ payment_method: paymentMethod || 'Direct Bank Transfer' }),
+      });
+    } catch {
+      const allItems = INITIAL_PAYROLL_RUNS.flatMap((r) => r.items || []);
+      const item = allItems.find((i) => i.id === id);
+      if (item) {
+        item.payment_status = 'paid';
+        item.payment_method = paymentMethod || 'Direct Bank Transfer';
+        return item;
+      }
+      throw new Error(`Payslip ${id} not found.`);
+    }
+  }
+
+  async getLoans(filter?: { employee_id?: string; status?: string }): Promise<EmployeeLoan[]> {
+    try {
+      const params = new URLSearchParams();
+      if (filter?.employee_id) params.set('employee_id', filter.employee_id);
+      if (filter?.status) params.set('status', filter.status);
+      const res = await requestLaravelData<EmployeeLoan[]>(`/payroll/loans${params.size ? `?${params}` : ''}`);
+      return res && res.length > 0 ? res : INITIAL_EMPLOYEE_LOANS;
+    } catch {
+      return INITIAL_EMPLOYEE_LOANS;
+    }
+  }
+
+  async createLoan(loan: {
+    employee_id: string;
+    loan_type: string;
+    principal_amount: number;
+    interest_rate?: number;
+    monthly_installment: number;
+    total_installments: number;
+    disbursed_at?: string;
+    notes?: string;
+  }): Promise<EmployeeLoan> {
+    try {
+      return await requestLaravelData<EmployeeLoan>('/payroll/loans', {
+        method: 'POST',
+        body: JSON.stringify(loan),
+      });
+    } catch {
+      const matchedEmployee = INITIAL_EMPLOYEES.find((e) => e.id === loan.employee_id);
+      const totalPayable = loan.principal_amount * (1 + (loan.interest_rate || 0) / 100);
+      const newLoan: EmployeeLoan = {
+        id: `loan-${Date.now()}`,
+        employee_id: loan.employee_id,
+        employee: matchedEmployee
+          ? {
+              id: matchedEmployee.id,
+              name: `${matchedEmployee.firstName} ${matchedEmployee.lastName}`,
+              staff_id: matchedEmployee.staffId,
+              department_name: matchedEmployee.departmentName,
+            }
+          : undefined,
+        loan_number: `LN-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+        loan_type: loan.loan_type,
+        principal_amount: loan.principal_amount,
+        interest_rate: loan.interest_rate || 0,
+        total_payable: totalPayable,
+        monthly_installment: loan.monthly_installment,
+        total_installments: loan.total_installments,
+        paid_installments: 0,
+        remaining_balance: totalPayable,
+        status: 'pending',
+        disbursed_at: loan.disbursed_at,
+        notes: loan.notes,
+        created_at: new Date().toISOString(),
+      };
+      INITIAL_EMPLOYEE_LOANS.unshift(newLoan);
+      return newLoan;
+    }
+  }
+
+  async approveLoan(id: string): Promise<EmployeeLoan> {
+    try {
+      return await requestLaravelData<EmployeeLoan>(`/payroll/loans/${encodeURIComponent(id)}/approve`, {
+        method: 'PATCH',
+      });
+    } catch {
+      const loan = INITIAL_EMPLOYEE_LOANS.find((l) => l.id === id);
+      if (loan) {
+        loan.status = 'active';
+        return loan;
+      }
+      throw new Error(`Loan ${id} not found.`);
+    }
+  }
+
+  async getDeductions(filter?: { employee_id?: string }): Promise<EmployeeDeduction[]> {
+    try {
+      const params = new URLSearchParams();
+      if (filter?.employee_id) params.set('employee_id', filter.employee_id);
+      const res = await requestLaravelData<EmployeeDeduction[]>(`/payroll/deductions${params.size ? `?${params}` : ''}`);
+      return res && res.length > 0 ? res : INITIAL_EMPLOYEE_DEDUCTIONS;
+    } catch {
+      return INITIAL_EMPLOYEE_DEDUCTIONS;
+    }
+  }
+
+  async createDeduction(deduction: {
+    employee_id: string;
+    title: string;
+    deduction_type: string;
+    amount: number;
+    is_percentage?: boolean;
+    start_date: string;
+    end_date?: string | null;
+    is_recurring?: boolean;
+  }): Promise<EmployeeDeduction> {
+    try {
+      return await requestLaravelData<EmployeeDeduction>('/payroll/deductions', {
+        method: 'POST',
+        body: JSON.stringify(deduction),
+      });
+    } catch {
+      const newDed: EmployeeDeduction = {
+        id: `ded-${Date.now()}`,
+        employee_id: deduction.employee_id,
+        title: deduction.title,
+        deduction_type: deduction.deduction_type,
+        amount: deduction.amount,
+        is_percentage: !!deduction.is_percentage,
+        start_date: deduction.start_date,
+        end_date: deduction.end_date,
+        is_recurring: deduction.is_recurring ?? true,
+        is_active: true,
+        created_at: new Date().toISOString(),
+      };
+      INITIAL_EMPLOYEE_DEDUCTIONS.unshift(newDed);
+      return newDed;
+    }
+  }
+
+  async getProvidentFunds(): Promise<EmployeeProvidentFund[]> {
+    try {
+      const res = await requestLaravelData<EmployeeProvidentFund[]>('/payroll/provident-funds');
+      return res && res.length > 0 ? res : INITIAL_PROVIDENT_FUNDS;
+    } catch {
+      return INITIAL_PROVIDENT_FUNDS;
+    }
+  }
+
+  async createProvidentFund(data: {
+    employee_id: string;
+    employee_rate?: number;
+    employer_rate?: number;
+    status?: 'active' | 'inactive';
+  }): Promise<EmployeeProvidentFund> {
+    try {
+      return await requestLaravelData<EmployeeProvidentFund>('/payroll/provident-funds', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    } catch {
+      const newPf: EmployeeProvidentFund = {
+        id: `pf-${Date.now()}`,
+        employee_id: data.employee_id,
+        employee_rate: data.employee_rate ?? 8.0,
+        employer_rate: data.employer_rate ?? 10.0,
+        total_employee_contribution: 0,
+        total_employer_contribution: 0,
+        current_balance: 0,
+        status: data.status || 'active',
+        created_at: new Date().toISOString(),
+      };
+      INITIAL_PROVIDENT_FUNDS.unshift(newPf);
+      return newPf;
+    }
+  }
+}
+

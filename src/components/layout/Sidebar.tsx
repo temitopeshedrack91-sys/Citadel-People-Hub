@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Users,
   FolderTree,
+  Banknote,
   CalendarDays,
   Clock,
   Briefcase,
@@ -39,6 +40,7 @@ export type NavModule =
   | 'leave'
   | 'attendance'
   | 'projects'
+  | 'payroll'
   | 'calendar'
   | 'team-notes'
   | 'recruitment'
@@ -118,6 +120,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           label: 'Projects',
           icon: FolderTree,
           visible: canAccessModule(currentUser || currentRole, 'projects'),
+        },
+        {
+          id: 'payroll' as NavModule,
+          label: 'Payroll',
+          icon: Banknote,
+          visible: canAccessModule(currentUser || currentRole, 'payroll'),
         },
       ],
     },

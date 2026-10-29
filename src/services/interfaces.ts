@@ -22,6 +22,13 @@ import {
   OnboardingTask,
   OnboardingChecklistTemplate,
   RecruitmentRequisition,
+  SalaryTemplate,
+  EmployeeSalaryAssignment,
+  PayrollRun,
+  PayrollItem,
+  EmployeeLoan,
+  EmployeeDeduction,
+  EmployeeProvidentFund,
 } from '../types';
 
 export interface IEmployeeRepository {
@@ -96,3 +103,61 @@ export interface ITalentRepository {
   getChecklistTemplates?(): Promise<OnboardingChecklistTemplate[]>;
   createChecklistTemplate?(template: OnboardingChecklistTemplate): Promise<OnboardingChecklistTemplate>;
 }
+
+export interface IPayrollRepository {
+  getSalaryTemplates(): Promise<SalaryTemplate[]>;
+  createSalaryTemplate(template: Omit<SalaryTemplate, 'id' | 'created_at' | 'updated_at'>): Promise<SalaryTemplate>;
+  getAssignments(): Promise<EmployeeSalaryAssignment[]>;
+  assignSalaryTemplate(assignment: {
+    employee_id: string;
+    salary_template_id: string;
+    effective_date: string;
+    override_basic_salary?: number | null;
+    custom_allowances?: any[];
+    custom_deductions?: any[];
+    notes?: string;
+  }): Promise<EmployeeSalaryAssignment>;
+  getPayrollRuns(): Promise<PayrollRun[]>;
+  getPayrollRun(id: string): Promise<PayrollRun>;
+  generatePayrollRun(data: {
+    title?: string;
+    period_start: string;
+    period_end: string;
+    pay_date?: string;
+    notes?: string;
+  }): Promise<PayrollRun>;
+  finalizePayrollRun(id: string): Promise<PayrollRun>;
+  getPayslip(id: string): Promise<PayrollItem>;
+  markPayslipPaid(id: string, paymentMethod?: string): Promise<PayrollItem>;
+  getLoans(filter?: { employee_id?: string; status?: string }): Promise<EmployeeLoan[]>;
+  createLoan(loan: {
+    employee_id: string;
+    loan_type: string;
+    principal_amount: number;
+    interest_rate?: number;
+    monthly_installment: number;
+    total_installments: number;
+    disbursed_at?: string;
+    notes?: string;
+  }): Promise<EmployeeLoan>;
+  approveLoan(id: string): Promise<EmployeeLoan>;
+  getDeductions(filter?: { employee_id?: string }): Promise<EmployeeDeduction[]>;
+  createDeduction(deduction: {
+    employee_id: string;
+    title: string;
+    deduction_type: string;
+    amount: number;
+    is_percentage?: boolean;
+    start_date: string;
+    end_date?: string | null;
+    is_recurring?: boolean;
+  }): Promise<EmployeeDeduction>;
+  getProvidentFunds(): Promise<EmployeeProvidentFund[]>;
+  createProvidentFund(data: {
+    employee_id: string;
+    employee_rate?: number;
+    employer_rate?: number;
+    status?: 'active' | 'inactive';
+  }): Promise<EmployeeProvidentFund>;
+}
+

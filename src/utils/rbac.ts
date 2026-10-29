@@ -34,7 +34,9 @@ export type PermissionAction =
   | 'create_task'
   | 'edit_task'
   | 'delete_task'
-  | 'clock_in_out';
+  | 'clock_in_out'
+  | 'manage_payroll'
+  | 'view_payroll';
 
 /**
  * Normalizes any role string (including legacy and alias roles) into canonical roles:
@@ -90,6 +92,7 @@ export const ROLE_MODULE_PERMISSIONS: Record<CanonicalRole, NavModule[]> = {
     'leave',
     'attendance',
     'projects',
+    'payroll',
     'calendar',
     'team-notes',
     'recruitment',
@@ -113,6 +116,7 @@ export const ROLE_MODULE_PERMISSIONS: Record<CanonicalRole, NavModule[]> = {
     'leave',
     'attendance',
     'projects',
+    'payroll',
     'calendar',
     'team-notes',
     'recruitment',
@@ -131,6 +135,7 @@ export const ROLE_MODULE_PERMISSIONS: Record<CanonicalRole, NavModule[]> = {
     'attendance',
     'leave',
     'projects',
+    'payroll',
     'calendar',
     'team-notes',
     'directory',
@@ -147,6 +152,7 @@ export const ROLE_MODULE_PERMISSIONS: Record<CanonicalRole, NavModule[]> = {
     'team-notes',
     'documents',
     'reports',
+    'payroll',
     'notifications',
     'ai-assistant',
   ],
@@ -252,6 +258,8 @@ export function getRolePermissions(role?: string | null): RolePermissions {
         canConfigureIntegrations: true,
         canExportReports: true,
         canManageSettings: true,
+        canManagePayroll: true,
+        canViewPayroll: true,
         isReadOnly: false,
       };
 
@@ -270,6 +278,8 @@ export function getRolePermissions(role?: string | null): RolePermissions {
         canConfigureIntegrations: false, // System-level
         canExportReports: true,
         canManageSettings: false, // System-level
+        canManagePayroll: true,
+        canViewPayroll: true,
         isReadOnly: false,
       };
 
@@ -288,6 +298,8 @@ export function getRolePermissions(role?: string | null): RolePermissions {
         canConfigureIntegrations: false,
         canExportReports: false,
         canManageSettings: false,
+        canManagePayroll: false,
+        canViewPayroll: true, // Self-service payslips
         isReadOnly: false, // Can clock-in, apply leave, manage personal tasks
       };
 
@@ -306,6 +318,8 @@ export function getRolePermissions(role?: string | null): RolePermissions {
         canConfigureIntegrations: false,
         canExportReports: true,
         canManageSettings: false,
+        canManagePayroll: false,
+        canViewPayroll: true,
         isReadOnly: true,
       };
 
@@ -396,6 +410,7 @@ export function canPerformAction(
         'manage_performance',
         'manage_documents',
         'export_reports',
+        'manage_payroll',
       ].includes(action)
     ) {
       return {

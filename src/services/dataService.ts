@@ -14,6 +14,7 @@ import {
   LaravelNotificationRepository,
   LaravelOrganizationRepository,
   LaravelTalentRepository,
+  LaravelPayrollRepository,
 } from './laravelAdapter';
 import { isLaravelApiConfigured } from './laravelClient';
 import {
@@ -25,6 +26,7 @@ import {
   SupabaseNotificationRepository,
   SupabaseOrganizationRepository,
   SupabaseTalentRepository,
+  SupabasePayrollRepository,
 } from './supabaseAdapter';
 
 const useLaravelApi = isLaravelApiConfigured();
@@ -37,3 +39,5 @@ export const auditRepository = useLaravelApi ? new LaravelAuditRepository() : ne
 export const documentRepository = useLaravelApi ? new LaravelDocumentRepository() : new SupabaseDocumentRepository();
 export const notificationRepository = useLaravelApi ? new LaravelNotificationRepository() : new SupabaseNotificationRepository();
 export const talentRepository = useLaravelApi ? new LaravelTalentRepository() : new SupabaseTalentRepository();
+export const payrollRepository = useLaravelApi ? new LaravelPayrollRepository() : new SupabasePayrollRepository();
+

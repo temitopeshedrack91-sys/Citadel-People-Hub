@@ -45,5 +45,7 @@ export interface RolePermissions {
   canConfigureIntegrations: boolean;
   canExportReports: boolean;
   canManageSettings: boolean;
+  canManagePayroll?: boolean;
+  canViewPayroll?: boolean;
   isReadOnly: boolean;
 }

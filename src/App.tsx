@@ -35,13 +35,14 @@ import { OffboardingView } from './components/views/OffboardingView';
 import { AIAssistantView } from './components/views/AIAssistantView';
 import { ProjectsView } from './components/views/ProjectsView';
 import { TeamNotesView } from './components/views/TeamNotesView';
+import { PayrollView } from './components/views/PayrollView';
 import { LoginModal } from './components/auth/LoginModal';
 import { AuthPage } from './components/auth/AuthPage';
 import { AccessDeniedView } from './components/common/AccessDeniedView';
 import { checkRouteAccess } from './utils/rbac';
 
 const VALID_MODULES: NavModule[] = [
-  'dashboard', 'employees', 'directory', 'leave', 'attendance', 'projects',
+  'dashboard', 'employees', 'directory', 'leave', 'attendance', 'projects', 'payroll',
   'calendar', 'team-notes', 'recruitment', 'onboarding', 'offboarding',
   'performance', 'documents', 'reports', 'notifications', 'integrations',
   'ai-assistant', 'settings', 'audit-logs'
@@ -154,6 +155,8 @@ const MainAppLayout: React.FC = () => {
         return 'Settings';
       case 'projects':
         return 'Citadel People Hub';
+      case 'payroll':
+        return 'Payroll & Compensation';
       case 'team-notes':
         return 'Team Notes';
       case 'audit-logs':
@@ -239,6 +242,8 @@ const MainAppLayout: React.FC = () => {
         return <SettingsView />;
       case 'projects':
         return <ProjectsView />;
+      case 'payroll':
+        return <PayrollView />;
       case 'team-notes':
         return <TeamNotesView />;
       case 'audit-logs':

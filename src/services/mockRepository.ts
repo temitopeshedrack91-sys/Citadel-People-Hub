@@ -17,6 +17,7 @@ import {
   IDocumentRepository,
   INotificationRepository,
   ITalentRepository,
+  IPayrollRepository,
 } from './interfaces';
 import {
   Employee,
@@ -34,6 +35,13 @@ import {
   OnboardingTask,
   OnboardingChecklistTemplate,
   RecruitmentRequisition,
+  SalaryTemplate,
+  EmployeeSalaryAssignment,
+  PayrollRun,
+  PayrollItem,
+  EmployeeLoan,
+  EmployeeDeduction,
+  EmployeeProvidentFund,
 } from '../types';
 import {
   INITIAL_ENTITIES,
@@ -48,6 +56,14 @@ import {
   INITIAL_NOTIFICATIONS,
   INITIAL_RECRUITMENT,
 } from '../data/mockData';
+import {
+  INITIAL_SALARY_TEMPLATES,
+  INITIAL_PAYROLL_ASSIGNMENTS,
+  INITIAL_PAYROLL_RUNS,
+  INITIAL_EMPLOYEE_LOANS,
+  INITIAL_EMPLOYEE_DEDUCTIONS,
+  INITIAL_PROVIDENT_FUNDS,
+} from '../data/mockPayrollData';
 
 // Persistent storage helpers
 const loadStorage = <T>(key: string, fallback: T): T => {
@@ -92,6 +108,12 @@ let documents: HubDocument[] =
     : [...INITIAL_DOCUMENTS];
 let notifications: SystemNotification[] = loadStorage('notifications', [...INITIAL_NOTIFICATIONS]);
 let requisitions: RecruitmentRequisition[] = loadStorage('requisitions', [...INITIAL_RECRUITMENT]);
+let salaryTemplates: SalaryTemplate[] = loadStorage('salary_templates', [...INITIAL_SALARY_TEMPLATES]);
+let payrollAssignments: EmployeeSalaryAssignment[] = loadStorage('payroll_assignments', [...INITIAL_PAYROLL_ASSIGNMENTS]);
+let payrollRuns: PayrollRun[] = loadStorage('payroll_runs', [...INITIAL_PAYROLL_RUNS]);
+let employeeLoans: EmployeeLoan[] = loadStorage('employee_loans', [...INITIAL_EMPLOYEE_LOANS]);
+let employeeDeductions: EmployeeDeduction[] = loadStorage('employee_deductions', [...INITIAL_EMPLOYEE_DEDUCTIONS]);
+let providentFunds: EmployeeProvidentFund[] = loadStorage('provident_funds', [...INITIAL_PROVIDENT_FUNDS]);
 
 const sleep = (ms = 60) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -580,3 +602,272 @@ export class MockTalentRepository implements ITalentRepository {
     return template;
   }
 }
+
+export class MockPayrollRepository implements IPayrollRepository {
+  async getSalaryTemplates(): Promise<SalaryTemplate[]> {
+    await sleep();
+    return [...salaryTemplates];
+  }
+
+  async createSalaryTemplate(template: Omit<SalaryTemplate, 'id' | 'created_at' | 'updated_at'>): Promise<SalaryTemplate> {
+    await sleep();
+    const newTemplate: SalaryTemplate = {
+      ...template,
+      id: `st-${Date.now()}`,
+      created_at: new Date().toISOString(),
+    };
+    salaryTemplates = [newTemplate, ...salaryTemplates];
+    saveStorage('salary_templates', salaryTemplates);
+    return newTemplate;
+  }
+
+  async getAssignments(): Promise<EmployeeSalaryAssignment[]> {
+    await sleep();
+    return [...payrollAssignments];
+  }
+
+  async assignSalaryTemplate(assignment: {
+    employee_id: string;
+    salary_template_id: string;
+    effective_date: string;
+    override_basic_salary?: number | null;
+    custom_allowances?: any[];
+    custom_deductions?: any[];
+    notes?: string;
+  }): Promise<EmployeeSalaryAssignment> {
+    await sleep();
+    const matchedTemplate = salaryTemplates.find((t) => t.id === assignment.salary_template_id);
+    const matchedEmployee = employees.find((e) => e.id === assignment.employee_id);
+
+    const newAssignment: EmployeeSalaryAssignment = {
+      id: `assign-${Date.now()}`,
+      employee_id: assignment.employee_id,
+      salary_template_id: assignment.salary_template_id,
+      salary_template: matchedTemplate,
+      employee: matchedEmployee
+        ? {
+            id: matchedEmployee.id,
+            name: `${matchedEmployee.firstName} ${matchedEmployee.lastName}`,
+            staff_id: matchedEmployee.staffId,
+            department_name: matchedEmployee.departmentName,
+            job_title: matchedEmployee.jobTitle,
+          }
+        : undefined,
+      effective_date: assignment.effective_date,
+      override_basic_salary: assignment.override_basic_salary,
+      custom_allowances: assignment.custom_allowances,
+      custom_deductions: assignment.custom_deductions,
+      is_active: true,
+      notes: assignment.notes,
+      created_at: new Date().toISOString(),
+    };
+    payrollAssignments = [newAssignment, ...payrollAssignments];
+    saveStorage('payroll_assignments', payrollAssignments);
+    return newAssignment;
+  }
+
+  async getPayrollRuns(): Promise<PayrollRun[]> {
+    await sleep();
+    return [...payrollRuns];
+  }
+
+  async getPayrollRun(id: string): Promise<PayrollRun> {
+    await sleep();
+    const match = payrollRuns.find((r) => r.id === id);
+    if (match) return match;
+    throw new Error(`Payroll run ${id} not found.`);
+  }
+
+  async generatePayrollRun(data: {
+    title?: string;
+    period_start: string;
+    period_end: string;
+    pay_date?: string;
+    notes?: string;
+  }): Promise<PayrollRun> {
+    await sleep();
+    const newRun: PayrollRun = {
+      id: `run-${Date.now()}`,
+      run_number: `PR-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${Math.floor(100 + Math.random() * 900)}`,
+      title: data.title || `Payroll Run for ${data.period_start} to ${data.period_end}`,
+      period_start: data.period_start,
+      period_end: data.period_end,
+      pay_date: data.pay_date || new Date().toISOString().split('T')[0],
+      status: 'draft',
+      currency: 'NGN',
+      total_basic: 1690000,
+      total_allowance: 975000,
+      total_gross: 2665000,
+      total_deduction: 423000,
+      total_net: 2242000,
+      notes: data.notes,
+      created_at: new Date().toISOString(),
+    };
+    payrollRuns = [newRun, ...payrollRuns];
+    saveStorage('payroll_runs', payrollRuns);
+    return newRun;
+  }
+
+  async finalizePayrollRun(id: string): Promise<PayrollRun> {
+    await sleep();
+    const match = payrollRuns.find((r) => r.id === id);
+    if (match) {
+      match.status = 'approved';
+      saveStorage('payroll_runs', payrollRuns);
+      return match;
+    }
+    throw new Error(`Payroll run ${id} not found.`);
+  }
+
+  async getPayslip(id: string): Promise<PayrollItem> {
+    await sleep();
+    const allItems = payrollRuns.flatMap((r) => r.items || []);
+    const match = allItems.find((i) => i.id === id);
+    if (match) return match;
+    throw new Error(`Payslip ${id} not found.`);
+  }
+
+  async markPayslipPaid(id: string, paymentMethod?: string): Promise<PayrollItem> {
+    await sleep();
+    for (const r of payrollRuns) {
+      if (r.items) {
+        const item = r.items.find((i) => i.id === id);
+        if (item) {
+          item.payment_status = 'paid';
+          item.payment_method = paymentMethod || 'Direct Bank Transfer';
+          saveStorage('payroll_runs', payrollRuns);
+          return item;
+        }
+      }
+    }
+    throw new Error(`Payslip ${id} not found.`);
+  }
+
+  async getLoans(filter?: { employee_id?: string; status?: string }): Promise<EmployeeLoan[]> {
+    await sleep();
+    let result = [...employeeLoans];
+    if (filter?.employee_id) result = result.filter((l) => l.employee_id === filter.employee_id);
+    if (filter?.status) result = result.filter((l) => l.status === filter.status);
+    return result;
+  }
+
+  async createLoan(loan: {
+    employee_id: string;
+    loan_type: string;
+    principal_amount: number;
+    interest_rate?: number;
+    monthly_installment: number;
+    total_installments: number;
+    disbursed_at?: string;
+    notes?: string;
+  }): Promise<EmployeeLoan> {
+    await sleep();
+    const matchedEmployee = employees.find((e) => e.id === loan.employee_id);
+    const totalPayable = loan.principal_amount * (1 + (loan.interest_rate || 0) / 100);
+
+    const newLoan: EmployeeLoan = {
+      id: `loan-${Date.now()}`,
+      employee_id: loan.employee_id,
+      employee: matchedEmployee
+        ? {
+            id: matchedEmployee.id,
+            name: `${matchedEmployee.firstName} ${matchedEmployee.lastName}`,
+            staff_id: matchedEmployee.staffId,
+            department_name: matchedEmployee.departmentName,
+          }
+        : undefined,
+      loan_number: `LN-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+      loan_type: loan.loan_type,
+      principal_amount: loan.principal_amount,
+      interest_rate: loan.interest_rate || 0,
+      total_payable: totalPayable,
+      monthly_installment: loan.monthly_installment,
+      total_installments: loan.total_installments,
+      paid_installments: 0,
+      remaining_balance: totalPayable,
+      status: 'pending',
+      disbursed_at: loan.disbursed_at,
+      notes: loan.notes,
+      created_at: new Date().toISOString(),
+    };
+    employeeLoans = [newLoan, ...employeeLoans];
+    saveStorage('employee_loans', employeeLoans);
+    return newLoan;
+  }
+
+  async approveLoan(id: string): Promise<EmployeeLoan> {
+    await sleep();
+    const loan = employeeLoans.find((l) => l.id === id);
+    if (loan) {
+      loan.status = 'active';
+      saveStorage('employee_loans', employeeLoans);
+      return loan;
+    }
+    throw new Error(`Loan ${id} not found.`);
+  }
+
+  async getDeductions(filter?: { employee_id?: string }): Promise<EmployeeDeduction[]> {
+    await sleep();
+    let result = [...employeeDeductions];
+    if (filter?.employee_id) result = result.filter((d) => d.employee_id === filter.employee_id);
+    return result;
+  }
+
+  async createDeduction(deduction: {
+    employee_id: string;
+    title: string;
+    deduction_type: string;
+    amount: number;
+    is_percentage?: boolean;
+    start_date: string;
+    end_date?: string | null;
+    is_recurring?: boolean;
+  }): Promise<EmployeeDeduction> {
+    await sleep();
+    const newDed: EmployeeDeduction = {
+      id: `ded-${Date.now()}`,
+      employee_id: deduction.employee_id,
+      title: deduction.title,
+      deduction_type: deduction.deduction_type,
+      amount: deduction.amount,
+      is_percentage: !!deduction.is_percentage,
+      start_date: deduction.start_date,
+      end_date: deduction.end_date,
+      is_recurring: deduction.is_recurring ?? true,
+      is_active: true,
+      created_at: new Date().toISOString(),
+    };
+    employeeDeductions = [newDed, ...employeeDeductions];
+    saveStorage('employee_deductions', employeeDeductions);
+    return newDed;
+  }
+
+  async getProvidentFunds(): Promise<EmployeeProvidentFund[]> {
+    await sleep();
+    return [...providentFunds];
+  }
+
+  async createProvidentFund(data: {
+    employee_id: string;
+    employee_rate?: number;
+    employer_rate?: number;
+    status?: 'active' | 'inactive';
+  }): Promise<EmployeeProvidentFund> {
+    await sleep();
+    const newPf: EmployeeProvidentFund = {
+      id: `pf-${Date.now()}`,
+      employee_id: data.employee_id,
+      employee_rate: data.employee_rate ?? 8.0,
+      employer_rate: data.employer_rate ?? 10.0,
+      total_employee_contribution: 0,
+      total_employer_contribution: 0,
+      current_balance: 0,
+      status: data.status || 'active',
+      created_at: new Date().toISOString(),
+    };
+    providentFunds = [newPf, ...providentFunds];
+    saveStorage('provident_funds', providentFunds);
+    return newPf;
+  }
+}
+

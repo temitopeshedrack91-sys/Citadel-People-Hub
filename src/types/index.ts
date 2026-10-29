@@ -9,3 +9,4 @@ export * from './documents';
 export * from './audit';
 export * from './notifications';
 export * from './integrations';
+export * from './payroll';
