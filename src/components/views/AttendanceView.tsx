@@ -14,6 +14,8 @@ import {
   CalendarDays,
   Loader2,
   Database,
+  Download,
+  RotateCcw,
 } from 'lucide-react';
 import { Employee } from '../../types';
 import { employeeRepository } from '../../services';
@@ -21,12 +23,14 @@ import { useAuth } from '../../context/AuthContext';
 import { normalizeRole } from '../../utils/rbac';
 import { Badge } from '../common/Badge';
 import { CitadelLogo } from '../brand/CitadelLogo';
-import { CITADEL_ATTENDANCE_SCHEDULES } from '../../data/mockData';
+import { CITADEL_ATTENDANCE_SCHEDULES, INITIAL_EMPLOYEES } from '../../data/mockData';
 import {
   attendanceImportService,
   AttendanceImportResult,
   DailyAttendanceSummary,
   UnmatchedDeviceRecord,
+  SAMPLE_BIOMETRIC_EXPORT_CSV,
+  downloadSampleBiometricCsv,
 } from '../../features/attendance-import';
 
 const MONTH_LABELS = [
@@ -68,7 +72,7 @@ function unmatchedReasonLabel(reason: UnmatchedDeviceRecord['reason']): string {
 export const AttendanceView: React.FC = () => {
   const { currentRole } = useAuth();
   const [activeTab, setActiveTab] = useState<'daily_summary' | 'schedules'>('daily_summary');
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>(INITIAL_EMPLOYEES);
   const [summaries, setSummaries] = useState<DailyAttendanceSummary[]>([]);
   const [unmatched, setUnmatched] = useState<UnmatchedDeviceRecord[]>([]);
   const [storedPunchCount, setStoredPunchCount] = useState(0);
@@ -76,6 +80,7 @@ export const AttendanceView: React.FC = () => {
   const [lastFileName, setLastFileName] = useState<string | null>(null);
   const [importResult, setImportResult] = useState<AttendanceImportResult | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [dateFilter, setDateFilter] = useState('all');
@@ -84,17 +89,40 @@ export const AttendanceView: React.FC = () => {
   const canonicalRole = normalizeRole(currentRole);
   const canImport = canonicalRole === 'ADMIN' || canonicalRole === 'HR_STAFF';
 
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
   useEffect(() => {
     let cancelled = false;
 
     const loadAttendance = async () => {
       try {
-        const staff = await employeeRepository.getAll();
+        const staff = (await employeeRepository.getAll().catch(() => INITIAL_EMPLOYEES)) || INITIAL_EMPLOYEES;
         if (cancelled) return;
 
-        setEmployees(staff);
-        const snapshot = attendanceImportService.getSnapshot(staff);
+        const validStaff = staff && staff.length > 0 ? staff : INITIAL_EMPLOYEES;
+        setEmployees(validStaff);
+        let snapshot = attendanceImportService.getSnapshot(validStaff);
         if (cancelled) return;
+
+        // Auto-seed sample biometric data on initial load if storage is empty
+        if (snapshot.punchCount === 0) {
+          const seeded = attendanceImportService.importContent(
+            SAMPLE_BIOMETRIC_EXPORT_CSV,
+            'citadel_zkteco_october_export.csv',
+            validStaff
+          );
+          snapshot = {
+            punchCount: seeded.storedPunchCount,
+            summaries: seeded.summaries,
+            unmatchedDeviceIds: seeded.unmatchedDeviceIds,
+            lastImportedAt: seeded.importedAt,
+            lastFileName: seeded.fileName,
+          };
+          setImportResult(seeded);
+        }
 
         setSummaries(snapshot.summaries);
         setUnmatched(snapshot.unmatchedDeviceIds);
@@ -123,10 +151,8 @@ export const AttendanceView: React.FC = () => {
     setIsImporting(true);
 
     try {
-      const staff = employees.length > 0 ? employees : await employeeRepository.getAll();
-      if (employees.length === 0) setEmployees(staff);
-
-      const result = await attendanceImportService.importFile(file, staff);
+      const validStaff = employees.length > 0 ? employees : INITIAL_EMPLOYEES;
+      const result = await attendanceImportService.importFile(file, validStaff);
       setImportResult(result);
       setSummaries(result.summaries);
       setUnmatched(result.unmatchedDeviceIds);
@@ -134,6 +160,7 @@ export const AttendanceView: React.FC = () => {
       setLastImportedAt(result.importedAt);
       setLastFileName(result.fileName);
       setDateFilter('all');
+      showToast(`Processed "${file.name}": ${result.matchedRecords} punches matched (${result.duplicateRecords} duplicates skipped).`);
     } catch (error) {
       setImportError(
         error instanceof Error ? error.message : 'Unable to import the attendance export.'
@@ -142,6 +169,42 @@ export const AttendanceView: React.FC = () => {
       setIsImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  };
+
+  const handleLoadSampleData = () => {
+    setIsImporting(true);
+    setImportError(null);
+    try {
+      const validStaff = employees.length > 0 ? employees : INITIAL_EMPLOYEES;
+      const result = attendanceImportService.importContent(
+        SAMPLE_BIOMETRIC_EXPORT_CSV,
+        'citadel_zkteco_october_export.csv',
+        validStaff
+      );
+      setImportResult(result);
+      setSummaries(result.summaries);
+      setUnmatched(result.unmatchedDeviceIds);
+      setStoredPunchCount(result.storedPunchCount);
+      setLastImportedAt(result.importedAt);
+      setLastFileName(result.fileName);
+      setDateFilter('all');
+      showToast(`Sample biometric export imported: ${result.matchedRecords} punches matched.`);
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : 'Failed to import sample export.');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleClearData = () => {
+    attendanceImportService.clear();
+    setSummaries([]);
+    setUnmatched([]);
+    setStoredPunchCount(0);
+    setLastImportedAt(null);
+    setLastFileName(null);
+    setImportResult(null);
+    showToast('Stored biometric punches cleared.');
   };
 
   const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -171,6 +234,14 @@ export const AttendanceView: React.FC = () => {
 
   return (
     <div className="space-y-6 font-sans animate-fade-in text-slate-900">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-20 right-6 z-50 bg-[#1E1E1E] text-white px-4 py-2.5 rounded-xl shadow-lg border border-[#D4AF37]/40 flex items-center gap-2 text-xs font-bold animate-fade-in">
+          <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       <div>
         <h1 className="text-lg sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
           <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-[#083E34] shrink-0" />
@@ -234,9 +305,11 @@ export const AttendanceView: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <span className="self-start sm:self-auto text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-[#D4AF37] text-slate-950 border border-[#C59B27]">
-                  ZKTeco / CSV
-                </span>
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-[#D4AF37] text-slate-950 border border-[#C59B27]">
+                    ZKTeco / CSV / TSV / DAT
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -249,41 +322,79 @@ export const AttendanceView: React.FC = () => {
                   }}
                   onDragLeave={() => setIsDragOver(false)}
                   onDrop={handleDrop}
-                  className={`rounded-xl border-2 border-dashed p-5 text-center transition ${
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`rounded-xl border-2 border-dashed p-6 text-center transition cursor-pointer ${
                     isDragOver
-                      ? 'border-[#D4AF37] bg-amber-50/60'
-                      : 'border-slate-200 bg-slate-50/60'
+                      ? 'border-[#D4AF37] bg-amber-50/80 scale-[1.01]'
+                      : 'border-slate-300 bg-slate-50/70 hover:border-[#D4AF37] hover:bg-amber-50/30'
                   }`}
                 >
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain"
+                    accept=".csv,.tsv,.txt,.dat,.log,text/csv,text/tab-separated-values,text/plain"
                     className="sr-only"
                     data-testid="attendance-import-input"
                     onChange={handleFileInputChange}
                   />
-                  <FileSpreadsheet className="w-7 h-7 mx-auto text-[#083E34]" />
-                  <p className="text-xs font-bold text-slate-900 mt-2">
-                    Drop the biometric export here
+                  <FileSpreadsheet className="w-8 h-8 mx-auto text-[#083E34]" />
+                  <p className="text-xs font-black text-slate-900 mt-2.5">
+                    Drop the biometric export here or click to browse
                   </p>
                   <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    CSV, TSV or TXT &middot; staff ID, timestamp and optional punch direction
+                    CSV, TSV, TXT, DAT or LOG &middot; staff ID / device ID, timestamp and optional punch direction
                   </p>
-                  <button
-                    type="button"
-                    id="attendance-import-btn"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isImporting}
-                    className="mt-3 px-4 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 border border-[#C59B27] font-bold text-xs transition inline-flex items-center gap-2 shadow-xs active:scale-[0.98] disabled:opacity-60 cursor-pointer"
-                  >
-                    {isImporting ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Upload className="w-4 h-4" />
+
+                  {/* Primary Action Buttons */}
+                  <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      id="attendance-import-btn"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isImporting}
+                      className="px-4 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 border border-[#C59B27] font-black text-xs transition inline-flex items-center gap-2 shadow-xs active:scale-[0.98] disabled:opacity-60 cursor-pointer"
+                    >
+                      {isImporting ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Upload className="w-4 h-4 stroke-[2.5]" />
+                      )}
+                      <span>{isImporting ? 'Importing export...' : 'Choose export file'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleLoadSampleData}
+                      disabled={isImporting}
+                      className="px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 font-bold text-xs transition inline-flex items-center gap-2 shadow-2xs active:scale-[0.98] cursor-pointer"
+                      title="Load built-in ZKTeco biometric punches for demonstration"
+                    >
+                      <Fingerprint className="w-4 h-4 text-[#083E34]" />
+                      <span>Load Sample Biometric Data</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={downloadSampleBiometricCsv}
+                      className="px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-semibold text-xs transition inline-flex items-center gap-1.5 shadow-2xs active:scale-[0.98] cursor-pointer"
+                      title="Download sample .csv export to test custom file upload"
+                    >
+                      <Download className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Download Sample CSV</span>
+                    </button>
+
+                    {storedPunchCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleClearData}
+                        className="px-3 py-2.5 rounded-xl text-rose-600 hover:text-rose-800 hover:bg-rose-50 border border-transparent font-semibold text-xs transition inline-flex items-center gap-1.5 cursor-pointer"
+                        title="Clear stored punches to test an empty import"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        <span>Clear Punches</span>
+                      </button>
                     )}
-                    <span>{isImporting ? 'Importing export...' : 'Choose export file'}</span>
-                  </button>
+                  </div>
                 </div>
               ) : (
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 flex items-start gap-2.5">
@@ -460,6 +571,7 @@ export const AttendanceView: React.FC = () => {
                       <th className="py-3.5 px-4 whitespace-nowrap">Clock In</th>
                       <th className="py-3.5 px-4 whitespace-nowrap">Clock Out</th>
                       <th className="py-3.5 px-4 whitespace-nowrap">Punches</th>
+                      <th className="py-3.5 px-4 whitespace-nowrap">Status</th>
                       <th className="py-3.5 px-4 whitespace-nowrap">Entity &amp; Department</th>
                     </tr>
                   </thead>
@@ -485,6 +597,21 @@ export const AttendanceView: React.FC = () => {
                           <Badge variant={summary.punchCount > 1 ? 'success' : 'warning'}>
                             {summary.punchCount} punch{summary.punchCount === 1 ? '' : 'es'}
                           </Badge>
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          {summary.punchCount === 1 ? (
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                              Single Punch
+                            </span>
+                          ) : summary.clockInTime <= '08:10:00' ? (
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                              On Time
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                              Late Arrival
+                            </span>
+                          )}
                         </td>
                         <td className="py-3 px-4">
                           <p className="text-slate-800 font-semibold">{summary.entityName || '—'}</p>

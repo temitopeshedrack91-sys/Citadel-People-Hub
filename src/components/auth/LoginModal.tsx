@@ -102,7 +102,7 @@ const DEMO_CREDENTIALS: {
       'Employee self-service portal',
       'Projects Kanban board collaboration',
       'Leave application submissions',
-      'Attendance biometric clock-ins',
+      'Attendance biometric daily summaries',
     ],
   },
   {
@@ -134,7 +134,7 @@ const DEMO_CREDENTIALS: {
       'Employee self-service portal',
       'Task QA review & verification',
       'Bug reporting & project boards',
-      'Attendance clock-in & self-service',
+      'Attendance daily summaries & self-service',
     ],
   },
   {
@@ -589,7 +589,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   )}
                   {role === 'EMPLOYEE' && (
                     <>
-                      <li>Employee self-service clock-in, leave requests, and profile.</li>
+                      <li>Employee self-service attendance view, leave requests, and profile.</li>
                       <li>Projects Kanban board task collaborator and reviewer.</li>
                       <li>Staff directory lookup and public policy document vault.</li>
                     </>

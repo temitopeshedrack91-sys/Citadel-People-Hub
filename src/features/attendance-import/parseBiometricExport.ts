@@ -31,12 +31,21 @@ const STAFF_HEADERS = [
   'employeeid',
   'employeeno',
   'employeenumber',
+  'employeecode',
+  'empcode',
+  'empid',
+  'empno',
   'deviceid',
   'deviceuserid',
   'userid',
   'user',
   'userno',
   'pin',
+  'badgenumber',
+  'badgeno',
+  'badge',
+  'cardno',
+  'cardnumber',
   'enrollid',
   'enrollno',
   'enrollnumber',
@@ -57,6 +66,11 @@ const TIMESTAMP_HEADERS = [
   'clocktime',
   'logtime',
   'dateandtime',
+  'verifytime',
+  'eventtime',
+  'checkintime',
+  'checkouttime',
+  'transactiontime',
 ];
 
 const DATE_HEADERS = ['date', 'punchdate', 'attendancedate', 'logdate', 'day'];
@@ -71,6 +85,9 @@ const DIRECTION_HEADERS = [
   'status',
   'attstate',
   'type',
+  'event',
+  'eventtype',
+  'verifytype',
 ];
 
 const MONTHS: Record<string, number> = {

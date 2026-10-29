@@ -108,6 +108,23 @@ export function matchDeviceIdToStaff(
     };
   }
 
+  // Also match normalized staff codes (e.g. CGCC-001 or CGCC001 matches CGCC/001)
+  const normalizedDeviceCode = deviceId.trim().replace(/[-_/\s]/g, '').toUpperCase();
+  if (normalizedDeviceCode.length >= 3 && /[A-Z]/.test(normalizedDeviceCode)) {
+    const codeMatch = staff.find(
+      (member) =>
+        member.staffId.trim().replace(/[-_/\s]/g, '').toUpperCase() === normalizedDeviceCode
+    );
+    if (codeMatch) {
+      return {
+        status: 'matched',
+        staff: codeMatch,
+        normalizedDeviceId: deviceId,
+        matchType: 'staff_id',
+      };
+    }
+  }
+
   const devicePattern = options.deviceIdPattern || DEFAULT_DEVICE_ID_PATTERN;
   if (!devicePattern.test(deviceId)) {
     return {
