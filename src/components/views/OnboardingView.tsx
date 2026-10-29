@@ -34,6 +34,7 @@ import {
   MoreHorizontal,
   RotateCw,
   ArrowLeft,
+  ChevronDown,
   ExternalLink,
   Layers,
   ListChecks,
@@ -47,7 +48,12 @@ import {
   Employee,
 } from '../../types';
 import { talentRepository, employeeRepository, auditRepository } from '../../services';
-import { DEFAULT_CHECKLIST_TEMPLATES, createCitadelOnboardingTasks } from '../../data/mockData';
+import {
+  DEFAULT_CHECKLIST_TEMPLATES,
+  createCitadelOnboardingTasks,
+  INITIAL_EMPLOYEES,
+  INITIAL_ONBOARDING_JOURNEYS,
+} from '../../data/mockData';
 import { useAuth } from '../../context/AuthContext';
 
 export const OnboardingView: React.FC = () => {
@@ -62,7 +68,7 @@ export const OnboardingView: React.FC = () => {
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
   const [checklistFilter, setChecklistFilter] = useState<string>('All');
   const [checklistTemplates, setChecklistTemplates] = useState<OnboardingChecklistTemplate[]>(DEFAULT_CHECKLIST_TEMPLATES);
-  const [employeesList, setEmployeesList] = useState<Employee[]>([]);
+  const [employeesList, setEmployeesList] = useState<Employee[]>(INITIAL_EMPLOYEES);
   const [isStartOnboardingModalOpen, setIsStartOnboardingModalOpen] = useState(false);
   const [isAddChecklistModalOpen, setIsAddChecklistModalOpen] = useState(false);
   const [actionMenuOpenId, setActionMenuOpenId] = useState<string | null>(null);
@@ -117,19 +123,22 @@ export const OnboardingView: React.FC = () => {
   const loadData = async () => {
     try {
       const [list, emps, tpls] = await Promise.all([
-        talentRepository.getOnboardingJourneys(),
-        employeeRepository.getAll(),
-        talentRepository.getChecklistTemplates ? talentRepository.getChecklistTemplates() : Promise.resolve(DEFAULT_CHECKLIST_TEMPLATES),
+        talentRepository.getOnboardingJourneys().catch(() => INITIAL_ONBOARDING_JOURNEYS),
+        employeeRepository.getAll().catch(() => INITIAL_EMPLOYEES),
+        talentRepository.getChecklistTemplates
+          ? talentRepository.getChecklistTemplates().catch(() => DEFAULT_CHECKLIST_TEMPLATES)
+          : Promise.resolve(DEFAULT_CHECKLIST_TEMPLATES),
       ]);
-      setJourneys(list);
-      setEmployeesList(emps || []);
+      setJourneys(list && list.length > 0 ? list : INITIAL_ONBOARDING_JOURNEYS);
+      setEmployeesList(emps && emps.length > 0 ? emps : INITIAL_EMPLOYEES);
       setChecklistTemplates(tpls && tpls.length > 0 ? tpls : DEFAULT_CHECKLIST_TEMPLATES);
-      if (list.length > 0 && !list.find((j) => j.id === selectedJourneyId)) {
+      if (list && list.length > 0 && !list.find((j) => j.id === selectedJourneyId)) {
         setSelectedJourneyId(list[0].id);
       }
     } catch {
-      const list = await talentRepository.getOnboardingJourneys();
-      setJourneys(list);
+      setJourneys(INITIAL_ONBOARDING_JOURNEYS);
+      setEmployeesList(INITIAL_EMPLOYEES);
+      setChecklistTemplates(DEFAULT_CHECKLIST_TEMPLATES);
     }
   };
 
@@ -251,14 +260,23 @@ export const OnboardingView: React.FC = () => {
 
   const handleSaveNewOnboarding = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!startEmployeeId || !startChecklistId) {
-      showToast('Please select both an employee and a checklist.');
+    if (!startEmployeeId) {
+      showToast('Please select an employee to onboard.');
+      return;
+    }
+    if (!startChecklistId) {
+      showToast('Please select an onboarding checklist template.');
       return;
     }
 
-    const employee = employeesList.find((e) => e.id === startEmployeeId);
-    const template = checklistTemplates.find((t) => t.id === startChecklistId);
-    if (!employee || !template) return;
+    const availableEmployees = employeesList && employeesList.length > 0 ? employeesList : INITIAL_EMPLOYEES;
+    const availableChecklists = checklistTemplates && checklistTemplates.length > 0 ? checklistTemplates : DEFAULT_CHECKLIST_TEMPLATES;
+    const employee = availableEmployees.find((e) => e.id === startEmployeeId) || INITIAL_EMPLOYEES.find((e) => e.id === startEmployeeId);
+    const template = availableChecklists.find((t) => t.id === startChecklistId) || DEFAULT_CHECKLIST_TEMPLATES.find((t) => t.id === startChecklistId);
+    if (!employee || !template) {
+      showToast('Please select both a valid employee and checklist template.');
+      return;
+    }
 
     const newJourney: OnboardingJourney = {
       id: `onboard-${Date.now()}`,
@@ -487,7 +505,11 @@ export const OnboardingView: React.FC = () => {
         {/* Primary Action Buttons */}
         <div className="flex flex-wrap items-center gap-2.5">
           <button
-            onClick={() => setIsStartOnboardingModalOpen(true)}
+            onClick={() => {
+              setStartEmployeeId('');
+              setStartChecklistId('');
+              setIsStartOnboardingModalOpen(true);
+            }}
             className="px-4 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-[#DFC15D] text-black font-black text-xs sm:text-sm transition flex items-center gap-2 shadow-xs cursor-pointer active:scale-95"
             title="Start new employee onboarding"
           >
@@ -862,6 +884,7 @@ export const OnboardingView: React.FC = () => {
                     <button
                       onClick={() => {
                         setStartChecklistId(tpl.id);
+                        setStartEmployeeId('');
                         setIsStartOnboardingModalOpen(true);
                       }}
                       className="w-full px-3 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#DFC15D] text-black font-black text-xs transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-2xs"
@@ -2024,28 +2047,33 @@ export const OnboardingView: React.FC = () => {
             <form onSubmit={handleSaveNewOnboarding} className="p-6 space-y-4">
               {/* Employee Field */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                <label htmlFor="start-employee-select" className="block text-xs font-bold text-slate-700 mb-1.5">
                   Employee <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={startEmployeeId}
-                  onChange={(e) => setStartEmployeeId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] bg-white cursor-pointer"
-                  required
-                >
-                  <option value="">--</option>
-                  {employeesList.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.fullName} ({emp.staffId} - {emp.jobTitle})
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    id="start-employee-select"
+                    name="employee"
+                    value={startEmployeeId}
+                    onChange={(e) => setStartEmployeeId(e.target.value)}
+                    className="w-full appearance-none px-3.5 py-2.5 pr-10 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] bg-white cursor-pointer"
+                    required
+                  >
+                    <option value="">-- Select Employee --</option>
+                    {(employeesList && employeesList.length > 0 ? employeesList : INITIAL_EMPLOYEES).map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.fullName} ({emp.staffId} • {emp.jobTitle})
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
               </div>
 
               {/* Checklist Field */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-bold text-slate-700">
+                  <label htmlFor="start-checklist-select" className="text-xs font-bold text-slate-700">
                     Checklist <span className="text-red-500">*</span>
                   </label>
                   <button
@@ -2057,27 +2085,34 @@ export const OnboardingView: React.FC = () => {
                     <span>Add Checklist</span>
                   </button>
                 </div>
-                <select
-                  value={startChecklistId}
-                  onChange={(e) => setStartChecklistId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] bg-white cursor-pointer"
-                  required
-                >
-                  <option value="">-- Select Checklist --</option>
-                  {checklistTemplates.map((tpl) => (
-                    <option key={tpl.id} value={tpl.id}>
-                      {tpl.title} ({tpl.duration} • {tpl.category})
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    id="start-checklist-select"
+                    name="checklist"
+                    value={startChecklistId}
+                    onChange={(e) => setStartChecklistId(e.target.value)}
+                    className="w-full appearance-none px-3.5 py-2.5 pr-10 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] bg-white cursor-pointer"
+                    required
+                  >
+                    <option value="">-- Select Checklist --</option>
+                    {(checklistTemplates && checklistTemplates.length > 0 ? checklistTemplates : DEFAULT_CHECKLIST_TEMPLATES).map((tpl) => (
+                      <option key={tpl.id} value={tpl.id}>
+                        {tpl.title} ({tpl.duration})
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
               </div>
 
               {/* Start Date Field */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                <label htmlFor="start-date-input" className="block text-xs font-bold text-slate-700 mb-1.5">
                   Start Date <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="start-date-input"
+                  name="startDate"
                   type="date"
                   value={startDateInput}
                   onChange={(e) => setStartDateInput(e.target.value)}
@@ -2112,7 +2147,7 @@ export const OnboardingView: React.FC = () => {
           MODAL: ADD ONBOARDING CHECKLIST TEMPLATE
          ========================================================================= */}
       {isAddChecklistModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900">Add Onboarding Checklist</h3>

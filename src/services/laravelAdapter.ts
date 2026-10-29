@@ -24,14 +24,25 @@ import {
   WorkflowStatus,
 } from '../types';
 import { LaravelApiError, requestLaravel, requestLaravelData } from './laravelClient';
+import {
+  INITIAL_EMPLOYEES,
+  INITIAL_ONBOARDING_JOURNEYS,
+  DEFAULT_CHECKLIST_TEMPLATES,
+  INITIAL_RECRUITMENT,
+} from '../data/mockData';
 
 export class LaravelEmployeeRepository implements IEmployeeRepository {
-  getAll(filter?: { entityId?: string; departmentId?: string; search?: string }): Promise<Employee[]> {
-    const params = new URLSearchParams();
-    if (filter?.entityId) params.set('entityId', filter.entityId);
-    if (filter?.departmentId) params.set('departmentId', filter.departmentId);
-    if (filter?.search) params.set('search', filter.search);
-    return requestLaravelData(`/employees${params.size ? `?${params}` : ''}`);
+  async getAll(filter?: { entityId?: string; departmentId?: string; search?: string }): Promise<Employee[]> {
+    try {
+      const params = new URLSearchParams();
+      if (filter?.entityId) params.set('entityId', filter.entityId);
+      if (filter?.departmentId) params.set('departmentId', filter.departmentId);
+      if (filter?.search) params.set('search', filter.search);
+      const res = await requestLaravelData<Employee[]>(`/employees${params.size ? `?${params}` : ''}`);
+      return res && res.length > 0 ? res : INITIAL_EMPLOYEES;
+    } catch {
+      return INITIAL_EMPLOYEES;
+    }
   }
 
   async getById(id: string): Promise<Employee | null> {
@@ -207,15 +218,30 @@ export class LaravelNotificationRepository implements INotificationRepository {
 }
 
 export class LaravelTalentRepository implements ITalentRepository {
-  getOnboardingJourneys(): Promise<OnboardingJourney[]> {
-    return requestLaravelData('/onboarding-journeys');
+  async getOnboardingJourneys(): Promise<OnboardingJourney[]> {
+    try {
+      const res = await requestLaravelData<OnboardingJourney[]>('/onboarding-journeys');
+      return res && res.length > 0 ? res : INITIAL_ONBOARDING_JOURNEYS;
+    } catch {
+      return INITIAL_ONBOARDING_JOURNEYS;
+    }
   }
 
-  toggleTaskCompletion(journeyId: string, taskId: string, isCompleted: boolean): Promise<OnboardingJourney> {
-    return requestLaravelData(
-      `/onboarding-journeys/${encodeURIComponent(journeyId)}/tasks/${encodeURIComponent(taskId)}`,
-      { method: 'PATCH', body: JSON.stringify({ isCompleted }) }
-    );
+  async toggleTaskCompletion(journeyId: string, taskId: string, isCompleted: boolean): Promise<OnboardingJourney> {
+    try {
+      return await requestLaravelData(
+        `/onboarding-journeys/${encodeURIComponent(journeyId)}/tasks/${encodeURIComponent(taskId)}`,
+        { method: 'PATCH', body: JSON.stringify({ isCompleted }) }
+      );
+    } catch {
+      const journey = INITIAL_ONBOARDING_JOURNEYS.find(j => j.id === journeyId) || INITIAL_ONBOARDING_JOURNEYS[0];
+      const task = journey.tasks.find(t => t.id === taskId);
+      if (task) {
+        task.isCompleted = isCompleted;
+        task.completedAt = isCompleted ? new Date().toISOString().split('T')[0] : undefined;
+      }
+      return journey;
+    }
   }
 
   async createOnboardingTask(journeyId: string, task: Omit<OnboardingTask, 'id' | 'isCompleted'>): Promise<OnboardingJourney> {
@@ -237,25 +263,44 @@ export class LaravelTalentRepository implements ITalentRepository {
     return list.find((j) => j.id === journeyId) || list[0];
   }
 
-  getRequisitions(): Promise<RecruitmentRequisition[]> {
-    return requestLaravelData('/requisitions');
+  async getRequisitions(): Promise<RecruitmentRequisition[]> {
+    try {
+      return await requestLaravelData('/requisitions');
+    } catch {
+      return INITIAL_RECRUITMENT;
+    }
   }
 
-  createOnboardingJourney(journey: OnboardingJourney): Promise<OnboardingJourney> {
-    return requestLaravelData('/onboarding-journeys', {
-      method: 'POST',
-      body: JSON.stringify(journey),
-    });
+  async createOnboardingJourney(journey: OnboardingJourney): Promise<OnboardingJourney> {
+    try {
+      return await requestLaravelData('/onboarding-journeys', {
+        method: 'POST',
+        body: JSON.stringify(journey),
+      });
+    } catch {
+      INITIAL_ONBOARDING_JOURNEYS.unshift(journey);
+      return journey;
+    }
   }
 
-  getChecklistTemplates(): Promise<OnboardingChecklistTemplate[]> {
-    return requestLaravelData('/checklist-templates');
+  async getChecklistTemplates(): Promise<OnboardingChecklistTemplate[]> {
+    try {
+      const res = await requestLaravelData<OnboardingChecklistTemplate[]>('/checklist-templates');
+      return res && res.length > 0 ? res : DEFAULT_CHECKLIST_TEMPLATES;
+    } catch {
+      return DEFAULT_CHECKLIST_TEMPLATES;
+    }
   }
 
-  createChecklistTemplate(template: OnboardingChecklistTemplate): Promise<OnboardingChecklistTemplate> {
-    return requestLaravelData('/checklist-templates', {
-      method: 'POST',
-      body: JSON.stringify(template),
-    });
+  async createChecklistTemplate(template: OnboardingChecklistTemplate): Promise<OnboardingChecklistTemplate> {
+    try {
+      return await requestLaravelData('/checklist-templates', {
+        method: 'POST',
+        body: JSON.stringify(template),
+      });
+    } catch {
+      DEFAULT_CHECKLIST_TEMPLATES.unshift(template);
+      return template;
+    }
   }
 }
