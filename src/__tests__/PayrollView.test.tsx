@@ -6,6 +6,13 @@ import { Sidebar } from '../components/layout/Sidebar';
 import { AuthProvider } from '../context/AuthContext';
 import { payrollRepository } from '../services';
 
+// The UI workflow tests use the repository's local test fixtures. The direct
+// Laravel repository contract is covered by the integration tests below.
+vi.mock('../services/laravelClient', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../services/laravelClient')>();
+  return { ...actual, isLaravelApiConfigured: () => false };
+});
+
 describe('Payroll Domain & Sidebar Integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -82,7 +89,8 @@ describe('Payroll Domain & Sidebar Integration', () => {
     expect(screen.getByText('Select Period')).toBeDefined();
     expect(screen.getByText('Details')).toBeDefined();
     expect(screen.getByText('Verify')).toBeDefined();
-    expect(screen.getByText('Finish')).toBeDefined();
+    expect(screen.getByText('Review')).toBeDefined();
+    expect(screen.getByText('Approval')).toBeDefined();
 
     // Advance to Step 2
     const nextBtn1 = screen.getByRole('button', { name: /next step/i });
@@ -94,9 +102,14 @@ describe('Payroll Domain & Sidebar Integration', () => {
     fireEvent.click(nextBtn2);
     expect(screen.getByText('Estimated Baseline Basic Pay')).toBeDefined();
 
-    // Advance to Step 4
+    // Advance to Step 4 (Review)
     const nextBtn3 = screen.getByRole('button', { name: /next step/i });
     fireEvent.click(nextBtn3);
+    expect(screen.getByText('Review Adjustments & Penalties')).toBeDefined();
+
+    // Advance to Step 5 (Approval)
+    const nextBtn4 = screen.getByRole('button', { name: /next step/i });
+    fireEvent.click(nextBtn4);
     expect(screen.getByText('Ready to Generate Draft Pay Run')).toBeDefined();
 
     // Finish & Generate

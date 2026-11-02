@@ -51,6 +51,7 @@ export const TrellisTaskDetail: React.FC = () => {
     acceptTask,
     declineTask,
     moveTaskStatus,
+    canManageTasks,
   } = useTrellis();
 
   const [commentInput, setCommentInput] = useState('');
@@ -110,9 +111,7 @@ export const TrellisTaskDetail: React.FC = () => {
   const assigner = findMember(task.assignerId) || teamMembers.find((m) => m.id === task.assignerId);
   const reviewer = findMember(task.reviewerId) || teamMembers.find((m) => m.id === task.reviewerId);
 
-  const isAssignedToCurrentUser =
-    task.assigneeId === currentUser.id ||
-    (currentUser.supabaseId && String(task.assigneeId) === String(currentUser.supabaseId));
+  const isAssignedToCurrentUser = task.assigneeId === currentUser.id;
 
   const handleSaveEdit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -186,7 +185,7 @@ export const TrellisTaskDetail: React.FC = () => {
         </span>
 
         <div className="flex items-center gap-1.5 text-slate-400">
-          <button
+          {canManageTasks && <button
             onClick={() => setIsEditMode(!isEditMode)}
             data-testid="trellis-toggle-edit-btn"
             className={`p-1.5 rounded-lg transition ${
@@ -197,15 +196,15 @@ export const TrellisTaskDetail: React.FC = () => {
             title={isEditMode ? 'Exit edit mode' : 'Edit task'}
           >
             <Pencil className="w-4 h-4" />
-          </button>
-          <button
+          </button>}
+          {canManageTasks && <button
             onClick={() => setIsDeleteConfirmOpen(true)}
             data-testid="trellis-delete-task-btn"
             className="p-1.5 rounded-lg hover:bg-rose-50 hover:text-rose-600 transition"
             title="Delete task"
           >
             <Trash2 className="w-4 h-4" />
-          </button>
+          </button>}
           <button
             onClick={() => alert(`Task link copied: https://peoplehub.citadel.ng/task/${task.id}`)}
             className="p-1.5 rounded-lg hover:bg-slate-100 hover:text-slate-700 transition"

@@ -21,6 +21,7 @@ import {
 import { useAuth, PRESET_PERSONAS } from '../../context/AuthContext';
 import { CitadelLogo } from '../brand/CitadelLogo';
 import { UserRole } from '../../types';
+import { canUseLocalPersonaAuthentication } from '../../utils/authMode';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -39,7 +40,7 @@ const DEMO_CREDENTIALS: {
   password: string;
   color: string;
   permissions: string[];
-}[] = [
+}[] = import.meta.env.DEV ? [
   {
     email: 'dr.adeleke@citadel.ng',
     name: 'Dr. Bukola Adeleke',
@@ -185,7 +186,7 @@ const DEMO_CREDENTIALS: {
       'Strictly zero mutation privileges',
     ],
   },
-];
+] : [];
 
 export const LoginModal: React.FC<LoginModalProps> = ({
   isOpen,
@@ -193,12 +194,20 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   required = false,
   initialTab = 'signin',
 }) => {
-  const { currentPersona, switchPersona, isAuthenticated, login, register, logout } = useAuth();
-  const [tab, setTab] = useState<'signin' | 'register' | 'personas'>(initialTab);
+  const { currentPersona, switchPersona, isAuthenticated, login, register, logout, backendEnabled } = useAuth();
+  const localDemoAuthenticationEnabled = canUseLocalPersonaAuthentication(
+    import.meta.env.DEV,
+    backendEnabled,
+    import.meta.env.VITE_ENABLE_LOCAL_DEMO_AUTH === 'true'
+  );
+  const initialVisibleTab = (
+    (backendEnabled && initialTab === 'register')
+    || (!localDemoAuthenticationEnabled && initialTab === 'personas')
+  ) ? 'signin' : initialTab;
+  const [tab, setTab] = useState<'signin' | 'register' | 'personas'>(initialVisibleTab);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('EMPLOYEE');
   const [showPassword, setShowPassword] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
@@ -248,12 +257,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     setErrorMessage('');
     setSuccessMessage('');
     try {
-      await register(email, password, name, role);
+      const result = await register(email, password, name);
       setPassword('');
-      setSuccessMessage(`Account created for ${name || email}! Signed in to Supabase.`);
-      setTimeout(() => {
-        onClose();
-      }, 800);
+      if (result.requiresEmailConfirmation) {
+        setSuccessMessage('Account created. Confirm your work email before signing in.');
+      } else {
+        setSuccessMessage(`Account created for ${name || email}!`);
+        setTimeout(() => onClose(), 800);
+      }
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : 'Registration failed. Please try again.'
@@ -274,12 +285,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         onClose();
       }, 600);
     } catch (error) {
-      // If network fails, switch via local persona
-      switchPersona(cred.role);
-      setSuccessMessage(`Switched to ${cred.name} (${cred.roleLabel})`);
-      setTimeout(() => {
-        onClose();
-      }, 600);
+      if (localDemoAuthenticationEnabled && switchPersona(cred.role)) {
+        setSuccessMessage(`Switched to ${cred.name} (${cred.roleLabel})`);
+        setTimeout(() => onClose(), 600);
+      } else {
+        setErrorMessage(error instanceof Error ? error.message : 'Unable to sign in with this demo account.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -323,7 +334,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               Citadel People Hub
             </h2>
             <p className="text-xs text-[#D4AF37] mt-0.5 font-medium">
-              Supabase Auth &bull; 7 Demo Users &bull; Role-Based Access Control (RBAC)
+              {backendEnabled ? 'Citadel API Authentication' : 'Employee Access & Role-Based Permissions'}
             </p>
           </div>
 
@@ -363,7 +374,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               <UserPlus className="w-3.5 h-3.5" />
               <span>Register</span>
             </button>
-            <button
+            {localDemoAuthenticationEnabled && <button
               type="button"
               onClick={() => {
                 setTab('personas');
@@ -379,7 +390,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             >
               <UserCheck className="w-3.5 h-3.5" />
               <span>Demo Users &amp; Roles</span>
-            </button>
+            </button>}
           </div>
         </div>
 
@@ -419,7 +430,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="block text-xs font-bold text-slate-700">Password</label>
-                    <span className="text-[11px] text-slate-400">Default: Password123!</span>
+                    {localDemoAuthenticationEnabled && <span className="text-[11px] text-slate-400">Default: Password123!</span>}
                   </div>
                   <div className="relative">
                     <input
@@ -447,11 +458,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   className="w-full rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-950 border border-[#C59B27] disabled:opacity-60 cursor-pointer transition shadow-xs flex items-center justify-center gap-2"
                 >
                   <LogIn className="w-4 h-4" />
-                  <span>{isSubmitting ? 'Authenticating...' : 'Sign In with Supabase'}</span>
+                  <span>{isSubmitting ? 'Authenticating...' : `Sign In with ${backendEnabled ? 'Citadel' : 'Supabase'}`}</span>
                 </button>
               </form>
 
-              {/* Quick Demo Fill Selector */}
+              {/* Development-only demo credential fill selector */}
+              {localDemoAuthenticationEnabled && (
               <div className="pt-4 border-t border-slate-100 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
@@ -493,13 +505,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   ))}
                 </div>
               </div>
+              )}
             </div>
           )}
 
           {/* ======================================================== */}
           {/* TAB 2: REGISTER NEW USER                                  */}
           {/* ======================================================== */}
-          {tab === 'register' && (
+          {tab === 'register' && !backendEnabled && (
             <form onSubmit={handleRegister} className="space-y-4">
               <div>
                 <label className="mb-1 block text-xs font-bold text-slate-700">Full Name *</label>
@@ -538,64 +551,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 />
               </div>
 
-              <div>
-                <label className="mb-1 block text-xs font-bold text-slate-700">Role Designation *</label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as UserRole)}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 focus:outline-none cursor-pointer"
-                >
-                  <option value="EMPLOYEE">Employee / Staff Member (Self-Service)</option>
-                  <option value="DEPARTMENT_HEAD">Department Head (Team Reviews &amp; Leaves)</option>
-                  <option value="BUSINESS_HEAD">Business Head (Executive Oversight)</option>
-                  <option value="SYSTEM_ADMIN">System Admin (Hardware &amp; Technical Nodes)</option>
-                  <option value="PCCM_SUPER_ADMIN">PCCM Super Admin (Full Governance)</option>
-                </select>
-              </div>
-
-              {/* Role Permissions Live Preview */}
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5">
-                <span className="font-bold text-slate-800 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  <span>Permissions granted for {role.replaceAll('_', ' ')}:</span>
-                </span>
-                <ul className="text-[11px] text-slate-600 space-y-1 pl-4 list-disc">
-                  {role === 'PCCM_SUPER_ADMIN' && (
-                    <>
-                      <li>Primary HR super admin with full cross-entity access.</li>
-                      <li>Can view and edit sensitive staff salaries and contracts.</li>
-                      <li>Can approve leave policies, create staff, and view audit trail.</li>
-                    </>
-                  )}
-                  {role === 'BUSINESS_HEAD' && (
-                    <>
-                      <li>Executive entity access across Church, CSOG, and Holdings.</li>
-                      <li>Can approve staff leaves and export executive census reports.</li>
-                      <li>Performance and milestone reviews.</li>
-                    </>
-                  )}
-                  {role === 'DEPARTMENT_HEAD' && (
-                    <>
-                      <li>Line-manager access for assigned department members.</li>
-                      <li>Can approve leave requests and perform onboarding milestones.</li>
-                      <li>Department performance appraisals and shift schedules.</li>
-                    </>
-                  )}
-                  {role === 'SYSTEM_ADMIN' && (
-                    <>
-                      <li>Technical integrations, biometric devices, and API credentials.</li>
-                      <li>View all employee records and full compliance audit logs.</li>
-                    </>
-                  )}
-                  {role === 'EMPLOYEE' && (
-                    <>
-                      <li>Employee self-service attendance view, leave requests, and profile.</li>
-                      <li>Projects Kanban board task collaborator and reviewer.</li>
-                      <li>Staff directory lookup and public policy document vault.</li>
-                    </>
-                  )}
-                </ul>
-              </div>
+              <p className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-xs text-slate-700">
+                New accounts receive employee access. An administrator assigns organization, department, and elevated permissions after verification.
+              </p>
 
               <button
                 type="submit"
@@ -603,7 +561,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 className="w-full rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-950 border border-[#C59B27] disabled:opacity-60 cursor-pointer transition shadow-xs flex items-center justify-center gap-2"
               >
                 <UserPlus className="w-4 h-4" />
-                <span>{isSubmitting ? 'Creating Account...' : 'Register User on Supabase'}</span>
+                <span>{isSubmitting ? 'Creating Account...' : 'Create Employee Account'}</span>
               </button>
             </form>
           )}
@@ -611,7 +569,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           {/* ======================================================== */}
           {/* TAB 3: DEMO USERS (7+ ACCOUNTS WITH ROLE PERMISSIONS)    */}
           {/* ======================================================== */}
-          {tab === 'personas' && (
+          {tab === 'personas' && localDemoAuthenticationEnabled && (
             <div className="space-y-3">
               <div className="flex items-center justify-between pb-1">
                 <div>

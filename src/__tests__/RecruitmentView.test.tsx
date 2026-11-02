@@ -27,7 +27,26 @@ vi.mock('../services', async (importOriginal) => {
           candidates: [],
         },
       ]),
-      createRequisition: vi.fn().mockImplementation((req) => Promise.resolve(req)),
+      createRequisition: vi.fn().mockImplementation((req) => Promise.resolve({
+        ...req,
+        id: 'req-new',
+        requisitionCode: 'REQ-CGCC-2026-NEW001',
+      })),
+      updateRequisitionStatus: vi.fn().mockImplementation((id, status) => Promise.resolve({
+        id,
+        requisitionCode: 'REQ-CGCC-2026-09',
+        jobTitle: 'Senior Sound & Media Broadcast Engineer',
+        entityId: 'entity-cgcc',
+        entityName: 'Citadel Global Community Church (CGCC)',
+        departmentId: 'dept-cgcc-ict',
+        departmentName: 'ICT',
+        openPositions: 2,
+        employmentType: 'Full-Time',
+        status,
+        targetDate: '2026-10-15',
+        applicantsCount: 24,
+        candidates: [],
+      })),
     },
     organizationRepository: {
       ...actual.organizationRepository,
@@ -54,6 +73,10 @@ vi.mock('../services', async (importOriginal) => {
           employeeCount: 6,
         },
       ]),
+    },
+    employeeRepository: {
+      ...actual.employeeRepository,
+      getAll: vi.fn().mockResolvedValue([]),
     },
     auditRepository: {
       logAction: vi.fn().mockResolvedValue(true),
@@ -89,7 +112,7 @@ describe('RecruitmentView & CreateRequisitionModal', () => {
   });
 
   it('validates required fields and navigates through the wizard steps', async () => {
-    render(<RecruitmentView />);
+    const { container } = render(<RecruitmentView />);
 
     const newReqBtn = await screen.findByRole('button', { name: /New Requisition/i });
     fireEvent.click(newReqBtn);
@@ -107,10 +130,14 @@ describe('RecruitmentView & CreateRequisitionModal', () => {
     // Advance to Step 2
     fireEvent.click(continueBtn);
     expect(await screen.findByText(/Step 2: Headcount, Hiring Lead & Compensation/i)).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText(/e.g. Dr. Bukola Adeleke/i), { target: { value: 'Current Manager' } });
 
     // Advance to Step 3
     fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
     expect(await screen.findByText(/Step 3: Timeline & Sheet 8 Protocol/i)).toBeInTheDocument();
+    const targetDateInput = container.querySelector('input[type="date"]');
+    expect(targetDateInput).not.toBeNull();
+    fireEvent.change(targetDateInput as HTMLInputElement, { target: { value: '2026-12-15' } });
 
     // Advance to Step 4 (Verify & Submit)
     fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
@@ -124,6 +151,27 @@ describe('RecruitmentView & CreateRequisitionModal', () => {
     await waitFor(() => {
       expect(talentRepository.createRequisition).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it('persists a requisition status change through the repository', async () => {
+    render(<RecruitmentView />);
+    const statusSelect = await screen.findByRole('combobox', {
+      name: 'Update status for Senior Sound & Media Broadcast Engineer',
+    });
+
+    fireEvent.change(statusSelect, { target: { value: 'Interviewing' } });
+
+    await waitFor(() => {
+      expect(talentRepository.updateRequisitionStatus).toHaveBeenCalledWith('req-01', 'Interviewing');
+    });
+  });
+
+  it('shows a load error without substituting seed requisitions', async () => {
+    vi.mocked(talentRepository.getRequisitions).mockRejectedValueOnce(new Error('API unavailable'));
+    render(<RecruitmentView />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('API unavailable');
+    expect(screen.queryByText('Senior Sound & Media Broadcast Engineer')).not.toBeInTheDocument();
   });
 });
 

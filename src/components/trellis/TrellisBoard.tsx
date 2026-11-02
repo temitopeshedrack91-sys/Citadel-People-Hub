@@ -54,15 +54,12 @@ export const TrellisBoard: React.FC = () => {
     setIsNewTaskModalOpen,
     deleteTask,
     setIsEditMode,
+    canManageTasks,
   } = useTrellis();
 
   // Filter tasks based on search, assignee, label, and myTasksMode
   const filteredTasks = tasks.filter((t) => {
-    if (
-      myTasksMode &&
-      t.assigneeId !== currentUser.id &&
-      (!currentUser.supabaseId || String(t.assigneeId) !== String(currentUser.supabaseId))
-    )
+    if (myTasksMode && t.assigneeId !== currentUser.id)
       return false;
     if (selectedAssigneeFilter !== 'All') {
       const targetMember = findMember(selectedAssigneeFilter);
@@ -184,7 +181,7 @@ export const TrellisBoard: React.FC = () => {
                             )}
                           </div>
 
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity shrink-0">
+                          {canManageTasks && <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity shrink-0">
                             <button
                               type="button"
                               onClick={(e) => {
@@ -210,7 +207,7 @@ export const TrellisBoard: React.FC = () => {
                             >
                               <Trash2 className="w-3 h-3" />
                             </button>
-                          </div>
+                          </div>}
                         </div>
 
                         {/* Title */}

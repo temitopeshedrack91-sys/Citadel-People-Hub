@@ -6,7 +6,21 @@ import {
   EmployeeLoan,
   EmployeeDeduction,
   EmployeeProvidentFund,
+  PayrollExcelTemplate,
+  PayrollImportBatch,
+  PayrollAdjustment,
+  AttendancePenaltyRule,
+  EmployeeProrationRecord,
 } from '../types/payroll';
+
+import {
+  INITIAL_PAYROLL_EXCEL_TEMPLATES,
+  INITIAL_PAYROLL_IMPORT_BATCHES,
+  INITIAL_PAYROLL_ADJUSTMENTS,
+  INITIAL_ATTENDANCE_PENALTY_RULES,
+  INITIAL_PRORATION_RECORDS,
+  INITIAL_PAYROLL_IMPORT_ROWS,
+} from './mockPayrollExcelData';
 
 export const INITIAL_SALARY_TEMPLATES: SalaryTemplate[] = [
   {
@@ -80,6 +94,7 @@ export const INITIAL_PAYROLL_ASSIGNMENTS: EmployeeSalaryAssignment[] = [
       department_name: 'Pastoral Council',
     },
     effective_date: '2026-01-01',
+    basic_salary: 850000,
     override_basic_salary: 850000,
     is_active: true,
     notes: 'Approved by PCCM Board of Trustees',
@@ -97,6 +112,7 @@ export const INITIAL_PAYROLL_ASSIGNMENTS: EmployeeSalaryAssignment[] = [
       department_name: 'Human Resources',
     },
     effective_date: '2026-01-01',
+    basic_salary: 520000,
     override_basic_salary: 520000,
     is_active: true,
     notes: 'Standard HR Directorate assignment',
@@ -114,6 +130,7 @@ export const INITIAL_PAYROLL_ASSIGNMENTS: EmployeeSalaryAssignment[] = [
       department_name: 'Technology & Media',
     },
     effective_date: '2026-02-01',
+    basic_salary: 320000,
     override_basic_salary: 320000,
     is_active: true,
     notes: 'Technical retention differential applied',
@@ -155,6 +172,7 @@ export const INITIAL_PAYROLL_RUNS: PayrollRun[] = [
         allowance_total: 700000,
         gross_salary: 1550000,
         deduction_total: 238000,
+        total_deduction: 238000,
         net_salary: 1312000,
         tax_amount: 155000,
         provident_fund_amount: 68000,
@@ -179,6 +197,7 @@ export const INITIAL_PAYROLL_RUNS: PayrollRun[] = [
         allowance_total: 330000,
         gross_salary: 850000,
         deduction_total: 136600,
+        total_deduction: 136600,
         net_salary: 713400,
         tax_amount: 85000,
         provident_fund_amount: 41600,
@@ -203,6 +222,7 @@ export const INITIAL_PAYROLL_RUNS: PayrollRun[] = [
         allowance_total: 190000,
         gross_salary: 510000,
         deduction_total: 88400,
+        total_deduction: 88400,
         net_salary: 421600,
         tax_amount: 41000,
         provident_fund_amount: 25600,
@@ -254,8 +274,8 @@ export const INITIAL_EMPLOYEE_LOANS: EmployeeLoan[] = [
     disbursed_at: '2026-08-15',
     notes: 'Approved under Citadel Staff Welfare Revolving Fund.',
     installments: [
-      { id: 'inst-1', employee_loan_id: 'loan-1', installment_number: 1, due_date: '2026-09-25', amount: 20000, status: 'paid', paid_at: '2026-09-25' },
-      { id: 'inst-2', employee_loan_id: 'loan-1', installment_number: 2, due_date: '2026-10-25', amount: 20000, status: 'paid', paid_at: '2026-10-28' },
+      { id: 'inst-1', employee_loan_id: 'loan-1', installment_number: 1, due_date: '2026-09-25', amount: 20000, status: 'paid', paid_date: '2026-09-25' },
+      { id: 'inst-2', employee_loan_id: 'loan-1', installment_number: 2, due_date: '2026-10-25', amount: 20000, status: 'paid', paid_date: '2026-10-28' },
       { id: 'inst-3', employee_loan_id: 'loan-1', installment_number: 3, due_date: '2026-11-25', amount: 20000, status: 'pending' },
       { id: 'inst-4', employee_loan_id: 'loan-1', installment_number: 4, due_date: '2026-12-25', amount: 20000, status: 'pending' },
     ],
@@ -269,9 +289,11 @@ export const INITIAL_EMPLOYEE_DEDUCTIONS: EmployeeDeduction[] = [
     employee: { id: 'emp-003', name: 'David Adeleke', staff_id: 'CIT-003' },
     title: 'Staff Cooperative Society Monthly Share',
     deduction_type: 'Cooperative Dues',
+    calculation_type: 'fixed',
     amount: 15000,
     is_percentage: false,
     start_date: '2026-01-01',
+    frequency: 'monthly',
     is_recurring: true,
     is_active: true,
   },
@@ -312,4 +334,13 @@ export const INITIAL_PROVIDENT_FUNDS: EmployeeProvidentFund[] = [
     status: 'active',
   },
 ];
+
+export {
+  INITIAL_PAYROLL_EXCEL_TEMPLATES,
+  INITIAL_PAYROLL_IMPORT_BATCHES,
+  INITIAL_PAYROLL_ADJUSTMENTS,
+  INITIAL_ATTENDANCE_PENALTY_RULES,
+  INITIAL_PRORATION_RECORDS,
+  INITIAL_PAYROLL_IMPORT_ROWS,
+};
 

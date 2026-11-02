@@ -71,6 +71,7 @@ export type EmployeeStatus =
 export interface Employee {
   id: string;
   staffId: string;
+  biometricDeviceId?: string;
   fullName: string;
   firstName: string;
   lastName: string;

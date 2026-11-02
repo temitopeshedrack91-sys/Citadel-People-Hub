@@ -7,6 +7,7 @@ use App\Models\Department;
 use App\Models\Employee;
 use App\Models\User;
 use App\Support\AuditLogger;
+use App\Support\RoleAuthorization;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,8 +16,6 @@ use Illuminate\Validation\Rule;
 
 class EmployeeController extends Controller
 {
-    private const HR_ROLES = ['PCCM_SUPER_ADMIN'];
-
     public function index(Request $request): JsonResponse
     {
         $query = $this->scopedQuery($request->user())->with(['entity', 'department']);
@@ -50,8 +49,13 @@ class EmployeeController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $this->authorizeRole($request, self::HR_ROLES);
+        $this->authorizeRole($request);
         $data = $this->validated($request);
+        abort_unless(RoleAuthorization::canManageEmployeeScope(
+            $request->user(),
+            $data['entityId'],
+            (int) $data['departmentId'],
+        ), 403, 'You are not authorized to create an employee in this organization scope.');
         $employee = DB::transaction(function () use ($request, $data) {
             $employee = Employee::create($this->toDatabase($data));
             AuditLogger::record($request, 'Employee Records', 'Created employee', $employee->id, $employee->full_name, null, 'Created');
@@ -64,11 +68,18 @@ class EmployeeController extends Controller
 
     public function update(Request $request, Employee $employee): JsonResponse
     {
-        $this->authorizeRole($request, self::HR_ROLES);
-        DB::transaction(function () use ($request, $employee): void {
+        $this->authorizeRole($request);
+        abort_unless(RoleAuthorization::canManageEmployee($request->user(), $employee), 403, 'You are not authorized to update this employee.');
+        $data = $this->validated($request, $employee);
+        abort_unless(RoleAuthorization::canManageEmployeeScope(
+            $request->user(),
+            $data['entityId'] ?? $employee->entity_id,
+            (int) ($data['departmentId'] ?? $employee->department_id),
+        ), 403, 'You are not authorized to move an employee outside your organization scope.');
+        DB::transaction(function () use ($request, $employee, $data): void {
             $lockedEmployee = Employee::query()->lockForUpdate()->findOrFail($employee->id);
             $previousStaffId = $lockedEmployee->staff_id;
-            $lockedEmployee->update($this->toDatabase($this->validated($request, $lockedEmployee)));
+            $lockedEmployee->update($this->toDatabase($data));
             $this->syncUserAccounts($lockedEmployee, $previousStaffId);
             AuditLogger::record($request, 'Employee Records', 'Updated employee', $lockedEmployee->id, $lockedEmployee->full_name, null, 'Updated');
         });
@@ -78,7 +89,8 @@ class EmployeeController extends Controller
 
     public function destroy(Request $request, Employee $employee): JsonResponse
     {
-        $this->authorizeRole($request, self::HR_ROLES);
+        $this->authorizeRole($request);
+        abort_unless(RoleAuthorization::canManageEmployee($request->user(), $employee), 403, 'You are not authorized to deactivate this employee.');
         DB::transaction(function () use ($request, $employee): void {
             $lockedEmployee = Employee::query()->lockForUpdate()->findOrFail($employee->id);
             $lockedEmployee->update(['status' => 'Inactive']);
@@ -91,26 +103,12 @@ class EmployeeController extends Controller
 
     private function scopedQuery($user): Builder
     {
-        $query = Employee::query();
-        if ($user->role === 'PCCM_SUPER_ADMIN') {
-            return $query;
-        }
-        if ($user->role === 'BUSINESS_HEAD' && $user->entity_id) {
-            return $query->where('entity_id', $user->entity_id);
-        }
-        if ($user->role === 'DEPARTMENT_HEAD' && $user->department_id) {
-            return $query->where('department_id', $user->department_id);
-        }
-        if ($user->role === 'SYSTEM_ADMIN' && $user->entity_id) {
-            return $query->where('entity_id', $user->entity_id);
-        }
-
-        return $query->where('staff_id', $user->staff_id ?? '');
+        return RoleAuthorization::visibleEmployees($user);
     }
 
-    private function authorizeRole(Request $request, array $roles): void
+    private function authorizeRole(Request $request): void
     {
-        abort_unless(in_array($request->user()->role, $roles, true), 403, 'You are not authorized to manage employee records.');
+        abort_unless(RoleAuthorization::canManageEmployeeRecords($request->user()), 403, 'You are not authorized to manage employee records.');
     }
 
     private function syncUserAccounts(Employee $employee, string $previousStaffId): void
@@ -143,6 +141,7 @@ class EmployeeController extends Controller
         $required = $employee ? 'sometimes' : 'required';
         $data = $request->validate([
             'staffId' => [$required, 'string', 'max:50', Rule::unique('employees', 'staff_id')->ignore($employee?->id)],
+            'biometricDeviceId' => ['nullable', 'string', 'max:100', Rule::unique('employees', 'biometric_device_id')->ignore($employee?->id)],
             'fullName' => [$required, 'string', 'max:180'],
             'firstName' => [$required, 'string', 'max:100'],
             'lastName' => [$required, 'string', 'max:100'],
@@ -185,7 +184,7 @@ class EmployeeController extends Controller
     private function toDatabase(array $data): array
     {
         $map = [
-            'staffId' => 'staff_id', 'fullName' => 'full_name', 'firstName' => 'first_name',
+            'staffId' => 'staff_id', 'biometricDeviceId' => 'biometric_device_id', 'fullName' => 'full_name', 'firstName' => 'first_name',
             'lastName' => 'last_name', 'profilePhoto' => 'profile_photo', 'dateOfBirth' => 'date_of_birth',
             'emergencyContact' => 'emergency_contact', 'nextOfKin' => 'next_of_kin', 'entityId' => 'entity_id',
             'departmentId' => 'department_id', 'jobTitle' => 'job_title', 'gradeLevel' => 'grade_level',
@@ -240,9 +239,10 @@ class EmployeeController extends Controller
             'notes' => $employee->notes,
         ];
 
-        if ($request->user()->role === 'PCCM_SUPER_ADMIN') {
+        if (RoleAuthorization::canViewSensitiveEmployeeData($request->user())) {
             $data = array_merge($data, [
                 'dateOfBirth' => $employee->date_of_birth,
+                'biometricDeviceId' => $employee->biometric_device_id,
                 'address' => $employee->address,
                 'emergencyContact' => $employee->emergency_contact,
                 'nextOfKin' => $employee->next_of_kin,

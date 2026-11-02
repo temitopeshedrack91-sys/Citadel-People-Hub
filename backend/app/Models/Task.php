@@ -18,12 +18,22 @@ class Task extends Model
         'due_date',
         'assigned_to_employee_id',
         'created_by_employee_id',
+        'labels',
+        'estimated_hours',
+        'reviewer_employee_id',
+        'assignment_status',
+        'decline_reason',
+        'checklist',
+        'pr_tag',
     ];
 
     protected function casts(): array
     {
         return [
             'due_date' => 'date:Y-m-d',
+            'labels' => 'array',
+            'estimated_hours' => 'decimal:2',
+            'checklist' => 'array',
         ];
     }
 
@@ -45,6 +55,11 @@ class Task extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'created_by_employee_id');
+    }
+
+    public function reviewer(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'reviewer_employee_id');
     }
 
     public function comments(): HasMany

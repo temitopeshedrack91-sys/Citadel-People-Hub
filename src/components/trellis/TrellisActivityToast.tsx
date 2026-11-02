@@ -3,7 +3,7 @@ import { CheckCircle2, X } from 'lucide-react';
 import { useTrellis } from './TrellisContext';
 
 export const TrellisActivityToast: React.FC = () => {
-  const { activeToast, undoLastAction, clearToast } = useTrellis();
+  const { activeToast, undoLastAction, clearToast, canUndo } = useTrellis();
 
   if (!activeToast) return null;
 
@@ -19,13 +19,13 @@ export const TrellisActivityToast: React.FC = () => {
 
       <span className="text-slate-100">{activeToast.message}</span>
 
-      <button
+      {canUndo && <button
         onClick={undoLastAction}
         data-testid="trellis-undo-btn"
         className="text-amber-400 hover:text-amber-300 font-bold underline underline-offset-2 transition ml-1 cursor-pointer"
       >
         Undo
-      </button>
+      </button>}
 
       <button
         onClick={clearToast}

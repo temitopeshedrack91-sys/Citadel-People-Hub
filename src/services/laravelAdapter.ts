@@ -15,6 +15,7 @@ import {
   CitadelDepartment,
   CitadelEntity,
   Employee,
+  EmployeeDocumentInput,
   HubDocument,
   LeaveRequest,
   OnboardingJourney,
@@ -30,35 +31,25 @@ import {
   EmployeeLoan,
   EmployeeDeduction,
   EmployeeProvidentFund,
+  PayrollExcelTemplate,
+  PayrollExcelMapping,
+  PayrollImportBatch,
+  PayrollImportRow,
+  PayrollAdjustment,
+  AttendancePenaltyRule,
+  EmployeeProrationRecord,
+  ExcelPreviewResponse,
 } from '../types';
-import { LaravelApiError, requestLaravel, requestLaravelData } from './laravelClient';
-import {
-  INITIAL_EMPLOYEES,
-  INITIAL_ONBOARDING_JOURNEYS,
-  DEFAULT_CHECKLIST_TEMPLATES,
-  INITIAL_RECRUITMENT,
-} from '../data/mockData';
-import {
-  INITIAL_SALARY_TEMPLATES,
-  INITIAL_PAYROLL_ASSIGNMENTS,
-  INITIAL_PAYROLL_RUNS,
-  INITIAL_EMPLOYEE_LOANS,
-  INITIAL_EMPLOYEE_DEDUCTIONS,
-  INITIAL_PROVIDENT_FUNDS,
-} from '../data/mockPayrollData';
-
+import { AttendanceImportSnapshot, BiometricPunch, matchPunchesToStaff, summarizeDailyAttendance } from '../features/attendance-import';
+import { BiometricImportBatchResult } from './interfaces';
+import { LaravelApiError, requestLaravel, requestLaravelBlob, requestLaravelData } from './laravelClient';
 export class LaravelEmployeeRepository implements IEmployeeRepository {
   async getAll(filter?: { entityId?: string; departmentId?: string; search?: string }): Promise<Employee[]> {
-    try {
-      const params = new URLSearchParams();
-      if (filter?.entityId) params.set('entityId', filter.entityId);
-      if (filter?.departmentId) params.set('departmentId', filter.departmentId);
-      if (filter?.search) params.set('search', filter.search);
-      const res = await requestLaravelData<Employee[]>(`/employees${params.size ? `?${params}` : ''}`);
-      return res && res.length > 0 ? res : INITIAL_EMPLOYEES;
-    } catch {
-      return INITIAL_EMPLOYEES;
-    }
+    const params = new URLSearchParams();
+    if (filter?.entityId) params.set('entityId', filter.entityId);
+    if (filter?.departmentId) params.set('departmentId', filter.departmentId);
+    if (filter?.search) params.set('search', filter.search);
+    return requestLaravelData(`/employees${params.size ? `?${params}` : ''}`);
   }
 
   async getById(id: string): Promise<Employee | null> {
@@ -174,6 +165,54 @@ export class LaravelAttendanceRepository implements IAttendanceRepository {
   recordClockOut(recordId: string): Promise<AttendanceRecord> {
     return requestLaravelData(`/attendance/${encodeURIComponent(recordId)}/clock-out`, { method: 'POST' });
   }
+
+  async getBiometricPunchSnapshot(employees: Employee[]): Promise<AttendanceImportSnapshot> {
+    type PunchPage = {
+      punches: BiometricPunch[];
+      pagination: { currentPage: number; lastPage: number };
+      punchCount: number;
+      lastFileName: string | null;
+      lastImportedAt: string | null;
+    };
+    const punches: BiometricPunch[] = [];
+    let page = 1;
+    let lastPage = 1;
+    let metadata: PunchPage | null = null;
+    do {
+      metadata = await requestLaravelData<PunchPage>(`/attendance/biometric-punches?per_page=1000&page=${page}`);
+      punches.push(...metadata.punches);
+      lastPage = metadata.pagination.lastPage;
+      page += 1;
+      if (page > 51 && page <= lastPage) {
+        throw new Error('Attendance history exceeds the 50,000 punch display limit. Filter or archive older imports before retrying.');
+      }
+    } while (page <= lastPage);
+
+    const staff = employees.map((employee) => ({
+      id: String(employee.id),
+      staffId: employee.staffId,
+      fullName: employee.fullName,
+      entityName: employee.entityName,
+      departmentName: employee.departmentName,
+      biometricDeviceId: employee.biometricDeviceId,
+    }));
+    const { matched, unmatched } = matchPunchesToStaff(punches, staff);
+
+    return {
+      punchCount: metadata?.punchCount ?? 0,
+      summaries: summarizeDailyAttendance(matched),
+      unmatchedDeviceIds: unmatched,
+      lastImportedAt: metadata?.lastImportedAt ?? undefined,
+      lastFileName: metadata?.lastFileName ?? undefined,
+    };
+  }
+
+  importBiometricPunches(fileName: string, punches: BiometricPunch[]): Promise<BiometricImportBatchResult> {
+    return requestLaravelData<BiometricImportBatchResult>('/attendance/biometric-imports', {
+      method: 'POST',
+      body: JSON.stringify({ fileName, punches }),
+    });
+  }
 }
 
 export class LaravelAuditRepository implements IAuditRepository {
@@ -217,6 +256,61 @@ export class LaravelDocumentRepository implements IDocumentRepository {
     form.set('isSensitive', String(document.isSensitive));
     return requestLaravelData('/documents', { method: 'POST', body: form });
   }
+
+  getEmployeeDocuments(employeeId: string, filter?: { category?: string }): Promise<HubDocument[]> {
+    const params = new URLSearchParams();
+    if (filter?.category) params.set('category', filter.category);
+    return requestLaravelData(`/employees/${encodeURIComponent(employeeId)}/documents${params.size ? `?${params}` : ''}`);
+  }
+
+  async uploadEmployeeDocument(
+    employeeId: string,
+    document: EmployeeDocumentInput,
+    file: File
+  ): Promise<HubDocument> {
+    const form = new FormData();
+    form.set('file', file);
+    form.set('title', document.title);
+    form.set('description', document.description || '');
+    form.set('category', document.category);
+    form.set('issueDate', document.issueDate || '');
+    form.set('expiryDate', document.expiryDate || '');
+    form.set('version', document.version || '1.0');
+    return requestLaravelData(`/employees/${encodeURIComponent(employeeId)}/documents`, { method: 'POST', body: form });
+  }
+
+  async replaceEmployeeDocument(
+    employeeId: string,
+    documentId: string,
+    document: EmployeeDocumentInput,
+    file: File
+  ): Promise<HubDocument> {
+    const form = new FormData();
+    form.set('file', file);
+    form.set('title', document.title);
+    form.set('description', document.description || '');
+    form.set('category', document.category);
+    form.set('issueDate', document.issueDate || '');
+    form.set('expiryDate', document.expiryDate || '');
+    form.set('version', document.version || '1.0');
+    return requestLaravelData(
+      `/employees/${encodeURIComponent(employeeId)}/documents/${encodeURIComponent(documentId)}/replace`,
+      { method: 'POST', body: form }
+    );
+  }
+
+  async deleteEmployeeDocument(employeeId: string, documentId: string): Promise<void> {
+    await requestLaravel(
+      `/employees/${encodeURIComponent(employeeId)}/documents/${encodeURIComponent(documentId)}`,
+      { method: 'DELETE' }
+    );
+  }
+
+  async downloadEmployeeDocument(employeeId: string, documentId: string): Promise<Blob> {
+    return requestLaravelBlob(
+      `/employees/${encodeURIComponent(employeeId)}/documents/${encodeURIComponent(documentId)}/download`
+    );
+  }
 }
 
 export class LaravelNotificationRepository implements INotificationRepository {
@@ -234,139 +328,99 @@ export class LaravelNotificationRepository implements INotificationRepository {
 }
 
 export class LaravelTalentRepository implements ITalentRepository {
-  async getOnboardingJourneys(): Promise<OnboardingJourney[]> {
-    try {
-      const res = await requestLaravelData<OnboardingJourney[]>('/onboarding-journeys');
-      return res && res.length > 0 ? res : INITIAL_ONBOARDING_JOURNEYS;
-    } catch {
-      return INITIAL_ONBOARDING_JOURNEYS;
-    }
+  getOnboardingJourneys(): Promise<OnboardingJourney[]> {
+    return requestLaravelData('/onboarding-journeys');
   }
 
-  async toggleTaskCompletion(journeyId: string, taskId: string, isCompleted: boolean): Promise<OnboardingJourney> {
-    try {
-      return await requestLaravelData(
-        `/onboarding-journeys/${encodeURIComponent(journeyId)}/tasks/${encodeURIComponent(taskId)}`,
-        { method: 'PATCH', body: JSON.stringify({ isCompleted }) }
-      );
-    } catch {
-      const journey = INITIAL_ONBOARDING_JOURNEYS.find(j => j.id === journeyId) || INITIAL_ONBOARDING_JOURNEYS[0];
-      const task = journey.tasks.find(t => t.id === taskId);
-      if (task) {
-        task.isCompleted = isCompleted;
-        task.completedAt = isCompleted ? new Date().toISOString().split('T')[0] : undefined;
-      }
-      return journey;
-    }
+  toggleTaskCompletion(journeyId: string, taskId: string, isCompleted: boolean): Promise<OnboardingJourney> {
+    return requestLaravelData(
+      `/onboarding-journeys/${encodeURIComponent(journeyId)}/tasks/${encodeURIComponent(taskId)}`,
+      { method: 'PATCH', body: JSON.stringify({ isCompleted }) }
+    );
   }
 
-  async createOnboardingTask(journeyId: string, task: Omit<OnboardingTask, 'id' | 'isCompleted'>): Promise<OnboardingJourney> {
-    const list = await this.getOnboardingJourneys();
-    return list.find((j) => j.id === journeyId) || list[0];
+  createOnboardingTask(journeyId: string, task: Omit<OnboardingTask, 'id' | 'isCompleted'>): Promise<OnboardingJourney> {
+    return requestLaravelData(`/onboarding-journeys/${encodeURIComponent(journeyId)}/tasks`, {
+      method: 'POST',
+      body: JSON.stringify(task),
+    });
   }
 
   async sendTaskReminder(journeyId: string, taskId: string): Promise<boolean> {
-    return true;
+    void journeyId;
+    void taskId;
+    throw new Error('Reminder delivery is not configured. No reminder was sent.');
   }
 
-  async toggleDocumentSubmission(journeyId: string, docId: string, isSubmitted: boolean): Promise<OnboardingJourney> {
-    const list = await this.getOnboardingJourneys();
-    return list.find((j) => j.id === journeyId) || list[0];
+  toggleDocumentSubmission(journeyId: string, docId: string, isSubmitted: boolean): Promise<OnboardingJourney> {
+    return requestLaravelData(
+      `/onboarding-journeys/${encodeURIComponent(journeyId)}/documents/${encodeURIComponent(docId)}`,
+      { method: 'PATCH', body: JSON.stringify({ isSubmitted }) }
+    );
   }
 
-  async toggleOrientationItem(journeyId: string, itemId: string, isCompleted: boolean): Promise<OnboardingJourney> {
-    const list = await this.getOnboardingJourneys();
-    return list.find((j) => j.id === journeyId) || list[0];
+  toggleOrientationItem(journeyId: string, itemId: string, isCompleted: boolean): Promise<OnboardingJourney> {
+    return requestLaravelData(
+      `/onboarding-journeys/${encodeURIComponent(journeyId)}/orientation/${encodeURIComponent(itemId)}`,
+      { method: 'PATCH', body: JSON.stringify({ isCompleted }) }
+    );
   }
 
-  async getRequisitions(): Promise<RecruitmentRequisition[]> {
-    try {
-      return await requestLaravelData('/requisitions');
-    } catch {
-      return INITIAL_RECRUITMENT;
-    }
+  getRequisitions(): Promise<RecruitmentRequisition[]> {
+    return requestLaravelData('/requisitions');
   }
 
-  async createRequisition(requisition: RecruitmentRequisition): Promise<RecruitmentRequisition> {
-    try {
-      return await requestLaravelData('/requisitions', {
-        method: 'POST',
-        body: JSON.stringify(requisition),
-      });
-    } catch {
-      INITIAL_RECRUITMENT.unshift(requisition);
-      return requisition;
-    }
+  createRequisition(requisition: RecruitmentRequisition): Promise<RecruitmentRequisition> {
+    return requestLaravelData('/requisitions', {
+      method: 'POST',
+      body: JSON.stringify(requisition),
+    });
   }
 
-  async createOnboardingJourney(journey: OnboardingJourney): Promise<OnboardingJourney> {
-    try {
-      return await requestLaravelData('/onboarding-journeys', {
-        method: 'POST',
-        body: JSON.stringify(journey),
-      });
-    } catch {
-      INITIAL_ONBOARDING_JOURNEYS.unshift(journey);
-      return journey;
-    }
+  updateRequisitionStatus(id: string, status: RecruitmentRequisition['status']): Promise<RecruitmentRequisition> {
+    return requestLaravelData(`/requisitions/${encodeURIComponent(id)}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
   }
 
-  async getChecklistTemplates(): Promise<OnboardingChecklistTemplate[]> {
-    try {
-      const res = await requestLaravelData<OnboardingChecklistTemplate[]>('/checklist-templates');
-      return res && res.length > 0 ? res : DEFAULT_CHECKLIST_TEMPLATES;
-    } catch {
-      return DEFAULT_CHECKLIST_TEMPLATES;
-    }
+  createOnboardingJourney(journey: OnboardingJourney): Promise<OnboardingJourney> {
+    return requestLaravelData('/onboarding-journeys', {
+      method: 'POST',
+      body: JSON.stringify({
+        employeeId: journey.employeeId,
+        checklistId: journey.checklistId,
+        startDate: journey.startDate,
+      }),
+    });
   }
 
-  async createChecklistTemplate(template: OnboardingChecklistTemplate): Promise<OnboardingChecklistTemplate> {
-    try {
-      return await requestLaravelData('/checklist-templates', {
-        method: 'POST',
-        body: JSON.stringify(template),
-      });
-    } catch {
-      DEFAULT_CHECKLIST_TEMPLATES.unshift(template);
-      return template;
-    }
+  getChecklistTemplates(): Promise<OnboardingChecklistTemplate[]> {
+    return requestLaravelData('/checklist-templates');
+  }
+
+  createChecklistTemplate(template: OnboardingChecklistTemplate): Promise<OnboardingChecklistTemplate> {
+    return requestLaravelData('/checklist-templates', {
+      method: 'POST',
+      body: JSON.stringify(template),
+    });
   }
 }
 
 export class LaravelPayrollRepository implements IPayrollRepository {
-  async getSalaryTemplates(): Promise<SalaryTemplate[]> {
-    try {
-      const res = await requestLaravelData<SalaryTemplate[]>('/payroll/templates');
-      return res && res.length > 0 ? res : INITIAL_SALARY_TEMPLATES;
-    } catch {
-      return INITIAL_SALARY_TEMPLATES;
-    }
+  getSalaryTemplates(): Promise<SalaryTemplate[]> {
+    return requestLaravelData('/payroll/templates');
   }
 
-  async createSalaryTemplate(template: Omit<SalaryTemplate, 'id' | 'created_at' | 'updated_at'>): Promise<SalaryTemplate> {
-    try {
-      return await requestLaravelData<SalaryTemplate>('/payroll/templates', {
-        method: 'POST',
-        body: JSON.stringify(template),
-      });
-    } catch {
-      const newTemplate: SalaryTemplate = {
-        ...template,
-        id: `st-${Date.now()}`,
-        created_at: new Date().toISOString(),
-      };
-      INITIAL_SALARY_TEMPLATES.unshift(newTemplate);
-      return newTemplate;
-    }
+  createSalaryTemplate(template: Omit<SalaryTemplate, 'id' | 'created_at' | 'updated_at'>): Promise<SalaryTemplate> {
+    return requestLaravelData('/payroll/templates', {
+      method: 'POST',
+      body: JSON.stringify(template),
+    });
   }
 
-  async getAssignments(): Promise<EmployeeSalaryAssignment[]> {
-    try {
-      const res = await requestLaravelData<EmployeeSalaryAssignment[]>('/payroll/assignments');
-      return res && res.length > 0 ? res : INITIAL_PAYROLL_ASSIGNMENTS;
-    } catch {
-      return INITIAL_PAYROLL_ASSIGNMENTS;
-    }
+  getAssignments(): Promise<EmployeeSalaryAssignment[]> {
+    return requestLaravelData('/payroll/assignments');
   }
 
   async assignSalaryTemplate(assignment: {
@@ -378,58 +432,18 @@ export class LaravelPayrollRepository implements IPayrollRepository {
     custom_deductions?: any[];
     notes?: string;
   }): Promise<EmployeeSalaryAssignment> {
-    try {
-      return await requestLaravelData<EmployeeSalaryAssignment>('/payroll/assignments', {
-        method: 'POST',
-        body: JSON.stringify(assignment),
-      });
-    } catch {
-      const matchedTemplate = INITIAL_SALARY_TEMPLATES.find((t) => t.id === assignment.salary_template_id);
-      const matchedEmployee = INITIAL_EMPLOYEES.find((e) => e.id === assignment.employee_id);
-      const newAssignment: EmployeeSalaryAssignment = {
-        id: `assign-${Date.now()}`,
-        employee_id: assignment.employee_id,
-        salary_template_id: assignment.salary_template_id,
-        salary_template: matchedTemplate,
-        employee: matchedEmployee
-          ? {
-              id: matchedEmployee.id,
-              name: `${matchedEmployee.firstName} ${matchedEmployee.lastName}`,
-              staff_id: matchedEmployee.staffId,
-              department_name: matchedEmployee.departmentName,
-              job_title: matchedEmployee.jobTitle,
-            }
-          : undefined,
-        effective_date: assignment.effective_date,
-        override_basic_salary: assignment.override_basic_salary,
-        custom_allowances: assignment.custom_allowances,
-        custom_deductions: assignment.custom_deductions,
-        is_active: true,
-        notes: assignment.notes,
-        created_at: new Date().toISOString(),
-      };
-      INITIAL_PAYROLL_ASSIGNMENTS.unshift(newAssignment);
-      return newAssignment;
-    }
+    return requestLaravelData('/payroll/assignments', {
+      method: 'POST',
+      body: JSON.stringify(assignment),
+    });
   }
 
-  async getPayrollRuns(): Promise<PayrollRun[]> {
-    try {
-      const res = await requestLaravelData<PayrollRun[]>('/payroll/runs');
-      return res && res.length > 0 ? res : INITIAL_PAYROLL_RUNS;
-    } catch {
-      return INITIAL_PAYROLL_RUNS;
-    }
+  getPayrollRuns(): Promise<PayrollRun[]> {
+    return requestLaravelData('/payroll/runs');
   }
 
-  async getPayrollRun(id: string): Promise<PayrollRun> {
-    try {
-      return await requestLaravelData<PayrollRun>(`/payroll/runs/${encodeURIComponent(id)}`);
-    } catch {
-      const match = INITIAL_PAYROLL_RUNS.find((r) => r.id === id);
-      if (match) return match;
-      throw new Error(`Payroll run ${id} not found.`);
-    }
+  getPayrollRun(id: string): Promise<PayrollRun> {
+    return requestLaravelData(`/payroll/runs/${encodeURIComponent(id)}`);
   }
 
   async generatePayrollRun(data: {
@@ -439,88 +453,32 @@ export class LaravelPayrollRepository implements IPayrollRepository {
     pay_date?: string;
     notes?: string;
   }): Promise<PayrollRun> {
-    try {
-      return await requestLaravelData<PayrollRun>('/payroll/runs', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-    } catch {
-      const newRun: PayrollRun = {
-        id: `run-${Date.now()}`,
-        run_number: `PR-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${Math.floor(100 + Math.random() * 900)}`,
-        title: data.title || `Payroll Run for ${data.period_start} to ${data.period_end}`,
-        period_start: data.period_start,
-        period_end: data.period_end,
-        pay_date: data.pay_date || new Date().toISOString().split('T')[0],
-        status: 'draft',
-        currency: 'NGN',
-        total_basic: 1690000,
-        total_allowance: 975000,
-        total_gross: 2665000,
-        total_deduction: 423000,
-        total_net: 2242000,
-        notes: data.notes,
-        created_at: new Date().toISOString(),
-      };
-      INITIAL_PAYROLL_RUNS.unshift(newRun);
-      return newRun;
-    }
+    return requestLaravelData('/payroll/runs', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
 
-  async finalizePayrollRun(id: string): Promise<PayrollRun> {
-    try {
-      return await requestLaravelData<PayrollRun>(`/payroll/runs/${encodeURIComponent(id)}/finalize`, {
-        method: 'POST',
-      });
-    } catch {
-      const match = INITIAL_PAYROLL_RUNS.find((r) => r.id === id);
-      if (match) {
-        match.status = 'approved';
-        return match;
-      }
-      throw new Error(`Payroll run ${id} not found.`);
-    }
+  finalizePayrollRun(id: string): Promise<PayrollRun> {
+    return requestLaravelData(`/payroll/runs/${encodeURIComponent(id)}/finalize`, { method: 'POST' });
   }
 
-  async getPayslip(id: string): Promise<PayrollItem> {
-    try {
-      return await requestLaravelData<PayrollItem>(`/payroll/payslips/${encodeURIComponent(id)}`);
-    } catch {
-      const allItems = INITIAL_PAYROLL_RUNS.flatMap((r) => r.items || []);
-      const item = allItems.find((i) => i.id === id);
-      if (item) return item;
-      throw new Error(`Payslip ${id} not found.`);
-    }
+  getPayslip(id: string): Promise<PayrollItem> {
+    return requestLaravelData(`/payroll/payslips/${encodeURIComponent(id)}`);
   }
 
-  async markPayslipPaid(id: string, paymentMethod?: string): Promise<PayrollItem> {
-    try {
-      return await requestLaravelData<PayrollItem>(`/payroll/payslips/${encodeURIComponent(id)}/paid`, {
-        method: 'PATCH',
-        body: JSON.stringify({ payment_method: paymentMethod || 'Direct Bank Transfer' }),
-      });
-    } catch {
-      const allItems = INITIAL_PAYROLL_RUNS.flatMap((r) => r.items || []);
-      const item = allItems.find((i) => i.id === id);
-      if (item) {
-        item.payment_status = 'paid';
-        item.payment_method = paymentMethod || 'Direct Bank Transfer';
-        return item;
-      }
-      throw new Error(`Payslip ${id} not found.`);
-    }
+  markPayslipPaid(id: string, paymentMethod?: string): Promise<PayrollItem> {
+    return requestLaravelData(`/payroll/payslips/${encodeURIComponent(id)}/paid`, {
+      method: 'PATCH',
+      body: JSON.stringify({ payment_method: paymentMethod || 'Direct Bank Transfer' }),
+    });
   }
 
-  async getLoans(filter?: { employee_id?: string; status?: string }): Promise<EmployeeLoan[]> {
-    try {
-      const params = new URLSearchParams();
-      if (filter?.employee_id) params.set('employee_id', filter.employee_id);
-      if (filter?.status) params.set('status', filter.status);
-      const res = await requestLaravelData<EmployeeLoan[]>(`/payroll/loans${params.size ? `?${params}` : ''}`);
-      return res && res.length > 0 ? res : INITIAL_EMPLOYEE_LOANS;
-    } catch {
-      return INITIAL_EMPLOYEE_LOANS;
-    }
+  getLoans(filter?: { employee_id?: string; status?: string }): Promise<EmployeeLoan[]> {
+    const params = new URLSearchParams();
+    if (filter?.employee_id) params.set('employee_id', filter.employee_id);
+    if (filter?.status) params.set('status', filter.status);
+    return requestLaravelData(`/payroll/loans${params.size ? `?${params}` : ''}`);
   }
 
   async createLoan(loan: {
@@ -533,68 +491,20 @@ export class LaravelPayrollRepository implements IPayrollRepository {
     disbursed_at?: string;
     notes?: string;
   }): Promise<EmployeeLoan> {
-    try {
-      return await requestLaravelData<EmployeeLoan>('/payroll/loans', {
-        method: 'POST',
-        body: JSON.stringify(loan),
-      });
-    } catch {
-      const matchedEmployee = INITIAL_EMPLOYEES.find((e) => e.id === loan.employee_id);
-      const totalPayable = loan.principal_amount * (1 + (loan.interest_rate || 0) / 100);
-      const newLoan: EmployeeLoan = {
-        id: `loan-${Date.now()}`,
-        employee_id: loan.employee_id,
-        employee: matchedEmployee
-          ? {
-              id: matchedEmployee.id,
-              name: `${matchedEmployee.firstName} ${matchedEmployee.lastName}`,
-              staff_id: matchedEmployee.staffId,
-              department_name: matchedEmployee.departmentName,
-            }
-          : undefined,
-        loan_number: `LN-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
-        loan_type: loan.loan_type,
-        principal_amount: loan.principal_amount,
-        interest_rate: loan.interest_rate || 0,
-        total_payable: totalPayable,
-        monthly_installment: loan.monthly_installment,
-        total_installments: loan.total_installments,
-        paid_installments: 0,
-        remaining_balance: totalPayable,
-        status: 'pending',
-        disbursed_at: loan.disbursed_at,
-        notes: loan.notes,
-        created_at: new Date().toISOString(),
-      };
-      INITIAL_EMPLOYEE_LOANS.unshift(newLoan);
-      return newLoan;
-    }
+    return requestLaravelData('/payroll/loans', {
+      method: 'POST',
+      body: JSON.stringify(loan),
+    });
   }
 
-  async approveLoan(id: string): Promise<EmployeeLoan> {
-    try {
-      return await requestLaravelData<EmployeeLoan>(`/payroll/loans/${encodeURIComponent(id)}/approve`, {
-        method: 'PATCH',
-      });
-    } catch {
-      const loan = INITIAL_EMPLOYEE_LOANS.find((l) => l.id === id);
-      if (loan) {
-        loan.status = 'active';
-        return loan;
-      }
-      throw new Error(`Loan ${id} not found.`);
-    }
+  approveLoan(id: string): Promise<EmployeeLoan> {
+    return requestLaravelData(`/payroll/loans/${encodeURIComponent(id)}/approve`, { method: 'PATCH' });
   }
 
-  async getDeductions(filter?: { employee_id?: string }): Promise<EmployeeDeduction[]> {
-    try {
-      const params = new URLSearchParams();
-      if (filter?.employee_id) params.set('employee_id', filter.employee_id);
-      const res = await requestLaravelData<EmployeeDeduction[]>(`/payroll/deductions${params.size ? `?${params}` : ''}`);
-      return res && res.length > 0 ? res : INITIAL_EMPLOYEE_DEDUCTIONS;
-    } catch {
-      return INITIAL_EMPLOYEE_DEDUCTIONS;
-    }
+  getDeductions(filter?: { employee_id?: string }): Promise<EmployeeDeduction[]> {
+    const params = new URLSearchParams();
+    if (filter?.employee_id) params.set('employee_id', filter.employee_id);
+    return requestLaravelData(`/payroll/deductions${params.size ? `?${params}` : ''}`);
   }
 
   async createDeduction(deduction: {
@@ -607,37 +517,14 @@ export class LaravelPayrollRepository implements IPayrollRepository {
     end_date?: string | null;
     is_recurring?: boolean;
   }): Promise<EmployeeDeduction> {
-    try {
-      return await requestLaravelData<EmployeeDeduction>('/payroll/deductions', {
-        method: 'POST',
-        body: JSON.stringify(deduction),
-      });
-    } catch {
-      const newDed: EmployeeDeduction = {
-        id: `ded-${Date.now()}`,
-        employee_id: deduction.employee_id,
-        title: deduction.title,
-        deduction_type: deduction.deduction_type,
-        amount: deduction.amount,
-        is_percentage: !!deduction.is_percentage,
-        start_date: deduction.start_date,
-        end_date: deduction.end_date,
-        is_recurring: deduction.is_recurring ?? true,
-        is_active: true,
-        created_at: new Date().toISOString(),
-      };
-      INITIAL_EMPLOYEE_DEDUCTIONS.unshift(newDed);
-      return newDed;
-    }
+    return requestLaravelData('/payroll/deductions', {
+      method: 'POST',
+      body: JSON.stringify(deduction),
+    });
   }
 
-  async getProvidentFunds(): Promise<EmployeeProvidentFund[]> {
-    try {
-      const res = await requestLaravelData<EmployeeProvidentFund[]>('/payroll/provident-funds');
-      return res && res.length > 0 ? res : INITIAL_PROVIDENT_FUNDS;
-    } catch {
-      return INITIAL_PROVIDENT_FUNDS;
-    }
+  getProvidentFunds(): Promise<EmployeeProvidentFund[]> {
+    return requestLaravelData('/payroll/provident-funds');
   }
 
   async createProvidentFund(data: {
@@ -646,26 +533,137 @@ export class LaravelPayrollRepository implements IPayrollRepository {
     employer_rate?: number;
     status?: 'active' | 'inactive';
   }): Promise<EmployeeProvidentFund> {
-    try {
-      return await requestLaravelData<EmployeeProvidentFund>('/payroll/provident-funds', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-    } catch {
-      const newPf: EmployeeProvidentFund = {
-        id: `pf-${Date.now()}`,
-        employee_id: data.employee_id,
-        employee_rate: data.employee_rate ?? 8.0,
-        employer_rate: data.employer_rate ?? 10.0,
-        total_employee_contribution: 0,
-        total_employer_contribution: 0,
-        current_balance: 0,
-        status: data.status || 'active',
-        created_at: new Date().toISOString(),
-      };
-      INITIAL_PROVIDENT_FUNDS.unshift(newPf);
-      return newPf;
-    }
+    return requestLaravelData('/payroll/provident-funds', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Excel Payroll Templates
+  getExcelTemplates(params?: { active_only?: boolean; entity_id?: string }): Promise<{ data: PayrollExcelTemplate[] }> {
+    const queryParams = new URLSearchParams();
+    if (params?.active_only !== undefined) queryParams.set('active_only', String(params.active_only));
+    if (params?.entity_id) queryParams.set('entity_id', params.entity_id);
+    return requestLaravelData(`/payroll/excel-templates${queryParams.size ? `?${queryParams}` : ''}`);
+  }
+
+  async createExcelTemplate(template: any): Promise<PayrollExcelTemplate> {
+    const { mappings, ...templateData } = template;
+    return requestLaravelData('/payroll/excel-templates', {
+      method: 'POST',
+      body: JSON.stringify(templateData),
+    });
+  }
+
+  getExcelTemplate(id: string): Promise<PayrollExcelTemplate> {
+    return requestLaravelData(`/payroll/excel-templates/${encodeURIComponent(id)}`);
+  }
+
+  async updateExcelTemplate(id: string, updates: Partial<PayrollExcelTemplate>): Promise<PayrollExcelTemplate> {
+    return requestLaravelData(`/payroll/excel-templates/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async deleteExcelTemplate(id: string): Promise<void> {
+    await requestLaravel(`/payroll/excel-templates/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  }
+
+  async getImportBatches(): Promise<{ data: PayrollImportBatch[] }> {
+    return requestLaravelData('/payroll/import-batches');
+  }
+
+  // Excel Upload & Import
+  async previewExcelUpload(file: File, templateId?: string): Promise<ExcelPreviewResponse> {
+    const form = new FormData();
+    form.set('file', file);
+    if (templateId) form.set('template_id', String(templateId));
+    return requestLaravelData('/payroll/excel-preview', {
+      method: 'POST',
+      body: form,
+    });
+  }
+
+  async importExcelPayroll(data: any): Promise<PayrollImportBatch> {
+    const form = new FormData();
+    form.set('file', data.file);
+    form.set('mappings', JSON.stringify(data.mappings));
+    if (data.template_id) form.set('template_id', String(data.template_id));
+    if (data.save_as_template) form.set('save_as_template', 'true');
+    if (data.template_name) form.set('template_name', data.template_name);
+    if (data.import_options) form.set('import_options', JSON.stringify(data.import_options));
+    return requestLaravelData('/payroll/excel-import', {
+      method: 'POST',
+      body: form,
+    });
+  }
+
+  getImportBatch(id: string): Promise<PayrollImportBatch> {
+    return requestLaravelData(`/payroll/import-batches/${encodeURIComponent(id)}`);
+  }
+
+  async updateImportRow(id: string, updates: any): Promise<PayrollImportRow> {
+    return requestLaravelData(`/payroll/import-rows/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async processImportBatch(id: string, options: any): Promise<any> {
+    return requestLaravelData(`/payroll/import-batches/${encodeURIComponent(id)}/process`, {
+      method: 'POST',
+      body: JSON.stringify(options),
+    });
+  }
+
+  // Payroll Adjustments
+  getAdjustments(filter?: { payroll_run_id?: string; employee_id?: string }): Promise<{ data: PayrollAdjustment[] }> {
+    const params = new URLSearchParams();
+    if (filter?.payroll_run_id) params.set('payroll_run_id', filter.payroll_run_id);
+    if (filter?.employee_id) params.set('employee_id', filter.employee_id);
+    return requestLaravelData(`/payroll/adjustments${params.size ? `?${params}` : ''}`);
+  }
+
+  async createAdjustment(adjustment: Omit<PayrollAdjustment, 'id' | 'created_at' | 'updated_at' | 'employee' | 'adjuster' | 'difference'>): Promise<PayrollAdjustment> {
+    return requestLaravelData('/payroll/adjustments', {
+      method: 'POST',
+      body: JSON.stringify(adjustment),
+    });
+  }
+
+  // Attendance Penalty Rules
+  getPenaltyRules(params?: { entity_id?: string; active_only?: boolean }): Promise<AttendancePenaltyRule[]> {
+    const queryParams = new URLSearchParams();
+    if (params?.entity_id) queryParams.set('entity_id', params.entity_id);
+    if (params?.active_only !== undefined) queryParams.set('active_only', String(params.active_only));
+    return requestLaravelData(`/payroll/penalty-rules${queryParams.size ? `?${queryParams}` : ''}`);
+  }
+
+  async createPenaltyRule(rule: Omit<AttendancePenaltyRule, 'id' | 'created_at' | 'updated_at' | 'entity'>): Promise<AttendancePenaltyRule> {
+    return requestLaravelData('/payroll/penalty-rules', {
+      method: 'POST',
+      body: JSON.stringify(rule),
+    });
+  }
+
+  async updatePenaltyRule(id: string, updates: Partial<AttendancePenaltyRule>): Promise<AttendancePenaltyRule> {
+    return requestLaravelData(`/payroll/penalty-rules/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async deletePenaltyRule(id: string): Promise<void> {
+    await requestLaravel(`/payroll/penalty-rules/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  }
+
+  // Proration Records
+  getProrationRecords(filter?: { payroll_run_id?: string; employee_id?: string }): Promise<{ data: EmployeeProrationRecord[] }> {
+    const params = new URLSearchParams();
+    if (filter?.payroll_run_id) params.set('payroll_run_id', filter.payroll_run_id);
+    if (filter?.employee_id) params.set('employee_id', filter.employee_id);
+    return requestLaravelData(`/payroll/proration-records${params.size ? `?${params}` : ''}`);
   }
 }
 

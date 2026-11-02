@@ -59,7 +59,12 @@ const getInitialModule = (): NavModule => {
 const MainAppLayout: React.FC = () => {
   const { backendEnabled, isAuthenticated, currentRole, currentUser } = useAuth();
   const shouldReduceMotion = useReducedMotion();
-  const [currentModule, setCurrentModuleState] = useState<NavModule>(getInitialModule);
+  const [currentModule, setCurrentModuleState] = useState<NavModule>(() => {
+    const initial = getInitialModule();
+    // Validate module access for the current user; fall back to dashboard if access denied
+    const accessCheck = checkRouteAccess(currentUser, initial);
+    return accessCheck.allowed ? initial : 'dashboard';
+  });
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const setCurrentModule = (mod: NavModule) => {
@@ -73,13 +78,19 @@ const MainAppLayout: React.FC = () => {
   React.useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '') as NavModule;
-      if (VALID_MODULES.includes(hash)) {
-        setCurrentModuleState(hash);
+      let module = hash;
+      // Validate module access for the current user; fall back to dashboard if access denied
+      const accessCheck = checkRouteAccess(currentUser, module as NavModule);
+      if (!accessCheck.allowed) {
+        module = 'dashboard';
+      }
+      if (VALID_MODULES.includes(module)) {
+        setCurrentModuleState(module);
       }
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+  }, [currentUser]);
 
   // Desktop sidebar collapse state with localStorage persistence
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {

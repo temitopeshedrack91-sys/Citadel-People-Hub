@@ -49,19 +49,13 @@ import {
   Employee,
 } from '../../types';
 import { talentRepository, employeeRepository, auditRepository } from '../../services';
-import {
-  DEFAULT_CHECKLIST_TEMPLATES,
-  createCitadelOnboardingTasks,
-  INITIAL_EMPLOYEES,
-  INITIAL_ONBOARDING_JOURNEYS,
-} from '../../data/mockData';
 import { useAuth } from '../../context/AuthContext';
 import { ChevronStepper } from '../common/ChevronStepper';
 
 export const OnboardingView: React.FC = () => {
   const { currentUser, currentRole } = useAuth();
   const [journeys, setJourneys] = useState<OnboardingJourney[]>([]);
-  const [selectedJourneyId, setSelectedJourneyId] = useState<string>('onboard-1');
+  const [selectedJourneyId, setSelectedJourneyId] = useState<string>('');
   const [activeTab, setActiveTab] = useState<
     'schedule' | 'milestones' | 'documents' | 'orientation' | 'accountability' | 'welcome-email'
   >('schedule');
@@ -69,8 +63,10 @@ export const OnboardingView: React.FC = () => {
   const [onboardingViewMode, setOnboardingViewMode] = useState<'roster' | 'detail'>('roster');
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
   const [checklistFilter, setChecklistFilter] = useState<string>('All');
-  const [checklistTemplates, setChecklistTemplates] = useState<OnboardingChecklistTemplate[]>(DEFAULT_CHECKLIST_TEMPLATES);
-  const [employeesList, setEmployeesList] = useState<Employee[]>(INITIAL_EMPLOYEES);
+  const [checklistTemplates, setChecklistTemplates] = useState<OnboardingChecklistTemplate[]>([]);
+  const [employeesList, setEmployeesList] = useState<Employee[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isStartOnboardingModalOpen, setIsStartOnboardingModalOpen] = useState(false);
   const [isAddChecklistModalOpen, setIsAddChecklistModalOpen] = useState(false);
   const [actionMenuOpenId, setActionMenuOpenId] = useState<string | null>(null);
@@ -78,7 +74,7 @@ export const OnboardingView: React.FC = () => {
   // Start Onboarding Form state
   const [startEmployeeId, setStartEmployeeId] = useState('');
   const [startChecklistId, setStartChecklistId] = useState('');
-  const [startDateInput, setStartDateInput] = useState('2026-10-29');
+  const [startDateInput, setStartDateInput] = useState('');
   const [startOnboardingStep, setStartOnboardingStep] = useState<number>(1);
   const [selectedMilestonePhase, setSelectedMilestonePhase] = useState<number>(0);
 
@@ -97,6 +93,7 @@ export const OnboardingView: React.FC = () => {
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastIsError, setToastIsError] = useState(false);
 
   // New task form state
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -110,10 +107,13 @@ export const OnboardingView: React.FC = () => {
   const [newTaskConditionNote, setNewTaskConditionNote] = useState('');
   const [newTaskRequiresHr, setNewTaskRequiresHr] = useState(false);
 
-  const showToast = (msg: string) => {
+  const showToast = (msg: string, isError = false) => {
+    setToastIsError(isError);
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
+
+  const errorMessage = (error: unknown): string => error instanceof Error ? error.message : 'The request failed.';
 
   const formatDateDisplay = (dateStr?: string) => {
     if (!dateStr) return '';
@@ -125,25 +125,28 @@ export const OnboardingView: React.FC = () => {
   };
 
   const loadData = async () => {
-    try {
-      const [list, emps, tpls] = await Promise.all([
-        talentRepository.getOnboardingJourneys().catch(() => INITIAL_ONBOARDING_JOURNEYS),
-        employeeRepository.getAll().catch(() => INITIAL_EMPLOYEES),
-        talentRepository.getChecklistTemplates
-          ? talentRepository.getChecklistTemplates().catch(() => DEFAULT_CHECKLIST_TEMPLATES)
-          : Promise.resolve(DEFAULT_CHECKLIST_TEMPLATES),
-      ]);
-      setJourneys(list && list.length > 0 ? list : INITIAL_ONBOARDING_JOURNEYS);
-      setEmployeesList(emps && emps.length > 0 ? emps : INITIAL_EMPLOYEES);
-      setChecklistTemplates(tpls && tpls.length > 0 ? tpls : DEFAULT_CHECKLIST_TEMPLATES);
-      if (list && list.length > 0 && !list.find((j) => j.id === selectedJourneyId)) {
-        setSelectedJourneyId(list[0].id);
+    setIsLoading(true);
+    const results = await Promise.allSettled([
+      talentRepository.getOnboardingJourneys(),
+      employeeRepository.getAll(),
+      talentRepository.getChecklistTemplates
+        ? talentRepository.getChecklistTemplates()
+        : Promise.reject(new Error('Checklist template persistence is unavailable.')),
+    ]);
+    const failures: string[] = [];
+    const [journeyResult, employeeResult, templateResult] = results;
+    if (journeyResult.status === 'fulfilled') {
+      setJourneys(journeyResult.value);
+      if (journeyResult.value.length > 0 && !journeyResult.value.some((journey) => journey.id === selectedJourneyId)) {
+        setSelectedJourneyId(journeyResult.value[0].id);
       }
-    } catch {
-      setJourneys(INITIAL_ONBOARDING_JOURNEYS);
-      setEmployeesList(INITIAL_EMPLOYEES);
-      setChecklistTemplates(DEFAULT_CHECKLIST_TEMPLATES);
-    }
+    } else failures.push(`Onboarding journeys: ${errorMessage(journeyResult.reason)}`);
+    if (employeeResult.status === 'fulfilled') setEmployeesList(employeeResult.value);
+    else failures.push(`Employees: ${errorMessage(employeeResult.reason)}`);
+    if (templateResult.status === 'fulfilled') setChecklistTemplates(templateResult.value);
+    else failures.push(`Checklist templates: ${errorMessage(templateResult.reason)}`);
+    setLoadError(failures.length ? failures.join(' ') : null);
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -153,113 +156,106 @@ export const OnboardingView: React.FC = () => {
   const currentJourney = journeys.find((j) => j.id === selectedJourneyId) || journeys[0];
 
   const handleToggleTask = async (journeyId: string, taskId: string, currentVal: boolean) => {
-    const updated = await talentRepository.toggleTaskCompletion(journeyId, taskId, !currentVal);
-    setJourneys(journeys.map((j) => (j.id === journeyId ? updated : j)));
-
-    await auditRepository.logAction({
-      userId: currentUser.id,
-      userName: currentUser.name,
-      userRole: currentRole,
-      module: 'Talent & Onboarding',
-      action: !currentVal ? 'Completed Onboarding Task' : 'Unchecked Onboarding Task',
-      recordAffectedId: journeyId,
-      recordAffectedTitle: `Journey for ${updated.employeeName}`,
-      previousValue: currentVal ? 'Done' : 'Pending',
-      newValue: !currentVal ? 'Done' : 'Pending',
-      severity: 'Info',
-    });
-
-    showToast(!currentVal ? 'Task confirmed as completed.' : 'Task reverted to pending.');
+    try {
+      const updated = await talentRepository.toggleTaskCompletion(journeyId, taskId, !currentVal);
+      setJourneys((previous) => previous.map((journey) => journey.id === journeyId ? updated : journey));
+      await auditRepository.logAction({
+        userId: currentUser.id,
+        userName: currentUser.name,
+        userRole: currentRole,
+        module: 'Talent & Onboarding',
+        action: !currentVal ? 'Completed Onboarding Task' : 'Unchecked Onboarding Task',
+        recordAffectedId: journeyId,
+        recordAffectedTitle: `Journey for ${updated.employeeName}`,
+        previousValue: currentVal ? 'Done' : 'Pending',
+        newValue: !currentVal ? 'Done' : 'Pending',
+        severity: 'Info',
+      });
+      showToast(!currentVal ? 'Task confirmed as completed.' : 'Task reverted to pending.');
+    } catch (error) {
+      showToast(`Task update failed: ${errorMessage(error)}`, true);
+    }
   };
 
   const handleToggleDocument = async (docId: string, currentVal: boolean) => {
     if (!currentJourney) return;
-    if (talentRepository.toggleDocumentSubmission) {
+    try {
+      if (!talentRepository.toggleDocumentSubmission) throw new Error('Document status persistence is unavailable.');
       const updated = await talentRepository.toggleDocumentSubmission(currentJourney.id, docId, !currentVal);
-      setJourneys(journeys.map((j) => (j.id === currentJourney.id ? updated : j)));
-    } else {
-      const updatedDocs = (currentJourney.requiredDocuments || []).map((d) =>
-        d.id === docId ? { ...d, isSubmitted: !currentVal, submittedAt: !currentVal ? new Date().toISOString().split('T')[0] : undefined } : d
-      );
-      const updated = { ...currentJourney, requiredDocuments: updatedDocs };
-      setJourneys(journeys.map((j) => (j.id === currentJourney.id ? updated : j)));
+      setJourneys((previous) => previous.map((journey) => journey.id === currentJourney.id ? updated : journey));
+      showToast(!currentVal ? 'Document marked as received.' : 'Document marked as pending.');
+    } catch (error) {
+      showToast(`Document update failed: ${errorMessage(error)}`, true);
     }
-    showToast(!currentVal ? 'Document marked as received.' : 'Document marked as pending.');
   };
 
   const handleToggleOrientation = async (itemId: string, currentVal: boolean) => {
     if (!currentJourney) return;
-    if (talentRepository.toggleOrientationItem) {
+    try {
+      if (!talentRepository.toggleOrientationItem) throw new Error('Orientation status persistence is unavailable.');
       const updated = await talentRepository.toggleOrientationItem(currentJourney.id, itemId, !currentVal);
-      setJourneys(journeys.map((j) => (j.id === currentJourney.id ? updated : j)));
-    } else {
-      const updatedItems = (currentJourney.orientationItems || []).map((i) =>
-        i.id === itemId ? { ...i, isCompleted: !currentVal } : i
-      );
-      const updated = { ...currentJourney, orientationItems: updatedItems };
-      setJourneys(journeys.map((j) => (j.id === currentJourney.id ? updated : j)));
+      setJourneys((previous) => previous.map((journey) => journey.id === currentJourney.id ? updated : journey));
+      showToast(!currentVal ? 'Orientation step verified.' : 'Orientation step reverted.');
+    } catch (error) {
+      showToast(`Orientation update failed: ${errorMessage(error)}`, true);
     }
-    showToast(!currentVal ? 'Orientation step verified.' : 'Orientation step reverted.');
   };
 
   const handleSendReminder = async (task: OnboardingTask) => {
     if (!currentJourney) return;
-    if (talentRepository.sendTaskReminder) {
-      await talentRepository.sendTaskReminder(currentJourney.id, task.id);
+    try {
+      if (!talentRepository.sendTaskReminder) throw new Error('Reminder delivery is not configured. No reminder was sent.');
+      const sent = await talentRepository.sendTaskReminder(currentJourney.id, task.id);
+      if (!sent) throw new Error('The reminder service did not confirm delivery.');
+      const updatedTasks = currentJourney.tasks.map((item) => item.id === task.id ? { ...item, reminderSentAt: new Date().toISOString() } : item);
+      setJourneys((previous) => previous.map((journey) => journey.id === currentJourney.id ? { ...journey, tasks: updatedTasks } : journey));
+      showToast(`Reminder sent to ${task.assignedToName || task.assignedRole} for "${task.title}".`);
+    } catch (error) {
+      showToast(`Reminder failed: ${errorMessage(error)}`, true);
     }
-    const updatedTasks = currentJourney.tasks.map((t) =>
-      t.id === task.id ? { ...t, reminderSentAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) } : t
-    );
-    setJourneys(journeys.map((j) => (j.id === currentJourney.id ? { ...j, tasks: updatedTasks } : j)));
-    showToast(`Reminder sent to ${task.assignedToName || task.assignedRole} for "${task.title}".`);
   };
 
   const handleSendBulkReminders = () => {
-    if (!currentJourney) return;
-    const pendingTasks = currentJourney.tasks.filter((t) => !t.isCompleted);
-    showToast(`Sent reminders for ${pendingTasks.length} pending onboarding items.`);
+    showToast('Bulk reminder delivery is not configured. No reminders were sent.', true);
   };
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim() || !currentJourney) return;
+    if (!newTaskDesc.trim() || !newTaskDueDate.trim()) {
+      showToast('Enter a task description and due date before saving.', true);
+      return;
+    }
 
     const taskPayload: Omit<OnboardingTask, 'id' | 'isCompleted'> = {
       title: newTaskTitle.trim(),
-      description: newTaskDesc.trim() || 'Onboarding obligation per Citadel induction procedure.',
+      description: newTaskDesc.trim(),
       department: newTaskDept,
       timeline: newTaskTimeline,
       assignedRole: newTaskRole,
       assignedToName: newTaskAssignee.trim() || undefined,
-      dueDate: newTaskDueDate.trim() || newTaskTimeline,
+      dueDate: newTaskDueDate.trim(),
       isConditional: newTaskIsConditional,
       conditionNote: newTaskConditionNote.trim() || undefined,
       requiresHrConfirmation: newTaskRequiresHr,
     };
 
-    if (talentRepository.createOnboardingTask) {
+    try {
+      if (!talentRepository.createOnboardingTask) throw new Error('Onboarding task persistence is unavailable.');
       const updated = await talentRepository.createOnboardingTask(currentJourney.id, taskPayload);
-      setJourneys(journeys.map((j) => (j.id === currentJourney.id ? updated : j)));
-    } else {
-      const newTask: OnboardingTask = {
-        ...taskPayload,
-        id: `task-custom-${Date.now()}`,
-        isCompleted: false,
-      };
-      const updated = { ...currentJourney, tasks: [...currentJourney.tasks, newTask] };
-      setJourneys(journeys.map((j) => (j.id === currentJourney.id ? updated : j)));
+      setJourneys((previous) => previous.map((journey) => journey.id === currentJourney.id ? updated : journey));
+      setNewTaskTitle('');
+      setNewTaskDesc('');
+      setNewTaskAssignee('');
+      setNewTaskDueDate('');
+      setNewTaskIsConditional(false);
+      setNewTaskConditionNote('');
+      setNewTaskRequiresHr(false);
+      setIsNewTaskModalOpen(false);
+      showToast('New onboarding task saved.');
+    } catch (error) {
+      showToast(`Onboarding task could not be saved: ${errorMessage(error)}`, true);
     }
-
-    // Reset form
-    setNewTaskTitle('');
-    setNewTaskDesc('');
-    setNewTaskAssignee('');
-    setNewTaskDueDate('');
-    setNewTaskIsConditional(false);
-    setNewTaskConditionNote('');
-    setNewTaskRequiresHr(false);
-    setIsNewTaskModalOpen(false);
-    showToast('New onboarding task created successfully.');
   };
 
   const handleSaveNewOnboarding = async (e: React.FormEvent) => {
@@ -273,175 +269,120 @@ export const OnboardingView: React.FC = () => {
       return;
     }
 
-    const availableEmployees = employeesList && employeesList.length > 0 ? employeesList : INITIAL_EMPLOYEES;
-    const availableChecklists = checklistTemplates && checklistTemplates.length > 0 ? checklistTemplates : DEFAULT_CHECKLIST_TEMPLATES;
-    const employee = availableEmployees.find((e) => e.id === startEmployeeId) || INITIAL_EMPLOYEES.find((e) => e.id === startEmployeeId);
-    const template = availableChecklists.find((t) => t.id === startChecklistId) || DEFAULT_CHECKLIST_TEMPLATES.find((t) => t.id === startChecklistId);
+    if (!startDateInput) {
+      showToast('Select an onboarding start date.', true);
+      return;
+    }
+    const employee = employeesList.find((item) => item.id === startEmployeeId);
+    const template = checklistTemplates.find((item) => item.id === startChecklistId);
     if (!employee || !template) {
       showToast('Please select both a valid employee and checklist template.');
       return;
     }
 
-    const newJourney: OnboardingJourney = {
-      id: `onboard-${Date.now()}`,
+    const journeyRequest: OnboardingJourney = {
+      id: '',
       employeeId: employee.id,
       employeeName: employee.fullName,
       staffId: employee.staffId,
       jobTitle: employee.jobTitle,
       entityName: employee.entityName,
       departmentName: employee.departmentName,
-      startDate: startDateInput || '2026-10-29',
+      startDate: startDateInput,
       checklistId: template.id,
       checklistTitle: template.title,
       overallProgressPercent: 0,
       status: 'In Progress',
-      avatarUrl: (employee as any).avatarUrl,
-      mentorName: employee.managerName || 'Assigned Lead',
-      mentorBuddyName: 'Assigned Buddy',
+      avatarUrl: employee.profilePhoto,
+      mentorName: employee.managerName || '',
+      mentorBuddyName: '',
       teamRoster: {
-        managerName: employee.managerName || 'Assigned Lead',
-        pccmOfficerName: 'Dr. Bukola Adeleke',
-        itLeadName: 'Femi Olatunji',
-        financeLeadName: 'Kemi Adebayo',
-        mentorBuddyName: 'Assigned Buddy',
+        managerName: employee.managerName || '',
+        pccmOfficerName: '',
+        itLeadName: '',
+        financeLeadName: '',
+        mentorBuddyName: '',
       },
-      requiredDocuments: [
-        { id: 'doc-bio', name: 'Employee Bio-Data Form', isSubmitted: true, submittedAt: startDateInput },
-        { id: 'doc-emg', name: 'Emergency Contact Information', isSubmitted: true, submittedAt: startDateInput },
-        { id: 'doc-ben', name: 'Benefits Enrollment Paperwork (HMO / Pension)', isSubmitted: false },
-        { id: 'doc-pay', name: 'Payroll & Bank Account Details', isSubmitted: false },
-        { id: 'doc-nda', name: 'Non-Disclosure & Confidentiality Agreement (NDA)', isSubmitted: false },
-        { id: 'doc-hbk', name: 'Employee Handbook & Code of Conduct Sign-off', isSubmitted: false },
-        { id: 'doc-sop', name: 'Standard Operating Procedure (SOP) Manual Acknowledgement', isSubmitted: false },
-      ],
-      orientationItems: [
-        { id: 'ori-tour', name: 'Show new hires office space, parking spots & break room', isCompleted: false },
-        { id: 'ori-id', name: 'Create Employee ID & Biometric Access Pass', isCompleted: false },
-        { id: 'ori-desk', name: 'Set up work space, computer, phone, and supplies', isCompleted: false },
-        { id: 'ori-gift', name: 'Place Citadel Welcome Gift (Swag Mug, T-Shirt, Stationery) on desk', isCompleted: false },
-      ],
-      tasks: (template.tasks && template.tasks.length > 0)
-        ? template.tasks.map((t, idx) => ({ ...t, id: `task-${Date.now()}-${idx}` }))
-        : createCitadelOnboardingTasks(
-            employee.fullName,
-            employee.managerName || 'Assigned Lead',
-            'Dr. Bukola Adeleke',
-            'Femi Olatunji',
-            'Kemi Adebayo',
-            'Assigned Buddy',
-            'new'
-          ),
+      requiredDocuments: [],
+      orientationItems: [],
+      tasks: template.tasks || [],
     };
 
-    if (talentRepository.createOnboardingJourney) {
-      await talentRepository.createOnboardingJourney(newJourney);
+    try {
+      if (!talentRepository.createOnboardingJourney) throw new Error('Onboarding journey persistence is unavailable.');
+      const newJourney = await talentRepository.createOnboardingJourney(journeyRequest);
+      setJourneys((previous) => [newJourney, ...previous]);
+      setSelectedJourneyId(newJourney.id);
+      setIsStartOnboardingModalOpen(false);
+      setStartEmployeeId('');
+      setStartChecklistId('');
+      setStartDateInput('');
+      setMainTab('employee_onboardings');
+      setOnboardingViewMode('roster');
+      await auditRepository.logAction({
+        userId: currentUser.id,
+        userName: currentUser.name,
+        userRole: currentRole,
+        module: 'Talent & Onboarding',
+        action: 'Initiated Onboarding Journey',
+        recordAffectedId: newJourney.id,
+        recordAffectedTitle: `Onboarding for ${newJourney.employeeName} (${newJourney.checklistTitle})`,
+        newValue: 'In Progress',
+        severity: 'Info',
+      });
+      showToast(`Onboarding journey saved for ${newJourney.employeeName}.`);
+    } catch (error) {
+      showToast(`Onboarding journey could not be saved: ${errorMessage(error)}`, true);
     }
-
-    setJourneys([newJourney, ...journeys]);
-    setSelectedJourneyId(newJourney.id);
-    setIsStartOnboardingModalOpen(false);
-    setStartEmployeeId('');
-    setStartChecklistId('');
-    setMainTab('employee_onboardings');
-    setOnboardingViewMode('roster');
-
-    await auditRepository.logAction({
-      userId: currentUser.id,
-      userName: currentUser.name,
-      userRole: currentRole,
-      module: 'Talent & Onboarding',
-      action: 'Initiated Onboarding Journey',
-      recordAffectedId: newJourney.id,
-      recordAffectedTitle: `Onboarding for ${newJourney.employeeName} (${newJourney.checklistTitle})`,
-      newValue: 'In Progress',
-      severity: 'Info',
-    });
-
-    showToast(`Onboarding journey initiated for ${newJourney.employeeName}.`);
   };
 
   const handleSaveNewChecklist = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newChecklistTitle.trim()) {
-      showToast('Please provide a title for the checklist template.');
+    if (!newChecklistTitle.trim() || !newChecklistTarget.trim() || !newChecklistDuration.trim()) {
+      showToast('Enter a title, target audience, and duration for the checklist template.', true);
       return;
     }
 
-    const template: OnboardingChecklistTemplate = {
-      id: `template-${Date.now()}`,
+    const templateRequest: OnboardingChecklistTemplate = {
+      id: '',
       title: newChecklistTitle.trim(),
       category: newChecklistCategory,
-      targetAudience: newChecklistTarget.trim() || 'All New Staff',
-      duration: newChecklistDuration.trim() || '1 Month',
-      taskCount: 6,
-      description: newChecklistDesc.trim() || 'Departmental onboarding and compliance checklist template.',
-      createdAt: new Date().toISOString().split('T')[0],
-      tasks: [
-        {
-          id: `t-${Date.now()}-1`,
-          title: 'Initial Welcome & Workspace Setup',
-          description: 'Introduce new hire to team members, set up workstation and communication tools.',
-          department: 'Manager',
-          timeline: 'Day 1',
-          assignedRole: 'Department Head',
-          dueDate: 'Day 1',
-          isCompleted: false,
-        },
-        {
-          id: `t-${Date.now()}-2`,
-          title: 'Core Tools & System Credentials Provisioning',
-          description: 'Provision role-based software access, security tokens, and corporate directory.',
-          department: 'IT',
-          timeline: 'Week 1',
-          assignedRole: 'ICT',
-          dueDate: 'Week 1',
-          isCompleted: false,
-        },
-      ],
+      targetAudience: newChecklistTarget.trim(),
+      duration: newChecklistDuration.trim(),
+      taskCount: 0,
+      description: newChecklistDesc.trim(),
+      tasks: [],
     };
 
-    if (talentRepository.createChecklistTemplate) {
-      await talentRepository.createChecklistTemplate(template);
+    try {
+      if (!talentRepository.createChecklistTemplate) throw new Error('Checklist template persistence is unavailable.');
+      const template = await talentRepository.createChecklistTemplate(templateRequest);
+      setChecklistTemplates((previous) => [template, ...previous]);
+      if (isStartOnboardingModalOpen) setStartChecklistId(template.id);
+      setNewChecklistTitle('');
+      setNewChecklistTarget('');
+      setNewChecklistDesc('');
+      setIsAddChecklistModalOpen(false);
+      await auditRepository.logAction({
+        userId: currentUser.id,
+        userName: currentUser.name,
+        userRole: currentRole,
+        module: 'Talent & Onboarding',
+        action: 'Created Checklist Template',
+        recordAffectedId: template.id,
+        recordAffectedTitle: template.title,
+        newValue: template.category,
+        severity: 'Info',
+      });
+      showToast(`Checklist "${template.title}" saved.`);
+    } catch (error) {
+      showToast(`Checklist could not be saved: ${errorMessage(error)}`, true);
     }
-
-    const updated = [template, ...checklistTemplates];
-    setChecklistTemplates(updated);
-
-    if (isStartOnboardingModalOpen) {
-      setStartChecklistId(template.id);
-    }
-
-    setNewChecklistTitle('');
-    setNewChecklistTarget('');
-    setNewChecklistDesc('');
-    setIsAddChecklistModalOpen(false);
-
-    await auditRepository.logAction({
-      userId: currentUser.id,
-      userName: currentUser.name,
-      userRole: currentRole,
-      module: 'Talent & Onboarding',
-      action: 'Created Checklist Template',
-      recordAffectedId: template.id,
-      recordAffectedTitle: template.title,
-      newValue: template.category,
-      severity: 'Info',
-    });
-
-    showToast(`Checklist "${template.title}" created successfully.`);
   };
 
   const handleToggleJourneyStatus = (journeyId: string) => {
-    const updated = journeys.map((j) => {
-      if (j.id === journeyId) {
-        const nextStatus: 'In Progress' | 'Completed' = j.status === 'Completed' ? 'In Progress' : 'Completed';
-        const nextPercent = nextStatus === 'Completed' ? 100 : j.overallProgressPercent;
-        return { ...j, status: nextStatus, overallProgressPercent: nextPercent };
-      }
-      return j;
-    });
-    setJourneys(updated);
-    showToast('Onboarding status updated.');
+    void journeyId;
+    showToast('Onboarding status changes require an approved completion rule and are not saved yet.', true);
   };
 
   // Filter tasks based on Department, Timeline, Status, and Search
@@ -498,11 +439,14 @@ export const OnboardingView: React.FC = () => {
     <div className="space-y-6">
       {/* Toast Notification Banner */}
       {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 bg-[#1E1E1E] text-white px-4 py-2.5 rounded-xl shadow-lg border border-[#D4AF37]/40 flex items-center gap-2 text-xs font-bold animate-fade-in">
-          <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />
+        <div role={toastIsError ? 'alert' : 'status'} className={`fixed top-20 right-6 z-50 bg-[#1E1E1E] text-white px-4 py-2.5 rounded-xl shadow-lg border flex items-center gap-2 text-xs font-bold animate-fade-in ${toastIsError ? 'border-rose-500/70' : 'border-[#D4AF37]/40'}`}>
+          {toastIsError ? <AlertTriangle className="w-4 h-4 text-rose-400" /> : <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />}
           <span>{toastMessage}</span>
         </div>
       )}
+
+      {loadError && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-800">Some onboarding data could not be loaded. {loadError}</div>}
+      {isLoading && <div role="status" className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-semibold text-slate-600">Loading onboarding data…</div>}
 
       {/* Top Navigation & Action Header (Matching Screenshot 2) */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
@@ -512,6 +456,7 @@ export const OnboardingView: React.FC = () => {
             onClick={() => {
               setStartEmployeeId('');
               setStartChecklistId('');
+              setStartDateInput('');
               setStartOnboardingStep(1);
               setIsStartOnboardingModalOpen(true);
             }}
@@ -890,6 +835,7 @@ export const OnboardingView: React.FC = () => {
                       onClick={() => {
                         setStartChecklistId(tpl.id);
                         setStartEmployeeId('');
+                        setStartDateInput('');
                         setStartOnboardingStep(1);
                         setIsStartOnboardingModalOpen(true);
                       }}
@@ -1055,7 +1001,7 @@ export const OnboardingView: React.FC = () => {
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-700 font-semibold mt-2">
                 <span>Resumption Date: <strong className="text-black">{currentJourney.startDate}</strong></span>
                 <span>•</span>
-                <span>Unit Manager: <strong className="text-black">{currentJourney.teamRoster?.managerName || 'Assigned Lead'}</strong></span>
+                <span>Unit Manager: <strong className="text-black">{currentJourney.teamRoster?.managerName || 'Not assigned'}</strong></span>
                 <span>•</span>
                 <span>Assigned Buddy: <strong className="text-black">{currentJourney.mentorBuddyName || currentJourney.mentorName}</strong></span>
               </div>
@@ -2113,7 +2059,7 @@ export const OnboardingView: React.FC = () => {
                         required
                       >
                         <option value="">-- Select Employee --</option>
-                        {(employeesList && employeesList.length > 0 ? employeesList : INITIAL_EMPLOYEES).map((emp) => (
+                        {employeesList.map((emp) => (
                           <option key={emp.id} value={emp.id}>
                             {emp.fullName} ({emp.staffId} • {emp.jobTitle})
                           </option>
@@ -2125,7 +2071,7 @@ export const OnboardingView: React.FC = () => {
 
                   {/* Selected Employee Preview Card */}
                   {(() => {
-                    const selectedEmp = (employeesList && employeesList.length > 0 ? employeesList : INITIAL_EMPLOYEES).find((e) => e.id === startEmployeeId);
+                    const selectedEmp = employeesList.find((e) => e.id === startEmployeeId);
                     if (!selectedEmp) {
                       return (
                         <div className="rounded-xl border border-dashed border-slate-300 p-5 text-center bg-slate-50 text-slate-500">
@@ -2160,7 +2106,7 @@ export const OnboardingView: React.FC = () => {
                           </div>
                           <div>
                             <span className="text-slate-400 font-semibold block text-[10px] uppercase">Manager / Lead</span>
-                            <span className="text-slate-800 font-bold">{selectedEmp.managerName || 'Assigned Lead'}</span>
+                            <span className="text-slate-800 font-bold">{selectedEmp.managerName || 'Not assigned'}</span>
                           </div>
                         </div>
                       </div>
@@ -2196,7 +2142,7 @@ export const OnboardingView: React.FC = () => {
                         required
                       >
                         <option value="">-- Select Checklist --</option>
-                        {(checklistTemplates && checklistTemplates.length > 0 ? checklistTemplates : DEFAULT_CHECKLIST_TEMPLATES).map((tpl) => (
+                        {checklistTemplates.map((tpl) => (
                           <option key={tpl.id} value={tpl.id}>
                             {tpl.title} ({tpl.duration})
                           </option>
@@ -2208,7 +2154,7 @@ export const OnboardingView: React.FC = () => {
 
                   {/* Selected Checklist Template Preview */}
                   {(() => {
-                    const selectedTpl = (checklistTemplates && checklistTemplates.length > 0 ? checklistTemplates : DEFAULT_CHECKLIST_TEMPLATES).find((t) => t.id === startChecklistId);
+                    const selectedTpl = checklistTemplates.find((t) => t.id === startChecklistId);
                     if (!selectedTpl) {
                       return (
                         <div className="rounded-xl border border-dashed border-slate-300 p-5 text-center bg-slate-50 text-slate-500">
@@ -2278,7 +2224,7 @@ export const OnboardingView: React.FC = () => {
                       <div className="p-3 rounded-lg border border-slate-200 bg-white">
                         <span className="text-[10px] uppercase font-bold text-slate-400 block">Unit Manager</span>
                         <span className="font-bold text-slate-900 block mt-0.5">
-                          {((employeesList && employeesList.length > 0 ? employeesList : INITIAL_EMPLOYEES).find((e) => e.id === startEmployeeId))?.managerName || 'Assigned Lead'}
+                          {employeesList.find((e) => e.id === startEmployeeId)?.managerName || 'Not assigned'}
                         </span>
                       </div>
                       <div className="p-3 rounded-lg border border-slate-200 bg-white">
@@ -2320,8 +2266,8 @@ export const OnboardingView: React.FC = () => {
                   </div>
 
                   {(() => {
-                    const emp = (employeesList && employeesList.length > 0 ? employeesList : INITIAL_EMPLOYEES).find((e) => e.id === startEmployeeId);
-                    const tpl = (checklistTemplates && checklistTemplates.length > 0 ? checklistTemplates : DEFAULT_CHECKLIST_TEMPLATES).find((t) => t.id === startChecklistId);
+                    const emp = employeesList.find((e) => e.id === startEmployeeId);
+                    const tpl = checklistTemplates.find((t) => t.id === startChecklistId);
                     return (
                       <div className="border border-slate-200 rounded-xl bg-white p-4 space-y-3 text-xs">
                         <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">

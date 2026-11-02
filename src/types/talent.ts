@@ -17,6 +17,12 @@ export interface RecruitmentRequisition {
   targetDate: string;
   targetHiringDate?: string;
   hiringManager?: string;
+  workLocation?: string;
+  salaryBand?: string;
+  justification?: string;
+  interviewFormat?: string;
+  sourcingChannel?: string;
+  keyRequirements?: string;
   applicantsCount: number;
   candidates?: any[];
 }

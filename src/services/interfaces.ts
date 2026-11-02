@@ -17,6 +17,7 @@ import {
   WorkflowActionType,
   AuditLogEntry,
   HubDocument,
+  EmployeeDocumentInput,
   SystemNotification,
   OnboardingJourney,
   OnboardingTask,
@@ -29,7 +30,27 @@ import {
   EmployeeLoan,
   EmployeeDeduction,
   EmployeeProvidentFund,
+  PayrollExcelTemplate,
+  PayrollExcelMapping,
+  PayrollImportBatch,
+  PayrollImportRow,
+  PayrollAdjustment,
+  AttendancePenaltyRule,
+  EmployeeProrationRecord,
+  ExcelPreviewResponse,
 } from '../types';
+import { AttendanceImportSnapshot, BiometricPunch, UnmatchedDeviceRecord } from '../features/attendance-import';
+
+export interface BiometricImportBatchResult {
+  totalRecords: number;
+  matchedRecords: number;
+  unmatchedRecords: number;
+  duplicateRecords: number;
+  storedPunchCount: number;
+  unmatchedDeviceIds: UnmatchedDeviceRecord[];
+  importedAt: string;
+  fileName: string;
+}
 
 export interface IEmployeeRepository {
   getAll(filter?: { entityId?: string; departmentId?: string; search?: string }): Promise<Employee[]>;
@@ -60,6 +81,8 @@ export interface IAttendanceRepository {
   getRecentLogs(limit?: number): Promise<AttendanceRecord[]>;
   recordClockIn(employeeId: string, employeeName: string, staffId: string, entity: string, dept: string): Promise<AttendanceRecord>;
   recordClockOut(recordId: string): Promise<AttendanceRecord>;
+  getBiometricPunchSnapshot?(employees: Employee[]): Promise<AttendanceImportSnapshot>;
+  importBiometricPunches?(fileName: string, punches: BiometricPunch[]): Promise<BiometricImportBatchResult>;
 }
 
 export interface IWorkflowRepository {
@@ -82,6 +105,11 @@ export interface IAuditRepository {
 export interface IDocumentRepository {
   getAll(filter?: { category?: string; accessLevel?: string }): Promise<HubDocument[]>;
   uploadDocument(doc: Omit<HubDocument, 'id' | 'uploadedDate'>, file?: File): Promise<HubDocument>;
+  getEmployeeDocuments(employeeId: string, filter?: { category?: string }): Promise<HubDocument[]>;
+  uploadEmployeeDocument(employeeId: string, doc: EmployeeDocumentInput, file: File): Promise<HubDocument>;
+  replaceEmployeeDocument(employeeId: string, documentId: string, doc: EmployeeDocumentInput, file: File): Promise<HubDocument>;
+  deleteEmployeeDocument(employeeId: string, documentId: string): Promise<void>;
+  downloadEmployeeDocument(employeeId: string, documentId: string): Promise<Blob>;
 }
 
 export interface INotificationRepository {
@@ -99,14 +127,18 @@ export interface ITalentRepository {
   toggleOrientationItem?(journeyId: string, itemId: string, isCompleted: boolean): Promise<OnboardingJourney>;
   getRequisitions(): Promise<RecruitmentRequisition[]>;
   createRequisition?(requisition: RecruitmentRequisition): Promise<RecruitmentRequisition>;
+  updateRequisitionStatus?(id: string, status: RecruitmentRequisition['status']): Promise<RecruitmentRequisition>;
   createOnboardingJourney?(journey: OnboardingJourney): Promise<OnboardingJourney>;
   getChecklistTemplates?(): Promise<OnboardingChecklistTemplate[]>;
   createChecklistTemplate?(template: OnboardingChecklistTemplate): Promise<OnboardingChecklistTemplate>;
 }
 
 export interface IPayrollRepository {
+  // Salary Templates
   getSalaryTemplates(): Promise<SalaryTemplate[]>;
   createSalaryTemplate(template: Omit<SalaryTemplate, 'id' | 'created_at' | 'updated_at'>): Promise<SalaryTemplate>;
+
+  // Employee Assignments
   getAssignments(): Promise<EmployeeSalaryAssignment[]>;
   assignSalaryTemplate(assignment: {
     employee_id: string;
@@ -117,6 +149,8 @@ export interface IPayrollRepository {
     custom_deductions?: any[];
     notes?: string;
   }): Promise<EmployeeSalaryAssignment>;
+
+  // Payroll Runs
   getPayrollRuns(): Promise<PayrollRun[]>;
   getPayrollRun(id: string): Promise<PayrollRun>;
   generatePayrollRun(data: {
@@ -127,8 +161,12 @@ export interface IPayrollRepository {
     notes?: string;
   }): Promise<PayrollRun>;
   finalizePayrollRun(id: string): Promise<PayrollRun>;
+
+  // Payslips
   getPayslip(id: string): Promise<PayrollItem>;
   markPayslipPaid(id: string, paymentMethod?: string): Promise<PayrollItem>;
+
+  // Loans
   getLoans(filter?: { employee_id?: string; status?: string }): Promise<EmployeeLoan[]>;
   createLoan(loan: {
     employee_id: string;
@@ -141,6 +179,8 @@ export interface IPayrollRepository {
     notes?: string;
   }): Promise<EmployeeLoan>;
   approveLoan(id: string): Promise<EmployeeLoan>;
+
+  // Deductions
   getDeductions(filter?: { employee_id?: string }): Promise<EmployeeDeduction[]>;
   createDeduction(deduction: {
     employee_id: string;
@@ -152,6 +192,8 @@ export interface IPayrollRepository {
     end_date?: string | null;
     is_recurring?: boolean;
   }): Promise<EmployeeDeduction>;
+
+  // Provident Funds
   getProvidentFunds(): Promise<EmployeeProvidentFund[]>;
   createProvidentFund(data: {
     employee_id: string;
@@ -159,5 +201,66 @@ export interface IPayrollRepository {
     employer_rate?: number;
     status?: 'active' | 'inactive';
   }): Promise<EmployeeProvidentFund>;
+
+  // Excel Payroll Templates
+  getExcelTemplates(params?: { active_only?: boolean; entity_id?: string }): Promise<{ data: PayrollExcelTemplate[] }>;
+  getImportBatches(): Promise<{ data: PayrollImportBatch[] }>;
+  createExcelTemplate(template: Omit<PayrollExcelTemplate, 'id' | 'created_at' | 'updated_at' | 'creator' | 'entity' | 'import_batches' | 'mappings'> & { mappings?: any[] }): Promise<PayrollExcelTemplate>;
+  getExcelTemplate(id: string): Promise<PayrollExcelTemplate>;
+  updateExcelTemplate(id: string, updates: Partial<PayrollExcelTemplate>): Promise<PayrollExcelTemplate>;
+  deleteExcelTemplate(id: string): Promise<void>;
+
+  // Excel Upload & Import
+  previewExcelUpload(file: File, templateId?: string): Promise<ExcelPreviewResponse>;
+  importExcelPayroll(data: {
+    file: File;
+    template_id?: string;
+    mappings: Array<{
+      excel_column: string;
+      payroll_field: string;
+      field_type: 'earning' | 'deduction' | 'identifier' | 'info';
+      calculation_type?: 'fixed' | 'percentage' | 'formula';
+      default_value?: number;
+      is_required?: boolean;
+      is_identifier?: boolean;
+      sort_order?: number;
+    }>;
+    save_as_template?: boolean;
+    template_name?: string;
+    import_options?: {
+      proration_method?: 'calendar_days' | 'working_days';
+      apply_attendance_penalties?: boolean;
+      create_payroll_run?: boolean;
+      period_start?: string;
+      period_end?: string;
+      pay_date?: string;
+      pay_frequency?: 'monthly' | 'weekly';
+    };
+  }): Promise<PayrollImportBatch>;
+  getImportBatch(id: string): Promise<PayrollImportBatch>;
+  updateImportRow(id: string, updates: { employee_id?: string | null; mapped_data?: Record<string, any>; status?: string }): Promise<PayrollImportRow>;
+  processImportBatch(id: string, options: {
+    payroll_run_id?: string;
+    create_payroll_run?: boolean;
+    period_start?: string;
+    period_end?: string;
+    pay_date?: string;
+    pay_frequency?: 'monthly' | 'weekly';
+    proration_method?: 'calendar_days' | 'working_days';
+    apply_attendance_penalties?: boolean;
+  }): Promise<{ batch: PayrollImportBatch; payroll_run?: PayrollRun; processed_count: number }>;
+
+  // Payroll Adjustments
+  getAdjustments(filter?: { payroll_run_id?: string; employee_id?: string }): Promise<{ data: PayrollAdjustment[] }>;
+  createAdjustment(adjustment: Omit<PayrollAdjustment, 'id' | 'created_at' | 'updated_at' | 'employee' | 'adjuster' | 'difference'>): Promise<PayrollAdjustment>;
+
+  // Attendance Penalty Rules
+  getPenaltyRules(params?: { entity_id?: string; active_only?: boolean }): Promise<AttendancePenaltyRule[]>;
+  createPenaltyRule(rule: Omit<AttendancePenaltyRule, 'id' | 'created_at' | 'updated_at' | 'entity'>): Promise<AttendancePenaltyRule>;
+  updatePenaltyRule(id: string, updates: Partial<AttendancePenaltyRule>): Promise<AttendancePenaltyRule>;
+  deletePenaltyRule(id: string): Promise<void>;
+
+  // Proration Records
+  getProrationRecords(filter?: { payroll_run_id?: string; employee_id?: string }): Promise<{ data: EmployeeProrationRecord[] }>;
 }
 

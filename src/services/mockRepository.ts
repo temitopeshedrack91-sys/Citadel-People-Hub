@@ -29,6 +29,7 @@ import {
   WorkflowStatus,
   WorkflowActionType,
   AuditLogEntry,
+  EmployeeDocumentInput,
   HubDocument,
   SystemNotification,
   OnboardingJourney,
@@ -42,6 +43,14 @@ import {
   EmployeeLoan,
   EmployeeDeduction,
   EmployeeProvidentFund,
+  PayrollExcelTemplate,
+  PayrollExcelMapping,
+  PayrollImportBatch,
+  PayrollImportRow,
+  PayrollAdjustment,
+  AttendancePenaltyRule,
+  EmployeeProrationRecord,
+  ExcelPreviewResponse,
 } from '../types';
 import {
   INITIAL_ENTITIES,
@@ -63,6 +72,12 @@ import {
   INITIAL_EMPLOYEE_LOANS,
   INITIAL_EMPLOYEE_DEDUCTIONS,
   INITIAL_PROVIDENT_FUNDS,
+  INITIAL_PAYROLL_EXCEL_TEMPLATES,
+  INITIAL_PAYROLL_IMPORT_BATCHES,
+  INITIAL_PAYROLL_ADJUSTMENTS,
+  INITIAL_ATTENDANCE_PENALTY_RULES,
+  INITIAL_PRORATION_RECORDS,
+  INITIAL_PAYROLL_IMPORT_ROWS,
 } from '../data/mockPayrollData';
 
 // Persistent storage helpers
@@ -114,6 +129,11 @@ let payrollRuns: PayrollRun[] = loadStorage('payroll_runs', [...INITIAL_PAYROLL_
 let employeeLoans: EmployeeLoan[] = loadStorage('employee_loans', [...INITIAL_EMPLOYEE_LOANS]);
 let employeeDeductions: EmployeeDeduction[] = loadStorage('employee_deductions', [...INITIAL_EMPLOYEE_DEDUCTIONS]);
 let providentFunds: EmployeeProvidentFund[] = loadStorage('provident_funds', [...INITIAL_PROVIDENT_FUNDS]);
+let excelTemplates: PayrollExcelTemplate[] = loadStorage('excel_templates', [...INITIAL_PAYROLL_EXCEL_TEMPLATES]);
+let importBatches: PayrollImportBatch[] = loadStorage('import_batches', [...INITIAL_PAYROLL_IMPORT_BATCHES]);
+let payrollAdjustments: PayrollAdjustment[] = loadStorage('payroll_adjustments', [...INITIAL_PAYROLL_ADJUSTMENTS]);
+let penaltyRules: AttendancePenaltyRule[] = loadStorage('penalty_rules', [...INITIAL_ATTENDANCE_PENALTY_RULES]);
+let prorationRecords: EmployeeProrationRecord[] = loadStorage('proration_records', [...INITIAL_PRORATION_RECORDS]);
 
 const sleep = (ms = 60) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -433,6 +453,88 @@ export class MockDocumentRepository implements IDocumentRepository {
     saveStorage('documents', documents);
     return created;
   }
+
+  async getEmployeeDocuments(employeeId: string, filter?: { category?: string }): Promise<HubDocument[]> {
+    await sleep();
+    return documents.filter(
+      (document) =>
+        document.employeeId === employeeId && (!filter?.category || document.category === filter.category)
+    );
+  }
+
+  async uploadEmployeeDocument(
+    employeeId: string,
+    doc: EmployeeDocumentInput,
+    file: File
+  ): Promise<HubDocument> {
+    await sleep();
+    const created: HubDocument = {
+      ...doc,
+      employeeId,
+      id: `doc-${Date.now()}`,
+      accessLevel: 'Departmental',
+      uploadedBy: 'Current User',
+      isSensitive: true,
+      version: doc.version ?? '1.0',
+      uploadedDate: new Date().toISOString().split('T')[0],
+      fileName: file.name,
+      fileSize: file.size >= 1024 * 1024
+        ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+        : `${Math.max(1, Math.round(file.size / 1024))} KB`,
+      fileType: file.type.split('/')[1]?.toUpperCase() || 'FILE',
+      versionNumber: 1,
+    };
+    documents.unshift(created);
+    saveStorage('documents', documents);
+    return created;
+  }
+
+  async replaceEmployeeDocument(
+    employeeId: string,
+    documentId: string,
+    doc: EmployeeDocumentInput,
+    file: File
+  ): Promise<HubDocument> {
+    await sleep();
+    const previous = documents.find((document) => document.id === documentId && document.employeeId === employeeId);
+    if (!previous) throw new Error('Document not found');
+    documents = documents.filter((document) => document.id !== documentId);
+    const created: HubDocument = {
+      ...doc,
+      employeeId,
+      id: `doc-${Date.now()}`,
+      accessLevel: previous.accessLevel,
+      uploadedBy: previous.uploadedBy,
+      isSensitive: previous.isSensitive,
+      version: doc.version ?? previous.version ?? '1.0',
+      uploadedDate: new Date().toISOString().split('T')[0],
+      fileName: file.name,
+      fileSize: file.size >= 1024 * 1024
+        ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+        : `${Math.max(1, Math.round(file.size / 1024))} KB`,
+      fileType: file.type.split('/')[1]?.toUpperCase() || 'FILE',
+      versionNumber: (previous.versionNumber ?? 1) + 1,
+      previousVersionId: previous.id,
+    };
+    documents.unshift(created);
+    saveStorage('documents', documents);
+    return created;
+  }
+
+  async deleteEmployeeDocument(employeeId: string, documentId: string): Promise<void> {
+    await sleep();
+    const exists = documents.some((document) => document.id === documentId && document.employeeId === employeeId);
+    if (!exists) throw new Error('Document not found');
+    documents = documents.filter((document) => document.id !== documentId);
+    saveStorage('documents', documents);
+  }
+
+  async downloadEmployeeDocument(employeeId: string, documentId: string): Promise<Blob> {
+    await sleep();
+    const document = documents.find((item) => item.id === documentId && item.employeeId === employeeId);
+    if (!document) throw new Error('Document not found');
+    return new Blob([`${document.title}\n\nMock copy of ${document.fileName}.`], { type: 'text/plain' });
+  }
 }
 
 export class MockNotificationRepository implements INotificationRepository {
@@ -583,6 +685,19 @@ export class MockTalentRepository implements ITalentRepository {
     return requisition;
   }
 
+  async updateRequisitionStatus(
+    id: string,
+    status: RecruitmentRequisition['status']
+  ): Promise<RecruitmentRequisition> {
+    await sleep();
+    const index = requisitions.findIndex((requisition) => requisition.id === id);
+    if (index < 0) throw new Error(`Requisition ${id} not found`);
+    const updated = { ...requisitions[index], status };
+    requisitions[index] = updated;
+    saveStorage('requisitions', requisitions);
+    return updated;
+  }
+
   async createOnboardingJourney(journey: OnboardingJourney): Promise<OnboardingJourney> {
     await sleep();
     onboardingJourneys = [journey, ...onboardingJourneys];
@@ -654,6 +769,7 @@ export class MockPayrollRepository implements IPayrollRepository {
           }
         : undefined,
       effective_date: assignment.effective_date,
+      basic_salary: assignment.override_basic_salary ?? matchedTemplate?.basic_salary ?? 0,
       override_basic_salary: assignment.override_basic_salary,
       custom_allowances: assignment.custom_allowances,
       custom_deductions: assignment.custom_deductions,
@@ -822,6 +938,8 @@ export class MockPayrollRepository implements IPayrollRepository {
     start_date: string;
     end_date?: string | null;
     is_recurring?: boolean;
+    calculation_type?: 'fixed' | 'percent';
+    frequency?: 'monthly' | 'weekly' | 'one_time';
   }): Promise<EmployeeDeduction> {
     await sleep();
     const newDed: EmployeeDeduction = {
@@ -829,10 +947,12 @@ export class MockPayrollRepository implements IPayrollRepository {
       employee_id: deduction.employee_id,
       title: deduction.title,
       deduction_type: deduction.deduction_type,
+      calculation_type: deduction.calculation_type ?? 'fixed',
       amount: deduction.amount,
       is_percentage: !!deduction.is_percentage,
       start_date: deduction.start_date,
       end_date: deduction.end_date,
+      frequency: deduction.frequency ?? 'monthly',
       is_recurring: deduction.is_recurring ?? true,
       is_active: true,
       created_at: new Date().toISOString(),
@@ -868,6 +988,204 @@ export class MockPayrollRepository implements IPayrollRepository {
     providentFunds = [newPf, ...providentFunds];
     saveStorage('provident_funds', providentFunds);
     return newPf;
+  }
+
+  async getExcelTemplates(params?: { active_only?: boolean; entity_id?: string }): Promise<{ data: PayrollExcelTemplate[] }> {
+    await sleep();
+    let result = [...excelTemplates];
+    if (params?.active_only) {
+      result = result.filter((t) => t.is_active);
+    }
+    if (params?.entity_id) {
+      result = result.filter((t) => t.entity_id === params.entity_id);
+    }
+    return { data: result };
+  }
+
+  async createExcelTemplate(template: Omit<PayrollExcelTemplate, 'id' | 'created_at' | 'updated_at' | 'creator' | 'entity' | 'import_batches' | 'mappings'> & { mappings?: any[] }): Promise<PayrollExcelTemplate> {
+    await sleep();
+    const newTemplate: PayrollExcelTemplate = {
+      ...template,
+      id: `ext-${Date.now()}`,
+      creator: undefined,
+      entity: undefined,
+      import_batches: [],
+      mappings: template.mappings || [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    } as PayrollExcelTemplate;
+    excelTemplates = [newTemplate, ...excelTemplates];
+    saveStorage('excel_templates', excelTemplates);
+    return newTemplate;
+  }
+
+  async getExcelTemplate(id: string): Promise<PayrollExcelTemplate> {
+    await sleep();
+    const match = excelTemplates.find((t) => t.id === id);
+    if (match) return match;
+    throw new Error(`Excel template ${id} not found.`);
+  }
+
+  async updateExcelTemplate(id: string, updates: Partial<PayrollExcelTemplate>): Promise<PayrollExcelTemplate> {
+    await sleep();
+    const index = excelTemplates.findIndex((t) => t.id === id);
+    if (index === -1) throw new Error('Excel template not found');
+    excelTemplates[index] = { ...excelTemplates[index], ...updates, updated_at: new Date().toISOString() };
+    saveStorage('excel_templates', excelTemplates);
+    return excelTemplates[index];
+  }
+
+  async deleteExcelTemplate(id: string): Promise<void> {
+    await sleep();
+    excelTemplates = excelTemplates.filter((t) => t.id !== id);
+    saveStorage('excel_templates', excelTemplates);
+  }
+
+  async previewExcelUpload(file: File, templateId?: string): Promise<any> {
+    await sleep();
+    return {
+      headers: ['staff_id', 'basic_salary', 'housing_allowance'],
+      rows: [
+        { staff_id: 'CIT-001', basic_salary: 850000, housing_allowance: 350000 },
+        { staff_id: 'CIT-002', basic_salary: 520000, housing_allowance: 200000 },
+      ],
+      total_rows: 2,
+      valid_rows: 2,
+      error_rows: 0,
+      template: templateId ? excelTemplates.find((t) => t.id === templateId) : undefined,
+    };
+  }
+
+  async importExcelPayroll(data: any): Promise<any> {
+    await sleep();
+    return {
+      id: `import-${Date.now()}`,
+      template_id: data.template_id,
+      original_filename: data.file?.name || 'upload.xlsx',
+      uploaded_by: 'emp-002',
+      status: 'preview',
+      total_rows: 2,
+      valid_rows: 2,
+      error_rows: 0,
+      warning_rows: 0,
+      validation_errors: null,
+      validation_warnings: null,
+      import_options: data.import_options,
+      payroll_run_id: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  }
+
+  async getImportBatch(id: string): Promise<any> {
+    await sleep();
+    throw new Error(`Import batch ${id} not found.`);
+  }
+
+  async updateImportRow(id: string, updates: { employee_id?: string | null; mapped_data?: Record<string, any>; status?: string }): Promise<any> {
+    await sleep();
+    return { id, ...updates };
+  }
+
+  async processImportBatch(id: string, options: {
+    payroll_run_id?: string;
+    create_payroll_run?: boolean;
+    period_start?: string;
+    period_end?: string;
+  }): Promise<any> {
+    await sleep();
+    return { id, status: 'processing', ...options };
+  }
+
+  async getImportBatches(): Promise<{ data: PayrollImportBatch[] }> {
+    await sleep();
+    return { data: [...importBatches] };
+  }
+
+  async getAdjustments(filter?: { payroll_run_id?: string; employee_id?: string }): Promise<{ data: PayrollAdjustment[] }> {
+    await sleep();
+    let result = [...payrollAdjustments];
+    if (filter?.payroll_run_id) {
+      result = result.filter((a) => a.payroll_run_id === filter.payroll_run_id);
+    }
+    if (filter?.employee_id) {
+      result = result.filter((a) => a.employee_id === filter.employee_id);
+    }
+    return { data: result };
+  }
+
+  async createAdjustment(adjustment: Omit<PayrollAdjustment, 'id' | 'created_at' | 'updated_at' | 'employee' | 'adjuster' | 'difference'>): Promise<PayrollAdjustment> {
+    await sleep();
+    const newAdjustment: PayrollAdjustment = {
+      ...adjustment,
+      id: `adj-${Date.now()}`,
+      difference: adjustment.adjusted_value - adjustment.original_value,
+      employee: undefined,
+      adjuster: undefined,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    payrollAdjustments = [newAdjustment, ...payrollAdjustments];
+    saveStorage('payroll_adjustments', payrollAdjustments);
+    return newAdjustment;
+  }
+
+  async getPenaltyRules(params?: { entity_id?: string; active_only?: boolean }): Promise<AttendancePenaltyRule[]> {
+    await sleep();
+    let result = [...penaltyRules];
+    if (params?.entity_id) {
+      result = result.filter((r) => r.entity_id === params.entity_id);
+    }
+    if (params?.active_only) {
+      result = result.filter((r) => r.is_active);
+    }
+    return result;
+  }
+
+  async createPenaltyRule(rule: Omit<AttendancePenaltyRule, 'id' | 'created_at' | 'updated_at' | 'entity'>): Promise<AttendancePenaltyRule> {
+    await sleep();
+    const newRule: AttendancePenaltyRule = {
+      ...rule,
+      id: `pen-${Date.now()}`,
+      entity: undefined,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    penaltyRules = [newRule, ...penaltyRules];
+    saveStorage('penalty_rules', penaltyRules);
+    return newRule;
+  }
+
+  async updatePenaltyRule(id: string, updates: Partial<AttendancePenaltyRule>): Promise<AttendancePenaltyRule> {
+    await sleep();
+    const index = penaltyRules.findIndex((r) => r.id === id);
+    if (index === -1) throw new Error('Penalty rule not found');
+    penaltyRules[index] = { ...penaltyRules[index], ...updates, updated_at: new Date().toISOString() };
+    saveStorage('penalty_rules', penaltyRules);
+    return penaltyRules[index];
+  }
+
+  async deletePenaltyRule(id: string): Promise<void> {
+    await sleep();
+    penaltyRules = penaltyRules.filter((r) => r.id !== id);
+    saveStorage('penalty_rules', penaltyRules);
+  }
+
+  async getProrationRecords(filter?: { payroll_run_id?: string; employee_id?: string }): Promise<{ data: EmployeeProrationRecord[] }> {
+    await sleep();
+    let result = [...prorationRecords];
+    if (filter?.payroll_run_id) {
+      result = result.filter((r) => r.payroll_run_id === filter.payroll_run_id);
+    }
+    if (filter?.employee_id) {
+      result = result.filter((r) => r.employee_id === filter.employee_id);
+    }
+    return { data: result };
+  }
+
+  async getImportBatchRows(batchId: string): Promise<PayrollImportRow[]> {
+    await sleep();
+    return INITIAL_PAYROLL_IMPORT_ROWS.filter((r) => r.batch_id === batchId);
   }
 }
 

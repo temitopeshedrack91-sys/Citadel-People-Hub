@@ -22,51 +22,71 @@ import { talentRepository, organizationRepository, employeeRepository } from '..
 import { Badge } from '../common/Badge';
 import {
   CITADEL_RECRUITMENT_STAGES,
-  INITIAL_ENTITIES,
-  INITIAL_DEPARTMENTS,
-  INITIAL_EMPLOYEES,
 } from '../../data/mockData';
 import { CreateRequisitionModal } from '../recruitment/CreateRequisitionModal';
 
 export const RecruitmentView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'requisitions' | 'sop_stages'>('requisitions');
   const [requisitions, setRequisitions] = useState<RecruitmentRequisition[]>([]);
-  const [entities, setEntities] = useState<CitadelEntity[]>(INITIAL_ENTITIES);
-  const [departments, setDepartments] = useState<CitadelDepartment[]>(INITIAL_DEPARTMENTS);
-  const [employees, setEmployees] = useState<Employee[]>(INITIAL_EMPLOYEES);
+  const [entities, setEntities] = useState<CitadelEntity[]>([]);
+  const [departments, setDepartments] = useState<CitadelDepartment[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [successBanner, setSuccessBanner] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchData = async () => {
       try {
         const [reqList, entList, deptList, empList] = await Promise.all([
-          talentRepository.getRequisitions().catch(() => []),
-          organizationRepository.getEntities().catch(() => INITIAL_ENTITIES),
-          organizationRepository.getDepartments().catch(() => INITIAL_DEPARTMENTS),
-          employeeRepository.getAll().catch(() => INITIAL_EMPLOYEES),
+          talentRepository.getRequisitions(),
+          organizationRepository.getEntities(),
+          organizationRepository.getDepartments(),
+          employeeRepository.getAll(),
         ]);
 
-        if (reqList && reqList.length > 0) setRequisitions(reqList);
-        if (entList && entList.length > 0) setEntities(entList);
-        if (deptList && deptList.length > 0) setDepartments(deptList);
-        if (empList && empList.length > 0) setEmployees(empList);
+        if (!isMounted) return;
+        setRequisitions(reqList);
+        setEntities(entList);
+        setDepartments(deptList);
+        setEmployees(empList);
+        setLoadError(null);
       } catch (err) {
-        console.warn('Failed to load recruitment view data, using defaults:', err);
+        if (isMounted) {
+          console.error('Failed to load recruitment view data:', err);
+          setLoadError(err instanceof Error ? err.message : 'Recruitment data could not be loaded.');
+        }
       }
     };
     fetchData();
+    return () => { isMounted = false; };
   }, []);
 
   const handleRequisitionCreated = (newReq: RecruitmentRequisition) => {
     setRequisitions((prev) => [newReq, ...prev]);
     setActiveTab('requisitions');
     setSuccessBanner(
-      `Requisition "${newReq.requisitionCode} - ${newReq.jobTitle}" created and submitted for PCCM headcount approval!`
+      `Requisition "${newReq.requisitionCode} - ${newReq.jobTitle}" was saved.`
     );
     setTimeout(() => {
       setSuccessBanner(null);
     }, 6000);
+  };
+
+  const handleStatusChange = async (requisition: RecruitmentRequisition, status: RecruitmentRequisition['status']) => {
+    if (status === requisition.status) return;
+    try {
+      if (!talentRepository.updateRequisitionStatus) {
+        throw new Error('Requisition status updates are not supported by the configured data service.');
+      }
+      const saved = await talentRepository.updateRequisitionStatus(requisition.id, status);
+      setRequisitions((previous) => previous.map((item) => item.id === saved.id ? saved : item));
+      setActionError(null);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Requisition status could not be saved.');
+    }
   };
 
   return (
@@ -90,6 +110,17 @@ export const RecruitmentView: React.FC = () => {
           <span className="font-bold">New Requisition</span>
         </button>
       </div>
+
+      {loadError && (
+        <div role="alert" className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">
+          Recruitment data could not be loaded: {loadError}
+        </div>
+      )}
+      {actionError && (
+        <div role="alert" className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">
+          Requisition status could not be saved: {actionError}
+        </div>
+      )}
 
       {/* Success Notification Banner */}
       {successBanner && (
@@ -138,8 +169,8 @@ export const RecruitmentView: React.FC = () => {
         requisitions.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {requisitions.map((req) => {
-              const hiringMgr = (req as any).hiringManager || 'Dr. Bukola Adeleke';
-              const targetDt = (req as any).targetDate || (req as any).targetHiringDate || '2026-11-30';
+              const hiringMgr = req.hiringManager || 'Not assigned';
+              const targetDt = req.targetDate || req.targetHiringDate || 'Not set';
               const candidates = req.candidates || [];
 
               return (
@@ -169,6 +200,20 @@ export const RecruitmentView: React.FC = () => {
                         {req.status}
                       </Badge>
                     </div>
+
+                    <label className="mt-3 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      Requisition status
+                      <select
+                        aria-label={`Update status for ${req.jobTitle}`}
+                        value={req.status}
+                        onChange={(event) => void handleStatusChange(req, event.target.value as RecruitmentRequisition['status'])}
+                        className="mt-1 block w-full rounded-lg border border-slate-200 bg-white p-2 text-xs font-semibold normal-case tracking-normal text-slate-800"
+                      >
+                        {['Draft', 'Approved', 'Open', 'Interviewing', 'Filled', 'Closed'].map((status) => (
+                          <option key={status} value={status}>{status}</option>
+                        ))}
+                      </select>
+                    </label>
 
                     <div className="mt-3.5 grid grid-cols-2 gap-2 text-xs bg-slate-50/80 p-3 rounded-xl border border-slate-100">
                       <div>

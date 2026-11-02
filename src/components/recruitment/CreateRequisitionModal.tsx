@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { RecruitmentRequisition, CitadelEntity, CitadelDepartment, Employee } from '../../types';
 import { ChevronStepper, StepItem } from '../common/ChevronStepper';
-import { auditRepository, talentRepository } from '../../services';
+import { talentRepository } from '../../services';
 
 interface CreateRequisitionModalProps {
   isOpen: boolean;
@@ -61,24 +61,30 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
   // Form State
   // Step 1: Role & Entity
   const [jobTitle, setJobTitle] = useState('');
-  const [entityId, setEntityId] = useState(entities[0]?.id || 'entity-cgcc');
+  const [entityId, setEntityId] = useState(entities[0]?.id || '');
   const [departmentId, setDepartmentId] = useState('');
   const [employmentType, setEmploymentType] = useState<'Full-Time' | 'Part-Time' | 'Contract' | 'Internship'>('Full-Time');
-  const [workLocation, setWorkLocation] = useState('Physical On-Site (Oregun Campus)');
+  const [workLocation, setWorkLocation] = useState('');
 
   // Step 2: Headcount & Team
   const [openPositions, setOpenPositions] = useState<number>(1);
   const [hiringManager, setHiringManager] = useState('');
-  const [salaryBand, setSalaryBand] = useState(SALARY_BANDS[2].name);
-  const [justification, setJustification] = useState('New Headcount / Strategic Growth');
+  const [salaryBand, setSalaryBand] = useState('');
+  const [justification, setJustification] = useState('');
 
   // Step 3: SLA & Timeline
-  const [targetDate, setTargetDate] = useState('2026-11-30');
-  const [interviewFormat, setInterviewFormat] = useState('Two-Stage (Physical + Virtual)');
-  const [sourcingChannel, setSourcingChannel] = useState('Citadel Community & Careers Portal');
+  const [targetDate, setTargetDate] = useState('');
+  const [interviewFormat, setInterviewFormat] = useState('');
+  const [sourcingChannel, setSourcingChannel] = useState('');
   const [keyRequirements, setKeyRequirements] = useState('');
 
   // Keep department synced when entityId changes
+  useEffect(() => {
+    if (!entityId && entities.length > 0) {
+      setEntityId(entities[0].id);
+    }
+  }, [entities, entityId]);
+
   useEffect(() => {
     const entityDepts = departments.filter((d) => d.entityId === entityId);
     if (entityDepts.length > 0) {
@@ -103,22 +109,14 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
           ? `${pccmLead.firstName} ${pccmLead.lastName}`
           : `${employees[0].firstName} ${employees[0].lastName}`
       );
-    } else if (!hiringManager) {
-      setHiringManager('Dr. Bukola Adeleke (PCCM)');
     }
   }, [employees, hiringManager]);
 
   if (!isOpen) return null;
 
-  const selectedEntity = entities.find((e) => e.id === entityId) || entities[0];
+  const selectedEntity = entities.find((e) => e.id === entityId);
   const filteredDepartments = departments.filter((d) => d.entityId === entityId);
-  const selectedDept = departments.find((d) => d.id === departmentId) || filteredDepartments[0];
-
-  // Auto-generate code preview
-  const shortCode = selectedEntity?.shortCode || 'CGCC';
-  const currentYear = new Date().getFullYear();
-  const sequenceNumber = Math.floor(10 + Math.random() * 90);
-  const requisitionCode = `REQ-${shortCode}-${currentYear}-${sequenceNumber}`;
+  const selectedDept = departments.find((d) => d.id === departmentId);
 
   const validateStep = (step: number): boolean => {
     setValidationError(null);
@@ -131,7 +129,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
         setValidationError('Please select an assigned Citadel entity.');
         return false;
       }
-      if (!departmentId && filteredDepartments.length > 0) {
+      if (!departmentId || !selectedDept) {
         setValidationError('Please select an assigned department.');
         return false;
       }
@@ -173,45 +171,39 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
     setIsSubmitting(true);
     try {
       const newRequisition: RecruitmentRequisition = {
-        id: `req-${Date.now()}`,
-        requisitionCode,
+        id: '',
+        requisitionCode: '',
         jobTitle: jobTitle.trim(),
-        entityId: selectedEntity?.id || 'entity-cgcc',
-        entityName: selectedEntity?.name || 'Citadel Global Community Church (CGCC)',
-        departmentId: selectedDept?.id || 'dept-cgcc-pccm',
-        departmentName: selectedDept?.name || 'People, Culture & Change',
+        entityId: selectedEntity?.id || '',
+        entityName: selectedEntity?.name || '',
+        departmentId: selectedDept?.id || '',
+        departmentName: selectedDept?.name || '',
         openPositions: Number(openPositions) || 1,
         employmentType,
         status: 'Open',
         targetDate,
         targetHiringDate: targetDate,
         hiringManager: hiringManager.trim(),
+        workLocation,
+        salaryBand,
+        justification,
+        interviewFormat,
+        sourcingChannel,
+        keyRequirements,
         applicantsCount: 0,
         candidates: [],
       };
 
-      if (talentRepository.createRequisition) {
-        await talentRepository.createRequisition(newRequisition);
+      if (!talentRepository.createRequisition) {
+        throw new Error('Recruitment requisition creation is not supported by the configured data service.');
       }
+      const savedRequisition = await talentRepository.createRequisition(newRequisition);
 
-      await auditRepository.logAction({
-        userId: 'pccm-system',
-        userName: hiringManager || 'PCCM Recruitment Lead',
-        userRole: 'HR_STAFF',
-        module: 'Recruitment',
-        action: 'Created New Hiring Requisition',
-        recordAffectedId: newRequisition.id,
-        recordAffectedTitle: `${newRequisition.requisitionCode} - ${newRequisition.jobTitle}`,
-        previousValue: 'None',
-        newValue: `Created in ${newRequisition.entityName} • ${newRequisition.departmentName} (${newRequisition.openPositions} Openings)`,
-        severity: 'Info',
-      });
-
-      onSuccess(newRequisition);
+      onSuccess(savedRequisition);
       handleClose();
     } catch (err) {
       console.error('Failed to create requisition:', err);
-      setValidationError('Failed to create requisition. Please try again.');
+      setValidationError(err instanceof Error ? err.message : 'Failed to create requisition. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -313,6 +305,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                     onChange={(e) => setEntityId(e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition cursor-pointer"
                   >
+                    <option value="">Select an entity</option>
                     {entities.map((ent) => (
                       <option key={ent.id} value={ent.id}>
                         {ent.name} ({ent.shortCode})
@@ -330,6 +323,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                     onChange={(e) => setDepartmentId(e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition cursor-pointer"
                   >
+                    <option value="">Select a department</option>
                     {filteredDepartments.length > 0 ? (
                       filteredDepartments.map((dept) => (
                         <option key={dept.id} value={dept.id}>
@@ -369,6 +363,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                     onChange={(e) => setWorkLocation(e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition cursor-pointer"
                   >
+                    <option value="">Select a work arrangement</option>
                     <option value="Physical On-Site (Oregun Campus)">Physical On-Site (Oregun Campus, Ikeja)</option>
                     <option value="Hybrid (Campus + Remote)">Hybrid (Campus + Remote)</option>
                     <option value="Fully Remote">Fully Remote</option>
@@ -430,6 +425,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                   onChange={(e) => setSalaryBand(e.target.value)}
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition cursor-pointer"
                 >
+                  <option value="">Select an approved salary band</option>
                   {SALARY_BANDS.map((band) => (
                     <option key={band.id} value={band.name}>
                       {band.name}
@@ -447,6 +443,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                   onChange={(e) => setJustification(e.target.value)}
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition cursor-pointer"
                 >
+                  <option value="">Select a requisition justification</option>
                   <option value="New Headcount / Strategic Growth">New Headcount / Strategic Growth</option>
                   <option value="Backfill / Attrition Replacement">Backfill / Attrition Replacement</option>
                   <option value="Special Ministry Project / Seasonal Surge">Special Ministry Project / Seasonal Surge</option>
@@ -546,7 +543,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <span className="px-2.5 py-1 rounded-md bg-[#083E34] text-amber-300 font-mono text-xs font-bold inline-block mb-1.5">
-                      {requisitionCode}
+                      Assigned after save
                     </span>
                     <h3 className="text-base font-extrabold text-slate-900">{jobTitle || 'Untitled Position'}</h3>
                     <p className="text-xs font-semibold text-[#083E34]">

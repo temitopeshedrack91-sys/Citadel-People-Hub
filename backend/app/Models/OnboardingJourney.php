@@ -10,7 +10,7 @@ class OnboardingJourney extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['employee_id', 'journey_data'];
+    protected $fillable = ['employee_id', 'employee_record_id', 'journey_data'];
 
     protected function casts(): array
     {
@@ -20,5 +20,10 @@ class OnboardingJourney extends Model
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    public function employeeRecord(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'employee_record_id');
     }
 }

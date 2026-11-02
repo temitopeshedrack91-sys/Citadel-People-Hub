@@ -108,13 +108,28 @@ export const requestLaravelData = async <T>(
   return response.data;
 };
 
-export const downloadLaravelFile = async (path: string, fileName: string): Promise<void> => {
+export const requestLaravelBlob = async (path: string): Promise<Blob> => {
+  if (!baseUrl) {
+    throw new Error('VITE_API_BASE_URL is not configured.');
+  }
+
   const response = await fetch(`${baseUrl}/api/v1${path}`, {
     headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
   });
-  if (!response.ok) throw new Error(`Document download failed (${response.status}).`);
 
-  const objectUrl = URL.createObjectURL(await response.blob());
+  if (response.status === 401 && accessToken) {
+    setLaravelAccessToken(null);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('citadel:unauthorized'));
+    }
+  }
+
+  if (!response.ok) throw new Error(`Document download failed (${response.status}).`);
+  return response.blob();
+};
+
+export const downloadLaravelFile = async (path: string, fileName: string): Promise<void> => {
+  const objectUrl = URL.createObjectURL(await requestLaravelBlob(path));
   const link = document.createElement('a');
   link.href = objectUrl;
   link.download = fileName;

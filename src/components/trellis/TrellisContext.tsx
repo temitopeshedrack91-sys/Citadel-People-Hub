@@ -10,8 +10,21 @@ import {
   TaskLabel,
 } from './types';
 import { initialTeamMembers, initialTasks } from './mockData';
-import { taskDbService } from '../../services/supabaseService';
-import { supabase } from '../../utils/supabase/client';
+import { AuthContext } from '../../context/AuthContext';
+import { employeeRepository } from '../../services';
+import { isLaravelApiConfigured } from '../../services/laravelClient';
+import {
+  createLaravelTask,
+  deleteLaravelTask,
+  listLaravelTasks,
+  mapAuthenticatedUserToTeamMember,
+  mapEmployeeToTeamMember,
+  updateLaravelTask,
+  updateLaravelTaskAssignment,
+  updateLaravelTaskStatus,
+} from '../../services/trellisApi';
+import { Employee } from '../../types';
+import { normalizeRole } from '../../utils/rbac';
 
 interface CreateTaskInput {
   title: string;
@@ -35,9 +48,15 @@ interface TrellisContextType {
   unreadNotificationCount: number;
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
-  createTask: (input: CreateTaskInput) => TrellisTask;
-  updateTask: (taskId: string, updates: Partial<TrellisTask>) => void;
-  deleteTask: (taskId: string) => void;
+  createTask: (input: CreateTaskInput) => Promise<TrellisTask | null>;
+  updateTask: (taskId: string, updates: Partial<TrellisTask>) => Promise<void>;
+  deleteTask: (taskId: string) => Promise<void>;
+  isApiMode: boolean;
+  isLoading: boolean;
+  apiError: string | null;
+  clearApiError: () => void;
+  canUndo: boolean;
+  canManageTasks: boolean;
   isEditMode: boolean;
   setIsEditMode: (val: boolean) => void;
   assignTask: (taskId: string, newAssigneeId: string) => void;
@@ -71,10 +90,32 @@ interface TrellisContextType {
 const TrellisContext = createContext<TrellisContextType | undefined>(undefined);
 
 export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [tasks, setTasks] = useState<TrellisTask[]>(initialTasks);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialTeamMembers);
-  const [currentUser, setCurrentUser] = useState<TeamMember>(initialTeamMembers[0]); // Nadia Safitri by default
-  const [notifications, setNotifications] = useState<TrellisNotification[]>([
+  const isApiMode = import.meta.env.PROD || isLaravelApiConfigured();
+  const authContext = useContext(AuthContext);
+  const authenticatedUser = authContext?.isAuthenticated ? authContext.currentUser : null;
+  const canManageTasks = !isApiMode || ['ADMIN', 'HR_STAFF'].includes(normalizeRole(authContext?.currentRole) || '');
+  const [tasks, setTasks] = useState<TrellisTask[]>(isApiMode ? [] : initialTasks);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(isApiMode ? [] : initialTeamMembers);
+  const [employeeRecords, setEmployeeRecords] = useState<Employee[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>(initialTeamMembers[0]?.id || '');
+  const currentUser = useMemo(() => {
+    if (!isApiMode) return teamMembers.find((member) => member.id === selectedUserId) || initialTeamMembers[0];
+    if (authenticatedUser) {
+      const employee = employeeRecords.find((record) =>
+        (authenticatedUser.employeeId && String(record.id) === String(authenticatedUser.employeeId)) ||
+        (authenticatedUser.staffId && record.staffId === authenticatedUser.staffId)
+      );
+      return mapAuthenticatedUserToTeamMember(authenticatedUser, employee);
+    }
+    return {
+      id: '', name: 'Signed-out user', initials: '', role: '', avatarBg: 'bg-slate-600', avatarText: 'text-white',
+      email: '', capacityHours: 0,
+    };
+  }, [authenticatedUser, employeeRecords, isApiMode, selectedUserId, teamMembers]);
+  const [isLoading, setIsLoading] = useState(isApiMode);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [canUndo, setCanUndo] = useState(false);
+  const [notifications, setNotifications] = useState<TrellisNotification[]>(isApiMode ? [] : [
     {
       id: 'notif-1',
       recipientId: 'user-nadia',
@@ -122,92 +163,31 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [activeToast, setActiveToast] = useState<ActivityHistoryItem | null>(null);
   const [undoStack, setUndoStack] = useState<ActivityHistoryItem[]>([]);
 
-  // Synchronize team member roles and attributes with Supabase employees if available
+  // Trellis uses the authenticated Laravel API whenever configured and always in production.
+  // Local fixture data remains confined to unconfigured development/test runs.
   useEffect(() => {
-    let isMounted = true;
-
-    async function syncTeamMembers() {
-      try {
-        const { data, error } = await supabase
-          .from('employees')
-          .select('*')
-          .in('email', [
-            'nadia@citadel.ng',
-            'bayu@citadel.ng',
-            'sinta@citadel.ng',
-            'jonathan@citadel.ng',
-            'raka@citadel.ng',
-          ]);
-
-        if (error) {
-          console.warn('Supabase fetch team members warning:', error.message);
-          return;
-        }
-
-        if (isMounted && data && data.length > 0) {
-          setTeamMembers((prev) =>
-            prev.map((m) => {
-              const dbMatch = data.find(
-                (d: any) =>
-                  d.email?.toLowerCase() === m.email.toLowerCase() ||
-                  `${d.first_name} ${d.last_name}`.toLowerCase() === m.name.toLowerCase()
-              );
-              if (!dbMatch) return m;
-              return {
-                ...m,
-                supabaseId: dbMatch.id,
-                staffId: dbMatch.staff_id || m.staffId,
-                role: dbMatch.position || dbMatch.job_title || m.role,
-                avatarBg: dbMatch.avatar_bg || m.avatarBg,
-                avatarText: dbMatch.avatar_text || m.avatarText,
-              };
-            })
-          );
-        }
-      } catch (err) {
-        console.warn('Supabase sync team members error:', err);
+    if (!isApiMode) return;
+    let active = true;
+    setIsLoading(true);
+    setTasks([]);
+    setTeamMembers([]);
+    setEmployeeRecords([]);
+    setSelectedTaskId(null);
+    Promise.allSettled([listLaravelTasks(), employeeRepository.getAll()]).then(([taskResult, employeeResult]) => {
+      if (!active) return;
+      const errors: string[] = [];
+      if (taskResult.status === 'fulfilled') setTasks(taskResult.value);
+      else errors.push(`Tasks: ${taskResult.reason instanceof Error ? taskResult.reason.message : 'request failed'}`);
+      if (employeeResult.status === 'fulfilled') {
+        setEmployeeRecords(employeeResult.value);
+        setTeamMembers(employeeResult.value.map(mapEmployeeToTeamMember));
       }
-    }
-
-    syncTeamMembers();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  // Fetch tasks from Supabase and subscribe to realtime changes
-  React.useEffect(() => {
-    let isMounted = true;
-    taskDbService
-      .fetchTasks()
-      .then((dbTasks) => {
-        if (isMounted && dbTasks.length > 0) {
-          setTasks(dbTasks);
-        }
-      })
-      .catch((err) => console.warn('Supabase fetch tasks error:', err));
-
-    const unsubscribe = taskDbService.subscribeToTasks((payload) => {
-      if (payload.eventType === 'INSERT') {
-        setTasks((prev) => {
-          if (prev.some((t) => t.id === payload.new.id)) return prev;
-          return [payload.new, ...prev];
-        });
-      } else if (payload.eventType === 'UPDATE') {
-        setTasks((prev) =>
-          prev.map((t) => (t.id === payload.new.id ? { ...t, ...payload.new } : t))
-        );
-      } else if (payload.eventType === 'DELETE') {
-        setTasks((prev) => prev.filter((t) => t.id !== payload.old.id));
-      }
+      else errors.push(`Employees: ${employeeResult.reason instanceof Error ? employeeResult.reason.message : 'request failed'}`);
+      setApiError(errors.length ? errors.join(' ') : null);
+      setIsLoading(false);
     });
-
-    return () => {
-      isMounted = false;
-      unsubscribe();
-    };
-  }, []);
+    return () => { active = false; };
+  }, [authenticatedUser?.id, isApiMode]);
 
   // Listen for global open new task event
   React.useEffect(() => {
@@ -225,346 +205,256 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const findMember = useCallback(
     (idOrEmail?: string | number): TeamMember | undefined => {
       if (!idOrEmail) return undefined;
-      const str = String(idOrEmail).trim().toLowerCase();
-      return teamMembers.find(
-        (m) =>
-          m.id.toLowerCase() === str ||
-          String(m.supabaseId || '').toLowerCase() === str ||
-          String(m.staffId || '').toLowerCase() === str ||
-          m.email.toLowerCase() === str ||
-          m.name.toLowerCase() === str
+      const value = String(idOrEmail).trim().toLowerCase();
+      return teamMembers.find((member) =>
+        member.id.toLowerCase() === value ||
+        String(member.staffId || '').toLowerCase() === value ||
+        member.email.toLowerCase() === value ||
+        member.name.toLowerCase() === value
       );
     },
     [teamMembers]
   );
 
   const switchUser = useCallback((userId: string) => {
-    const found = findMember(userId);
-    if (found) {
-      setCurrentUser(found);
-    }
-  }, [findMember]);
+    if (isApiMode) return;
+    if (teamMembers.some((member) => member.id === userId)) setSelectedUserId(userId);
+  }, [isApiMode, teamMembers]);
 
-  // Notifications filtered for current user
-  const userNotifications = useMemo(() => {
-    return notifications.filter((n) => n.recipientId === currentUser.id);
-  }, [notifications, currentUser.id]);
-
-  const unreadNotificationCount = useMemo(() => {
-    return userNotifications.filter((n) => !n.read).length;
-  }, [userNotifications]);
+  const userNotifications = useMemo(
+    () => notifications.filter((notification) => notification.recipientId === currentUser.id),
+    [notifications, currentUser.id]
+  );
+  const unreadNotificationCount = useMemo(() => userNotifications.filter((item) => !item.read).length, [userNotifications]);
+  const clearApiError = useCallback(() => setApiError(null), []);
+  const reportApiError = useCallback((error: unknown) => {
+    setApiError(error instanceof Error ? error.message : 'The task operation failed.');
+  }, []);
 
   const markNotificationAsRead = useCallback((id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+    setNotifications((previous) => previous.map((item) => item.id === id ? { ...item, read: true } : item));
   }, []);
-
   const markAllNotificationsAsRead = useCallback(() => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.recipientId === currentUser.id ? { ...n, read: true } : n))
-    );
+    setNotifications((previous) => previous.map((item) => item.recipientId === currentUser.id ? { ...item, read: true } : item));
   }, [currentUser.id]);
 
-  // Dynamically calculate team workload hours from active tasks
   const teamWorkload = useMemo(() => {
-    const hoursMap: Record<string, number> = {};
-    teamMembers.forEach((m) => {
-      hoursMap[m.id] = 0;
+    const hours: Record<string, number> = {};
+    teamMembers.forEach((member) => { hours[member.id] = 0; });
+    tasks.forEach((task) => {
+      if (task.status === 'Done') return;
+      const member = findMember(task.assigneeId);
+      if (member) hours[member.id] = (hours[member.id] || 0) + (task.hours ?? 0);
     });
-
-    tasks.forEach((t) => {
-      // Done tasks are archived/complete; active tasks contribute to workload
-      if (t.status !== 'Done') {
-        const member = findMember(t.assigneeId);
-        if (member) {
-          hoursMap[member.id] = (hoursMap[member.id] || 0) + (t.hours || 8);
-        }
-      }
-    });
-
-    return hoursMap;
+    return hours;
   }, [tasks, teamMembers, findMember]);
 
-  // Create Task Flow
-  const createTask = useCallback(
-    (input: CreateTaskInput): TrellisTask => {
-      const newIdNum = tasks.length + 219;
-      const newId = `PAS-${newIdNum}`;
-      const isSelfAssignment = input.assigneeId === currentUser.id;
-
-      const createdTask: TrellisTask = {
-        id: newId,
-        title: input.title,
-        description: input.description,
-        status: input.status || 'To do',
-        labels: input.labels || ['Feature'],
-        dueDate: input.dueDate || 'Oct 28',
-        assigneeId: input.assigneeId,
-        assignerId: currentUser.id,
-        assignmentStatus: isSelfAssignment ? 'accepted' : 'pending',
-        reviewerId: input.reviewerId,
-        hours: input.hours || 8,
-        checklist: [],
-        comments: [],
-        prTag: input.prTag,
-        createdAt: `Just now by ${currentUser.name.split(' ')[0]}`,
-      };
-
-      setTasks((prev) => [createdTask, ...prev]);
-
-      // Save to Supabase database
-      taskDbService.upsertTask(createdTask).catch((err) =>
-        console.warn('Supabase task save error:', err)
-      );
-
-      // If assigned to someone else, send them a notification
-      if (!isSelfAssignment) {
-        const notif: TrellisNotification = {
-          id: `notif-${Date.now()}`,
-          recipientId: input.assigneeId,
-          senderId: currentUser.id,
-          senderName: currentUser.name,
-          taskId: newId,
-          taskTitle: input.title,
-          type: 'assigned',
-          message: `${currentUser.name} assigned you to "${input.title}"`,
-          timestamp: 'Just now',
-          read: false,
-        };
-        setNotifications((prev) => [notif, ...prev]);
+  const createTask = useCallback(async (input: CreateTaskInput): Promise<TrellisTask | null> => {
+    if (isApiMode) {
+      try {
+        const created = await createLaravelTask({
+          ...input,
+          departmentId: authenticatedUser?.departmentId,
+        });
+        setTasks((previous) => [created, ...previous]);
+        setApiError(null);
+        return created;
+      } catch (error) {
+        reportApiError(error);
+        return null;
       }
-
-      return createdTask;
-    },
-    [tasks.length, currentUser]
-  );
-
-  const updateTask = useCallback((taskId: string, updates: Partial<TrellisTask>) => {
-    setTasks((prev) => {
-      const updatedList = prev.map((t) => (t.id === taskId ? { ...t, ...updates } : t));
-      const target = updatedList.find((t) => t.id === taskId);
-      if (target) {
-        taskDbService.upsertTask(target).catch((err) =>
-          console.warn('Supabase updateTask error:', err)
-        );
-      }
-      return updatedList;
-    });
-  }, []);
-
-  // Delete Task Flow with Undo Support
-  const deleteTask = useCallback(
-    (taskId: string) => {
-      const taskToDelete = tasks.find((t) => t.id === taskId);
-      if (!taskToDelete) return;
-
-      setTasks((prev) => prev.filter((t) => t.id !== taskId));
-      if (selectedTaskId === taskId) {
-        setSelectedTaskId(null);
-        setIsEditMode(false);
-      }
-
-      // Delete from Supabase database
-      taskDbService.deleteTask(taskId).catch((err) =>
-        console.warn('Supabase deleteTask error:', err)
-      );
-
-      const toastItem: ActivityHistoryItem = {
-        id: `act-${Date.now()}`,
-        taskId,
-        taskTitle: taskToDelete.title,
-        previousStatus: taskToDelete.status,
-        newStatus: taskToDelete.status,
-        timestamp: Date.now(),
-        message: `Deleted task "${taskToDelete.title}"`,
-        taskBackup: taskToDelete,
-        actionType: 'delete',
-      };
-
-      setActiveToast(toastItem);
-      setUndoStack((prev) => [toastItem, ...prev]);
-    },
-    [tasks, selectedTaskId]
-  );
-
-  // Reassignment Flow
-  const assignTask = useCallback(
-    (taskId: string, newAssigneeId: string) => {
-      const task = tasks.find((t) => t.id === taskId);
-      if (!task || task.assigneeId === newAssigneeId) return;
-
-      const newAssignee = teamMembers.find((m) => m.id === newAssigneeId);
-      const isSelf = newAssigneeId === currentUser.id;
-
-      setTasks((prev) =>
-        prev.map((t) => {
-          if (t.id === taskId) {
-            return {
-              ...t,
-              assigneeId: newAssigneeId,
-              assignerId: currentUser.id,
-              assignmentStatus: isSelf ? 'accepted' : 'pending',
-              declineReason: undefined,
-            };
-          }
-          return t;
-        })
-      );
-
-      // Create notification for new assignee
-      if (newAssignee && !isSelf) {
-        const notif: TrellisNotification = {
-          id: `notif-${Date.now()}`,
-          recipientId: newAssigneeId,
-          senderId: currentUser.id,
-          senderName: currentUser.name,
-          taskId: task.id,
-          taskTitle: task.title,
-          type: 'reassigned',
-          message: `${currentUser.name} assigned you to "${task.title}"`,
-          timestamp: 'Just now',
-          read: false,
-        };
-        setNotifications((prev) => [notif, ...prev]);
-      }
-    },
-    [tasks, teamMembers, currentUser]
-  );
-
-  // Accept Task Flow
-  const acceptTask = useCallback(
-    (taskId: string) => {
-      const task = tasks.find((t) => t.id === taskId);
-      if (!task) return;
-
-      setTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? { ...t, assignmentStatus: 'accepted' } : t))
-      );
-
-      // Notify the assigner that task was accepted
-      if (task.assignerId && task.assignerId !== currentUser.id) {
-        const notif: TrellisNotification = {
-          id: `notif-${Date.now()}`,
-          recipientId: task.assignerId,
-          senderId: currentUser.id,
-          senderName: currentUser.name,
-          taskId: task.id,
-          taskTitle: task.title,
-          type: 'accepted',
-          message: `${currentUser.name} accepted assignment for "${task.title}"`,
-          timestamp: 'Just now',
-          read: false,
-        };
-        setNotifications((prev) => [notif, ...prev]);
-      }
-    },
-    [tasks, currentUser]
-  );
-
-  // Decline Task Flow
-  const declineTask = useCallback(
-    (taskId: string, reason?: string) => {
-      const task = tasks.find((t) => t.id === taskId);
-      if (!task) return;
-
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.id === taskId
-            ? { ...t, assignmentStatus: 'declined', declineReason: reason || 'Declined by assignee' }
-            : t
-        )
-      );
-
-      // Notify the assigner that task was declined
-      if (task.assignerId && task.assignerId !== currentUser.id) {
-        const notif: TrellisNotification = {
-          id: `notif-${Date.now()}`,
-          recipientId: task.assignerId,
-          senderId: currentUser.id,
-          senderName: currentUser.name,
-          taskId: task.id,
-          taskTitle: task.title,
-          type: 'declined',
-          message: `${currentUser.name} declined "${task.title}"${reason ? `: "${reason}"` : ''}`,
-          timestamp: 'Just now',
-          read: false,
-        };
-        setNotifications((prev) => [notif, ...prev]);
-      }
-    },
-    [tasks, currentUser]
-  );
-
-  // Move Task Status Flow with Undo Support
-  const moveTaskStatus = useCallback(
-    (taskId: string, newStatus: TaskStatus) => {
-      const task = tasks.find((t) => t.id === taskId);
-      if (!task || task.status === newStatus) return;
-
-      const previousStatus = task.status;
-
-      setTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
-      );
-
-      // Save updated status to Supabase
-      taskDbService
-        .upsertTask({ ...task, status: newStatus })
-        .catch((err) => console.warn('Supabase moveTaskStatus error:', err));
-
-      // Target reviewer / assignee name for toast
-      const reviewer = teamMembers.find((m) => m.id === task.reviewerId);
-      const assignee = teamMembers.find((m) => m.id === task.assigneeId);
-      const targetPersonName = reviewer ? reviewer.name : assignee?.name || 'team';
-
-      const toastItem: ActivityHistoryItem = {
-        id: `act-${Date.now()}`,
-        taskId,
-        taskTitle: task.title,
-        previousStatus,
-        newStatus,
-        timestamp: Date.now(),
-        message:
-          newStatus === 'In review'
-            ? `Moved to In review • ${targetPersonName} was asked to review`
-            : `Moved to ${newStatus}`,
-      };
-
-      setActiveToast(toastItem);
-      setUndoStack((prev) => [toastItem, ...prev]);
-    },
-    [tasks, teamMembers]
-  );
-
-  // Undo Last Action
-  const undoLastAction = useCallback(() => {
-    if (undoStack.length === 0) return;
-    const [lastAction, ...rest] = undoStack;
-
-    if (lastAction.actionType === 'delete' && lastAction.taskBackup) {
-      setTasks((prev) => [lastAction.taskBackup!, ...prev]);
-      taskDbService
-        .upsertTask(lastAction.taskBackup!)
-        .catch((err) => console.warn('Supabase undo restore error:', err));
-    } else {
-      setTasks((prev) =>
-        prev.map((t) => {
-          if (t.id === lastAction.taskId) {
-            const reverted = { ...t, status: lastAction.previousStatus };
-            taskDbService
-              .upsertTask(reverted)
-              .catch((err) => console.warn('Supabase undo status error:', err));
-            return reverted;
-          }
-          return t;
-        })
-      );
     }
 
+    const newId = `PAS-${tasks.length + 219}`;
+    const isSelfAssignment = input.assigneeId === currentUser.id;
+    const createdTask: TrellisTask = {
+      id: newId,
+      title: input.title,
+      description: input.description,
+      status: input.status || 'To do',
+      labels: input.labels || ['Feature'],
+      dueDate: input.dueDate || '',
+      assigneeId: input.assigneeId,
+      assignerId: currentUser.id,
+      assignmentStatus: isSelfAssignment ? 'accepted' : 'pending',
+      reviewerId: input.reviewerId,
+      hours: input.hours ?? 8,
+      checklist: [],
+      comments: [],
+      prTag: input.prTag,
+      createdAt: `Just now by ${currentUser.name.split(' ')[0]}`,
+    };
+    setTasks((previous) => [createdTask, ...previous]);
+    if (!isSelfAssignment) {
+      setNotifications((previous) => [{
+        id: `notif-${Date.now()}`, recipientId: input.assigneeId, senderId: currentUser.id,
+        senderName: currentUser.name, taskId: newId, taskTitle: input.title, type: 'assigned',
+        message: `${currentUser.name} assigned you to "${input.title}"`, timestamp: 'Just now', read: false,
+      }, ...previous]);
+    }
+    return createdTask;
+  }, [authenticatedUser?.departmentId, currentUser, isApiMode, reportApiError, tasks.length]);
+
+  const updateTask = useCallback(async (taskId: string, updates: Partial<TrellisTask>): Promise<void> => {
+    const task = tasks.find((item) => item.id === taskId);
+    if (!task) return;
+    if (isApiMode) {
+      try {
+        const updated = await updateLaravelTask(task, updates);
+        setTasks((previous) => previous.map((item) => item.id === taskId ? updated : item));
+        setApiError(null);
+      } catch (error) {
+        reportApiError(error);
+      }
+      return;
+    }
+    setTasks((previous) => previous.map((item) => item.id === taskId ? { ...item, ...updates } : item));
+  }, [isApiMode, reportApiError, tasks]);
+
+  const deleteTask = useCallback(async (taskId: string): Promise<void> => {
+    const task = tasks.find((item) => item.id === taskId);
+    if (!task) return;
+    if (isApiMode) {
+      try {
+        await deleteLaravelTask(taskId);
+        setTasks((previous) => previous.filter((item) => item.id !== taskId));
+        if (selectedTaskId === taskId) { setSelectedTaskId(null); setIsEditMode(false); }
+        setCanUndo(false);
+        setUndoStack([]);
+        setActiveToast({
+          id: `act-${Date.now()}`, taskId, taskTitle: task.title, previousStatus: task.status,
+          newStatus: task.status, timestamp: Date.now(), message: `Deleted task "${task.title}"`,
+        });
+        setApiError(null);
+      } catch (error) {
+        reportApiError(error);
+      }
+      return;
+    }
+    setTasks((previous) => previous.filter((item) => item.id !== taskId));
+    if (selectedTaskId === taskId) { setSelectedTaskId(null); setIsEditMode(false); }
+    const toast: ActivityHistoryItem = {
+      id: `act-${Date.now()}`, taskId, taskTitle: task.title, previousStatus: task.status,
+      newStatus: task.status, timestamp: Date.now(), message: `Deleted task "${task.title}"`,
+      taskBackup: task, actionType: 'delete',
+    };
+    setActiveToast(toast);
+    setUndoStack((previous) => [toast, ...previous]);
+    setCanUndo(true);
+  }, [isApiMode, reportApiError, selectedTaskId, tasks]);
+
+  const assignTask = useCallback(async (taskId: string, newAssigneeId: string) => {
+    const task = tasks.find((item) => item.id === taskId);
+    if (!task || task.assigneeId === newAssigneeId) return;
+    if (isApiMode) {
+      try {
+        const updated = await updateLaravelTask(task, { assigneeId: newAssigneeId });
+        setTasks((previous) => previous.map((item) => item.id === taskId ? updated : item));
+        setApiError(null);
+      } catch (error) { reportApiError(error); }
+      return;
+    }
+    const newAssignee = teamMembers.find((member) => member.id === newAssigneeId);
+    const self = newAssigneeId === currentUser.id;
+    setTasks((previous) => previous.map((item) => item.id === taskId ? {
+      ...item, assigneeId: newAssigneeId, assignerId: currentUser.id,
+      assignmentStatus: self ? 'accepted' : 'pending', declineReason: undefined,
+    } : item));
+    if (newAssignee && !self) {
+      setNotifications((previous) => [{
+        id: `notif-${Date.now()}`, recipientId: newAssigneeId, senderId: currentUser.id,
+        senderName: currentUser.name, taskId, taskTitle: task.title, type: 'reassigned',
+        message: `${currentUser.name} assigned you to "${task.title}"`, timestamp: 'Just now', read: false,
+      }, ...previous]);
+    }
+  }, [currentUser, isApiMode, reportApiError, tasks, teamMembers]);
+
+  const acceptTask = useCallback(async (taskId: string) => {
+    const task = tasks.find((item) => item.id === taskId);
+    if (!task) return;
+    if (isApiMode) {
+      try {
+        const updated = await updateLaravelTaskAssignment(task, 'accepted');
+        setTasks((previous) => previous.map((item) => item.id === taskId ? updated : item));
+        setApiError(null);
+      } catch (error) { reportApiError(error); }
+      return;
+    }
+    setTasks((previous) => previous.map((item) => item.id === taskId ? { ...item, assignmentStatus: 'accepted' } : item));
+  }, [isApiMode, reportApiError, tasks]);
+
+  const declineTask = useCallback(async (taskId: string, reason?: string) => {
+    const task = tasks.find((item) => item.id === taskId);
+    if (!task) return;
+    if (isApiMode) {
+      try {
+        const updated = await updateLaravelTaskAssignment(task, 'declined', reason);
+        setTasks((previous) => previous.map((item) => item.id === taskId ? updated : item));
+        setApiError(null);
+      } catch (error) { reportApiError(error); }
+      return;
+    }
+    setTasks((previous) => previous.map((item) => item.id === taskId ? {
+      ...item, assignmentStatus: 'declined', declineReason: reason || 'Declined by assignee',
+    } : item));
+  }, [isApiMode, reportApiError, tasks]);
+
+  const moveTaskStatus = useCallback(async (taskId: string, newStatus: TaskStatus) => {
+    const task = tasks.find((item) => item.id === taskId);
+    if (!task || task.status === newStatus) return;
+    const previousStatus = task.status;
+    let updated = { ...task, status: newStatus };
+    if (isApiMode) {
+      try {
+        updated = await updateLaravelTaskStatus(task, newStatus);
+        setApiError(null);
+      } catch (error) { reportApiError(error); return; }
+    }
+    setTasks((previous) => previous.map((item) => item.id === taskId ? updated : item));
+    const reviewer = teamMembers.find((member) => member.id === task.reviewerId);
+    const assignee = teamMembers.find((member) => member.id === task.assigneeId);
+    const target = reviewer?.name || assignee?.name;
+    const toast: ActivityHistoryItem = {
+      id: `act-${Date.now()}`, taskId, taskTitle: task.title, previousStatus, newStatus,
+      timestamp: Date.now(), message: newStatus === 'In review' && target && !isApiMode
+        ? `Moved to In review • ${target} was asked to review`
+        : `Moved to ${newStatus}`,
+      actionType: 'status_change',
+    };
+    setActiveToast(toast);
+    setUndoStack((previous) => [toast, ...previous]);
+    setCanUndo(true);
+  }, [isApiMode, reportApiError, tasks, teamMembers]);
+
+  const undoLastAction = useCallback(async () => {
+    if (!canUndo || undoStack.length === 0) return;
+    const [lastAction, ...rest] = undoStack;
+    if (isApiMode) {
+      if (lastAction.actionType === 'delete') {
+        reportApiError(new Error('Deleted tasks cannot be restored through the current API.'));
+        return;
+      }
+      const task = tasks.find((item) => item.id === lastAction.taskId);
+      if (!task) return;
+      try {
+        const reverted = await updateLaravelTaskStatus(task, lastAction.previousStatus);
+        setTasks((previous) => previous.map((item) => item.id === task.id ? reverted : item));
+        setUndoStack(rest);
+        setCanUndo(rest.length > 0);
+        setActiveToast(null);
+        setApiError(null);
+      } catch (error) { reportApiError(error); }
+      return;
+    }
+    if (lastAction.actionType === 'delete' && lastAction.taskBackup) {
+      setTasks((previous) => [lastAction.taskBackup!, ...previous]);
+    } else {
+      setTasks((previous) => previous.map((item) => item.id === lastAction.taskId ? { ...item, status: lastAction.previousStatus } : item));
+    }
     setUndoStack(rest);
+    setCanUndo(rest.length > 0);
     setActiveToast(null);
-  }, [undoStack]);
+  }, [canUndo, isApiMode, reportApiError, tasks, undoStack]);
 
   const clearToast = useCallback(() => {
     setActiveToast(null);
@@ -585,6 +475,12 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
         createTask,
         updateTask,
         deleteTask,
+        isApiMode,
+        isLoading,
+        apiError,
+        clearApiError,
+        canUndo,
+        canManageTasks,
         isEditMode,
         setIsEditMode,
         assignTask,

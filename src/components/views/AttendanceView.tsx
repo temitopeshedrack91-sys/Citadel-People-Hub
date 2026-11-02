@@ -18,12 +18,12 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { Employee } from '../../types';
-import { employeeRepository } from '../../services';
+import { attendanceRepository, employeeRepository } from '../../services';
 import { useAuth } from '../../context/AuthContext';
 import { normalizeRole } from '../../utils/rbac';
 import { Badge } from '../common/Badge';
 import { CitadelLogo } from '../brand/CitadelLogo';
-import { CITADEL_ATTENDANCE_SCHEDULES, INITIAL_EMPLOYEES } from '../../data/mockData';
+import { CITADEL_ATTENDANCE_SCHEDULES } from '../../data/mockData';
 import {
   attendanceImportService,
   AttendanceImportResult,
@@ -31,6 +31,7 @@ import {
   UnmatchedDeviceRecord,
   SAMPLE_BIOMETRIC_EXPORT_CSV,
   downloadSampleBiometricCsv,
+  parseBiometricExport,
 } from '../../features/attendance-import';
 
 const MONTH_LABELS = [
@@ -72,13 +73,13 @@ function unmatchedReasonLabel(reason: UnmatchedDeviceRecord['reason']): string {
 export const AttendanceView: React.FC = () => {
   const { currentRole } = useAuth();
   const [activeTab, setActiveTab] = useState<'daily_summary' | 'schedules'>('daily_summary');
-  const [employees, setEmployees] = useState<Employee[]>(INITIAL_EMPLOYEES);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [summaries, setSummaries] = useState<DailyAttendanceSummary[]>([]);
   const [unmatched, setUnmatched] = useState<UnmatchedDeviceRecord[]>([]);
   const [storedPunchCount, setStoredPunchCount] = useState(0);
   const [lastImportedAt, setLastImportedAt] = useState<string | null>(null);
   const [lastFileName, setLastFileName] = useState<string | null>(null);
-  const [importResult, setImportResult] = useState<AttendanceImportResult | null>(null);
+  const [importResult, setImportResult] = useState<Pick<AttendanceImportResult, 'totalRecords' | 'matchedRecords' | 'unmatchedRecords' | 'duplicateRecords' | 'unmatchedDeviceIds' | 'skippedRows'> | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -99,30 +100,35 @@ export const AttendanceView: React.FC = () => {
 
     const loadAttendance = async () => {
       try {
-        const staff = (await employeeRepository.getAll().catch(() => INITIAL_EMPLOYEES)) || INITIAL_EMPLOYEES;
+        const staff = await employeeRepository.getAll();
         if (cancelled) return;
-
-        const validStaff = staff && staff.length > 0 ? staff : INITIAL_EMPLOYEES;
-        setEmployees(validStaff);
-        let snapshot = attendanceImportService.getSnapshot(validStaff);
-        if (cancelled) return;
-
-        // Auto-seed sample biometric data on initial load if storage is empty
-        if (snapshot.punchCount === 0) {
-          const seeded = attendanceImportService.importContent(
-            SAMPLE_BIOMETRIC_EXPORT_CSV,
-            'citadel_zkteco_october_export.csv',
-            validStaff
-          );
-          snapshot = {
-            punchCount: seeded.storedPunchCount,
-            summaries: seeded.summaries,
-            unmatchedDeviceIds: seeded.unmatchedDeviceIds,
-            lastImportedAt: seeded.importedAt,
-            lastFileName: seeded.fileName,
-          };
-          setImportResult(seeded);
+        setEmployees(staff);
+        if (staff.length === 0) {
+          setImportError('No employee records were returned. Attendance punches cannot be reconciled.');
+          return;
         }
+
+        if (import.meta.env.PROD) {
+          if (!canImport) {
+            setImportError('Biometric import summaries are available to authorized People & Culture users.');
+            return;
+          }
+          if (!attendanceRepository.getBiometricPunchSnapshot) {
+            throw new Error('The authenticated API does not provide biometric attendance history.');
+          }
+          const snapshot = await attendanceRepository.getBiometricPunchSnapshot(staff);
+          if (cancelled) return;
+          setSummaries(snapshot.summaries);
+          setUnmatched(snapshot.unmatchedDeviceIds);
+          setStoredPunchCount(snapshot.punchCount);
+          setLastImportedAt(snapshot.lastImportedAt || null);
+          setLastFileName(snapshot.lastFileName || null);
+          return;
+        }
+
+        const validStaff = staff;
+        const snapshot = attendanceImportService.getSnapshot(validStaff);
+        if (cancelled) return;
 
         setSummaries(snapshot.summaries);
         setUnmatched(snapshot.unmatchedDeviceIds);
@@ -151,8 +157,34 @@ export const AttendanceView: React.FC = () => {
     setIsImporting(true);
 
     try {
-      const validStaff = employees.length > 0 ? employees : INITIAL_EMPLOYEES;
-      const result = await attendanceImportService.importFile(file, validStaff);
+      if (employees.length === 0) throw new Error('Employee records must load before attendance punches can be reconciled.');
+      if (import.meta.env.PROD) {
+        if (!attendanceRepository.importBiometricPunches || !attendanceRepository.getBiometricPunchSnapshot) {
+          throw new Error('The authenticated API does not provide biometric attendance import persistence.');
+        }
+        const parsed = parseBiometricExport(await file.text());
+        if (parsed.punches.length === 0) throw new Error('No valid biometric punch rows were found in this file.');
+        const batch = await attendanceRepository.importBiometricPunches(file.name, parsed.punches);
+        const snapshot = await attendanceRepository.getBiometricPunchSnapshot(employees);
+        setImportResult({
+          totalRecords: batch.totalRecords,
+          matchedRecords: batch.matchedRecords,
+          unmatchedRecords: batch.unmatchedRecords,
+          duplicateRecords: batch.duplicateRecords,
+          unmatchedDeviceIds: batch.unmatchedDeviceIds,
+          skippedRows: parsed.skippedRows,
+        });
+        setSummaries(snapshot.summaries);
+        setUnmatched(snapshot.unmatchedDeviceIds);
+        setStoredPunchCount(snapshot.punchCount);
+        setLastImportedAt(snapshot.lastImportedAt || batch.importedAt);
+        setLastFileName(snapshot.lastFileName || batch.fileName);
+        setDateFilter('all');
+        showToast(`Processed "${file.name}": ${batch.matchedRecords} punches matched (${batch.duplicateRecords} duplicates skipped).`);
+        return;
+      }
+
+      const result = await attendanceImportService.importFile(file, employees);
       setImportResult(result);
       setSummaries(result.summaries);
       setUnmatched(result.unmatchedDeviceIds);
@@ -172,14 +204,15 @@ export const AttendanceView: React.FC = () => {
   };
 
   const handleLoadSampleData = () => {
+    if (!import.meta.env.DEV) return;
     setIsImporting(true);
     setImportError(null);
     try {
-      const validStaff = employees.length > 0 ? employees : INITIAL_EMPLOYEES;
+      if (employees.length === 0) throw new Error('Employee records must load before sample punches can be reconciled.');
       const result = attendanceImportService.importContent(
         SAMPLE_BIOMETRIC_EXPORT_CSV,
         'citadel_zkteco_october_export.csv',
-        validStaff
+        employees
       );
       setImportResult(result);
       setSummaries(result.summaries);
@@ -362,7 +395,7 @@ export const AttendanceView: React.FC = () => {
                       <span>{isImporting ? 'Importing export...' : 'Choose export file'}</span>
                     </button>
 
-                    <button
+                    {import.meta.env.DEV && <button
                       type="button"
                       onClick={handleLoadSampleData}
                       disabled={isImporting}
@@ -371,9 +404,9 @@ export const AttendanceView: React.FC = () => {
                     >
                       <Fingerprint className="w-4 h-4 text-[#083E34]" />
                       <span>Load Sample Biometric Data</span>
-                    </button>
+                    </button>}
 
-                    <button
+                    {import.meta.env.DEV && <button
                       type="button"
                       onClick={downloadSampleBiometricCsv}
                       className="px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-semibold text-xs transition inline-flex items-center gap-1.5 shadow-2xs active:scale-[0.98] cursor-pointer"
@@ -381,7 +414,7 @@ export const AttendanceView: React.FC = () => {
                     >
                       <Download className="w-3.5 h-3.5 text-slate-500" />
                       <span>Download Sample CSV</span>
-                    </button>
+                    </button>}
 
                     {storedPunchCount > 0 && (
                       <button

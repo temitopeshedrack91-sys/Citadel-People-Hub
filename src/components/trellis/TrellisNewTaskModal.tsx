@@ -18,17 +18,24 @@ const availableLabels: TaskLabel[] = [
 ];
 
 export const TrellisNewTaskModal: React.FC = () => {
-  const { isNewTaskModalOpen, setIsNewTaskModalOpen, teamMembers, currentUser, createTask } =
+  const { isNewTaskModalOpen, setIsNewTaskModalOpen, teamMembers, currentUser, createTask, isApiMode } =
     useTrellis();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<TaskStatus>('To do');
-  const [assigneeId, setAssigneeId] = useState<string>(teamMembers[1]?.id || 'user-bayu');
-  const [dueDate, setDueDate] = useState('Oct 28');
+  const [assigneeId, setAssigneeId] = useState<string>(currentUser.id);
+  const [dueDate, setDueDate] = useState('');
   const [selectedLabels, setSelectedLabels] = useState<TaskLabel[]>(['Feature']);
   const [hours, setHours] = useState<number>(8);
-  const [reviewerId, setReviewerId] = useState<string>('user-sinta');
+  const [reviewerId, setReviewerId] = useState<string>('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (!isNewTaskModalOpen) return;
+    setAssigneeId(currentUser.id);
+    setReviewerId('');
+  }, [currentUser.id, isNewTaskModalOpen]);
 
   useEffect(() => {
     if (!isNewTaskModalOpen) return;
@@ -49,24 +56,26 @@ export const TrellisNewTaskModal: React.FC = () => {
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-
-    createTask({
+    setIsSaving(true);
+    const created = await createTask({
       title: title.trim(),
       description: description.trim(),
       status,
       labels: selectedLabels,
       dueDate,
       assigneeId,
-      hours: Number(hours) || 8,
+      hours: Number(hours),
       reviewerId: reviewerId || undefined,
     });
-
+    setIsSaving(false);
+    if (!created) return;
     setIsNewTaskModalOpen(false);
     setTitle('');
     setDescription('');
+    setDueDate('');
     setSelectedLabels(['Feature']);
   };
 
@@ -165,10 +174,10 @@ export const TrellisNewTaskModal: React.FC = () => {
             <div>
               <label className="block text-slate-800 font-bold mb-1">Due Date</label>
               <input
-                type="text"
+                type={isApiMode ? 'date' : 'text'}
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                placeholder="Oct 28"
+                placeholder={isApiMode ? undefined : 'YYYY-MM-DD'}
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 text-xs font-semibold text-slate-900"
               />
             </div>
@@ -224,9 +233,10 @@ export const TrellisNewTaskModal: React.FC = () => {
             <button
               type="submit"
               data-testid="trellis-submit-new-task"
+              disabled={isSaving}
               className="px-5 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold shadow-xs transition active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-2"
             >
-              Create & Assign Task
+              {isSaving ? 'Saving…' : 'Create & Assign Task'}
             </button>
           </div>
         </form>

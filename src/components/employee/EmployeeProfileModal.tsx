@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   Building2,
@@ -23,12 +23,18 @@ import {
   Share2,
   ExternalLink,
   Lock,
+  Upload,
+  Trash2,
+  RefreshCw,
+  Loader2,
+  FileWarning,
 } from 'lucide-react';
-import { Employee, UserRole } from '../../types';
+import { Employee, DocumentCategory, HubDocument, UserRole } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { SensitiveField } from '../common/SensitiveField';
 import { Badge } from '../common/Badge';
-import { auditRepository } from '../../services';
+import { documentRepository, auditRepository } from '../../services';
+import { EmployeeDocumentInput } from '../../types/documents';
 
 interface EmployeeProfileModalProps {
   employee: Employee | null;
@@ -54,9 +60,210 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   onEdit,
   onNavigateLeave,
 }) => {
-  const { currentUser, currentRole, canViewSensitiveData } = useAuth();
+  const { currentUser, currentRole, canViewSensitiveData, permissions } = useAuth();
   const [activeTab, setActiveTab] = useState<ProfileTab>('overview');
   const [isCopied, setIsCopied] = useState(false);
+
+  // Employee Documents state
+  const [employeeDocs, setEmployeeDocs] = useState<HubDocument[]>([]);
+  const [docsLoading, setDocsLoading] = useState(false);
+  const [docsError, setDocsError] = useState<string | null>(null);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [uploadForm, setUploadForm] = useState<EmployeeDocumentInput & { file?: File }>({
+    title: '',
+    category: 'Identification',
+    description: '',
+    issueDate: '',
+    expiryDate: '',
+    version: '1.0',
+  });
+  const [uploading, setUploading] = useState(false);
+  const [replaceDocId, setReplaceDocId] = useState<string | null>(null);
+  const [replacing, setReplacing] = useState(false);
+  const [downloadingDocId, setDownloadingDocId] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const replaceFileRef = useRef<HTMLInputElement>(null);
+
+  const EMPLOYEE_DOCUMENT_CATEGORIES: DocumentCategory[] = [
+    'Educational Certificate',
+    'Professional Certification',
+    'CV/Resume',
+    'National Identification',
+    'Employment Letter',
+    'Previous Employment Document',
+    'Medical Fitness Certificate',
+    'Other Supporting Document',
+  ];
+
+  const canManageEmployeeDocs = permissions.canManageDocuments || currentUser.staffId === employee!.staffId;
+
+  const formatDate = (dateString?: string | null): string => {
+    if (!dateString) return 'Not set';
+    try {
+      return new Date(dateString).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch {
+      return String(dateString);
+    }
+  };
+
+  const documentStatus = (doc: HubDocument): { label: string; variant: 'success' | 'warning' | 'destructive' } => {
+    if (!doc.expiryDate) return { label: 'Valid', variant: 'success' };
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const expiry = new Date(doc.expiryDate);
+    const daysLeft = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysLeft < 0) return { label: 'Expired', variant: 'destructive' };
+    if (daysLeft <= 30) return { label: 'Expiring Soon', variant: 'warning' };
+    return { label: 'Valid', variant: 'success' };
+  };
+
+  const clearStatus = () => setTimeout(() => setStatusMessage(null), 4000);
+
+  const loadEmployeeDocuments = async () => {
+    setDocsError(null);
+    setDocsLoading(true);
+    try {
+      const docs = await documentRepository.getEmployeeDocuments(employee!.id);
+      setEmployeeDocs(docs);
+    } catch (error: any) {
+      setDocsError(error?.message || 'Unable to load employee documents.');
+    } finally {
+      setDocsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'documents') {
+      loadEmployeeDocuments();
+    }
+  }, [activeTab, employee!.id]);
+
+  const handleAuditLog = async (action: string, doc: HubDocument, previousValue: string | null = null) => {
+    void auditRepository.logAction({
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userRole: currentRole,
+      module: 'Employee Documents',
+      action,
+      recordAffectedId: doc.id,
+      recordAffectedTitle: doc.title,
+      previousValue: previousValue ?? 'None',
+      newValue: `${doc.category} ${action.toLowerCase()}`,
+      severity: 'Info',
+    });
+  };
+
+  const handleDownload = async (doc: HubDocument) => {
+    setDownloadingDocId(doc.id);
+    try {
+      await handleAuditLog('Downloaded Document', doc);
+      const blob = await documentRepository.downloadEmployeeDocument(employee!.id, doc.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = doc.fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      setStatusMessage(`Downloaded "${doc.title}".`);
+      clearStatus();
+    } catch (error: any) {
+      setDocsError(error?.message || 'Download failed.');
+    } finally {
+      setDownloadingDocId(null);
+    }
+  };
+
+  const handleUploadSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadForm.title.trim() || !uploadForm.file) return;
+    setUploading(true);
+    try {
+      const payload: EmployeeDocumentInput = {
+        title: uploadForm.title.trim(),
+        description: uploadForm.description || undefined,
+        category: uploadForm.category,
+        issueDate: uploadForm.issueDate || undefined,
+        expiryDate: uploadForm.expiryDate || undefined,
+        version: uploadForm.version || '1.0',
+      };
+      const newDoc = await documentRepository.uploadEmployeeDocument(employee!.id, payload, uploadForm.file);
+      await handleAuditLog('Uploaded Employee Document', newDoc);
+      setEmployeeDocs((prev) => [newDoc, ...prev]);
+      setStatusMessage(`"${newDoc.title}" uploaded successfully.`);
+      clearStatus();
+      setUploadModalOpen(false);
+      setUploadForm({ title: '', category: 'Identification', description: '', issueDate: '', expiryDate: '', version: '1.0' });
+    } catch (error: any) {
+      setDocsError(error?.message || 'Upload failed.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleReplaceSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const doc = employeeDocs.find((d) => d.id === replaceDocId);
+    if (!doc) return;
+    setReplacing(true);
+    try {
+      const payload: EmployeeDocumentInput = {
+        title: doc.title,
+        description: doc.description || undefined,
+        category: doc.category,
+        issueDate: doc.issueDate || undefined,
+        expiryDate: doc.expiryDate || undefined,
+        version: doc.version,
+      };
+      const replaced = await documentRepository.replaceEmployeeDocument(employee!.id, doc.id, payload, file);
+      await handleAuditLog('Replaced Employee Document', replaced, doc.fileName);
+      setEmployeeDocs((prev) => prev.map((d) => (d.id === replaced.id ? replaced : d)));
+      setStatusMessage(`"${replaced.title}" replaced successfully.`);
+      clearStatus();
+    } catch (error: any) {
+      setDocsError(error?.message || 'Replace failed.');
+    } finally {
+      setReplacing(false);
+      setReplaceDocId(null);
+      if (replaceFileRef.current) replaceFileRef.current.value = '';
+    }
+  };
+
+  const handleDelete = async (doc: HubDocument) => {
+    if (!window.confirm(`Delete "${doc.title}" for ${employee!.fullName}? This cannot be undone.`)) return;
+    try {
+      await documentRepository.deleteEmployeeDocument(employee!.id, doc.id);
+      await handleAuditLog('Deleted Employee Document', doc);
+      setEmployeeDocs((prev) => prev.filter((d) => d.id !== doc.id));
+      setStatusMessage(`"${doc.title}" deleted.`);
+      clearStatus();
+    } catch (error: any) {
+      setDocsError(error?.message || 'Delete failed.');
+    }
+  };
+
+  const UploadFormField = ({ label, id, value, onChange, type = 'text', required = true }: {
+    label: string;
+    id: string;
+    value: string;
+    onChange: (value: string) => void;
+    type?: string;
+    required?: boolean;
+  }) => (
+    <div className="space-y-1">
+      <label className="text-[10px] text-slate-500 font-medium block">{label}</label>
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs focus:ring-1 focus:ring-[#083E34] focus:border-[#083E34] outline-none transition"
+        required={required}
+      />
+    </div>
+  );
 
   if (!employee) return null;
 
@@ -65,7 +272,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   const isAuthorizedHR = isPCCM || currentRole === 'SYSTEM_ADMIN';
 
   const handleCopyContact = () => {
-    navigator.clipboard?.writeText(`${employee.fullName} (${employee.phone}, ${employee.email})`);
+    navigator.clipboard?.writeText(`${employee!.fullName} (${employee.phone}, ${employee.email})`);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
   };
@@ -106,7 +313,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-lg sm:text-xl font-bold text-white tracking-wide">
-                    {employee.fullName}
+                    {employee!.fullName}
                   </h2>
                   <span className="px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 font-mono text-[11px] font-bold border border-amber-400/30">
                     {employee.staffId}
@@ -288,7 +495,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
                   <span className="text-[10px] text-slate-400 block">Full Name</span>
-                  <span className="font-bold text-slate-900 text-sm block">{employee.fullName}</span>
+                  <span className="font-bold text-slate-900 text-sm block">{employee!.fullName}</span>
                 </div>
 
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
@@ -299,20 +506,20 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
                   <span className="text-[10px] text-slate-400 block">Date of Birth (Sensitive)</span>
                   <SensitiveField
-                    id={`sens-dob-${employee.id}`}
+                    id={`sens-dob-${employee!.id}`}
                     value={employee.dateOfBirth}
                     category="dateOfBirth"
-                    ownerId={employee.id}
+                    ownerId={employee!.id}
                   />
                 </div>
 
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
                   <span className="text-[10px] text-slate-400 block">Residential Address (Sensitive)</span>
                   <SensitiveField
-                    id={`sens-addr-${employee.id}`}
+                    id={`sens-addr-${employee!.id}`}
                     value={employee.address}
                     category="address"
-                    ownerId={employee.id}
+                    ownerId={employee!.id}
                   />
                 </div>
               </div>
@@ -360,10 +567,10 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                   <div>
                     <span className="text-[10px] text-slate-400 block">Next of Kin Name</span>
                     <SensitiveField
-                      id={`sens-nok-name-${employee.id}`}
+                      id={`sens-nok-name-${employee!.id}`}
                       value={employee.nextOfKin.name}
                       category="nextOfKin"
-                      ownerId={employee.id}
+                      ownerId={employee!.id}
                     />
                   </div>
                   <div>
@@ -375,19 +582,19 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                   <div>
                     <span className="text-[10px] text-slate-400 block">Contact Phone</span>
                     <SensitiveField
-                      id={`sens-nok-phone-${employee.id}`}
+                      id={`sens-nok-phone-${employee!.id}`}
                       value={employee.nextOfKin.phone}
                       category="nextOfKin"
-                      ownerId={employee.id}
+                      ownerId={employee!.id}
                     />
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 block">Residential Address</span>
                     <SensitiveField
-                      id={`sens-nok-addr-${employee.id}`}
+                      id={`sens-nok-addr-${employee!.id}`}
                       value={employee.nextOfKin.address}
                       category="address"
-                      ownerId={employee.id}
+                      ownerId={employee!.id}
                     />
                   </div>
                 </div>
@@ -482,14 +689,14 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                   <span className="text-[10px] text-slate-400 block">Monthly Basic Salary</span>
                   <div className="mt-1">
                     <SensitiveField
-                      id={`sens-sal-full-${employee.id}`}
+                      id={`sens-sal-full-${employee!.id}`}
                       value={
                         employee.bankPayroll.basicSalary
                           ? `₦${employee.bankPayroll.basicSalary.toLocaleString()} ${employee.bankPayroll.currency}`
                           : undefined
                       }
                       category="salary"
-                      ownerId={employee.id}
+                      ownerId={employee!.id}
                     />
                   </div>
                 </div>
@@ -507,10 +714,10 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                   <span className="text-[10px] text-slate-400 block">Bank & Account Number</span>
                   <div className="mt-1">
                     <SensitiveField
-                      id={`sens-bank-full-${employee.id}`}
+                      id={`sens-bank-full-${employee!.id}`}
                       value={`${employee.bankPayroll.bankName} - ${employee.bankPayroll.accountNumber}`}
                       category="bank"
-                      ownerId={employee.id}
+                      ownerId={employee!.id}
                     />
                   </div>
                 </div>
@@ -520,10 +727,10 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                   <span className="text-[10px] text-slate-400 block">Bank Verification Number (BVN)</span>
                   <div className="mt-1">
                     <SensitiveField
-                      id={`sens-bvn-full-${employee.id}`}
+                      id={`sens-bvn-full-${employee!.id}`}
                       value={employee.bankPayroll.bvn}
                       category="bank"
-                      ownerId={employee.id}
+                      ownerId={employee!.id}
                     />
                   </div>
                 </div>
@@ -541,10 +748,10 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                   <span className="text-[10px] text-slate-400 block">Retirement Savings Account (RSA PIN)</span>
                   <div className="mt-1">
                     <SensitiveField
-                      id={`sens-rsa-full-${employee.id}`}
+                      id={`sens-rsa-full-${employee!.id}`}
                       value={employee.pensionHmo.rsaPin}
                       category="pension"
-                      ownerId={employee.id}
+                      ownerId={employee!.id}
                     />
                   </div>
                 </div>
@@ -571,49 +778,249 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
           {/* TAB 6: DOCUMENTS & VERIFICATION */}
           {activeTab === 'documents' && (
             <div className="space-y-4 animate-fade-in">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-                <span className="font-bold text-slate-900 uppercase tracking-wider text-xs">
-                  Mandatory Personnel Documents
-                </span>
-                <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold">
-                  4 of 4 Verified
-                </span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200">
+                <div>
+                  <span className="font-bold text-slate-900 uppercase tracking-wider text-xs">
+                    Employee Personnel Documents
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-mono mt-0.5 block">
+                    {employeeDocs.length} document{employeeDocs.length === 1 ? '' : 's'} on file
+                  </span>
+                </div>
+                {canManageEmployeeDocs && (
+                  <button
+                    onClick={() => setUploadModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#083E34] text-white text-xs font-bold hover:bg-[#04241e] transition shadow-sm"
+                  >
+                    <Upload className="w-3.5 h-3.5" /> Upload Document
+                  </button>
+                )}
               </div>
 
-              <div className="space-y-2.5">
-                {[
-                  { name: 'Citadel Official Appointment Letter', date: '15 Jan 2024', status: 'Verified' },
-                  { name: 'National Youth Service Corps (NYSC) Discharge Certificate', date: '15 Jan 2024', status: 'Verified' },
-                  { name: 'National Identity Card (NIN Slip)', date: '16 Jan 2024', status: 'Verified' },
-                  { name: 'Signed Code of Conduct & Pastoral Alignment Accord', date: '18 Jan 2024', status: 'Verified' },
-                ].map((doc, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between gap-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <FileCheck2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                      <div>
-                        <p className="font-bold text-slate-900 text-xs sm:text-sm">{doc.name}</p>
-                        <p className="text-slate-500 text-[10px] font-mono mt-0.5">Filed: {doc.date}</p>
+              {docsError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-100 text-red-800 text-xs flex items-center gap-2 animate-fade-in">
+                  <AlertCircle className="w-4 h-4 shrink-0" /> {docsError}
+                </div>
+              )}
+
+              {docsLoading && employeeDocs.length === 0 ? (
+                <div className="h-48 flex items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50">
+                  <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+                </div>
+              ) : employeeDocs.length === 0 ? (
+                <div className="h-48 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 text-slate-400 text-xs">
+                  <FileText className="w-6 h-6 mb-2 text-slate-300" />
+                  <p>No employee documents filed yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {employeeDocs.map((doc) => {
+                    const status = documentStatus(doc);
+                    const isOwner = doc.uploadedById === currentUser.id || isSelf;
+                    return (
+                      <div
+                        key={doc.id}
+                        className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 animate-fade-in"
+                      >
+                        <div className="flex items-center gap-3 w-full sm:w-auto">
+                          <div className="p-1.5 rounded-lg bg-amber-50 text-amber-600 shrink-0">
+                            <FileText className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-bold text-slate-900 text-xs sm:text-sm truncate">{doc.title}</p>
+                            <p className="text-slate-500 text-[10px] font-mono mt-0.5 truncate">
+                              {doc.fileName} • {doc.fileSize} • {doc.fileType}
+                            </p>
+                          </div>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap shrink-0">
+                            {doc.category}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 w-full sm:w-auto">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-slate-400 block">
+                              Issued:{doc.issueDate ? ' ' : ''}
+                            </span>
+                            <span className="font-mono font-bold text-slate-700 text-[10px] block">
+                              {formatDate(doc.issueDate)}
+                            </span>
+                            <span className="text-[10px] text-slate-400 block ml-0.5">• Expires:</span>
+                            <span className="font-mono font-bold text-slate-700 text-[10px] block">
+                              {formatDate(doc.expiryDate)}
+                            </span>
+                          </div>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 ${
+                            status.variant === 'success'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                              : status.variant === 'warning'
+                              ? 'bg-amber-50 text-amber-700 border border-amber-100'
+                              : 'bg-red-50 text-red-700 border border-red-100'
+                          }`}>
+                            {status.label}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                          <button
+                            disabled={downloadingDocId === doc.id}
+                            onClick={() => handleDownload(doc)}
+                            className="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50/50 rounded transition disabled:opacity-60"
+                            title="Download document"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                          {(canManageEmployeeDocs || isOwner) && (
+                            <button
+                              disabled={replacing}
+                              onClick={() => {
+                                setReplaceDocId(doc.id);
+                                if (replaceFileRef.current) replaceFileRef.current.click();
+                              }}
+                              className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50/50 rounded transition disabled:opacity-60"
+                              title="Replace document"
+                            >
+                              <RefreshCw className="w-4 h-4" />
+                            </button>
+                          )}
+                          {canManageEmployeeDocs && (
+                            <button
+                              onClick={() => handleDelete(doc)}
+                              className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50/50 rounded transition"
+                              title="Delete document"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <input
+                ref={replaceFileRef}
+                type="file"
+                className="hidden"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={handleReplaceSelect}
+              />
+
+              {/* Upload Form */}
+              <div
+                className={`rounded-xl border p-3.5 animate-fade-in ${
+                  uploadModalOpen ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2.5 cursor-pointer" onClick={() => setUploadModalOpen((o) => !o)}>
+                  <span className="font-bold text-slate-900 text-xs uppercase tracking-wider">
+                    {uploadModalOpen ? 'Close' : 'Add New Employee Document'}
+                  </span>
+                  <span className={`text-[10px] ${uploadModalOpen ? 'text-[#083E34]' : 'text-slate-500'}`}>
+                    {uploadModalOpen ? 'Hide form' : 'Upload a new personnel document'}
+                  </span>
+                </div>
+                {uploadModalOpen && (
+                  <form onSubmit={handleUploadSubmit} className="space-y-3 mt-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <UploadFormField
+                        label="Document Title"
+                        id="doc-title"
+                        value={uploadForm.title}
+                        onChange={(v) => setUploadForm({ ...uploadForm, title: v })}
+                      />
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-medium block">Category</label>
+                        <select
+                          value={uploadForm.category}
+                          onChange={(e) => setUploadForm({ ...uploadForm, category: e.target.value as DocumentCategory })}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs focus:ring-1 focus:ring-[#083E34] focus:border-[#083E34] outline-none transition"
+                        >
+                          {EMPLOYEE_DOCUMENT_CATEGORIES.map((cat) => (
+                            <option key={cat} value={cat}>
+                              {cat}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
-                        {doc.status}
-                      </span>
+                    <UploadFormField
+                      label="Description"
+                      id="doc-description"
+                      value={uploadForm.description ?? ''}
+                      onChange={(v) => setUploadForm({ ...uploadForm, description: v })}
+                      required={false}
+                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <UploadFormField
+                        label="Issue Date"
+                        id="doc-issue-date"
+                        value={uploadForm.issueDate ?? ''}
+                        onChange={(v) => setUploadForm({ ...uploadForm, issueDate: v })}
+                        type="date"
+                        required={false}
+                      />
+                      <UploadFormField
+                        label="Expiry Date"
+                        id="doc-expiry-date"
+                        value={uploadForm.expiryDate ?? ''}
+                        onChange={(v) => setUploadForm({ ...uploadForm, expiryDate: v })}
+                        type="date"
+                        required={false}
+                      />
+                      <UploadFormField
+                        label="Version"
+                        id="doc-version"
+                        value={uploadForm.version ?? '1.0'}
+                        onChange={(v) => setUploadForm({ ...uploadForm, version: v })}
+                        required={false}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-medium block">Document File</label>
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => setUploadForm({ ...uploadForm, file: e.target.files?.[0] })}
+                        className="w-full block text-xs text-slate-600 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-[#083E34] file:text-white hover:file:bg-[#04241e] cursor-pointer"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-2 pt-1.5">
                       <button
-                        onClick={() => alert(`Simulating download of ${doc.name} for ${employee.fullName}`)}
-                        className="p-1.5 text-slate-500 hover:text-slate-900 rounded hover:bg-slate-200 transition"
-                        title="Download document"
+                        type="button"
+                        onClick={() => {
+                          setUploadModalOpen(false);
+                          setUploadForm({ title: '', category: 'Identification', description: '', issueDate: '', expiryDate: '', version: '1.0' });
+                        }}
+                        className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-semibold hover:bg-slate-100 transition"
                       >
-                        <Download className="w-4 h-4" />
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={uploading || !uploadForm.title.trim() || !uploadForm.file}
+                        className={`px-3 py-1.5 rounded-xl ${uploading || (!uploadForm.title.trim() && !uploadForm.file) ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-[#C59B27] text-white hover:bg-[#a0801f]'} text-xs font-bold transition disabled:opacity-60`}
+                      >
+                        {uploading ? <Loader2 className="w-3 h-3 mr-1.5 animate-spin" /> : ''} Upload Document
                       </button>
                     </div>
-                  </div>
-                ))}
+                  </form>
+                )}
               </div>
+
+              {statusMessage && (
+                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between animate-fade-in">
+                  <span>{statusMessage}</span>
+                  <button
+                    onClick={() => setStatusMessage(null)}
+                    className="p-1 text-emerald-500 hover:text-emerald-700 rounded"
+                    title="Dismiss"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

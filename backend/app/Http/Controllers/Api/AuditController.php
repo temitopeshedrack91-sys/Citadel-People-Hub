@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Support\RoleAuthorization;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -11,7 +12,7 @@ class AuditController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        abort_unless(in_array($request->user()->role, ['PCCM_SUPER_ADMIN', 'SYSTEM_ADMIN'], true), 403);
+        abort_unless(RoleAuthorization::canonical($request->user()->role) === 'ADMIN', 403);
         $filters = $request->validate([
             'limit' => ['sometimes', 'integer', 'min:1', 'max:200'],
             'module' => ['sometimes', 'string', 'max:100'],

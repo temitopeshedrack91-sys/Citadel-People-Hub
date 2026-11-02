@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Entity;
 use App\Support\AuditLogger;
+use App\Support\RoleAuthorization;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +34,7 @@ class OrganizationController extends Controller
 
     public function createEntity(Request $request): JsonResponse
     {
-        $this->authorizeHr($request);
+        $this->authorizeAdmin($request);
         $data = $request->validate([
             'name' => ['required', 'string', 'max:180'],
             'shortCode' => ['required', 'string', 'max:30', 'alpha_dash', 'unique:entities,short_code'],
@@ -80,7 +81,7 @@ class OrganizationController extends Controller
 
     public function createDepartment(Request $request): JsonResponse
     {
-        $this->authorizeHr($request);
+        $this->authorizeAdmin($request);
         $data = $request->validate([
             'entityId' => ['required', 'string', 'exists:entities,id'],
             'name' => ['required', 'string', 'max:180'],
@@ -108,7 +109,7 @@ class OrganizationController extends Controller
 
     public function updateDepartment(Request $request, Department $department): JsonResponse
     {
-        $this->authorizeHr($request);
+        $this->authorizeAdmin($request);
         $data = $request->validate([
             'name' => ['sometimes', 'string', 'max:180'],
             'code' => ['sometimes', 'string', 'max:30', 'alpha_dash', Rule::unique('departments', 'code')->where('entity_id', $department->entity_id)->ignore($department->id)],
@@ -143,8 +144,8 @@ class OrganizationController extends Controller
         ];
     }
 
-    private function authorizeHr(Request $request): void
+    private function authorizeAdmin(Request $request): void
     {
-        abort_unless($request->user()->role === 'PCCM_SUPER_ADMIN', 403, 'Only PCCM administrators can manage organizational records.');
+        abort_unless(RoleAuthorization::canonical($request->user()->role) === 'ADMIN', 403, 'Only administrators can manage organizational records.');
     }
 }

@@ -1,8 +1,15 @@
 import React from 'react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { TrellisProvider, useTrellis } from '../components/trellis/TrellisContext';
 import { TrellisApp } from '../components/trellis/TrellisApp';
+
+// This suite covers the local fixture workflow. Laravel API integration and
+// failure behavior are exercised separately by adapter/API tests.
+vi.mock('../services/laravelClient', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../services/laravelClient')>();
+  return { ...actual, isLaravelApiConfigured: () => false };
+});
 
 describe('Citadel People Hub (Project Management Module)', () => {
   it('renders the Citadel People Hub project board with 4 columns matching the screenshots', () => {

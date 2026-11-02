@@ -34,6 +34,8 @@ export const TrellisHeader: React.FC = () => {
     teamMembers,
     currentUser,
     switchUser,
+    isApiMode,
+    canManageTasks,
     unreadNotificationCount,
     setIsInboxOpen,
     setIsNewTaskModalOpen,
@@ -44,10 +46,7 @@ export const TrellisHeader: React.FC = () => {
   const openCount = tasks.filter((t) => t.status !== 'Done').length;
   const doneCount = tasks.filter((t) => t.status === 'Done').length;
   const myTasksCount = tasks.filter(
-    (t) =>
-      (t.assigneeId === currentUser.id ||
-        (currentUser.supabaseId && String(t.assigneeId) === String(currentUser.supabaseId))) &&
-      t.status !== 'Done'
+    (t) => t.assigneeId === currentUser.id && t.status !== 'Done'
   ).length;
 
   const tabs: { key: ViewTab; label: string; icon: React.FC<{ className?: string }> }[] = [
@@ -87,6 +86,15 @@ export const TrellisHeader: React.FC = () => {
 
           {/* User Persona Switcher Pill */}
           <div className="relative">
+            {isApiMode ? (
+              <div className="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-1.5 text-xs font-semibold text-slate-800" aria-label="Authenticated user">
+                <span className={`w-4 h-4 rounded-full flex items-center justify-center font-bold text-[8px] ${currentUser.avatarBg} ${currentUser.avatarText}`}>
+                  {currentUser.initials}
+                </span>
+                <span className="font-bold">{currentUser.name}</span>
+              </div>
+            ) : (
+              <>
             <button
               onClick={() => setIsUserSwitcherOpen((prev) => !prev)}
               data-testid="trellis-user-switcher-btn"
@@ -131,6 +139,8 @@ export const TrellisHeader: React.FC = () => {
                 ))}
               </div>
             )}
+              </>
+            )}
           </div>
 
           {/* Inbox Button */}
@@ -159,14 +169,14 @@ export const TrellisHeader: React.FC = () => {
           </button>
 
           {/* + New task Button */}
-          <button
+          {canManageTasks && <button
             onClick={() => setIsNewTaskModalOpen(true)}
             data-testid="trellis-new-task-btn"
             className="px-3.5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#C59B27] transition active:scale-95 cursor-pointer min-h-[40px] sm:min-h-[36px]"
           >
             <Plus className="w-3.5 h-3.5 text-slate-950 stroke-[2.5]" />
             <span className="font-bold">New task</span>
-          </button>
+          </button>}
         </div>
       </div>
 

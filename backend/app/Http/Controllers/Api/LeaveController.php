@@ -8,6 +8,7 @@ use App\Models\EmployeeLeaveBalance;
 use App\Models\LeaveCategory;
 use App\Models\LeaveRequest as LeaveRecord;
 use App\Support\AuditLogger;
+use App\Support\RoleAuthorization;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,16 +20,15 @@ class LeaveController extends Controller
     {
         $user = $request->user();
         $query = LeaveRecord::query();
-        if ($user->role === 'EMPLOYEE') {
+        $role = RoleAuthorization::canonical($user->role);
+        abort_unless(in_array($role, ['ADMIN', 'HR_STAFF', 'EMPLOYEE'], true), 403, 'You are not authorized to access leave requests.');
+
+        if ($role === 'EMPLOYEE') {
             $query->where('employee_staff_id', $user->staff_id);
-        } elseif ($user->role === 'BUSINESS_HEAD') {
+        } elseif (strtoupper(trim($user->role)) === 'BUSINESS_HEAD') {
             $query->whereIn('employee_id', Employee::query()->select('id')->where('entity_id', $user->entity_id));
-        } elseif ($user->role === 'DEPARTMENT_HEAD') {
+        } elseif (strtoupper(trim($user->role)) === 'DEPARTMENT_HEAD') {
             $query->whereIn('employee_id', Employee::query()->select('id')->where('department_id', $user->department_id));
-        } elseif ($user->role === 'SYSTEM_ADMIN') {
-            $query->whereIn('employee_id', Employee::query()->select('id')->where('entity_id', $user->entity_id));
-        } elseif ($user->role !== 'PCCM_SUPER_ADMIN') {
-            $query->where('employee_staff_id', $user->staff_id ?? '');
         }
 
         return response()->json(['data' => $query->latest('applied_date')->limit(500)->get()->map(fn (LeaveRecord $record) => $this->present($record))]);
@@ -60,13 +60,9 @@ class LeaveController extends Controller
             'handoverColleague' => ['nullable', 'string', 'max:180'],
         ]);
         $employee = Employee::query()->findOrFail($data['employeeId']);
-        abort_unless(
-            $request->user()->role === 'PCCM_SUPER_ADMIN'
-                || $employee->staff_id === $request->user()->staff_id,
-            403,
-            'Leave requests must be submitted by the employee or by PCCM on their behalf.'
-        );
-        $this->ensureCanViewEmployee($request, $employee);
+        $role = RoleAuthorization::canonical($request->user()->role);
+        $isSelf = $role === 'EMPLOYEE' && $employee->staff_id === $request->user()->staff_id;
+        abort_unless($isSelf || RoleAuthorization::canManageEmployee($request->user(), $employee), 403, 'Leave requests must be submitted by the employee or an authorized HR administrator.');
         if ($employee->staff_id !== $data['employeeStaffId']) {
             abort(422, 'Employee identity does not match the selected employee.');
         }
@@ -111,22 +107,32 @@ class LeaveController extends Controller
             $employee = Employee::query()->findOrFail($record->employee_id);
             abort_if(! in_array($record->status, ['Pending', 'Submitted', 'Pending Review'], true), 409, 'Only open leave requests can be updated.');
 
+            $userRole = strtoupper(trim($user->role));
+            $canonicalRole = RoleAuthorization::canonical($userRole);
             $stageRole = match ($record->approval_stage) {
                 'DEPARTMENT_HEAD' => 'DEPARTMENT_HEAD',
                 'BUSINESS_HEAD' => 'BUSINESS_HEAD',
-                'HR' => 'PCCM_SUPER_ADMIN',
+                'HR' => 'HR_STAFF',
                 default => null,
             };
             $stageScopeMatches = match ($stageRole) {
                 'DEPARTMENT_HEAD' => $employee->department_id === $user->department_id,
                 'BUSINESS_HEAD' => $employee->entity_id === $user->entity_id,
-                'PCCM_SUPER_ADMIN' => true,
+                'HR_STAFF' => true,
                 default => false,
             };
-            $authorizedReviewer = ($stageRole === $user->role || $user->role === 'PCCM_SUPER_ADMIN') && $stageScopeMatches;
-            $isRequester = $user->role === 'EMPLOYEE' && $employee->staff_id === $user->staff_id;
+            $isScopedHead = in_array($userRole, ['BUSINESS_HEAD', 'DEPARTMENT_HEAD'], true);
+            $isGlobalReviewer = $canonicalRole === 'ADMIN' || ($canonicalRole === 'HR_STAFF' && ! $isScopedHead);
+            $authorizedForStage = match ($stageRole) {
+                'DEPARTMENT_HEAD' => $userRole === 'DEPARTMENT_HEAD',
+                'BUSINESS_HEAD' => $userRole === 'BUSINESS_HEAD',
+                'HR_STAFF' => false,
+                default => false,
+            };
+            $authorizedReviewer = $isGlobalReviewer || ($authorizedForStage && $stageScopeMatches);
+            $isRequester = $canonicalRole === 'EMPLOYEE' && $employee->staff_id === $user->staff_id;
             $authorized = $data['status'] === 'Cancelled'
-                ? ($authorizedReviewer || $isRequester || $user->role === 'PCCM_SUPER_ADMIN')
+                ? ($authorizedReviewer || $isRequester)
                 : $authorizedReviewer;
             abort_unless($authorized, 403, 'This request is not awaiting action from your role or scope.');
 
@@ -183,15 +189,27 @@ class LeaveController extends Controller
     public function balances(Request $request, ?string $employeeId = null): JsonResponse
     {
         $user = $request->user();
-        $targetEmployeeId = $employeeId;
-        if (! $targetEmployeeId && $user->role === 'EMPLOYEE') {
-            $emp = Employee::query()->where('staff_id', $user->staff_id)->first();
-            $targetEmployeeId = $emp?->id;
+        $query = EmployeeLeaveBalance::query()->with(['category', 'employee:id,staff_id,full_name']);
+
+        if ($employeeId !== null) {
+            $employee = Employee::query()->findOrFail($employeeId);
+            $this->ensureCanViewEmployee($request, $employee);
+
+            return response()->json(['data' => $query->where('employee_id', $employee->id)->get()]);
         }
 
-        $query = EmployeeLeaveBalance::query()->with(['category', 'employee:id,staff_id,full_name']);
-        if ($targetEmployeeId) {
-            $query->where('employee_id', $targetEmployeeId);
+        $role = RoleAuthorization::canonical($user->role);
+        abort_unless(in_array($role, ['ADMIN', 'HR_STAFF', 'EMPLOYEE'], true), 403, 'You are not authorized to access leave balances.');
+
+        if ($role === 'EMPLOYEE') {
+            $employee = Employee::query()->where('staff_id', $user->staff_id)->first();
+            if ($employee === null) {
+                return response()->json(['data' => []]);
+            }
+
+            $query->where('employee_id', $employee->id);
+        } elseif (in_array(strtoupper(trim($user->role)), ['BUSINESS_HEAD', 'DEPARTMENT_HEAD'], true)) {
+            $query->whereIn('employee_id', RoleAuthorization::visibleEmployees($user)->select('id'));
         }
 
         return response()->json(['data' => $query->get()]);
@@ -200,12 +218,10 @@ class LeaveController extends Controller
     private function ensureCanViewEmployee(Request $request, Employee $employee): void
     {
         $user = $request->user();
-        $allowed = match ($user->role) {
-            'PCCM_SUPER_ADMIN' => true,
-            'BUSINESS_HEAD', 'SYSTEM_ADMIN' => $employee->entity_id === $user->entity_id,
-            'DEPARTMENT_HEAD' => $employee->department_id === $user->department_id,
-            default => $employee->staff_id === $user->staff_id,
-        };
+        $role = RoleAuthorization::canonical($user->role);
+        $allowed = $role === 'ADMIN'
+            || ($role === 'HR_STAFF' && RoleAuthorization::canManageEmployee($user, $employee))
+            || ($role === 'EMPLOYEE' && $employee->staff_id === $user->staff_id);
         abort_unless($allowed, 403, 'You are not authorized to access this employee record.');
     }
 

@@ -24,6 +24,7 @@ import {
   LeaveRequest,
   AttendanceRecord,
   AuditLogEntry,
+  EmployeeDocumentInput,
   HubDocument,
   SystemNotification,
   WorkflowStatus,
@@ -39,6 +40,14 @@ import {
   EmployeeLoan,
   EmployeeDeduction,
   EmployeeProvidentFund,
+  PayrollExcelTemplate,
+  PayrollExcelMapping,
+  PayrollImportBatch,
+  PayrollImportRow,
+  PayrollAdjustment,
+  AttendancePenaltyRule,
+  EmployeeProrationRecord,
+  ExcelPreviewResponse,
 } from '../types';
 import {
   INITIAL_ENTITIES,
@@ -60,6 +69,11 @@ import {
   INITIAL_EMPLOYEE_LOANS,
   INITIAL_EMPLOYEE_DEDUCTIONS,
   INITIAL_PROVIDENT_FUNDS,
+  INITIAL_PAYROLL_EXCEL_TEMPLATES,
+  INITIAL_PAYROLL_IMPORT_BATCHES,
+  INITIAL_PAYROLL_ADJUSTMENTS,
+  INITIAL_ATTENDANCE_PENALTY_RULES,
+  INITIAL_PRORATION_RECORDS,
 } from '../data/mockPayrollData';
 
 export class SupabaseEmployeeRepository implements IEmployeeRepository {
@@ -464,6 +478,10 @@ export class SupabaseAttendanceRepository implements IAttendanceRepository {
 }
 
 export class SupabaseDocumentRepository implements IDocumentRepository {
+  private unavailable(): Promise<never> {
+    return Promise.reject(new Error('Employee documents require the authenticated Laravel API.'));
+  }
+
   async getAll(filter?: { category?: string; accessLevel?: string }): Promise<HubDocument[]> {
     let query = supabase.from('documents').select('*');
     if (filter?.category) query = query.eq('category', filter.category);
@@ -520,6 +538,35 @@ export class SupabaseDocumentRepository implements IDocumentRepository {
       uploadedDate: data.uploaded_at,
       downloadUrl,
     };
+  }
+
+  getEmployeeDocuments(_employeeId: string, _filter?: { category?: string }): Promise<HubDocument[]> {
+    return this.unavailable();
+  }
+
+  uploadEmployeeDocument(
+    _employeeId: string,
+    _doc: EmployeeDocumentInput,
+    _file: File
+  ): Promise<HubDocument> {
+    return this.unavailable();
+  }
+
+  replaceEmployeeDocument(
+    _employeeId: string,
+    _documentId: string,
+    _doc: EmployeeDocumentInput,
+    _file: File
+  ): Promise<HubDocument> {
+    return this.unavailable();
+  }
+
+  deleteEmployeeDocument(_employeeId: string, _documentId: string): Promise<void> {
+    return this.unavailable();
+  }
+
+  downloadEmployeeDocument(_employeeId: string, _documentId: string): Promise<Blob> {
+    return this.unavailable();
   }
 }
 
@@ -581,57 +628,22 @@ export class SupabaseNotificationRepository implements INotificationRepository {
 }
 
 export class SupabaseTalentRepository implements ITalentRepository {
-  async getOnboardingJourneys(): Promise<OnboardingJourney[]> {
-    return INITIAL_ONBOARDING_JOURNEYS;
+  private unavailable(): Promise<never> {
+    return Promise.reject(new Error('Talent persistence is unavailable through the Supabase adapter. Use the authenticated Laravel API.'));
   }
-  async toggleTaskCompletion(journeyId: string, taskId: string, isCompleted: boolean): Promise<OnboardingJourney> {
-    const journey = INITIAL_ONBOARDING_JOURNEYS.find(j => j.id === journeyId) || INITIAL_ONBOARDING_JOURNEYS[0];
-    const task = journey.tasks.find(t => t.id === taskId);
-    if (task) {
-      task.isCompleted = isCompleted;
-      task.completedAt = isCompleted ? new Date().toISOString().split('T')[0] : undefined;
-    }
-    return journey;
-  }
-  async createOnboardingTask(journeyId: string, task: Omit<OnboardingTask, 'id' | 'isCompleted'>): Promise<OnboardingJourney> {
-    const journey = INITIAL_ONBOARDING_JOURNEYS.find(j => j.id === journeyId) || INITIAL_ONBOARDING_JOURNEYS[0];
-    const newTask: OnboardingTask = { ...task, id: `task-${Date.now()}`, isCompleted: false };
-    journey.tasks.push(newTask);
-    return journey;
-  }
-  async sendTaskReminder(journeyId: string, taskId: string): Promise<boolean> {
-    return true;
-  }
-  async toggleDocumentSubmission(journeyId: string, docId: string, isSubmitted: boolean): Promise<OnboardingJourney> {
-    const journey = INITIAL_ONBOARDING_JOURNEYS.find(j => j.id === journeyId) || INITIAL_ONBOARDING_JOURNEYS[0];
-    const doc = journey.requiredDocuments?.find(d => d.id === docId);
-    if (doc) doc.isSubmitted = isSubmitted;
-    return journey;
-  }
-  async toggleOrientationItem(journeyId: string, itemId: string, isCompleted: boolean): Promise<OnboardingJourney> {
-    const journey = INITIAL_ONBOARDING_JOURNEYS.find(j => j.id === journeyId) || INITIAL_ONBOARDING_JOURNEYS[0];
-    const item = journey.orientationItems?.find(i => i.id === itemId);
-    if (item) item.isCompleted = isCompleted;
-    return journey;
-  }
-  async getRequisitions(): Promise<RecruitmentRequisition[]> {
-    return INITIAL_RECRUITMENT;
-  }
-  async createRequisition(requisition: RecruitmentRequisition): Promise<RecruitmentRequisition> {
-    INITIAL_RECRUITMENT.unshift(requisition);
-    return requisition;
-  }
-  async createOnboardingJourney(journey: OnboardingJourney): Promise<OnboardingJourney> {
-    INITIAL_ONBOARDING_JOURNEYS.unshift(journey);
-    return journey;
-  }
-  async getChecklistTemplates(): Promise<OnboardingChecklistTemplate[]> {
-    return DEFAULT_CHECKLIST_TEMPLATES;
-  }
-  async createChecklistTemplate(template: OnboardingChecklistTemplate): Promise<OnboardingChecklistTemplate> {
-    DEFAULT_CHECKLIST_TEMPLATES.unshift(template);
-    return template;
-  }
+
+  getOnboardingJourneys(): Promise<OnboardingJourney[]> { return this.unavailable(); }
+  toggleTaskCompletion(_journeyId: string, _taskId: string, _isCompleted: boolean): Promise<OnboardingJourney> { return this.unavailable(); }
+  createOnboardingTask(_journeyId: string, _task: Omit<OnboardingTask, 'id' | 'isCompleted'>): Promise<OnboardingJourney> { return this.unavailable(); }
+  sendTaskReminder(_journeyId: string, _taskId: string): Promise<boolean> { return this.unavailable(); }
+  toggleDocumentSubmission(_journeyId: string, _docId: string, _isSubmitted: boolean): Promise<OnboardingJourney> { return this.unavailable(); }
+  toggleOrientationItem(_journeyId: string, _itemId: string, _isCompleted: boolean): Promise<OnboardingJourney> { return this.unavailable(); }
+  getRequisitions(): Promise<RecruitmentRequisition[]> { return this.unavailable(); }
+  createRequisition(_requisition: RecruitmentRequisition): Promise<RecruitmentRequisition> { return this.unavailable(); }
+  updateRequisitionStatus(_id: string, _status: RecruitmentRequisition['status']): Promise<RecruitmentRequisition> { return this.unavailable(); }
+  createOnboardingJourney(_journey: OnboardingJourney): Promise<OnboardingJourney> { return this.unavailable(); }
+  getChecklistTemplates(): Promise<OnboardingChecklistTemplate[]> { return this.unavailable(); }
+  createChecklistTemplate(_template: OnboardingChecklistTemplate): Promise<OnboardingChecklistTemplate> { return this.unavailable(); }
 }
 
 export class SupabasePayrollRepository implements IPayrollRepository {
@@ -679,6 +691,7 @@ export class SupabasePayrollRepository implements IPayrollRepository {
           }
         : undefined,
       effective_date: assignment.effective_date,
+      basic_salary: assignment.override_basic_salary ?? matchedTemplate?.basic_salary ?? 0,
       override_basic_salary: assignment.override_basic_salary,
       custom_allowances: assignment.custom_allowances,
       custom_deductions: assignment.custom_deductions,
@@ -833,16 +846,20 @@ export class SupabasePayrollRepository implements IPayrollRepository {
     start_date: string;
     end_date?: string | null;
     is_recurring?: boolean;
+    calculation_type?: 'fixed' | 'percent';
+    frequency?: 'monthly' | 'weekly' | 'one_time';
   }): Promise<EmployeeDeduction> {
     const newDed: EmployeeDeduction = {
       id: `ded-${Date.now()}`,
       employee_id: deduction.employee_id,
       title: deduction.title,
       deduction_type: deduction.deduction_type,
+      calculation_type: deduction.calculation_type ?? 'fixed',
       amount: deduction.amount,
       is_percentage: !!deduction.is_percentage,
       start_date: deduction.start_date,
       end_date: deduction.end_date,
+      frequency: deduction.frequency ?? 'monthly',
       is_recurring: deduction.is_recurring ?? true,
       is_active: true,
       created_at: new Date().toISOString(),
@@ -874,6 +891,192 @@ export class SupabasePayrollRepository implements IPayrollRepository {
     };
     INITIAL_PROVIDENT_FUNDS.unshift(newPf);
     return newPf;
+  }
+
+  // Excel Payroll Templates
+  async getExcelTemplates(params?: { active_only?: boolean; entity_id?: string }): Promise<{ data: PayrollExcelTemplate[] }> {
+    let result = [...INITIAL_PAYROLL_EXCEL_TEMPLATES];
+    if (params?.active_only) {
+      result = result.filter((t) => t.is_active);
+    }
+    if (params?.entity_id) {
+      result = result.filter((t) => t.entity_id === params.entity_id);
+    }
+    return { data: result };
+  }
+
+  async createExcelTemplate(template: Omit<PayrollExcelTemplate, 'id' | 'created_at' | 'updated_at' | 'creator' | 'entity' | 'import_batches' | 'mappings'> & { mappings?: any[] }): Promise<PayrollExcelTemplate> {
+    const newTemplate: PayrollExcelTemplate = {
+      ...template,
+      id: `ext-${Date.now()}`,
+      creator: undefined,
+      entity: undefined,
+      import_batches: [],
+      mappings: template.mappings || [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    } as PayrollExcelTemplate;
+    INITIAL_PAYROLL_EXCEL_TEMPLATES.unshift(newTemplate);
+    return newTemplate;
+  }
+
+  async getExcelTemplate(id: string): Promise<PayrollExcelTemplate> {
+    const match = INITIAL_PAYROLL_EXCEL_TEMPLATES.find((t) => t.id === id);
+    if (match) return match;
+    throw new Error(`Excel template ${id} not found.`);
+  }
+
+  async updateExcelTemplate(id: string, updates: Partial<PayrollExcelTemplate>): Promise<PayrollExcelTemplate> {
+    const index = INITIAL_PAYROLL_EXCEL_TEMPLATES.findIndex((t) => t.id === id);
+    if (index === -1) throw new Error('Excel template not found');
+    INITIAL_PAYROLL_EXCEL_TEMPLATES[index] = { ...INITIAL_PAYROLL_EXCEL_TEMPLATES[index], ...updates, updated_at: new Date().toISOString() };
+    return INITIAL_PAYROLL_EXCEL_TEMPLATES[index];
+  }
+
+  async deleteExcelTemplate(id: string): Promise<void> {
+    const index = INITIAL_PAYROLL_EXCEL_TEMPLATES.findIndex((t) => t.id === id);
+    if (index === -1) throw new Error('Excel template not found');
+    INITIAL_PAYROLL_EXCEL_TEMPLATES.splice(index, 1);
+  }
+
+  // Excel Upload & Import
+  async previewExcelUpload(file: File, templateId?: string): Promise<ExcelPreviewResponse> {
+    return {
+      headers: ['staff_id', 'basic_salary', 'housing_allowance'],
+      total_rows: 2,
+      preview_rows: [
+        { staff_id: 'CIT-001', basic_salary: 850000, housing_allowance: 350000 },
+        { staff_id: 'CIT-002', basic_salary: 520000, housing_allowance: 200000 },
+      ],
+      suggested_mappings: [
+        { excel_column: 'staff_id', suggested_field: 'staff_id', confidence: 'high' },
+        { excel_column: 'basic_salary', suggested_field: 'basic_salary', confidence: 'high' },
+        { excel_column: 'housing_allowance', suggested_field: 'house_rent', confidence: 'high' },
+      ],
+      template: templateId ? INITIAL_PAYROLL_EXCEL_TEMPLATES.find((t) => t.id === templateId) : undefined,
+    };
+  }
+
+  async importExcelPayroll(data: any): Promise<PayrollImportBatch> {
+    return {
+      id: `import-${Date.now()}`,
+      template_id: data.template_id,
+      original_filename: data.file?.name || 'upload.xlsx',
+      uploaded_by: 'emp-002',
+      uploader: { id: 'emp-002', name: 'Dr. Stella Okoye', email: 'stella.okoye@citadel.com' },
+      status: 'preview',
+      total_rows: 2,
+      valid_rows: 2,
+      error_rows: 0,
+      warning_rows: 0,
+      validation_errors: null,
+      validation_warnings: null,
+      import_options: data.import_options,
+      payroll_run_id: null,
+      payroll_run: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  }
+
+  async getImportBatch(id: string): Promise<PayrollImportBatch> {
+    throw new Error(`Import batch ${id} not found.`);
+  }
+
+  async updateImportRow(id: string, updates: { employee_id?: string | null; mapped_data?: Record<string, any>; status?: string }): Promise<PayrollImportRow> {
+    return { id, ...updates } as any;
+  }
+
+  async processImportBatch(id: string, options: {
+    payroll_run_id?: string;
+    create_payroll_run?: boolean;
+    period_start?: string;
+    period_end?: string;
+    pay_date?: string;
+    pay_frequency?: 'monthly' | 'weekly';
+    proration_method?: 'calendar_days' | 'working_days';
+    apply_attendance_penalties?: boolean;
+  }): Promise<{ batch: PayrollImportBatch; payroll_run?: PayrollRun; processed_count: number }> {
+    return { id, status: 'processing', ...options } as any;
+  }
+
+  // Payroll Adjustments
+  async getAdjustments(filter?: { payroll_run_id?: string; employee_id?: string }): Promise<{ data: PayrollAdjustment[] }> {
+    let result = [...INITIAL_PAYROLL_ADJUSTMENTS];
+    if (filter?.payroll_run_id) {
+      result = result.filter((a) => a.payroll_run_id === filter.payroll_run_id);
+    }
+    if (filter?.employee_id) {
+      result = result.filter((a) => a.employee_id === filter.employee_id);
+    }
+    return { data: result };
+  }
+
+  async createAdjustment(adjustment: Omit<PayrollAdjustment, 'id' | 'created_at' | 'updated_at' | 'employee' | 'adjuster' | 'difference'>): Promise<PayrollAdjustment> {
+    const newAdjustment: PayrollAdjustment = {
+      ...adjustment,
+      id: `adj-${Date.now()}`,
+      difference: adjustment.adjusted_value - adjustment.original_value,
+      employee: undefined,
+      adjuster: undefined,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    INITIAL_PAYROLL_ADJUSTMENTS.unshift(newAdjustment);
+    return newAdjustment;
+  }
+
+  // Attendance Penalty Rules
+  async getPenaltyRules(params?: { entity_id?: string; active_only?: boolean }): Promise<AttendancePenaltyRule[]> {
+    let result = [...INITIAL_ATTENDANCE_PENALTY_RULES];
+    if (params?.entity_id) {
+      result = result.filter((r) => r.entity_id === params.entity_id);
+    }
+    if (params?.active_only) {
+      result = result.filter((r) => r.is_active);
+    }
+    return result;
+  }
+
+  async createPenaltyRule(rule: Omit<AttendancePenaltyRule, 'id' | 'created_at' | 'updated_at' | 'entity'>): Promise<AttendancePenaltyRule> {
+    const newRule: AttendancePenaltyRule = {
+      ...rule,
+      id: `pen-${Date.now()}`,
+      entity: undefined,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    INITIAL_ATTENDANCE_PENALTY_RULES.unshift(newRule);
+    return newRule;
+  }
+
+  async updatePenaltyRule(id: string, updates: Partial<AttendancePenaltyRule>): Promise<AttendancePenaltyRule> {
+    const index = INITIAL_ATTENDANCE_PENALTY_RULES.findIndex((r) => r.id === id);
+    if (index === -1) throw new Error('Penalty rule not found');
+    INITIAL_ATTENDANCE_PENALTY_RULES[index] = { ...INITIAL_ATTENDANCE_PENALTY_RULES[index], ...updates, updated_at: new Date().toISOString() };
+    return INITIAL_ATTENDANCE_PENALTY_RULES[index];
+  }
+
+  async deletePenaltyRule(id: string): Promise<void> {
+    const index = INITIAL_ATTENDANCE_PENALTY_RULES.findIndex((r) => r.id === id);
+    if (index === -1) throw new Error('Penalty rule not found');
+    INITIAL_ATTENDANCE_PENALTY_RULES.splice(index, 1);
+  }
+
+  async getImportBatches(): Promise<{ data: PayrollImportBatch[] }> {
+    return { data: [...INITIAL_PAYROLL_IMPORT_BATCHES] };
+  }
+
+  // Proration Records
+  async getProrationRecords(filter?: { payroll_run_id?: string; employee_id?: string }): Promise<{ data: EmployeeProrationRecord[] }> {
+    let result = [...INITIAL_PRORATION_RECORDS];
+    if (filter?.payroll_run_id) {
+      result = result.filter((r) => r.payroll_run_id === filter.payroll_run_id);
+    }
+    if (filter?.employee_id) {
+      result = result.filter((r) => r.employee_id === filter.employee_id);
+    }
+    return { data: result };
   }
 }
 

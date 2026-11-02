@@ -3,7 +3,7 @@
  * Allows users to update their profile: name, email, phone, location, bio, and avatar.
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   X,
   Camera,
@@ -23,7 +23,7 @@ interface ProfileEditModalProps {
 }
 
 export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose }) => {
-  const { currentUser, updateProfile } = useAuth();
+  const { currentUser, updateProfile, backendEnabled } = useAuth();
 
   const [name, setName] = useState(currentUser.name);
   const [email, setEmail] = useState(currentUser.email);
@@ -32,7 +32,20 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
   const [bio, setBio] = useState(currentUser.bio || '');
   const [avatarPreview, setAvatarPreview] = useState(currentUser.avatarUrl || '');
   const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setName(currentUser.name);
+    setEmail(currentUser.email);
+    setPhone(currentUser.phone || '');
+    setLocation(currentUser.location || '');
+    setBio(currentUser.bio || '');
+    setAvatarPreview(currentUser.avatarUrl || '');
+    setSaveError(null);
+  }, [currentUser, isOpen]);
 
   if (!isOpen) return null;
 
@@ -52,20 +65,31 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
     reader.readAsDataURL(file);
   };
 
-  const handleSave = () => {
-    updateProfile({
-      name: name.trim() || currentUser.name,
-      email: email.trim() || currentUser.email,
-      phone: phone.trim() || undefined,
-      location: location.trim() || undefined,
-      bio: bio.trim() || undefined,
-      avatarUrl: avatarPreview || undefined,
-    });
-    setIsSaved(true);
-    setTimeout(() => {
-      setIsSaved(false);
-      onClose();
-    }, 1200);
+  const handleSave = async () => {
+    setSaveError(null);
+    setIsSaving(true);
+    try {
+      await updateProfile(backendEnabled ? {
+        phone: phone.trim(),
+        location: location.trim(),
+      } : {
+        name: name.trim() || currentUser.name,
+        email: email.trim() || currentUser.email,
+        phone: phone.trim(),
+        location: location.trim(),
+        bio: bio.trim(),
+        avatarUrl: avatarPreview,
+      });
+      setIsSaved(true);
+      setTimeout(() => {
+        setIsSaved(false);
+        onClose();
+      }, 1200);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Profile changes could not be saved.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const initials = (currentUser.name || 'U')
@@ -110,7 +134,8 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
               )}
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                disabled={backendEnabled}
+                className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition cursor-pointer disabled:cursor-not-allowed"
                 title="Change photo"
               >
                 <Camera className="w-5 h-5 text-white" />
@@ -120,12 +145,14 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                 type="file"
                 accept="image/*"
                 onChange={handleAvatarChange}
+                disabled={backendEnabled}
                 className="hidden"
               />
             </div>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="text-xs text-[#083E34] font-semibold hover:underline cursor-pointer"
+              disabled={backendEnabled}
+              className="text-xs text-[#083E34] font-semibold hover:underline cursor-pointer disabled:cursor-not-allowed disabled:text-slate-400"
             >
               Change profile picture
             </button>
@@ -143,6 +170,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                disabled={backendEnabled}
                 placeholder="Enter your full name"
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34]/20 transition"
               />
@@ -158,6 +186,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={backendEnabled}
                 placeholder="your.email@citadel.org"
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34]/20 transition"
               />
@@ -202,6 +231,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
               <textarea
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
+                disabled={backendEnabled}
                 placeholder="Tell us a little about yourself..."
                 rows={3}
                 maxLength={300}
@@ -211,6 +241,11 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                 {bio.length}/300
               </p>
             </div>
+            {backendEnabled && (
+              <p className="text-[11px] text-slate-500">
+                Name, work email, bio, and profile photo changes require an approved HR account workflow.
+              </p>
+            )}
           </div>
         </div>
 
@@ -222,16 +257,19 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
           >
             Cancel
           </button>
+          {saveError && <p role="alert" className="text-xs font-semibold text-rose-700">{saveError}</p>}
           <button
             onClick={handleSave}
-            disabled={isSaved}
+            disabled={isSaved || isSaving}
             className={`px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs transition cursor-pointer ${
               isSaved
                 ? 'bg-emerald-600 text-white'
                 : 'bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] font-bold active:scale-[0.97]'
             }`}
           >
-            {isSaved ? (
+            {isSaving ? (
+              <><span className="animate-pulse">Saving…</span></>
+            ) : isSaved ? (
               <>
                 <CheckCircle2 className="w-4 h-4" />
                 Saved!

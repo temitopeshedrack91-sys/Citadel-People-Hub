@@ -345,3 +345,24 @@ ALTER TABLE public.leave_requests REPLICA IDENTITY FULL;
 ALTER TABLE public.notifications REPLICA IDENTITY FULL;
 ALTER TABLE public.todos REPLICA IDENTITY FULL;
 
+-- identity_links table: server-managed crosswalk between Supabase auth users and employees
+CREATE TABLE IF NOT EXISTS public.identity_links (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES public.users (id) ON DELETE CASCADE,
+    employee_id BIGINT NOT NULL REFERENCES public.employees (id) ON DELETE CASCADE,
+    provider TEXT NOT NULL DEFAULT 'supabase',
+    provider_user_id TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    verification_method TEXT NOT NULL DEFAULT 'staff_id_manual',
+    verification_evidence TEXT,
+    verified_by_user_id BIGINT REFERENCES public.users (id),
+    verified_at TIMESTAMPTZ,
+    last_verified_at TIMESTAMPTZ,
+    revoked_by_user_id BIGINT REFERENCES public.users (id),
+    revoked_at TIMESTAMPTZ,
+    revocation_reason TEXT,
+    metadata JSONB,
+    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+

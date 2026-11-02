@@ -520,6 +520,12 @@ export const PayrollView: React.FC = () => {
             { key: 'deductions', label: 'Deductions & Provident Fund' },
           ].map((tab) => {
             const isActive = activeTab === tab.key;
+            /* Restrict Excel management tabs to ADMIN and HR_STAFF only */
+            if (tab.key === 'excel-templates' || tab.key === 'imports') {
+              const { currentUser, currentRole } = useAuth();
+              const isManager = currentRole && (currentRole.role === 'ADMIN' || currentRole.role === 'HR_STAFF' || currentRole.role === 'PCCM_SUPER_ADMIN');
+              if (!isManager) return null;
+            }
             return (
               <button
                 key={tab.key}

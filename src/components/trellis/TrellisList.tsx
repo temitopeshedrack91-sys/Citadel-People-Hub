@@ -16,14 +16,11 @@ export const TrellisList: React.FC = () => {
     setSelectedTaskId,
     deleteTask,
     setIsEditMode,
+    canManageTasks,
   } = useTrellis();
 
   const filteredTasks = tasks.filter((t) => {
-    if (
-      myTasksMode &&
-      t.assigneeId !== currentUser.id &&
-      (!currentUser.supabaseId || String(t.assigneeId) !== String(currentUser.supabaseId))
-    )
+    if (myTasksMode && t.assigneeId !== currentUser.id)
       return false;
     if (selectedAssigneeFilter !== 'All') {
       const targetMember = findMember(selectedAssigneeFilter);
@@ -115,7 +112,7 @@ export const TrellisList: React.FC = () => {
                       )}
 
                       {/* Quick Edit & Delete Actions */}
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                      {canManageTasks && <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                         <button
                           type="button"
                           onClick={(e) => {
@@ -141,7 +138,7 @@ export const TrellisList: React.FC = () => {
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
-                      </div>
+                      </div>}
                     </div>
                   </div>
                 );

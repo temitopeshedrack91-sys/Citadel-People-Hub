@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Employee extends Model
 {
     protected $fillable = [
-        'staff_id', 'full_name', 'first_name', 'last_name', 'profile_photo', 'date_of_birth',
+        'staff_id', 'biometric_device_id', 'full_name', 'first_name', 'last_name', 'profile_photo', 'date_of_birth',
         'gender', 'phone', 'email', 'address', 'emergency_contact', 'next_of_kin', 'entity_id',
         'department_id', 'job_title', 'grade_level', 'employment_type', 'employment_date',
         'confirmation_date', 'manager_id', 'manager_name', 'contract_status', 'years_of_service',
