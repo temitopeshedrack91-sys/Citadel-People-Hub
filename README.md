@@ -311,18 +311,3 @@ All endpoints are prefixed with `/api/v1`. Authenticated routes require `Authori
 | `POST` | `/notifications/read-all` | Mark all user notifications as read | Authenticated |
 | `GET` | `/audit-logs` | Query governance audit log entries | Admin / HR |
 
----
-
-## Shared Conventions & Caveats
-
-1. **API Envelope Format**: Collections and single-item resources returned by the API wrap data inside a top-level `data` key (e.g. `{ "data": [ ... ] }`). Error responses return `{ "message": "...", "errors": { ... } }`.
-2. **Date & Time Formats**:
-   - Dates submitted in request payloads follow `YYYY-MM-DD` (e.g., `2026-11-01`).
-   - Timestamps returned in responses are ISO-8601 strings in UTC.
-3. **Currency & Precision**:
-   - Monetary amounts in the payroll module represent Naira (NGN) and are stored as numeric floats rounded to two decimal places.
-4. **Biometric Deduplication**:
-   - Device punch imports use `(device_id, punch_time)` composite unique checks to prevent double-counting scans.
-5. **Multi-Entity Data Isolation**:
-   - Users with `BUSINESS_HEAD` or `DEPARTMENT_HEAD` roles are scoped by `entity_id` and `department_id`. The backend silently filters or returns 403 when attempting to access records outside their assigned boundary.
-
