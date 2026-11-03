@@ -14,8 +14,31 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
+/**
+ * Manages leave requests, balances, categories, and hierarchical approvals.
+ *
+ * Approval workflow advances sequentially:
+ * DEPARTMENT_HEAD -> BUSINESS_HEAD -> HR -> COMPLETE.
+ *
+ * Scoped reviewers (Department and Business Heads) can only act on records within
+ * their assigned organizational scope. Global administrators and HR staff have
+ * broad review authority across entities.
+ */
 class LeaveController extends Controller
 {
+    /**
+     * List leave requests visible to the authenticated user.
+     *
+     * GET /api/v1/leave-requests
+     * Scoping rules:
+     * - EMPLOYEE: Returns only requests filed by the authenticated user.
+     * - DEPARTMENT_HEAD: Scoped to employees within user's department.
+     * - BUSINESS_HEAD: Scoped to employees within user's entity.
+     * - ADMIN / HR_STAFF: Global list up to 500 recent requests.
+     *
+     * Response:
+     * - data: Array of serialized leave request objects.
+     */
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -34,6 +57,13 @@ class LeaveController extends Controller
         return response()->json(['data' => $query->latest('applied_date')->limit(500)->get()->map(fn (LeaveRecord $record) => $this->present($record))]);
     }
 
+    /**
+     * Retrieve leave history for a specific employee.
+     *
+     * GET /api/v1/employees/{employeeId}/leave-requests
+     *
+     * @param  string  $employeeId  Target employee ID.
+     */
     public function forEmployee(Request $request, string $employeeId): JsonResponse
     {
         $employee = Employee::query()->findOrFail($employeeId);
@@ -42,6 +72,27 @@ class LeaveController extends Controller
         return response()->json(['data' => LeaveRecord::query()->where('employee_id', $employee->id)->latest('applied_date')->get()->map(fn (LeaveRecord $record) => $this->present($record))]);
     }
 
+    /**
+     * Submit a new leave application.
+     *
+     * POST /api/v1/leave-requests
+     *
+     * Request body:
+     * - employeeId: Employee ID (required, exists:employees,id).
+     * - employeeStaffId: Staff code (required, max 50). Must match employee's staff_id.
+     * - employeeName: Full name (required, max 180).
+     * - entityName: Organizational entity name (required, max 180).
+     * - departmentName: Department name (required, max 180).
+     * - leaveType: Enum ('Annual Leave', 'Sick Leave', 'Maternity Leave', 'Paternity Leave', 'Exam Leave', 'Compassionate Leave', 'Casual Leave').
+     * - startDate: YYYY-MM-DD (required).
+     * - endDate: YYYY-MM-DD (required, after_or_equal:startDate).
+     * - totalDays: Positive integer (1-366).
+     * - reason: Text description (required, max 3000).
+     * - relievingStaffId, relievingStaffName, handoverColleague: Optional strings.
+     *
+     * Response:
+     * - data: Created leave record in 'Submitted' state, approval_stage 'DEPARTMENT_HEAD'.
+     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -95,6 +146,20 @@ class LeaveController extends Controller
         return response()->json(['data' => $this->present($record)], 201);
     }
 
+    /**
+     * Advance approval stage, approve, reject, or cancel a leave request.
+     *
+     * PATCH /api/v1/leave-requests/{leaveRequest}/status
+     *
+     * Request body:
+     * - status: 'Approved' | 'Rejected' | 'Cancelled' | 'Requires Correction' (required).
+     * - comments: Optional reviewer note (max 2000).
+     *
+     * Workflow advancement on 'Approved':
+     * - At DEPARTMENT_HEAD stage -> advances to BUSINESS_HEAD (status: 'Pending Review').
+     * - At BUSINESS_HEAD stage -> advances to HR (status: 'Pending Review').
+     * - At HR stage -> marks COMPLETE (status: 'Approved').
+     */
     public function updateStatus(Request $request, LeaveRecord $leaveRequest): JsonResponse
     {
         $user = $request->user();
@@ -176,6 +241,11 @@ class LeaveController extends Controller
         return response()->json(['data' => $this->present($updated)]);
     }
 
+    /**
+     * List active statutory and organizational leave categories and policies.
+     *
+     * GET /api/v1/leave/categories
+     */
     public function categories(): JsonResponse
     {
         $categories = LeaveCategory::query()
@@ -186,6 +256,14 @@ class LeaveController extends Controller
         return response()->json(['data' => $categories]);
     }
 
+    /**
+     * Retrieve accrued, used, and remaining leave balances.
+     *
+     * GET /api/v1/leave/balances
+     * GET /api/v1/employees/{employeeId}/leave-balances
+     *
+     * @param  string|null  $employeeId  Optional employee filter.
+     */
     public function balances(Request $request, ?string $employeeId = null): JsonResponse
     {
         $user = $request->user();
@@ -215,6 +293,9 @@ class LeaveController extends Controller
         return response()->json(['data' => $query->get()]);
     }
 
+    /**
+     * Guard access ensuring caller can view target employee's leave records.
+     */
     private function ensureCanViewEmployee(Request $request, Employee $employee): void
     {
         $user = $request->user();
@@ -225,6 +306,9 @@ class LeaveController extends Controller
         abort_unless($allowed, 403, 'You are not authorized to access this employee record.');
     }
 
+    /**
+     * Format a leave record for API consumers.
+     */
     private function present(LeaveRecord $record): array
     {
         return [

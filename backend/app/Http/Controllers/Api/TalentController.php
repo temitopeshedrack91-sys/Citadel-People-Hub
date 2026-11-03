@@ -17,8 +17,19 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
+/**
+ * Talent, Recruitment & Onboarding Controller
+ *
+ * Coordinates workforce recruitment requisitions, onboarding journeys,
+ * milestone checklists, and progress tracking with organizational role scoping.
+ */
 class TalentController extends Controller
 {
+    /**
+     * List active and completed onboarding journeys scoped by user role and department/entity.
+     *
+     * @return JsonResponse JSON array of onboarding journey records.
+     */
     public function journeys(Request $request): JsonResponse
     {
         $query = $this->scopedJourneys($request);
@@ -26,6 +37,12 @@ class TalentController extends Controller
         return response()->json(['data' => $query->latest()->limit(200)->get()->map(fn (OnboardingJourney $journey) => array_merge($journey->journey_data, ['id' => $journey->id]))]);
     }
 
+    /**
+     * Instantiate a new onboarding journey for an employee from a selected checklist template.
+     *
+     * @param  Request  $request  Payload containing employeeId, checklistId, startDate.
+     * @return JsonResponse Newly created onboarding journey.
+     */
     public function createJourney(Request $request): JsonResponse
     {
         $this->authorizeTalentManagement($request);
@@ -86,6 +103,11 @@ class TalentController extends Controller
         return response()->json(['data' => array_merge($journey->journey_data, ['id' => $journey->id])], 201);
     }
 
+    /**
+     * Retrieve reusable onboarding checklist templates.
+     *
+     * @return JsonResponse JSON array of checklist template definitions.
+     */
     public function checklistTemplates(Request $request): JsonResponse
     {
         $this->authorizeTalentManagement($request);
@@ -95,6 +117,11 @@ class TalentController extends Controller
         )]);
     }
 
+    /**
+     * Create a new onboarding checklist template defining standard tasks and timelines.
+     *
+     * @return JsonResponse Created checklist template record.
+     */
     public function createChecklistTemplate(Request $request): JsonResponse
     {
         $this->authorizeTalentManagement($request);
@@ -136,6 +163,13 @@ class TalentController extends Controller
         return response()->json(['data' => $this->presentChecklistTemplate($template)], 201);
     }
 
+    /**
+     * Mark an individual onboarding journey task as completed or incomplete, updating overall progress.
+     *
+     * @param  Request  $request  Payload containing boolean isCompleted.
+     * @param  string  $taskId  UUID of the target task in journey_data['tasks'].
+     * @return JsonResponse Updated journey state.
+     */
     public function updateTask(Request $request, OnboardingJourney $journey, string $taskId): JsonResponse
     {
         $journey = $this->scopedJourneys($request)->whereKey($journey->getKey())->firstOrFail();
@@ -176,6 +210,11 @@ class TalentController extends Controller
         return $this->updateJourneyItem($request, $journey, 'orientationItems', $itemId, 'isCompleted', 'completedAt', 'Updated onboarding orientation status');
     }
 
+    /**
+     * Append a custom onboarding task to an active journey.
+     *
+     * @return JsonResponse Updated journey representation.
+     */
     public function createOnboardingTask(Request $request, OnboardingJourney $journey): JsonResponse
     {
         $journey = $this->scopedJourneys($request)->whereKey($journey->getKey())->firstOrFail();
@@ -246,6 +285,11 @@ class TalentController extends Controller
         return response()->json(['data' => array_merge($journeyData, ['id' => $journey->id])]);
     }
 
+    /**
+     * Retrieve recruitment requisitions scoped to the user's role and entity/department authority.
+     *
+     * @return JsonResponse JSON array of requisition records.
+     */
     public function requisitions(Request $request): JsonResponse
     {
         return response()->json(['data' => $this->scopedRequisitions($request)->latest()->limit(200)->get()->map(
@@ -253,6 +297,11 @@ class TalentController extends Controller
         )]);
     }
 
+    /**
+     * Create a new recruitment requisition with auto-generated unique tracking code.
+     *
+     * @return JsonResponse Created requisition details.
+     */
     public function createRequisition(Request $request): JsonResponse
     {
         $this->authorizeTalentManagement($request);
@@ -303,6 +352,11 @@ class TalentController extends Controller
         return response()->json(['data' => $this->presentRequisition($requisition)], 201);
     }
 
+    /**
+     * Transition recruitment requisition status (e.g. Open, Interviewing, Filled, Closed).
+     *
+     * @return JsonResponse Updated requisition.
+     */
     public function updateRequisitionStatus(Request $request, RecruitmentRequisition $requisition): JsonResponse
     {
         $this->authorizeTalentManagement($request);

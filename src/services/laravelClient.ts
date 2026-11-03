@@ -1,3 +1,11 @@
+/**
+ * Citadel Laravel API HTTP Client
+ *
+ * Provides a resilient, type-safe HTTP client for interacting with the Laravel backend.
+ * Handles Bearer token persistence, automatic retries with exponential backoff on transient errors,
+ * 401 unauthenticated session revocation, and response unwrapping.
+ */
+
 const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
 const TOKEN_KEY = 'citadel_laravel_token';
 
@@ -5,7 +13,15 @@ let accessToken: string | null = typeof window !== 'undefined'
   ? localStorage.getItem(TOKEN_KEY)
   : null;
 
+/**
+ * Standardized API error thrown on non-2xx HTTP responses from Laravel.
+ */
 export class LaravelApiError extends Error {
+  /**
+   * @param message Human-readable error description or aggregated validation messages.
+   * @param status HTTP response status code (e.g. 422, 403, 404, 500).
+   * @param errors Validation error dictionary keyed by field name.
+   */
   constructor(
     message: string,
     readonly status: number,
@@ -16,10 +32,21 @@ export class LaravelApiError extends Error {
   }
 }
 
+/**
+ * Checks whether the Laravel backend API base URL is configured in the environment.
+ */
 export const isLaravelApiConfigured = (): boolean => Boolean(baseUrl);
 
+/**
+ * Returns the active Sanctum bearer token from memory or local storage.
+ */
 export const getLaravelAccessToken = (): string | null => accessToken;
 
+/**
+ * Sets or clears the active Sanctum bearer token and syncs to localStorage.
+ *
+ * @param token Sanctum plain-text bearer token or null to clear authentication.
+ */
 export const setLaravelAccessToken = (token: string | null): void => {
   accessToken = token;
   if (typeof window !== 'undefined') {
@@ -32,7 +59,19 @@ export const setLaravelAccessToken = (token: string | null): void => {
 };
 
 /**
- * Resilient HTTP client for Laravel backend API with retry logic and token management.
+ * Executes an HTTP request against the Laravel API with automatic retry and auth handling.
+ *
+ * - Automatically attaches Bearer token Authorization and JSON headers.
+ * - Handles 401 responses by clearing token and firing the 'citadel:unauthorized' window event.
+ * - Retries transient failures (network/5xx) with exponential backoff (300ms, 600ms...).
+ * - Immediately rejects 4xx client errors (validation, permissions) without retrying.
+ *
+ * @template T Expected response payload type.
+ * @param path Relative path under /api/v1 (e.g. '/payroll/runs').
+ * @param options Standard fetch RequestInit options.
+ * @param maxRetries Maximum retry attempts for transient errors (default: 2).
+ * @returns Parsed JSON response body or undefined on 204 No Content.
+ * @throws {LaravelApiError} On HTTP 4xx/5xx responses.
  */
 export const requestLaravel = async <T>(
   path: string,
@@ -91,7 +130,6 @@ export const requestLaravel = async <T>(
 
       attempt++;
       if (attempt <= maxRetries) {
-        // Exponential backoff: 300ms, 600ms...
         await new Promise((resolve) => setTimeout(resolve, attempt * 300));
       }
     }
@@ -100,6 +138,14 @@ export const requestLaravel = async <T>(
   throw lastError || new Error(`Request to ${path} failed after ${maxRetries} retries.`);
 };
 
+/**
+ * Convenience helper to request and unpack Laravel's standard `{ data: T }` envelope.
+ *
+ * @template T Inner entity or collection type.
+ * @param path Endpoint path under /api/v1.
+ * @param options RequestInit options.
+ * @returns The unpacked `data` property.
+ */
 export const requestLaravelData = async <T>(
   path: string,
   options?: RequestInit
@@ -108,6 +154,12 @@ export const requestLaravelData = async <T>(
   return response.data;
 };
 
+/**
+ * Request raw binary file data (blob) from an authenticated endpoint.
+ *
+ * @param path Endpoint path under /api/v1.
+ * @returns File blob.
+ */
 export const requestLaravelBlob = async (path: string): Promise<Blob> => {
   if (!baseUrl) {
     throw new Error('VITE_API_BASE_URL is not configured.');
@@ -128,6 +180,12 @@ export const requestLaravelBlob = async (path: string): Promise<Blob> => {
   return response.blob();
 };
 
+/**
+ * Download a file from the Laravel API and trigger browser file-save.
+ *
+ * @param path Download endpoint path.
+ * @param fileName Suggested filename for the downloaded file.
+ */
 export const downloadLaravelFile = async (path: string, fileName: string): Promise<void> => {
   const objectUrl = URL.createObjectURL(await requestLaravelBlob(path));
   const link = document.createElement('a');

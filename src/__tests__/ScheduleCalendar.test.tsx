@@ -15,7 +15,7 @@ describe('ScheduleCalendar Component', () => {
 
   it('triggers onSelectDay callback when a day is clicked', () => {
     const handleSelectDay = vi.fn();
-    render(<ScheduleCalendar selectedDay={16} onSelectDay={handleSelectDay} />);
+    render(<ScheduleCalendar initialMonth="January 2026" selectedDay={16} onSelectDay={handleSelectDay} />);
 
     const day15Btn = screen.getByTestId('schedule-day-15');
     fireEvent.click(day15Btn);
@@ -55,7 +55,7 @@ describe('ScheduleCalendar Component', () => {
   });
 
   it('updates events list when selecting different days', () => {
-    render(<ScheduleCalendar />);
+    render(<ScheduleCalendar initialMonth="October 2026" />);
 
     // Default day 27 (Tuesday) has Marketing Sync
     expect(screen.getByText('Marketing Sync')).toBeInTheDocument();

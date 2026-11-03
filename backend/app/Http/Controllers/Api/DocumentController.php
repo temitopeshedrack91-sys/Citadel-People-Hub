@@ -14,8 +14,23 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Throwable;
 
+/**
+ * Document & Institutional Policy Controller
+ *
+ * Manages institutional documents, organizational governance policies, and
+ * employee compliance documentation with strict departmental and entity-scoped RBAC.
+ */
 class DocumentController extends Controller
 {
+    /**
+     * Retrieve a filtered collection of institutional documents accessible to the authenticated user.
+     *
+     * Non-HR roles are strictly filtered according to entity and department scopes,
+     * while sensitive and PCCM-restricted documents are withheld.
+     *
+     * @param  Request  $request  Query filters: category, accessLevel, employeeId.
+     * @return JsonResponse JSON array of accessible document records.
+     */
     public function index(Request $request): JsonResponse
     {
         $documents = HubDocument::query()
@@ -31,6 +46,11 @@ class DocumentController extends Controller
         return response()->json(['data' => $documents]);
     }
 
+    /**
+     * List compliance and onboarding documents belonging to a specific employee.
+     *
+     * Requires HR, business head/department head over that employee, or the employee themselves.
+     */
     public function forEmployee(Request $request, Employee $employee): JsonResponse
     {
         abort_unless($this->canViewEmployeeDocuments($request, $employee), 403);
@@ -46,6 +66,14 @@ class DocumentController extends Controller
         return response()->json(['data' => $documents]);
     }
 
+    /**
+     * Upload an institutional policy or general managed document.
+     *
+     * Restricted to HR staff members. Enforces 20MB file limit and MIME allowlist.
+     *
+     * @param  Request  $request  Validated multipart request (file, title, category, accessLevel).
+     * @return JsonResponse Created document representation.
+     */
     public function store(Request $request): JsonResponse
     {
         abort_unless(RoleAuthorization::canonical($request->user()->role) === 'HR_STAFF', 403, 'Only HR staff can upload managed documents.');
@@ -96,6 +124,11 @@ class DocumentController extends Controller
         return response()->json(['data' => $this->present($document)], 201);
     }
 
+    /**
+     * Upload an individual compliance document (certificate, ID, resume) for an employee.
+     *
+     * @return JsonResponse Created employee document record.
+     */
     public function storeEmployeeDocument(Request $request, Employee $employee): JsonResponse
     {
         abort_unless($this->canManageEmployeeDocuments($request, $employee), 403);
@@ -159,6 +192,11 @@ class DocumentController extends Controller
         return response()->json(['data' => $this->present($document)], 201);
     }
 
+    /**
+     * Replace an existing employee document with an updated version, retaining audit continuity.
+     *
+     * @return JsonResponse Updated document details.
+     */
     public function replaceEmployeeDocument(Request $request, Employee $employee, HubDocument $document): JsonResponse
     {
         abort_unless($document->employee_id === $employee->id, 404);
@@ -227,6 +265,11 @@ class DocumentController extends Controller
         return response()->json(['data' => $this->present($newDocument)]);
     }
 
+    /**
+     * Delete an employee document from disk and database record.
+     *
+     * @return JsonResponse Confirmation response.
+     */
     public function deleteEmployeeDocument(Request $request, Employee $employee, HubDocument $document): JsonResponse
     {
         abort_unless($document->employee_id === $employee->id, 404);
@@ -252,6 +295,9 @@ class DocumentController extends Controller
         return response()->json(['message' => 'Document deleted successfully.']);
     }
 
+    /**
+     * Stream an institutional policy or general managed document file to the client.
+     */
     public function download(Request $request, HubDocument $document): JsonResponse
     {
         abort_unless($this->canAccess($request, $document), 404);
@@ -262,6 +308,9 @@ class DocumentController extends Controller
         return Storage::disk(config('filesystems.default'))->download($document->storage_path, $document->file_name);
     }
 
+    /**
+     * Stream a secured employee compliance document file to the client.
+     */
     public function downloadEmployeeDocument(Request $request, Employee $employee, HubDocument $document): JsonResponse
     {
         abort_unless($document->employee_id === $employee->id, 404);

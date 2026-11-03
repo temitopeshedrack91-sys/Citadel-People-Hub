@@ -1,9 +1,9 @@
 /**
- * Auth Context & Persona Switcher
- * Citadel People Hub
- * 
- * Allows instant simulation and testing of the 5 distinct roles and
- * verifies Role-Based Access Control (RBAC) across all Citadel entities.
+ * Authentication Context & Session State Manager
+ *
+ * Coordinates user session state, Laravel Sanctum Bearer token synchronization,
+ * persona switching in local development, and real-time permission derivation
+ * across all Citadel entities and departments.
  */
 
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
@@ -306,6 +306,9 @@ function sanitizeProfileUpdates(value: unknown): Partial<Pick<User, 'name' | 'em
   ) as Partial<Pick<User, 'name' | 'email' | 'phone' | 'location' | 'bio' | 'avatarUrl'>>;
 }
 
+/**
+ * Contract exposing current session identity, permissions, and authentication operations.
+ */
 interface AuthContextType {
   currentUser: User;
   currentRole: UserRole;
@@ -330,6 +333,10 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/**
+ * React Provider wrapping the application to manage session tokens,
+ * user persona hydration from Laravel or Supabase, and dynamic RBAC evaluation.
+ */
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const backendEnabled = shouldUseLaravelBackend(import.meta.env.PROD, isLaravelApiConfigured());
   const supabaseAuthEnabled = canUseSupabaseDirectAccess(
@@ -697,6 +704,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
+/**
+ * React hook to consume authentication state, active user profile, and RBAC permissions.
+ *
+ * @throws {Error} If consumed outside of an `AuthProvider` tree.
+ */
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {

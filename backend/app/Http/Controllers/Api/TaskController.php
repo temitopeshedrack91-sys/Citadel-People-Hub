@@ -14,8 +14,19 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
+/**
+ * Manages Kanban board tasks, checklist progress, status shifts, assignment acceptance, and comments.
+ *
+ * Scoped by TaskProjectAccess: supports board-level column status moves (todo, in_progress, review, completed),
+ * assignment acceptance/decline, checklist checkbox updates, and audit logging.
+ */
 class TaskController extends Controller
 {
+    /**
+     * List tasks visible to the authenticated user with optional project, status, and assignment filters.
+     *
+     * GET /api/v1/tasks
+     */
     public function index(Request $request, TaskProjectAccess $access): JsonResponse
     {
         $query = $access->visibleTasks($request->user())->with([
@@ -49,6 +60,11 @@ class TaskController extends Controller
         return response()->json(['data' => $query->latest()->paginate(50)]);
     }
 
+    /**
+     * Retrieve single task details including project, assignee, reviewer, checklist, and comments.
+     *
+     * GET /api/v1/tasks/{task}
+     */
     public function show(Request $request, Task $task, TaskProjectAccess $access): JsonResponse
     {
         $task = $access->visibleTasks($request->user())->whereKey($task->getKey())->firstOrFail();
@@ -64,6 +80,11 @@ class TaskController extends Controller
         return response()->json(['data' => $task]);
     }
 
+    /**
+     * Create a new task within caller's project or department scope.
+     *
+     * POST /api/v1/tasks
+     */
     public function store(Request $request, TaskProjectAccess $access): JsonResponse
     {
         $validated = $request->validate([
@@ -122,6 +143,11 @@ class TaskController extends Controller
         return response()->json(['data' => $task->load(['project', 'department', 'assignee', 'creator', 'reviewer', 'comments.author'])], 201);
     }
 
+    /**
+     * Update task metadata, assignment, checklist items, or department.
+     *
+     * PATCH /api/v1/tasks/{task}
+     */
     public function update(Request $request, Task $task, TaskProjectAccess $access): JsonResponse
     {
         $task = $access->visibleTasks($request->user())->whereKey($task->getKey())->firstOrFail();
@@ -178,6 +204,11 @@ class TaskController extends Controller
         return response()->json(['data' => $task->fresh()->load(['project', 'department', 'assignee', 'creator', 'reviewer', 'comments.author'])]);
     }
 
+    /**
+     * Move task status across Kanban columns ('todo', 'in_progress', 'review', 'completed').
+     *
+     * PATCH /api/v1/tasks/{task}/status
+     */
     public function updateStatus(Request $request, Task $task, TaskProjectAccess $access): JsonResponse
     {
         $task = $access->visibleTasks($request->user())->whereKey($task->getKey())->firstOrFail();
@@ -195,6 +226,11 @@ class TaskController extends Controller
         return response()->json(['data' => $task]);
     }
 
+    /**
+     * Accept or decline a task assignment (assignee only).
+     *
+     * PATCH /api/v1/tasks/{task}/assignment
+     */
     public function updateAssignment(Request $request, Task $task, TaskProjectAccess $access): JsonResponse
     {
         $task = $access->visibleTasks($request->user())->whereKey($task->getKey())->firstOrFail();
@@ -215,6 +251,11 @@ class TaskController extends Controller
         return response()->json(['data' => $task->fresh()->load(['project', 'department', 'assignee', 'creator', 'reviewer', 'comments.author'])]);
     }
 
+    /**
+     * Update checklist items and completion states for a task.
+     *
+     * PATCH /api/v1/tasks/{task}/checklist
+     */
     public function updateChecklist(Request $request, Task $task, TaskProjectAccess $access): JsonResponse
     {
         $task = $access->visibleTasks($request->user())->whereKey($task->getKey())->firstOrFail();
@@ -231,6 +272,11 @@ class TaskController extends Controller
         return response()->json(['data' => $task->fresh()->load(['project', 'department', 'assignee', 'creator', 'reviewer', 'comments.author'])]);
     }
 
+    /**
+     * Add a comment to a task discussion thread.
+     *
+     * POST /api/v1/tasks/{task}/comments
+     */
     public function addComment(Request $request, Task $task, TaskProjectAccess $access): JsonResponse
     {
         $task = $access->visibleTasks($request->user())->whereKey($task->getKey())->firstOrFail();
@@ -250,6 +296,11 @@ class TaskController extends Controller
         return response()->json(['data' => $comment->load('author:id,staff_id,full_name')], 201);
     }
 
+    /**
+     * Delete a task.
+     *
+     * DELETE /api/v1/tasks/{task}
+     */
     public function destroy(Request $request, Task $task, TaskProjectAccess $access): JsonResponse
     {
         $task = $access->visibleTasks($request->user())->whereKey($task->getKey())->firstOrFail();

@@ -45,7 +45,6 @@ import {
 // Production and configured environments use the authenticated API. Browser
 // database access is limited to an explicit local-development opt-in because
 // the canonical project's RLS and Storage policies have not been verified.
-const isLaravelApiConfigured = () => Boolean(import.meta.env.VITE_API_BASE_URL);
 const useLaravelApi = shouldUseLaravelBackend(import.meta.env.PROD, isLaravelApiConfigured());
 const useSupabaseDirectAccess = canUseSupabaseDirectAccess(
   import.meta.env.DEV,
@@ -53,16 +52,10 @@ const useSupabaseDirectAccess = canUseSupabaseDirectAccess(
   import.meta.env.VITE_ENABLE_SUPABASE_DIRECT_DEV_ACCESS === 'true'
 );
 
-// Use Supabase direct access in development when explicitly enabled,
-// since the Laravel API may have routing/configuration issues in local setups.
-const useEffectiveRepository = import.meta.env.DEV
-  ? useSupabaseDirectAccess
-  : useLaravelApi;
-
-export const employeeRepository = useEffectiveRepository
+export const employeeRepository = useLaravelApi
   ? new LaravelEmployeeRepository()
   : useSupabaseDirectAccess ? new SupabaseEmployeeRepository() : new MockEmployeeRepository();
-export const organizationRepository = useEffectiveRepository
+export const organizationRepository = useLaravelApi
   ? new LaravelOrganizationRepository()
   : useSupabaseDirectAccess ? new SupabaseOrganizationRepository() : new MockOrganizationRepository();
 export const leaveRepository = useLaravelApi

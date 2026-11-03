@@ -19,10 +19,22 @@ use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use RuntimeException;
 
+/**
+ * Payroll Service
+ *
+ * Core computation engine and ledger orchestration for Citadel People Hub payroll.
+ * Handles salary structure definitions, effective-dated employee compensation
+ * assignments, automated amortized loan schedules, statutory deductions (PAYE tax,
+ * pension / provident fund), and idempotent draft payroll run generation and finalization.
+ */
 class PayrollService
 {
     /**
-     * Create or update a salary template with allowance and statutory rate configurations.
+     * Create or update a reusable salary template defining base earnings and statutory defaults.
+     *
+     * @param  array{name: string, pay_frequency?: string, basic_salary: numeric, house_rent?: numeric, medical_allowance?: numeric, conveyance_allowance?: numeric, other_allowance?: numeric, provident_fund_percent?: numeric, tax_percent?: numeric, is_active?: bool}  $payload  Template configuration attributes.
+     * @param  SalaryTemplate|null  $template  Existing model instance if performing an update.
+     * @return SalaryTemplate The persisted salary structure template.
      */
     public function saveSalaryTemplate(array $payload, ?SalaryTemplate $template = null): SalaryTemplate
     {
@@ -45,6 +57,14 @@ class PayrollService
 
     /**
      * Assign a salary structure to an employee with effective date intervals and overlap prevention.
+     *
+     * Automatically closes prior open-ended assignments before the new start date,
+     * checks for date collisions against existing historical records, and computes gross salary.
+     *
+     * @param  array{employee_id: int|string, salary_template_id: int|string, effective_from: string, effective_to?: string|null, basic_salary: numeric, house_rent?: numeric, medical_allowance?: numeric, conveyance_allowance?: numeric, other_allowance?: numeric, provident_fund_percent?: numeric, tax_percent?: numeric, ctc_amount?: numeric|null, notes?: string|null, pay_frequency?: string}  $payload
+     * @return EmployeeSalaryTemplate The assigned effective salary structure record.
+     *
+     * @throws InvalidArgumentException If the effective date range overlaps with an existing structure.
      */
     public function assignSalaryTemplate(array $payload): EmployeeSalaryTemplate
     {
@@ -127,7 +147,12 @@ class PayrollService
     }
 
     /**
-     * Record a discretionary or performance bonus for an employee.
+     * Record a discretionary or performance bonus for an employee within a cycle.
+     *
+     * @param  array{employee_id: int|string, bonus_name: string, amount: numeric, bonus_date: string, remarks?: string|null}  $payload
+     * @param  int  $userId  ID of the authenticated administrator recording the bonus.
+     * @param  Bonus|null  $bonus  Existing model instance if editing.
+     * @return Bonus The saved bonus record.
      */
     public function saveBonus(array $payload, int $userId, ?Bonus $bonus = null): Bonus
     {
@@ -140,7 +165,13 @@ class PayrollService
     }
 
     /**
-     * Register or update an employee recurring/one-time deduction.
+     * Register or update an employee recurring or one-time deduction.
+     *
+     * Supports fixed monetary values or percentage of base salary.
+     *
+     * @param  array{employee_id: int|string, deduction_type: string, calculation_type: 'flat'|'percent', amount: numeric, frequency: 'monthly'|'weekly'|'one_time', effective_from: string, effective_to?: string|null, reason?: string|null, comments?: string|null, is_active?: bool}  $payload
+     * @param  EmployeeDeduction|null  $deduction  Existing deduction instance if updating.
+     * @return EmployeeDeduction The persisted deduction record.
      */
     public function saveDeduction(array $payload, ?EmployeeDeduction $deduction = null): EmployeeDeduction
     {
@@ -152,7 +183,12 @@ class PayrollService
     }
 
     /**
-     * Configure statutory Provident Fund / Pension parameters.
+     * Configure statutory Provident Fund / Pension parameters for an employee.
+     *
+     * Sets matching employee/employer contribution percentages and initial opening balance.
+     *
+     * @param  array{employee_id: int|string, opening_balance?: numeric, employee_contribution_percent: numeric, employer_contribution_percent: numeric, effective_from?: string|null, account_number?: string|null, pfa_name?: string|null}  $payload
+     * @return EmployeeProvidentFund The updated provident fund profile.
      */
     public function saveProvidentFund(array $payload): EmployeeProvidentFund
     {
@@ -166,6 +202,13 @@ class PayrollService
 
     /**
      * Save an approved employee loan with automated amortized installments.
+     *
+     * Computes installment amount from principal, interest rate, and term count,
+     * and automatically generates loan_installments records if active.
+     *
+     * @param  array{employee_id: int|string, principal_amount: numeric, installment_count: int, installment_amount?: numeric, interest_rate_percent?: numeric, issued_date: string, first_installment_date?: string|null, reason?: string|null, status?: string}  $payload
+     * @param  EmployeeLoan|null  $loan  Existing loan record if updating.
+     * @return EmployeeLoan The persisted loan record.
      */
     public function saveLoan(array $payload, ?EmployeeLoan $loan = null): EmployeeLoan
     {
@@ -189,7 +232,11 @@ class PayrollService
     }
 
     /**
-     * Submit a loan application on behalf of an employee requiring approval.
+     * Submit a loan application on behalf of an employee requiring supervisor approval.
+     *
+     * @param  array  $payload  Loan application parameters.
+     * @param  int  $userId  Authenticated applicant or manager ID.
+     * @return EmployeeLoan Pending loan record.
      */
     public function applyLoan(array $payload, int $userId): EmployeeLoan
     {
@@ -200,7 +247,18 @@ class PayrollService
     }
 
     /**
-     * Multi-step loan approval (supervisor or final management sign-off).
+     * Advance a loan through its multi-step approval workflow.
+     *
+     * In 'supervisor' step: transitions from pending_supervisor to pending_final.
+     * In 'final' step: transitions from pending_final to active, creating amortization installments.
+     *
+     * @param  EmployeeLoan  $loan  The target loan model.
+     * @param  string  $step  Approval level: 'supervisor' or 'final'.
+     * @param  int  $userId  ID of approving administrator.
+     * @param  string|null  $remarks  Optional approval remarks or conditions.
+     * @return EmployeeLoan The updated loan record.
+     *
+     * @throws InvalidArgumentException If the loan status is incompatible with the requested step.
      */
     public function approveLoan(EmployeeLoan $loan, string $step, int $userId, ?string $remarks = null): EmployeeLoan
     {
@@ -246,6 +304,13 @@ class PayrollService
 
     /**
      * Reject a pending loan application.
+     *
+     * @param  EmployeeLoan  $loan  The target loan.
+     * @param  int  $userId  Administrator recording the rejection.
+     * @param  string|null  $remarks  Rejection justification.
+     * @return EmployeeLoan The rejected loan record.
+     *
+     * @throws InvalidArgumentException If the loan is not in a pending state.
      */
     public function rejectLoan(EmployeeLoan $loan, int $userId, ?string $remarks = null): EmployeeLoan
     {
@@ -264,7 +329,15 @@ class PayrollService
     }
 
     /**
-     * Reschedule unpaid loan terms.
+     * Reschedule unpaid loan terms and regenerate amortization schedule.
+     *
+     * Disallowed if any installments have already been settled.
+     *
+     * @param  EmployeeLoan  $loan  The active loan to reschedule.
+     * @param  array  $payload  New principal balance, installment count, and start date.
+     * @return EmployeeLoan The rescheduled loan record.
+     *
+     * @throws InvalidArgumentException If one or more installments are already marked paid.
      */
     public function rescheduleLoan(EmployeeLoan $loan, array $payload): EmployeeLoan
     {
@@ -288,6 +361,16 @@ class PayrollService
 
     /**
      * Generate an audit-ready draft payroll run for a target cycle (monthly or weekly).
+     *
+     * Identifies active employees within scope, calculates basic salary and allowances
+     * from effective salary structures, incorporates bonuses within the window, and
+     * calculates statutory deductions (PAYE, PF employee/employer) and loan repayments.
+     *
+     * @param  array{period_start: string, period_end: string, pay_frequency?: string, payroll_week?: int|null, period_label?: string|null, pay_date?: string|null, employee_id?: int|string|null, entity_id?: string|null, department_id?: int|string|null}  $payload
+     * @param  int  $processedBy  ID of the administrator initiating run generation.
+     * @return PayrollRun The draft payroll run with associated payslip items.
+     *
+     * @throws RuntimeException If the target payroll period is already finalized, or if no active employees are matched.
      */
     public function generatePayrollRun(array $payload, int $processedBy): PayrollRun
     {
@@ -360,6 +443,15 @@ class PayrollService
 
     /**
      * Finalize payroll run: executes loan deductions, posts provident fund balances, and locks run.
+     *
+     * Transitions status from 'draft' to 'processed'. Marks pending loan installments
+     * as paid and posts permanent provident fund ledger contribution records.
+     *
+     * @param  PayrollRun  $run  The draft payroll run to lock and finalize.
+     * @param  int  $processedBy  ID of the authorized administrator executing finalization.
+     * @return PayrollRun The finalized payroll run.
+     *
+     * @throws RuntimeException If the run is not in 'draft' status or contains zero payslip items.
      */
     public function finalizePayrollRun(PayrollRun $run, int $processedBy): PayrollRun
     {
@@ -393,6 +485,12 @@ class PayrollService
 
     /**
      * Mark an individual payslip as paid and record disbursement reference.
+     *
+     * @param  PayrollItem  $item  The payslip item to update.
+     * @param  string|null  $paymentReference  Optional bank transfer reference or check number.
+     * @return PayrollItem The updated payslip item.
+     *
+     * @throws RuntimeException If the parent payroll run is not yet finalized.
      */
     public function markItemPaid(PayrollItem $item, ?string $paymentReference = null): PayrollItem
     {
@@ -409,6 +507,9 @@ class PayrollService
         return $item->refresh();
     }
 
+    /**
+     * Compute and create an individual payslip item for an employee within a run.
+     */
     private function createPayrollItem(PayrollRun $run, Employee $employee, CarbonImmutable $periodStart, CarbonImmutable $periodEnd): PayrollItem
     {
         $assignment = $this->activeSalaryAssignment($employee->id, $periodEnd);
@@ -469,6 +570,9 @@ class PayrollService
         return $item->refresh();
     }
 
+    /**
+     * Retrieve the active salary assignment valid on the specified target date.
+     */
     private function activeSalaryAssignment(int $employeeId, CarbonImmutable $periodEnd): ?EmployeeSalaryTemplate
     {
         return EmployeeSalaryTemplate::query()
@@ -481,6 +585,9 @@ class PayrollService
             ->first();
     }
 
+    /**
+     * Calculate monthly loan installment amount amortized over the installment count.
+     */
     private function calculateInstallmentAmount(array $payload): float
     {
         $count = (int) ($payload['installment_count'] ?? 0);
@@ -495,6 +602,9 @@ class PayrollService
         return round($total / $count, 2);
     }
 
+    /**
+     * Generate individual monthly loan installment records for an active loan.
+     */
     private function createLoanInstallments(EmployeeLoan $loan, array $payload): void
     {
         $firstDueDate = CarbonImmutable::parse($payload['first_installment_date'] ?: $payload['issued_date']);
@@ -512,6 +622,9 @@ class PayrollService
         }
     }
 
+    /**
+     * Settle due loan installments during payroll finalization and auto-close loans if complete.
+     */
     private function settleLoanInstallments(PayrollRun $run, PayrollItem $item): void
     {
         $installments = LoanInstallment::query()
@@ -537,6 +650,11 @@ class PayrollService
         }
     }
 
+    /**
+     * Compute statutory employee and employer provident fund (pension) contributions.
+     *
+     * @return array{employee: float, employer: float}
+     */
     private function calculateProvidentFund(int $employeeId, float $basicSalary, $assignment, CarbonImmutable $periodEnd): array
     {
         $fund = EmployeeProvidentFund::query()

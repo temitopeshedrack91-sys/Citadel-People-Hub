@@ -12,8 +12,19 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
+/**
+ * Manages organizational projects and initiatives (Trellis project management).
+ *
+ * Scoped by TaskProjectAccess: members, creators, department heads, and admins
+ * have visibility and management permissions according to their role.
+ */
 class ProjectController extends Controller
 {
+    /**
+     * List projects visible to the authenticated user.
+     *
+     * GET /api/v1/projects
+     */
     public function index(Request $request, TaskProjectAccess $access): JsonResponse
     {
         $query = $access->visibleProjects($request->user())->with(['department', 'creator:id,name,email', 'members:id,staff_id,full_name']);
@@ -34,6 +45,11 @@ class ProjectController extends Controller
         return response()->json(['data' => $query->latest()->paginate(30)]);
     }
 
+    /**
+     * Retrieve single project details with assigned members and task items.
+     *
+     * GET /api/v1/projects/{project}
+     */
     public function show(Request $request, Project $project, TaskProjectAccess $access): JsonResponse
     {
         $project = $access->visibleProjects($request->user())->whereKey($project->getKey())->firstOrFail();
@@ -46,6 +62,11 @@ class ProjectController extends Controller
         return response()->json(['data' => $project]);
     }
 
+    /**
+     * Create a new project within caller's authorized scope.
+     *
+     * POST /api/v1/projects
+     */
     public function store(Request $request, TaskProjectAccess $access): JsonResponse
     {
         $validated = $request->validate([
@@ -89,6 +110,11 @@ class ProjectController extends Controller
         return response()->json(['data' => $project->load(['members', 'department'])], 201);
     }
 
+    /**
+     * Update an existing project's metadata, status, or member list.
+     *
+     * PATCH /api/v1/projects/{project}
+     */
     public function update(Request $request, Project $project, TaskProjectAccess $access): JsonResponse
     {
         $project = $access->visibleProjects($request->user())->whereKey($project->getKey())->firstOrFail();
@@ -125,6 +151,11 @@ class ProjectController extends Controller
         return response()->json(['data' => $project->fresh()->load(['members', 'department'])]);
     }
 
+    /**
+     * Remove or archive a project.
+     *
+     * DELETE /api/v1/projects/{project}
+     */
     public function destroy(Request $request, Project $project, TaskProjectAccess $access): JsonResponse
     {
         $project = $access->visibleProjects($request->user())->whereKey($project->getKey())->firstOrFail();

@@ -89,8 +89,7 @@ describe('Payroll Domain & Sidebar Integration', () => {
     expect(screen.getByText('Select Period')).toBeDefined();
     expect(screen.getByText('Details')).toBeDefined();
     expect(screen.getByText('Verify')).toBeDefined();
-    expect(screen.getByText('Review')).toBeDefined();
-    expect(screen.getByText('Approval')).toBeDefined();
+    expect(screen.getByText('Finish')).toBeDefined();
 
     // Advance to Step 2
     const nextBtn1 = screen.getByRole('button', { name: /next step/i });
@@ -102,14 +101,9 @@ describe('Payroll Domain & Sidebar Integration', () => {
     fireEvent.click(nextBtn2);
     expect(screen.getByText('Estimated Baseline Basic Pay')).toBeDefined();
 
-    // Advance to Step 4 (Review)
+    // Advance to Step 4
     const nextBtn3 = screen.getByRole('button', { name: /next step/i });
     fireEvent.click(nextBtn3);
-    expect(screen.getByText('Review Adjustments & Penalties')).toBeDefined();
-
-    // Advance to Step 5 (Approval)
-    const nextBtn4 = screen.getByRole('button', { name: /next step/i });
-    fireEvent.click(nextBtn4);
     expect(screen.getByText('Ready to Generate Draft Pay Run')).toBeDefined();
 
     // Finish & Generate

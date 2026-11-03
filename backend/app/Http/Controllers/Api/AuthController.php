@@ -12,8 +12,32 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Handles authentication, user profile management, and session lifecycle.
+ *
+ * Public endpoints authenticate users and issue Laravel Sanctum personal
+ * access tokens. Authenticated endpoints provide the current user profile,
+ * allow self-service contact updates, and revoke active sessions.
+ */
 class AuthController extends Controller
 {
+    /**
+     * Authenticate user credentials and issue a personal access token.
+     *
+     * POST /api/v1/auth/login
+     * Throttled to 5 attempts per minute per IP address.
+     *
+     * Request body:
+     * - email: Valid RFC email address (required, max 254 characters).
+     * - password: Raw password string (required, max 4096 characters).
+     * - device_name: Optional device label for token identification (default: 'citadel-people-hub').
+     *
+     * Response:
+     * - token: Plain-text Sanctum bearer token string.
+     * - user: Canonical user payload with entity, department, and linked employee data.
+     *
+     * @throws ValidationException When credentials are invalid or user is inactive.
+     */
     public function login(Request $request): JsonResponse
     {
         $credentials = $request->validate([
@@ -40,11 +64,33 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Return the authenticated user profile and organizational context.
+     *
+     * GET /api/v1/auth/user
+     * Headers: Authorization: Bearer <token>
+     *
+     * Response:
+     * - user: User attributes, roles, entity code, and linked employee record.
+     */
     public function me(Request $request): JsonResponse
     {
         return response()->json(['user' => $this->userData($request->user())]);
     }
 
+    /**
+     * Update self-service contact information for the linked employee record.
+     *
+     * PATCH /api/v1/auth/profile
+     *
+     * Request body:
+     * - phone: Optional phone string (max 40 chars, nullable).
+     * - location: Optional physical address/campus string (max 2000 chars, nullable).
+     * At least one of phone or location must be provided.
+     *
+     * Response:
+     * - data: Updated phone and location strings.
+     */
     public function updateProfile(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -76,6 +122,11 @@ class AuthController extends Controller
         ]]);
     }
 
+    /**
+     * Revoke the current personal access token, terminating the active session.
+     *
+     * POST /api/v1/auth/logout
+     */
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()?->delete();
@@ -83,6 +134,9 @@ class AuthController extends Controller
         return response()->json(['message' => 'Signed out.']);
     }
 
+    /**
+     * Assemble serialized user data including entity, department, and verified identity crosswalk.
+     */
     private function userData($user): array
     {
         $user->loadMissing(['entity', 'department']);

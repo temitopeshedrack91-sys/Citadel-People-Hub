@@ -14,8 +14,23 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
+/**
+ * Manages employee master directory records, organizational assignments, and account synchronizations.
+ *
+ * Scope-controlled: Department heads view department staff; Business heads view entity staff;
+ * HR and Admin roles have full institutional directory visibility.
+ */
 class EmployeeController extends Controller
 {
+    /**
+     * List employees matching optional filters within caller's organizational scope.
+     *
+     * GET /api/v1/employees
+     * Query params:
+     * - entityId: string (filter by entity UUID).
+     * - departmentId: integer (filter by department ID).
+     * - search: string (matches full_name, staff_id, or job_title).
+     */
     public function index(Request $request): JsonResponse
     {
         $query = $this->scopedQuery($request->user())->with(['entity', 'department']);
@@ -40,6 +55,11 @@ class EmployeeController extends Controller
         ]);
     }
 
+    /**
+     * Retrieve single employee profile and organization relationships.
+     *
+     * GET /api/v1/employees/{employee}
+     */
     public function show(Request $request, Employee $employee): JsonResponse
     {
         abort_unless($this->scopedQuery($request->user())->whereKey($employee->id)->exists(), 404);
@@ -47,6 +67,11 @@ class EmployeeController extends Controller
         return response()->json(['data' => $this->present($employee->load(['entity', 'department']), $request)]);
     }
 
+    /**
+     * Create an employee master record within caller's organizational scope.
+     *
+     * POST /api/v1/employees
+     */
     public function store(Request $request): JsonResponse
     {
         $this->authorizeRole($request);
@@ -66,6 +91,11 @@ class EmployeeController extends Controller
         return response()->json(['data' => $this->present($employee->load(['entity', 'department']), $request)], 201);
     }
 
+    /**
+     * Update employee personal details, department, or job title.
+     *
+     * PATCH /api/v1/employees/{employee}
+     */
     public function update(Request $request, Employee $employee): JsonResponse
     {
         $this->authorizeRole($request);
@@ -87,6 +117,11 @@ class EmployeeController extends Controller
         return response()->json(['data' => $this->present($employee->fresh()->load(['entity', 'department']), $request)]);
     }
 
+    /**
+     * Mark an employee record as Inactive and disable linked system login accounts.
+     *
+     * DELETE /api/v1/employees/{employee}
+     */
     public function destroy(Request $request, Employee $employee): JsonResponse
     {
         $this->authorizeRole($request);

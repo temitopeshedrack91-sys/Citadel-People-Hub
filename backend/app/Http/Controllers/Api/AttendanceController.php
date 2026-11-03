@@ -12,8 +12,24 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
+/**
+ * Manages daily staff attendance, web clock-in/out, and biometric punch imports.
+ *
+ * Biometric imports parse raw physical device clocking logs, resolve device IDs
+ * against employee biometric identifiers, summarize daily first/last punches
+ * into attendance records, and enforce idempotent imports on device_id + timestamp.
+ */
 class AttendanceController extends Controller
 {
+    /**
+     * Retrieve paginated biometric device punches within authorized scope.
+     *
+     * GET /api/v1/attendance/biometric-punches
+     *
+     * Query params:
+     * - per_page: integer (1-1000, default 1000).
+     * - page: integer (page number).
+     */
     public function biometricPunches(Request $request): JsonResponse
     {
         $this->authorizeBiometricImport($request);
@@ -56,6 +72,27 @@ class AttendanceController extends Controller
         ]]);
     }
 
+    /**
+     * Import raw biometric clock-in/out punches from physical device export files.
+     *
+     * POST /api/v1/attendance/biometric-imports
+     *
+     * Ingestion behavior:
+     * 1. Matches punches against active employee biometric_device_id.
+     * 2. Idempotent: Skips duplicate punches on (device_id, local_timestamp).
+     * 3. Calculates daily first punch as clock-in and last punch as clock-out.
+     * 4. Reports any unmatched device IDs without dropping records.
+     *
+     * Request body:
+     * - fileName: Source export filename (required, max 255).
+     * - punches: Array of punch objects (1-2000 per batch).
+     *   - deviceId: Numeric/zero-padded biometric device ID.
+     *   - timestamp: ISO datetime string YYYY-MM-DDTHH:mm:ss.
+     *   - direction: 'in' | 'out' | 'unknown'.
+     *
+     * Response:
+     * - data: Summary statistics (matchedRecords, unmatchedRecords, duplicateRecords, storedPunchCount).
+     */
     public function importBiometricPunches(Request $request): JsonResponse
     {
         $this->authorizeBiometricImport($request);
@@ -156,6 +193,14 @@ class AttendanceController extends Controller
         ]], 201);
     }
 
+    /**
+     * List daily attendance records, optionally filtered by date.
+     *
+     * GET /api/v1/attendance
+     * Query params:
+     * - date: YYYY-MM-DD (optional date filter).
+     * - limit: integer (1-200, default 50).
+     */
     public function index(Request $request): JsonResponse
     {
         $filters = $request->validate([
@@ -171,6 +216,17 @@ class AttendanceController extends Controller
         return response()->json(['data' => $query->latest('date')->latest('clock_in_time')->limit($filters['limit'] ?? 50)->get()->map(fn (AttendanceRecord $record) => $this->present($record))]);
     }
 
+    /**
+     * Compute real-time attendance headcounts for the current working day.
+     *
+     * GET /api/v1/attendance/today-summary
+     *
+     * Response:
+     * - total: Total clocking records recorded today.
+     * - present: Headcount present or late.
+     * - late: Headcount flagged as arriving past shift schedule.
+     * - absent: Expected active staff minus attendees.
+     */
     public function todaySummary(Request $request): JsonResponse
     {
         $query = AttendanceRecord::query()->whereDate('date', today());
@@ -186,6 +242,11 @@ class AttendanceController extends Controller
         ]);
     }
 
+    /**
+     * Self-service or supervisor web clock-in.
+     *
+     * POST /api/v1/attendance/clock-in
+     */
     public function clockIn(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -229,6 +290,11 @@ class AttendanceController extends Controller
         return response()->json(['data' => $this->present($record)], 201);
     }
 
+    /**
+     * Complete an active attendance record with clock-out time and duration.
+     *
+     * POST /api/v1/attendance/{attendanceRecord}/clock-out
+     */
     public function clockOut(Request $request, AttendanceRecord $attendanceRecord): JsonResponse
     {
         $record = DB::transaction(function () use ($request, $attendanceRecord) {
