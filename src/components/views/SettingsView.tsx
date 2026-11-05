@@ -375,13 +375,13 @@ export const SettingsView: React.FC = () => {
       {activeTab === 'roles_matrix' && (
         <div className="space-y-5">
           {/* Matrix Header Banner */}
-          <div className="p-4 bg-emerald-50/80 border border-emerald-200 rounded-2xl flex items-start gap-3 shadow-xs">
-            <ShieldCheck className="w-5 h-5 text-emerald-800 shrink-0 mt-0.5" />
+          <div className="p-4 bg-blue-50/80 border border-blue-200 rounded-2xl flex items-start gap-3 shadow-xs">
+            <ShieldCheck className="w-5 h-5 text-blue-800 shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-xs font-black text-emerald-950 uppercase tracking-wider">
+              <h3 className="text-xs font-black text-blue-950 uppercase tracking-wider">
                 Citadel 5-Tier Role &amp; Permission Governance Charter (Workbook Sheet 4)
               </h3>
-              <p className="text-xs text-emerald-900 mt-1 leading-relaxed font-medium">
+              <p className="text-xs text-blue-900 mt-1 leading-relaxed font-medium">
                 Access to Citadel People Hub is strictly partitioned into 5 hierarchical tiers. PCCM Super Admin maintains full multi-entity oversight; Business Heads govern entity subsidiaries; HODs manage departmental leaves and team attendance; Employees utilize self-service; and System Admins manage technical biometrics infrastructure without sensitive HR payroll access.
               </p>
             </div>
@@ -396,7 +396,7 @@ export const SettingsView: React.FC = () => {
                 </h3>
                 <p className="text-[11px] text-slate-500 font-medium">Cross-cutting permission rules from Super Admin to Self-Service Employee</p>
               </div>
-              <span className="text-xs font-black px-2.5 py-1 bg-[#083E34] text-amber-300 rounded-lg shadow-xs">
+              <span className="text-xs font-black px-2.5 py-1 bg-[#0A1E3F] text-[#D4AF37] rounded-lg shadow-xs">
                 5 Standard Tiers
               </span>
             </div>

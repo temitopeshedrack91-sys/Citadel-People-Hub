@@ -380,8 +380,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <div className="space-y-6 pb-12 font-sans antialiased text-slate-900" data-testid="dashboard-view">
         {/* Toast Notification */}
         {toastMessage && (
-          <div className="fixed bottom-6 right-6 z-50 bg-[#083E34] text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-bold animate-slide-up">
-            <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+          <div className="fixed bottom-6 right-6 z-50 bg-[#0A1E3F] text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-bold animate-slide-up border border-blue-900/40">
+            <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />
             <span>{toastMessage}</span>
           </div>
         )}
@@ -724,7 +724,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         <div
                           style={{ height: `${d.rate}%` }}
                           className={`w-full rounded-lg transition-all duration-500 ${
-                            d.isToday ? 'bg-[#083E34]' : 'bg-emerald-600'
+                            d.isToday ? 'bg-[#0A1E3F]' : 'bg-[#1E3A8A]'
                           }`}
                         />
                       </div>
@@ -767,7 +767,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <span className="font-mono font-bold text-slate-900">82 Staff (57.0%)</span>
                   </div>
                   <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#083E34] rounded-full" style={{ width: '57%' }} />
+                    <div className="h-full bg-[#0A1E3F] rounded-full" style={{ width: '57%' }} />
                   </div>
                 </div>
 
@@ -777,7 +777,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <span className="font-mono font-bold text-slate-900">28 Staff (19.4%)</span>
                   </div>
                   <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#D97706] rounded-full" style={{ width: '19.4%' }} />
+                    <div className="h-full bg-[#D4AF37] rounded-full" style={{ width: '19.4%' }} />
                   </div>
                 </div>
 
@@ -787,7 +787,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <span className="font-mono font-bold text-slate-900">34 Staff (23.6%)</span>
                   </div>
                   <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-600 rounded-full" style={{ width: '23.6%' }} />
+                    <div className="h-full bg-[#1E40AF] rounded-full" style={{ width: '23.6%' }} />
                   </div>
                 </div>
               </div>
@@ -1002,10 +1002,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in"
           >
             <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
-              <div className="bg-[#083E34] text-white p-5 relative border-b border-emerald-800 shrink-0">
+              <div className="bg-[#0A1E3F] text-white p-5 relative border-b border-blue-900/30 shrink-0">
                 <button
                   onClick={() => setIsQuickActionsOpen(false)}
-                  className="absolute top-4 right-4 text-emerald-200 hover:text-white p-1 rounded-lg hover:bg-white/10 transition"
+                  className="absolute top-4 right-4 text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10 transition"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1013,7 +1013,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <Zap className="w-4 h-4 text-amber-300 fill-amber-300" />
                   <span>Citadel People Hub — Quick Actions</span>
                 </h3>
-                <p className="text-xs text-emerald-100/80 mt-0.5">
+                <p className="text-xs text-blue-100 mt-0.5">
                   Frequently executed People, Culture & Operations administrative workflows.
                 </p>
               </div>
@@ -1114,10 +1114,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in"
           >
             <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
-              <div className="bg-[#083E34] text-white p-5 relative border-b border-emerald-800 shrink-0">
+              <div className="bg-[#0A1E3F] text-white p-5 relative border-b border-blue-900/30 shrink-0">
                 <button
                   onClick={() => setIsAddNoteModalOpen(false)}
-                  className="absolute top-4 right-4 text-emerald-200 hover:text-white p-1 rounded-lg hover:bg-white/10 transition"
+                  className="absolute top-4 right-4 text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10 transition"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1125,7 +1125,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <StickyNote className="w-4 h-4 text-amber-300" />
                   <span>Add Team Note</span>
                 </h3>
-                <p className="text-xs text-emerald-100/80 mt-0.5">
+                <p className="text-xs text-blue-100 mt-0.5">
                   Share an operational update or handover task with the team.
                 </p>
               </div>

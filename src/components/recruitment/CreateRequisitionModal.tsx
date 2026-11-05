@@ -220,7 +220,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Modal Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-[#083E34] to-[#0D5C4D] text-white flex items-center justify-between">
+        <div className="px-6 py-4 bg-gradient-to-r from-[#0A1E3F] via-[#0F172A] to-[#1E3A8A] text-white flex items-center justify-between border-b border-blue-900/30">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-white/10 border border-white/20 text-[#D4AF37]">
               <Briefcase className="w-5 h-5" />

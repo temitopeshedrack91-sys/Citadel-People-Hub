@@ -321,7 +321,7 @@ export const AttendanceView: React.FC = () => {
         <div className="space-y-5">
           {/* Biometric Import Panel */}
           <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] overflow-hidden">
-            <div className="p-5 bg-gradient-to-r from-[#083E34] via-[#0A463A] to-[#0D5546] text-white">
+            <div className="p-5 bg-gradient-to-r from-[#0A1E3F] via-[#0F172A] to-[#1E3A8A] text-white">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
@@ -331,7 +331,7 @@ export const AttendanceView: React.FC = () => {
                     <h2 className="text-sm font-black tracking-tight text-white">
                       Biometric Attendance Import
                     </h2>
-                    <p className="text-[11px] text-emerald-50/80 font-medium mt-0.5 max-w-2xl">
+                    <p className="text-[11px] text-blue-100 font-medium mt-0.5 max-w-2xl">
                       Upload the export from the biometric device software. A single upload
                       refreshes the whole daily summary and never duplicates an overlapping
                       record.
@@ -791,7 +791,7 @@ export const AttendanceView: React.FC = () => {
                 </h3>
                 <p className="text-[11px] text-slate-600">Standard operating shifts, early shifts, and special schedules from Workbook Sheet 7</p>
               </div>
-              <span className="text-xs font-black px-2.5 py-1 bg-[#083E34] text-amber-300 rounded-lg">
+              <span className="text-xs font-black px-2.5 py-1 bg-[#0A1E3F] text-[#D4AF37] border border-[#D4AF37]/30 rounded-lg">
                 5 Active Schedules
               </span>
             </div>
@@ -799,7 +799,7 @@ export const AttendanceView: React.FC = () => {
             {/* Desktop: horizontal table */}
             <div className="hidden lg:block overflow-x-auto custom-scrollbar">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[#083E34] text-white uppercase tracking-wider text-xs font-bold">
+                <thead className="bg-[#0A1E3F] text-white uppercase tracking-wider text-xs font-bold">
                   <tr>
                     <th className="py-3.5 px-4 whitespace-nowrap">Entity / Operational Unit</th>
                     <th className="py-3.5 px-4 whitespace-nowrap">Shift Timings</th>

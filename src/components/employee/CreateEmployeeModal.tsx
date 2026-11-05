@@ -237,10 +237,10 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#04241e]/80 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto animate-fade-in">
       <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-6 flex flex-col max-h-[90vh]">
         {/* Modal Header */}
-        <div className="bg-[#083E34] text-white p-5 sm:p-6 relative shrink-0 border-b border-emerald-900/30">
+        <div className="bg-[#0A1E3F] text-white p-5 sm:p-6 relative shrink-0 border-b border-blue-900/30">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 text-slate-300 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition cursor-pointer"
@@ -254,7 +254,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
               PCCM Enrollment
             </span>
           </div>
-          <p className="text-xs text-amber-200/80 mt-1">
+          <p className="text-xs text-blue-100 mt-1">
             Sectioned personnel onboarding wizard with automatic credential indexing.
           </p>
 

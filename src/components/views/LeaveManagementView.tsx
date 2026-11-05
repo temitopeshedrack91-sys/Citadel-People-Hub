@@ -411,8 +411,8 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
     <div className="space-y-6 animate-fade-in font-sans">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#083E34] text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-bold animate-slide-up">
-          <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+        <div className="fixed bottom-6 right-6 z-50 bg-[#0A1E3F] text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-bold animate-slide-up border border-blue-900/40">
+          <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -473,13 +473,13 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in"
         >
           <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
-            <div className="bg-[#083E34] text-white p-5 relative border-b border-emerald-800 shrink-0">
+            <div className="bg-[#0A1E3F] text-white p-5 relative border-b border-blue-900/30 shrink-0">
               <button
                 onClick={() => {
                   setShowApplyModal(false);
                   onCloseApplyModal?.();
                 }}
-                className="absolute top-4 right-4 text-emerald-200 hover:text-white p-1 rounded-lg hover:bg-white/10 transition"
+                className="absolute top-4 right-4 text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10 transition"
               >
                 <X className="w-5 h-5" />
               </button>

@@ -76,7 +76,7 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in">
       <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 bg-[#083E34] text-white shrink-0">
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 bg-[#0A1E3F] text-white shrink-0 border-b border-blue-900/30">
           <div>
             <h3 className="text-base font-semibold text-white">Workflow Action</h3>
             <p className="text-xs text-amber-300/90">{title}</p>

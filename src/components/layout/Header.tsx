@@ -287,7 +287,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <div className="p-2.5 bg-slate-50 border-t border-slate-100 text-center">
                     <button
                       onClick={() => onNavigate('notifications')}
-                      className="text-xs text-[#083E34] hover:underline font-bold"
+                      className="text-xs text-[#0A1E3F] hover:text-[#1E3A8A] hover:underline font-bold"
                     >
                       View All Notifications →
                     </button>
@@ -322,7 +322,7 @@ export const Header: React.FC<HeaderProps> = ({
                       className="w-8 h-8 rounded-full object-cover shadow-xs"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-[#083E34] text-white font-bold flex items-center justify-center text-xs shadow-xs">
+                    <div className="w-8 h-8 rounded-full bg-[#0A1E3F] text-white font-bold flex items-center justify-center text-xs shadow-xs">
                       {currentUser.name
                         .split(' ')
                         .map((n) => n[0])

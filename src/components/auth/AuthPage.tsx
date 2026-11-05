@@ -229,7 +229,7 @@ export const AuthPage: React.FC = () => {
               className="h-10 w-10 object-contain rounded-lg shadow-2xs"
             />
             <div>
-              <span className="text-xs font-black text-[#083E34] uppercase tracking-wider block">
+              <span className="text-xs font-black text-[#0A1E3F] uppercase tracking-wider block">
                 Citadel People Hub
               </span>
               <span className="text-[11px] text-slate-500 font-medium block">

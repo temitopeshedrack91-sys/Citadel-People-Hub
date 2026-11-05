@@ -92,7 +92,7 @@ export const AIAssistantView: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-[#083E34] rounded-2xl border border-emerald-800/40 p-6 shadow-sm text-white">
+      <div className="bg-gradient-to-r from-[#0A1E3F] to-[#1E3A8A] rounded-2xl border border-blue-900/40 p-6 shadow-sm text-white">
         <div className="flex items-center gap-2 mb-3">
           <Lock className="w-4 h-4 text-[#D4AF37]" />
           <h3 className="text-xs font-black uppercase tracking-wider text-[#D4AF37]">Safe operating requirements</h3>

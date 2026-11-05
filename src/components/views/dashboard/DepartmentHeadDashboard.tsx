@@ -215,11 +215,11 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
             </div>
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-[#083E34]">{attendancePercentage}%</span>
+            <span className="text-2xl font-black text-[#0A1E3F]">{attendancePercentage}%</span>
             <span className="text-xs text-slate-500 font-bold">({presentCount}/{teamMembers.length})</span>
           </div>
           <div className="mt-2.5 w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-            <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${attendancePercentage}%` }} />
+            <div className="bg-[#1E40AF] h-full rounded-full" style={{ width: `${attendancePercentage}%` }} />
           </div>
           <p className="text-[11px] text-slate-500 mt-2 font-medium">Biometric clock-ins verified</p>
         </div>

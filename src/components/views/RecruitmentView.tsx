@@ -124,14 +124,14 @@ export const RecruitmentView: React.FC = () => {
 
       {/* Success Notification Banner */}
       {successBanner && (
-        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center justify-between animate-fade-in shadow-xs">
+        <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-xs flex items-center justify-between animate-fade-in shadow-xs">
           <div className="flex items-center gap-2 font-semibold">
-            <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-blue-700 shrink-0" />
             <span>{successBanner}</span>
           </div>
           <button
             onClick={() => setSuccessBanner(null)}
-            className="p-1 text-emerald-600 hover:text-emerald-900 transition rounded cursor-pointer"
+            className="p-1 text-blue-600 hover:text-blue-900 transition rounded cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -383,14 +383,14 @@ export const RecruitmentView: React.FC = () => {
                 </h3>
                 <p className="text-[11px] text-slate-600">Roles, responsibilities, SLA days, and stage deliverables</p>
               </div>
-              <span className="text-xs font-black px-2.5 py-1 bg-[#083E34] text-amber-300 rounded-md">
+              <span className="text-xs font-black px-2.5 py-1 bg-[#0A1E3F] text-[#D4AF37] rounded-md">
                 Sheet 8 Mandate
               </span>
             </div>
 
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[#083E34] text-white uppercase tracking-wider text-xs font-bold">
+                <thead className="bg-[#0A1E3F] text-white uppercase tracking-wider text-xs font-bold">
                   <tr>
                     <th className="py-3.5 px-4 w-12 text-center">Step</th>
                     <th className="py-3.5 px-4">Stage Name</th>

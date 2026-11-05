@@ -310,10 +310,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#04241e]/80 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in">
       <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-4 sm:my-6 flex flex-col max-h-[92vh]">
         {/* Modal Branded Header */}
-        <div className="bg-[#083E34] text-white p-5 sm:p-6 relative border-b border-emerald-900/40 shrink-0">
+        <div className="bg-[#0A1E3F] text-white p-5 sm:p-6 relative border-b border-blue-900/40 shrink-0">
           {!required && (
             <button
               onClick={onClose}
@@ -339,7 +339,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex items-center justify-center gap-1.5 mt-4 bg-[#052C25] p-1 rounded-xl">
+          <div className="flex items-center justify-center gap-1.5 mt-4 bg-[#06152D] p-1 rounded-xl">
             <button
               type="button"
               onClick={() => {

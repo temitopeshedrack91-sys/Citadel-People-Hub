@@ -290,10 +290,10 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#04241e]/80 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto animate-fade-in">
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-6 flex flex-col max-h-[90vh]">
         {/* Modal Top Header */}
-        <div className="bg-[#083E34] text-white p-5 sm:p-6 relative border-b border-emerald-900/30 shrink-0">
+        <div className="bg-[#0A1E3F] text-white p-5 sm:p-6 relative border-b border-blue-900/30 shrink-0">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 text-slate-300 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition cursor-pointer"
