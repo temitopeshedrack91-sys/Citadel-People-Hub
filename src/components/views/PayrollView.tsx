@@ -594,8 +594,8 @@ export const PayrollView: React.FC = () => {
                   {runs
                     .filter((r) =>
                       searchQuery
-                        ? r.run_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          r.title.toLowerCase().includes(searchQuery.toLowerCase())
+                        ? (r.run_number?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+                          (r.title?.toLowerCase() || '').includes(searchQuery.toLowerCase())
                         : true
                     )
                     .map((run) => (
@@ -1683,11 +1683,11 @@ export const PayrollView: React.FC = () => {
                     -{formatMoney(selectedPayslip.provident_fund_amount)}
                   </span>
                 </div>
-                {selectedPayslip.loan_repayment_amount > 0 && (
+                {(selectedPayslip.loan_repayment_amount ?? 0) > 0 && (
                   <div className="flex justify-between text-slate-600">
                     <span>Loan Installment</span>
                     <span className="font-semibold text-rose-600">
-                      -{formatMoney(selectedPayslip.loan_repayment_amount)}
+                      -{formatMoney(selectedPayslip.loan_repayment_amount!)}
                     </span>
                   </div>
                 )}

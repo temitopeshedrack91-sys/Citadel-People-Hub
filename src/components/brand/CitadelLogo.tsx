@@ -50,8 +50,8 @@ export const CitadelLogo: React.FC<CitadelLogoProps> = ({
     );
   }
 
-  // Vector Emblem Mark
-  const EmblemMark = (
+  // Vector Emblem Mark for dark background
+  const VectorEmblem = (
     <svg
       viewBox="0 0 136 136"
       fill="none"
@@ -79,6 +79,18 @@ export const CitadelLogo: React.FC<CitadelLogoProps> = ({
       <polygon points="103,136 103,61 136,83 136,136" fill={towerColor} />
     </svg>
   );
+
+  // For light backgrounds (white background), use the official citadel-logo.png bitmap
+  const LightEmblem = (
+    <img
+      src="/citadel-logo.png"
+      alt="The Citadel Global Community Church"
+      className={`inline-block shrink-0 object-contain ${variant === 'mark' ? className : 'h-full w-auto'}`}
+      style={variant === 'mark' && height ? { height: `${height}px`, width: 'auto' } : undefined}
+    />
+  );
+
+  const EmblemMark = isDark ? VectorEmblem : LightEmblem;
 
   if (variant === 'mark') {
     return EmblemMark;

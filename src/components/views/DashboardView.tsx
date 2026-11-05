@@ -395,13 +395,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           {/* ======================================================== */}
           <div className="lg:col-span-8 space-y-5">
             {/* Greeting Header */}
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                {greeting}, {greetingName}
-              </h1>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
-                People, Culture & Performance • Workforce Overview.
-              </p>
+            <div className="flex items-center gap-3.5">
+              <img
+                src="/citadel-logo.png"
+                alt="Citadel Logo"
+                className="h-11 w-11 object-contain rounded-xl p-1 bg-white border border-slate-200/90 shadow-2xs shrink-0"
+              />
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                  {greeting}, {greetingName}
+                </h1>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  People, Culture & Performance • Workforce Overview.
+                </p>
+              </div>
             </div>
 
             {/* 3 Summary Stat Cards in a row */}

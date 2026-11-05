@@ -222,11 +222,20 @@ export const AuthPage: React.FC = () => {
       <div className="w-full max-w-[450px] space-y-6">
         {/* Header Title & Subtitle */}
         <div className="text-left space-y-1.5 pt-2">
-          <div className="flex items-center gap-2 mb-2">
-            <CitadelLogo useImage colorMode="light" className="h-6 w-6" />
-            <span className="text-xs font-black text-[#083E34] uppercase tracking-wider">
-              Citadel People Hub
-            </span>
+          <div className="flex items-center gap-3 mb-2.5">
+            <img
+              src="/citadel-logo.png"
+              alt="The Citadel Global Community Church"
+              className="h-10 w-10 object-contain rounded-lg shadow-2xs"
+            />
+            <div>
+              <span className="text-xs font-black text-[#083E34] uppercase tracking-wider block">
+                Citadel People Hub
+              </span>
+              <span className="text-[11px] text-slate-500 font-medium block">
+                The Citadel Global Community Church
+              </span>
+            </div>
           </div>
 
           <h1 className="text-3xl sm:text-[34px] font-black tracking-tight text-[#0F172A] leading-tight">

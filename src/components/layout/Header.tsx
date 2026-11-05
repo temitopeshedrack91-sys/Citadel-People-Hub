@@ -154,7 +154,11 @@ export const Header: React.FC<HeaderProps> = ({
               className="cursor-pointer hover:opacity-95 transition flex items-center gap-2.5 shrink-0"
               title="Citadel People Hub Dashboard"
             >
-              <CitadelLogo useImage colorMode="light" className="h-5 w-5" />
+              <img
+                src="/citadel-logo.png"
+                alt="The Citadel Global Community Church"
+                className="h-7 w-7 object-contain rounded shadow-2xs"
+              />
               <div className="hidden min-[420px]:flex flex-col">
                 <span className="text-xs font-black text-slate-900 tracking-tight leading-none">
                   Citadel
