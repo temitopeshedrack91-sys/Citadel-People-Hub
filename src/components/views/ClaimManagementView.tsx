@@ -125,13 +125,13 @@ export const ClaimManagementView: React.FC = () => {
 
   // Summary KPI Metrics
   const metrics = useMemo(() => {
-    const totalVolume = claims.reduce((acc, c) => acc + (c.total_amount || 0), 0);
+    const totalVolume = claims.reduce((acc, c) => acc + (c.total_amount ?? c.totalAmount ?? 0), 0);
     const pendingClaims = claims.filter((c) => c.status === 'SUBMITTED');
-    const pendingTotal = pendingClaims.reduce((acc, c) => acc + (c.total_amount || 0), 0);
+    const pendingTotal = pendingClaims.reduce((acc, c) => acc + (c.total_amount ?? c.totalAmount ?? 0), 0);
     const approvedClaims = claims.filter((c) => c.status === 'APPROVED');
-    const approvedTotal = approvedClaims.reduce((acc, c) => acc + (c.total_amount || 0), 0);
+    const approvedTotal = approvedClaims.reduce((acc, c) => acc + (c.total_amount ?? c.totalAmount ?? 0), 0);
     const paidClaims = claims.filter((c) => c.status === 'PAID');
-    const paidTotal = paidClaims.reduce((acc, c) => acc + (c.total_amount || 0), 0);
+    const paidTotal = paidClaims.reduce((acc, c) => acc + (c.total_amount ?? c.totalAmount ?? 0), 0);
 
     return {
       totalCount: claims.length,
@@ -154,26 +154,32 @@ export const ClaimManagementView: React.FC = () => {
       if (activeTab === 'paid' && claim.status !== 'PAID') return false;
       if (activeTab === 'my-claims') {
         const staffId = currentUser?.staffId;
+        const empId = claim.employee_id ?? claim.employeeId;
         const matchesStaff =
-          String(claim.employee_id) === String(currentUser?.id) ||
-          claim.employee?.staff_id === staffId;
+          String(empId) === String(currentUser?.id) ||
+          claim.employee?.staff_id === staffId ||
+          claim.employee?.staffId === staffId;
         if (!matchesStaff) return false;
       }
 
       // Event filter
-      if (selectedEventFilter !== 'all' && String(claim.claim_event_id) !== selectedEventFilter) {
+      const eventId = claim.claim_event_id ?? claim.claimEventId;
+      if (selectedEventFilter !== 'all' && String(eventId) !== selectedEventFilter) {
         return false;
       }
 
       // Search query filter
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
-        const numMatch = claim.claim_number.toLowerCase().includes(q);
+        const claimNum = (claim.claim_number || claim.claimNumber || '').toLowerCase();
+        const numMatch = claimNum.includes(q);
         const descMatch = (claim.description || '').toLowerCase().includes(q);
         const staffMatch =
           (claim.employee?.name || '').toLowerCase().includes(q) ||
           (claim.employee?.full_name || '').toLowerCase().includes(q) ||
-          (claim.employee?.staff_id || '').toLowerCase().includes(q);
+          (claim.employee?.fullName || '').toLowerCase().includes(q) ||
+          (claim.employee?.staff_id || '').toLowerCase().includes(q) ||
+          (claim.employee?.staffId || '').toLowerCase().includes(q);
         return numMatch || descMatch || staffMatch;
       }
 
@@ -559,17 +565,24 @@ export const ClaimManagementView: React.FC = () => {
                 <tbody className="divide-y divide-slate-100">
                   {filteredClaims.length > 0 ? (
                     filteredClaims.map((claim) => (
-                      <tr key={claim.id} className="hover:bg-slate-50/80 transition-colors">
+                      <tr
+                        key={claim.id}
+                        onClick={() => {
+                          setSelectedClaim(claim);
+                          setIsDetailDrawerOpen(true);
+                        }}
+                        className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                      >
                         <td className="py-3.5 px-4">
-                          <div className="font-bold text-slate-900">{claim.claim_number}</div>
+                          <div className="font-bold text-slate-900">{claim.claim_number || claim.claimNumber}</div>
                           <div className="text-[11px] text-slate-500">
-                            {claim.employee?.name || claim.employee?.full_name || 'Staff Member'} ·{' '}
-                            {claim.employee?.department_name || 'CGCC'}
+                            {claim.employee?.name || claim.employee?.full_name || claim.employee?.fullName || 'Staff Member'} ·{' '}
+                            {claim.employee?.department_name || claim.employee?.departmentName || 'CGCC'}
                           </div>
                         </td>
                         <td className="py-3.5 px-4">
                           <span className="font-semibold text-slate-800">
-                            {claim.claim_event?.name || 'General Expense'}
+                            {claim.claim_event?.name || claim.claimEvent?.name || 'General Expense'}
                           </span>
                         </td>
                         <td className="py-3.5 px-4 text-slate-600 max-w-xs truncate">
@@ -579,7 +592,7 @@ export const ClaimManagementView: React.FC = () => {
                           {claim.expenses?.length || 0}
                         </td>
                         <td className="py-3.5 px-4 text-right font-black text-slate-900">
-                          {formatMoney(claim.total_amount)}
+                          {formatMoney(claim.total_amount ?? claim.totalAmount ?? 0)}
                         </td>
                         <td className="py-3.5 px-4 text-center">
                           <span
@@ -601,7 +614,8 @@ export const ClaimManagementView: React.FC = () => {
                         <td className="py-3.5 px-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
                             <button
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setSelectedClaim(claim);
                                 setIsDetailDrawerOpen(true);
                               }}
@@ -939,7 +953,7 @@ export const ClaimManagementView: React.FC = () => {
                 <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
                   Claim File
                 </span>
-                <h2 className="text-lg font-bold text-slate-900">{selectedClaim.claim_number}</h2>
+                <h2 className="text-lg font-bold text-slate-900">{selectedClaim.claim_number || selectedClaim.claimNumber}</h2>
               </div>
               <button
                 onClick={() => setIsDetailDrawerOpen(false)}
@@ -957,10 +971,10 @@ export const ClaimManagementView: React.FC = () => {
                     Claimant
                   </span>
                   <span className="font-bold text-sm text-slate-900">
-                    {selectedClaim.employee?.name || selectedClaim.employee?.full_name || 'Staff Member'}
+                    {selectedClaim.employee?.name || selectedClaim.employee?.full_name || selectedClaim.employee?.fullName || 'Staff Member'}
                   </span>
                   <span className="text-xs text-slate-500 block">
-                    {selectedClaim.employee?.staff_id} · {selectedClaim.employee?.department_name}
+                    {selectedClaim.employee?.staff_id || selectedClaim.employee?.staffId} · {selectedClaim.employee?.department_name || selectedClaim.employee?.departmentName || 'CGCC'}
                   </span>
                 </div>
                 <div>
@@ -985,11 +999,11 @@ export const ClaimManagementView: React.FC = () => {
               <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200 text-xs">
                 <div>
                   <span className="text-[10px] text-slate-400 uppercase font-bold block">Event / Purpose</span>
-                  <span className="font-semibold text-slate-800">{selectedClaim.claim_event?.name || 'General'}</span>
+                  <span className="font-semibold text-slate-800">{selectedClaim.claim_event?.name || selectedClaim.claimEvent?.name || 'General'}</span>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-400 uppercase font-bold block">Total Amount</span>
-                  <span className="font-black text-slate-900 text-sm">{formatMoney(selectedClaim.total_amount)}</span>
+                  <span className="font-black text-slate-900 text-sm">{formatMoney(selectedClaim.total_amount ?? selectedClaim.totalAmount ?? 0)}</span>
                 </div>
               </div>
 
@@ -1026,10 +1040,10 @@ export const ClaimManagementView: React.FC = () => {
                     {selectedClaim.expenses?.map((exp) => (
                       <tr key={exp.id}>
                         <td className="p-2.5">
-                          <div className="font-bold text-slate-900">{exp.expense_type?.name || 'Expense'}</div>
+                          <div className="font-bold text-slate-900">{exp.expense_type?.name || exp.expenseType?.name || 'Expense'}</div>
                           {exp.note && <div className="text-[11px] text-slate-500">{exp.note}</div>}
                         </td>
-                        <td className="p-2.5 text-slate-600 font-mono text-[11px]">{exp.expense_date}</td>
+                        <td className="p-2.5 text-slate-600 font-mono text-[11px]">{exp.expense_date || exp.expenseDate}</td>
                         <td className="p-2.5 text-right font-black text-slate-900">{formatMoney(exp.amount)}</td>
                       </tr>
                     ))}

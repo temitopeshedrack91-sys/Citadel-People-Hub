@@ -131,12 +131,20 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
 
     // 1. Entity Filter
     if (entityFilter) {
-      result = result.filter((e) => e.entityId === entityFilter);
+      result = result.filter((e) => {
+        if (e.entityId === entityFilter) return true;
+        const ef = entityFilter.toLowerCase();
+        const ee = (e.entityId || '').toLowerCase();
+        if (ef.includes('cgcc') && ee.includes('cgcc')) return true;
+        if (ef.includes('csog') && ee.includes('csog')) return true;
+        if (ef.includes('holding') && ee.includes('holding')) return true;
+        return false;
+      });
     }
 
     // 2. Department Filter
     if (deptFilter) {
-      result = result.filter((e) => e.departmentId === deptFilter);
+      result = result.filter((e) => String(e.departmentId) === String(deptFilter));
     }
 
     // 3. Status Filter
@@ -207,7 +215,15 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
 
   const availableDepartments = useMemo(() => {
     if (!entityFilter) return departments;
-    return departments.filter((d) => d.entityId === entityFilter);
+    return departments.filter((d) => {
+      if (d.entityId === entityFilter) return true;
+      const ef = entityFilter.toLowerCase();
+      const de = (d.entityId || '').toLowerCase();
+      if (ef.includes('cgcc') && de.includes('cgcc')) return true;
+      if (ef.includes('csog') && de.includes('csog')) return true;
+      if (ef.includes('holding') && de.includes('holding')) return true;
+      return false;
+    });
   }, [departments, entityFilter]);
 
   return (
@@ -681,6 +697,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
         }}
         entities={entities}
         departments={departments}
+        employees={employees}
       />
     </div>
   );

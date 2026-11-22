@@ -36,10 +36,16 @@ class EmployeeController extends Controller
         $query = $this->scopedQuery($request->user())->with(['entity', 'department']);
 
         if ($request->filled('entityId')) {
-            $query->where('entity_id', $request->string('entityId'));
+            $normEntity = \App\Models\Entity::normalizeEntityId($request->string('entityId')->toString());
+            if ($normEntity) {
+                $query->where('entity_id', $normEntity);
+            }
         }
         if ($request->filled('departmentId')) {
-            $query->where('department_id', $request->string('departmentId'));
+            $normDept = Department::normalizeDepartmentId($request->input('departmentId'));
+            if ($normDept) {
+                $query->where('department_id', $normDept);
+            }
         }
         if ($request->filled('search')) {
             $search = trim($request->string('search')->toString());
@@ -173,6 +179,15 @@ class EmployeeController extends Controller
 
     private function validated(Request $request, ?Employee $employee = null): array
     {
+        $input = $request->all();
+        if (isset($input['entityId'])) {
+            $input['entityId'] = \App\Models\Entity::normalizeEntityId($input['entityId']) ?? $input['entityId'];
+        }
+        if (isset($input['departmentId'])) {
+            $input['departmentId'] = Department::normalizeDepartmentId($input['departmentId']) ?? $input['departmentId'];
+        }
+        $request->replace($input);
+
         $required = $employee ? 'sometimes' : 'required';
         $data = $request->validate([
             'staffId' => [$required, 'string', 'max:50', Rule::unique('employees', 'staff_id')->ignore($employee?->id)],

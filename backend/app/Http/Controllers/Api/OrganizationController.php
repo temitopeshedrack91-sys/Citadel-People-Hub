@@ -70,7 +70,10 @@ class OrganizationController extends Controller
     {
         $query = Department::query()->with('entity');
         if ($request->filled('entityId')) {
-            $query->where('entity_id', $request->string('entityId')->toString());
+            $normEntity = Entity::normalizeEntityId($request->string('entityId')->toString());
+            if ($normEntity) {
+                $query->where('entity_id', $normEntity);
+            }
         }
         if ($request->user()->role === 'BUSINESS_HEAD') {
             $query->where('entity_id', $request->user()->entity_id);

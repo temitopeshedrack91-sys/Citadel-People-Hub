@@ -420,10 +420,12 @@ class PayrollService
                 $query->where('id', (int) $payload['employee_id']);
             }
             if (! empty($payload['entity_id'])) {
-                $query->where('entity_id', $payload['entity_id']);
+                $normalizedEntity = \App\Models\Entity::normalizeEntityId($payload['entity_id']) ?? $payload['entity_id'];
+                $query->where('entity_id', $normalizedEntity);
             }
             if (! empty($payload['department_id'])) {
-                $query->where('department_id', $payload['department_id']);
+                $normalizedDept = \App\Models\Department::normalizeDepartmentId($payload['department_id']) ?? $payload['department_id'];
+                $query->where('department_id', $normalizedDept);
             }
 
             $employees = $query->get();
@@ -513,6 +515,27 @@ class PayrollService
     private function createPayrollItem(PayrollRun $run, Employee $employee, CarbonImmutable $periodStart, CarbonImmutable $periodEnd): PayrollItem
     {
         $assignment = $this->activeSalaryAssignment($employee->id, $periodEnd);
+        if (! $assignment) {
+            $assignment = EmployeeSalaryTemplate::query()->where('employee_id', $employee->id)->latest('effective_from')->first();
+        }
+        if (! $assignment) {
+            $defaultTmpl = SalaryTemplate::query()->where('is_active', true)->first();
+            if ($defaultTmpl) {
+                $assignment = new EmployeeSalaryTemplate([
+                    'employee_id' => $employee->id,
+                    'salary_template_id' => $defaultTmpl->id,
+                    'pay_frequency' => $defaultTmpl->pay_frequency ?? 'monthly',
+                    'basic_salary' => $defaultTmpl->basic_salary,
+                    'house_rent' => $defaultTmpl->house_rent ?? 0,
+                    'medical_allowance' => $defaultTmpl->medical_allowance ?? 0,
+                    'conveyance_allowance' => $defaultTmpl->conveyance_allowance ?? 0,
+                    'other_allowance' => $defaultTmpl->other_allowance ?? 0,
+                    'provident_fund_percent' => $defaultTmpl->provident_fund_percent ?? 0,
+                    'tax_percent' => $defaultTmpl->tax_percent ?? 0,
+                    'effective_from' => $periodStart->toDateString(),
+                ]);
+            }
+        }
         if (! $assignment) {
             throw new RuntimeException("No active salary structure found for {$employee->full_name} ({$employee->staff_id}) for period {$periodStart->toDateString()} to {$periodEnd->toDateString()}.");
         }

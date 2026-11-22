@@ -24,6 +24,22 @@ class Entity extends Model
         return $this->hasMany(Department::class);
     }
 
+    /**
+     * Normalize entity ID between string slug (e.g. 'entity-cgcc') and database ID ('CGCC').
+     */
+    public static function normalizeEntityId(?string $entityId): ?string
+    {
+        if (empty($entityId) || $entityId === 'all') {
+            return null;
+        }
+        $trimmed = trim($entityId);
+        $upper = strtoupper($trimmed);
+        if ($upper === 'CGCC' || $upper === 'ENTITY-CGCC') return 'CGCC';
+        if ($upper === 'CSOG' || $upper === 'ENTITY-CSOG') return 'CSOG';
+        if ($upper === 'HOLDINGS' || $upper === 'ENTITY-HOLDINGS' || $upper === 'CH') return 'HOLDINGS';
+        return $trimmed;
+    }
+
     protected static function booted(): void
     {
         static::creating(function (self $entity) {

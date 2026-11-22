@@ -437,39 +437,61 @@ export class LaravelTalentRepository implements ITalentRepository {
   }
 }
 
+function extractArray<T>(res: any): T[] {
+  if (Array.isArray(res)) return res;
+  if (res && Array.isArray(res.data)) return res.data;
+  if (res && res.data && Array.isArray(res.data.data)) return res.data.data;
+  return [];
+}
+
 export class LaravelPayrollRepository implements IPayrollRepository {
-  getSalaryTemplates(): Promise<SalaryTemplate[]> {
-    return requestLaravelData('/payroll/templates');
+  async getSalaryTemplates(): Promise<SalaryTemplate[]> {
+    const res = await requestLaravelData('/payroll/templates');
+    return extractArray<SalaryTemplate>(res);
   }
 
-  createSalaryTemplate(template: Omit<SalaryTemplate, 'id' | 'created_at' | 'updated_at'>): Promise<SalaryTemplate> {
+  createSalaryTemplate(template: Omit<SalaryTemplate, 'id' | 'created_at' | 'updated_at'> & { code?: string; pay_frequency?: string }): Promise<SalaryTemplate> {
+    const payload = {
+      code: template.code || 'TMPL-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+      pay_frequency: template.pay_frequency || 'monthly',
+      ...template,
+    };
     return requestLaravelData('/payroll/templates', {
       method: 'POST',
-      body: JSON.stringify(template),
+      body: JSON.stringify(payload),
     });
   }
 
-  getAssignments(): Promise<EmployeeSalaryAssignment[]> {
-    return requestLaravelData('/payroll/assignments');
+  async getAssignments(): Promise<EmployeeSalaryAssignment[]> {
+    const res = await requestLaravelData('/payroll/assignments');
+    return extractArray<EmployeeSalaryAssignment>(res);
   }
 
   async assignSalaryTemplate(assignment: {
     employee_id: string;
     salary_template_id: string;
-    effective_date: string;
+    effective_date?: string;
+    effective_from?: string;
     override_basic_salary?: number | null;
+    basic_salary?: number | null;
     custom_allowances?: any[];
     custom_deductions?: any[];
     notes?: string;
   }): Promise<EmployeeSalaryAssignment> {
+    const payload = {
+      ...assignment,
+      effective_from: assignment.effective_from || assignment.effective_date,
+      basic_salary: assignment.basic_salary ?? assignment.override_basic_salary ?? 0,
+    };
     return requestLaravelData('/payroll/assignments', {
       method: 'POST',
-      body: JSON.stringify(assignment),
+      body: JSON.stringify(payload),
     });
   }
 
-  getPayrollRuns(): Promise<PayrollRun[]> {
-    return requestLaravelData('/payroll/runs');
+  async getPayrollRuns(): Promise<PayrollRun[]> {
+    const res = await requestLaravelData('/payroll/runs');
+    return extractArray<PayrollRun>(res);
   }
 
   getPayrollRun(id: string): Promise<PayrollRun> {
@@ -482,10 +504,17 @@ export class LaravelPayrollRepository implements IPayrollRepository {
     period_end: string;
     pay_date?: string;
     notes?: string;
+    pay_frequency?: string;
+    period_label?: string;
   }): Promise<PayrollRun> {
+    const payload = {
+      pay_frequency: data.pay_frequency || 'monthly',
+      period_label: data.period_label || data.title,
+      ...data,
+    };
     return requestLaravelData('/payroll/runs', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
   }
 
@@ -504,26 +533,39 @@ export class LaravelPayrollRepository implements IPayrollRepository {
     });
   }
 
-  getLoans(filter?: { employee_id?: string; status?: string }): Promise<EmployeeLoan[]> {
+  async getLoans(filter?: { employee_id?: string; status?: string }): Promise<EmployeeLoan[]> {
     const params = new URLSearchParams();
     if (filter?.employee_id) params.set('employee_id', filter.employee_id);
     if (filter?.status) params.set('status', filter.status);
-    return requestLaravelData(`/payroll/loans${params.size ? `?${params}` : ''}`);
+    const res = await requestLaravelData(`/payroll/loans${params.size ? `?${params}` : ''}`);
+    return extractArray<EmployeeLoan>(res);
   }
 
   async createLoan(loan: {
     employee_id: string;
-    loan_type: string;
+    loan_type?: string;
     principal_amount: number;
     interest_rate?: number;
-    monthly_installment: number;
-    total_installments: number;
+    interest_rate_percent?: number;
+    monthly_installment?: number;
+    total_installments?: number;
+    installment_count?: number;
     disbursed_at?: string;
+    issued_date?: string;
     notes?: string;
+    remarks?: string;
+    loan_reference?: string;
   }): Promise<EmployeeLoan> {
+    const payload = {
+      ...loan,
+      installment_count: loan.installment_count || loan.total_installments || 12,
+      interest_rate_percent: loan.interest_rate_percent ?? loan.interest_rate ?? 0,
+      issued_date: loan.issued_date || loan.disbursed_at || new Date().toISOString().split('T')[0],
+      remarks: loan.remarks || loan.notes || '',
+    };
     return requestLaravelData('/payroll/loans', {
       method: 'POST',
-      body: JSON.stringify(loan),
+      body: JSON.stringify(payload),
     });
   }
 
@@ -531,10 +573,11 @@ export class LaravelPayrollRepository implements IPayrollRepository {
     return requestLaravelData(`/payroll/loans/${encodeURIComponent(id)}/approve`, { method: 'PATCH' });
   }
 
-  getDeductions(filter?: { employee_id?: string }): Promise<EmployeeDeduction[]> {
+  async getDeductions(filter?: { employee_id?: string }): Promise<EmployeeDeduction[]> {
     const params = new URLSearchParams();
     if (filter?.employee_id) params.set('employee_id', filter.employee_id);
-    return requestLaravelData(`/payroll/deductions${params.size ? `?${params}` : ''}`);
+    const res = await requestLaravelData(`/payroll/deductions${params.size ? `?${params}` : ''}`);
+    return extractArray<EmployeeDeduction>(res);
   }
 
   async createDeduction(deduction: {
@@ -553,8 +596,9 @@ export class LaravelPayrollRepository implements IPayrollRepository {
     });
   }
 
-  getProvidentFunds(): Promise<EmployeeProvidentFund[]> {
-    return requestLaravelData('/payroll/provident-funds');
+  async getProvidentFunds(): Promise<EmployeeProvidentFund[]> {
+    const res = await requestLaravelData('/payroll/provident-funds');
+    return extractArray<EmployeeProvidentFund>(res);
   }
 
   async createProvidentFund(data: {

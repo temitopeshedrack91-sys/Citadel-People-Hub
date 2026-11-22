@@ -29,6 +29,7 @@ interface CreateEmployeeModalProps {
   onSuccess: () => void;
   entities: CitadelEntity[];
   departments: CitadelDepartment[];
+  employees?: Employee[];
 }
 
 export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
@@ -37,6 +38,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
   onSuccess,
   entities,
   departments,
+  employees,
 }) => {
   const { currentUser, currentRole } = useAuth();
   const [currentStep, setCurrentStep] = useState<number>(1);
@@ -94,11 +96,28 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
   // Synchronize departmentId when filtered departments change
   useEffect(() => {
     if (filteredDepartments.length > 0) {
-      if (!departmentId || !filteredDepartments.some((d) => d.id === departmentId)) {
-        setDepartmentId(filteredDepartments[0].id);
+      if (!departmentId || !filteredDepartments.some((d) => String(d.id) === String(departmentId))) {
+        setDepartmentId(String(filteredDepartments[0].id));
       }
     }
   }, [filteredDepartments, departmentId]);
+
+  const availableManagers = useMemo(() => {
+    if (employees && employees.length > 0) {
+      return employees.map((emp) => `${emp.fullName || `${emp.firstName} ${emp.lastName}`.trim()} (${emp.jobTitle || emp.role || 'Staff'})`);
+    }
+    return [
+      'Sussan Afuwape (PCCM Manager)',
+      'Pastor Christian Ike (Executive Pastor / Facilities & Logistics)',
+      'Pastor Biola Adeyoola (Church Admin & Operations / Protocol)',
+      'Pastor Segun Bakare (Executive Pastor / ICT)',
+      'Stephen Anuforo (Finance & Accounts Manager)',
+      'Olubunmi Ojo-John (Chief Security Officer)',
+      'Omoaholo Omoakhalen (Director CSG / Business Head)',
+      'Olufisayo Bakare (CEO Holdings / Managing Director)',
+      'Anwuli Uzu (Business Dev / Sales Manager)',
+    ];
+  }, [employees]);
 
   // Step 3: Emergency & Next of Kin
   const [emergName, setEmergName] = useState('');
@@ -546,15 +565,9 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                     className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none bg-white font-medium"
                   />
                   <datalist id="managers-list">
-                    <option value="Sussan Afuwape (PCCM Manager)" />
-                    <option value="Pastor Christian Ike (Executive Pastor / Facilities & Logistics)" />
-                    <option value="Pastor Biola Adeyoola (Church Admin & Operations / Protocol)" />
-                    <option value="Pastor Segun Bakare (Executive Pastor / ICT)" />
-                    <option value="Stephen Anuforo (Finance & Accounts Manager)" />
-                    <option value="Olubunmi Ojo-John (Chief Security Officer)" />
-                    <option value="Omoaholo Omoakhalen (Director CSG / Business Head)" />
-                    <option value="Olufisayo Bakare (CEO Holdings / Managing Director)" />
-                    <option value="Anwuli Uzu (Business Dev / Sales Manager)" />
+                    {availableManagers.map((m) => (
+                      <option key={m} value={m} />
+                    ))}
                   </datalist>
                 </div>
               </div>

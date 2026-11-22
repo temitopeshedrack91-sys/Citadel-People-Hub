@@ -34,6 +34,20 @@ class Employee extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::saving(function (Employee $employee) {
+            if (empty($employee->full_name)) {
+                $employee->full_name = trim(($employee->first_name ?? '') . ' ' . ($employee->last_name ?? ''));
+            }
+            if (empty($employee->first_name) && !empty($employee->full_name)) {
+                $parts = explode(' ', trim($employee->full_name), 2);
+                $employee->first_name = $parts[0] ?? '';
+                $employee->last_name = $parts[1] ?? '';
+            }
+        });
+    }
+
     public function entity(): BelongsTo
     {
         return $this->belongsTo(Entity::class);

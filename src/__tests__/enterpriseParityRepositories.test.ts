@@ -190,7 +190,7 @@ describe('Enterprise Parity Repositories (OrangeHRM Parity API Integration)', ()
 
     it('fetches claim events and expense types', async () => {
       requestLaravelData.mockResolvedValueOnce([{ id: 1, name: 'Local Travel' }]);
-      const events = await repo.getEvents();
+      const events = await repo.getClaimEvents();
       expect(requestLaravelData).toHaveBeenCalledWith('/claims/events?activeOnly=true');
       expect(events).toHaveLength(1);
 
@@ -202,7 +202,7 @@ describe('Enterprise Parity Repositories (OrangeHRM Parity API Integration)', ()
 
     it('creates events and expense types with POST requests', async () => {
       requestLaravelData.mockResolvedValueOnce({ id: 5, name: 'Regional Summit' });
-      await repo.createEvent({ name: 'Regional Summit', code: 'SUMMIT' });
+      await repo.createClaimEvent({ name: 'Regional Summit', code: 'SUMMIT' });
       expect(requestLaravelData).toHaveBeenCalledWith('/claims/events', {
         method: 'POST',
         body: JSON.stringify({ name: 'Regional Summit', code: 'SUMMIT' }),
@@ -220,7 +220,7 @@ describe('Enterprise Parity Repositories (OrangeHRM Parity API Integration)', ()
       // 1. Get claims with filter params
       requestLaravelData.mockResolvedValueOnce([]);
       await repo.getClaims({ status: 'SUBMITTED', employeeId: 42 });
-      expect(requestLaravelData).toHaveBeenCalledWith('/claims/requests?status=SUBMITTED&employee_id=42');
+      expect(requestLaravelData).toHaveBeenCalledWith('/claims/requests?employee_id=42&status=SUBMITTED');
 
       // 2. Create claim
       const newClaimPayload = {
@@ -233,41 +233,27 @@ describe('Enterprise Parity Repositories (OrangeHRM Parity API Integration)', ()
       const created = await repo.createClaim(newClaimPayload);
       expect(requestLaravelData).toHaveBeenCalledWith('/claims/requests', {
         method: 'POST',
-        body: JSON.stringify({
-          employee_id: 42,
-          claim_event_id: 1,
-          currency: 'NGN',
-          description: 'Client visit expenses',
-          remarks: undefined,
-          status: undefined,
-          expenses: undefined,
-        }),
+        body: JSON.stringify(newClaimPayload),
       });
       expect(created.id).toBe(101);
 
       // 3. Add expense line item
-      requestLaravelData.mockResolvedValueOnce({ id: 101, totalAmount: 15000 });
-      await repo.addExpenseItem(101, {
+      const newExpensePayload = {
         expenseTypeId: 2,
         expenseDate: '2026-11-20',
         amount: 15000,
         note: 'Taxi fare',
-      });
+      };
+      requestLaravelData.mockResolvedValueOnce({ id: 101, totalAmount: 15000 });
+      await repo.addExpense(101, newExpensePayload);
       expect(requestLaravelData).toHaveBeenCalledWith('/claims/requests/101/expenses', {
         method: 'POST',
-        body: JSON.stringify({
-          expense_type_id: 2,
-          expense_date: '2026-11-20',
-          amount: 15000,
-          currency: undefined,
-          note: 'Taxi fare',
-          receipt_url: undefined,
-        }),
+        body: JSON.stringify(newExpensePayload),
       });
 
       // 4. Delete expense line item
       requestLaravelData.mockResolvedValueOnce({ id: 101, totalAmount: 0 });
-      await repo.deleteExpenseItem(555);
+      await repo.deleteExpense(555);
       expect(requestLaravelData).toHaveBeenCalledWith('/claims/expenses/555', {
         method: 'DELETE',
       });

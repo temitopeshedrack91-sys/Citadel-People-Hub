@@ -160,13 +160,20 @@ export const PayrollView: React.FC = () => {
         employeeRepository.getAll(),
       ]);
 
-      if (rList.status === 'fulfilled') setRuns(rList.value);
-      if (tList.status === 'fulfilled') setTemplates(tList.value);
-      if (aList.status === 'fulfilled') setAssignments(aList.value);
-      if (lList.status === 'fulfilled') setLoans(lList.value);
-      if (dList.status === 'fulfilled') setDeductions(dList.value);
-      if (pfList.status === 'fulfilled') setProvidentFunds(pfList.value);
-      if (empList.status === 'fulfilled') setEmployees(empList.value);
+      const toArr = (val: any) => {
+        if (Array.isArray(val)) return val;
+        if (val && Array.isArray(val.data)) return val.data;
+        if (val && val.data && Array.isArray(val.data.data)) return val.data.data;
+        return [];
+      };
+
+      if (rList.status === 'fulfilled') setRuns(toArr(rList.value));
+      if (tList.status === 'fulfilled') setTemplates(toArr(tList.value));
+      if (aList.status === 'fulfilled') setAssignments(toArr(aList.value));
+      if (lList.status === 'fulfilled') setLoans(toArr(lList.value));
+      if (dList.status === 'fulfilled') setDeductions(toArr(dList.value));
+      if (pfList.status === 'fulfilled') setProvidentFunds(toArr(pfList.value));
+      if (empList.status === 'fulfilled') setEmployees(toArr(empList.value));
     } catch (err: any) {
       console.error('Error fetching payroll data:', err);
     } finally {
@@ -222,6 +229,8 @@ export const PayrollView: React.FC = () => {
     try {
       const created = await payrollRepository.generatePayrollRun({
         title: wizardData.title,
+        period_label: wizardData.title,
+        pay_frequency: 'monthly',
         period_start: wizardData.period_start,
         period_end: wizardData.period_end,
         pay_date: wizardData.pay_date,
@@ -619,6 +628,8 @@ export const PayrollView: React.FC = () => {
 
       const created = await payrollRepository.generatePayrollRun({
         title: `${monthStr} ${yearStr} CGCC Official Worksheet Pay Run`,
+        period_label: `${monthStr} ${yearStr} CGCC Official Worksheet Pay Run`,
+        pay_frequency: 'monthly',
         period_start: `${yearStr}-${String(now.getMonth() + 1).padStart(2, '0')}-01`,
         period_end: `${yearStr}-${String(now.getMonth() + 1).padStart(2, '0')}-28`,
         pay_date: `${yearStr}-${String(now.getMonth() + 1).padStart(2, '0')}-26`,

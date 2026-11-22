@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
     Route::get('/health', fn () => response()->json(['status' => 'ok', 'service' => config('app.name')]));
-    Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+    Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('login');
 
     Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
         Route::get('/auth/user', [AuthController::class, 'me']);

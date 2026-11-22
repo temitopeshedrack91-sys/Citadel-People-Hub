@@ -81,6 +81,15 @@ class PayrollController extends Controller
     {
         $this->authorizeRole($request, self::HR_ROLES);
 
+        $input = $request->all();
+        if (empty($input['code']) && !empty($input['name'])) {
+            $input['code'] = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $input['name']), 0, 10)) . '-' . rand(100, 999);
+        }
+        if (empty($input['pay_frequency'])) {
+            $input['pay_frequency'] = 'monthly';
+        }
+        $request->replace($input);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100', 'unique:salary_templates,name'],
             'code' => ['required', 'string', 'max:30', 'unique:salary_templates,code'],
@@ -124,7 +133,9 @@ class PayrollController extends Controller
             $query->where('employee_id', $request->input('employeeId'));
         }
 
-        return response()->json(['data' => $query->paginate(50)]);
+        $assignments = $request->boolean('paginate') ? $query->paginate(50) : $query->get();
+
+        return response()->json(['data' => $assignments]);
     }
 
     /**
@@ -148,6 +159,22 @@ class PayrollController extends Controller
     public function assignTemplate(Request $request): JsonResponse
     {
         $this->authorizeRole($request, self::HR_ROLES);
+
+        $input = $request->all();
+        if (isset($input['effective_date']) && empty($input['effective_from'])) {
+            $input['effective_from'] = $input['effective_date'];
+        }
+        if (empty($input['basic_salary'])) {
+            if (isset($input['override_basic_salary']) && $input['override_basic_salary'] !== null) {
+                $input['basic_salary'] = $input['override_basic_salary'];
+            } elseif (!empty($input['salary_template_id'])) {
+                $tmpl = SalaryTemplate::find($input['salary_template_id']);
+                if ($tmpl) {
+                    $input['basic_salary'] = $tmpl->basic_salary;
+                }
+            }
+        }
+        $request->replace($input);
 
         $validated = $request->validate([
             'employee_id' => ['required', 'integer', 'exists:employees,id'],
@@ -185,11 +212,12 @@ class PayrollController extends Controller
     {
         $this->authorizeRole($request, self::HR_ROLES);
 
-        $runs = PayrollRun::query()
+        $query = PayrollRun::query()
             ->with(['processor:id,name,email'])
             ->withCount('items')
-            ->orderByDesc('period_start')
-            ->paginate(20);
+            ->orderByDesc('period_start');
+
+        $runs = $request->boolean('paginate') ? $query->paginate(20) : $query->get();
 
         return response()->json(['data' => $runs]);
     }
@@ -211,6 +239,21 @@ class PayrollController extends Controller
     public function generateRun(Request $request): JsonResponse
     {
         $this->authorizeRole($request, self::HR_ROLES);
+
+        $input = $request->all();
+        if (empty($input['pay_frequency'])) {
+            $input['pay_frequency'] = 'monthly';
+        }
+        if (!empty($input['title']) && empty($input['period_label'])) {
+            $input['period_label'] = $input['title'];
+        }
+        if (isset($input['entity_id'])) {
+            $input['entity_id'] = \App\Models\Entity::normalizeEntityId($input['entity_id']) ?? $input['entity_id'];
+        }
+        if (isset($input['department_id'])) {
+            $input['department_id'] = \App\Models\Department::normalizeDepartmentId($input['department_id']) ?? $input['department_id'];
+        }
+        $request->replace($input);
 
         $validated = $request->validate([
             'pay_frequency' => ['required', Rule::in(['monthly', 'weekly'])],
@@ -311,10 +354,11 @@ class PayrollController extends Controller
 
         $validated = $request->validate([
             'payment_reference' => ['nullable', 'string', 'max:255'],
+            'payment_method' => ['nullable', 'string', 'max:100'],
         ]);
 
         try {
-            $paidItem = $this->payrollService->markItemPaid($item, $validated['payment_reference'] ?? null);
+            $paidItem = $this->payrollService->markItemPaid($item, $validated['payment_reference'] ?? $validated['payment_method'] ?? null);
             AuditLogger::record($request, 'Payroll', 'Marked payslip as paid', $paidItem->id, "Employee {$paidItem->employee_id}", 'pending', 'paid');
 
             return response()->json(['data' => $paidItem, 'message' => 'Payment reference recorded and payslip marked as paid.']);
@@ -340,7 +384,9 @@ class PayrollController extends Controller
             $query->where('employee_id', $employee?->id ?? 0);
         }
 
-        return response()->json(['data' => $query->latest('issued_date')->paginate(20)]);
+        $loans = $request->boolean('paginate') ? $query->latest('issued_date')->paginate(20) : $query->latest('issued_date')->get();
+
+        return response()->json(['data' => $loans]);
     }
 
     /**
@@ -351,6 +397,21 @@ class PayrollController extends Controller
     public function storeLoan(Request $request): JsonResponse
     {
         $this->authorizeRole($request, self::HR_ROLES);
+
+        $input = $request->all();
+        if (empty($input['loan_reference'])) {
+            $input['loan_reference'] = 'LN-' . date('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(6));
+        }
+        if (!isset($input['installment_count']) && isset($input['total_installments'])) {
+            $input['installment_count'] = (int) $input['total_installments'];
+        }
+        if (!isset($input['interest_rate_percent']) && isset($input['interest_rate'])) {
+            $input['interest_rate_percent'] = (float) $input['interest_rate'];
+        }
+        if (empty($input['issued_date'])) {
+            $input['issued_date'] = $input['disbursed_at'] ?? $input['start_date'] ?? date('Y-m-d');
+        }
+        $request->replace($input);
 
         $validated = $request->validate([
             'employee_id' => ['required', 'integer', 'exists:employees,id'],
@@ -407,7 +468,9 @@ class PayrollController extends Controller
             $query->where('employee_id', $request->input('employee_id'));
         }
 
-        return response()->json(['data' => $query->paginate(50)]);
+        $deductions = $request->boolean('paginate') ? $query->paginate(50) : $query->get();
+
+        return response()->json(['data' => $deductions]);
     }
 
     /**
@@ -446,7 +509,8 @@ class PayrollController extends Controller
     {
         $this->authorizeRole($request, self::HR_ROLES);
 
-        $funds = EmployeeProvidentFund::query()->with('employee:id,staff_id,full_name')->paginate(50);
+        $query = EmployeeProvidentFund::query()->with('employee:id,staff_id,full_name');
+        $funds = $request->boolean('paginate') ? $query->paginate(50) : $query->get();
 
         return response()->json(['data' => $funds]);
     }
