@@ -8,6 +8,13 @@ import {
   IOrganizationRepository,
   ITalentRepository,
   IPayrollRepository,
+  IClassificationRepository,
+  ITimesheetRepository,
+  IPerformanceRepository,
+  IRecruitmentPipelineRepository,
+  ITrainingRepository,
+  IReportRepository,
+  IClaimRepository,
 } from './interfaces';
 import {
   AttendanceRecord,
@@ -18,6 +25,12 @@ import {
   EmployeeDocumentInput,
   HubDocument,
   LeaveRequest,
+  ClaimEvent,
+  ExpenseType,
+  ClaimRequest,
+  ClaimAction,
+  CreateClaimRequestInput,
+  CreateExpenseItemInput,
   OnboardingJourney,
   OnboardingTask,
   OnboardingChecklistTemplate,
@@ -39,6 +52,23 @@ import {
   AttendancePenaltyRule,
   EmployeeProrationRecord,
   ExcelPreviewResponse,
+  JobTitle,
+  PayGrade,
+  Timesheet,
+  TimesheetItem,
+  Kpi,
+  PerformanceReview,
+  ReviewRating,
+  JobVacancy,
+  Candidate,
+  CandidateInterview,
+  TrainingCourse,
+  TrainingSession,
+  EmployeeTraining,
+  WorkforceReport,
+  LeaveReport,
+  AttendanceReport,
+  RecruitmentReport,
 } from '../types';
 import { AttendanceImportSnapshot, BiometricPunch, matchPunchesToStaff, summarizeDailyAttendance } from '../features/attendance-import';
 import { BiometricImportBatchResult } from './interfaces';
@@ -666,4 +696,306 @@ export class LaravelPayrollRepository implements IPayrollRepository {
     return requestLaravelData(`/payroll/proration-records${params.size ? `?${params}` : ''}`);
   }
 }
+
+export class LaravelClassificationRepository implements IClassificationRepository {
+  async getJobTitles(activeOnly: boolean = true): Promise<JobTitle[]> {
+    return requestLaravelData(`/job-titles?activeOnly=${activeOnly}`);
+  }
+
+  async createJobTitle(title: Partial<JobTitle>): Promise<JobTitle> {
+    return requestLaravelData('/job-titles', {
+      method: 'POST',
+      body: JSON.stringify(title),
+    });
+  }
+
+  async getPayGrades(activeOnly: boolean = true): Promise<PayGrade[]> {
+    return requestLaravelData(`/pay-grades?activeOnly=${activeOnly}`);
+  }
+
+  async createPayGrade(grade: Partial<PayGrade>): Promise<PayGrade> {
+    return requestLaravelData('/pay-grades', {
+      method: 'POST',
+      body: JSON.stringify(grade),
+    });
+  }
+}
+
+export class LaravelTimesheetRepository implements ITimesheetRepository {
+  async getTimesheets(filter?: { employeeId?: number; status?: string }): Promise<Timesheet[]> {
+    const params = new URLSearchParams();
+    if (filter?.employeeId) params.set('employeeId', String(filter.employeeId));
+    if (filter?.status) params.set('status', filter.status);
+    return requestLaravelData(`/timesheets${params.size ? `?${params}` : ''}`);
+  }
+
+  async getTimesheet(id: number): Promise<Timesheet> {
+    return requestLaravelData(`/timesheets/${id}`);
+  }
+
+  async saveDraftTimesheet(data: {
+    employeeId: number;
+    periodStart: string;
+    periodEnd: string;
+    items: TimesheetItem[];
+  }): Promise<Timesheet> {
+    return requestLaravelData('/timesheets', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async submitTimesheet(id: number): Promise<Timesheet> {
+    return requestLaravelData(`/timesheets/${id}/submit`, { method: 'POST' });
+  }
+
+  async approveTimesheet(id: number, comments?: string): Promise<Timesheet> {
+    return requestLaravelData(`/timesheets/${id}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({ comments }),
+    });
+  }
+
+  async rejectTimesheet(id: number, comments: string): Promise<Timesheet> {
+    return requestLaravelData(`/timesheets/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ comments }),
+    });
+  }
+
+  async resetTimesheet(id: number): Promise<Timesheet> {
+    return requestLaravelData(`/timesheets/${id}/reset`, { method: 'POST' });
+  }
+}
+
+export class LaravelPerformanceRepository implements IPerformanceRepository {
+  async getKpis(jobTitleId?: number): Promise<Kpi[]> {
+    const query = jobTitleId ? `?jobTitleId=${jobTitleId}` : '';
+    return requestLaravelData(`/performance/kpis${query}`);
+  }
+
+  async createKpi(kpi: Partial<Kpi>): Promise<Kpi> {
+    return requestLaravelData('/performance/kpis', {
+      method: 'POST',
+      body: JSON.stringify(kpi),
+    });
+  }
+
+  async getReviews(filter?: { employeeId?: number; status?: string }): Promise<PerformanceReview[]> {
+    const params = new URLSearchParams();
+    if (filter?.employeeId) params.set('employeeId', String(filter.employeeId));
+    if (filter?.status) params.set('status', filter.status);
+    return requestLaravelData(`/performance/reviews${params.size ? `?${params}` : ''}`);
+  }
+
+  async getReview(id: number): Promise<PerformanceReview> {
+    return requestLaravelData(`/performance/reviews/${id}`);
+  }
+
+  async createReview(data: Partial<PerformanceReview>): Promise<PerformanceReview> {
+    return requestLaravelData('/performance/reviews', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async evaluateReview(
+    id: number,
+    data: {
+      ratings: ReviewRating[];
+      reviewerComments?: string;
+      employeeComments?: string;
+    }
+  ): Promise<PerformanceReview> {
+    return requestLaravelData(`/performance/reviews/${id}/evaluate`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async approveReview(id: number): Promise<PerformanceReview> {
+    return requestLaravelData(`/performance/reviews/${id}/approve`, { method: 'POST' });
+  }
+}
+
+export class LaravelRecruitmentPipelineRepository implements IRecruitmentPipelineRepository {
+  async getVacancies(filter?: { activeOnly?: boolean; departmentId?: number }): Promise<JobVacancy[]> {
+    const params = new URLSearchParams();
+    if (filter?.activeOnly !== undefined) params.set('activeOnly', String(filter.activeOnly));
+    if (filter?.departmentId) params.set('departmentId', String(filter.departmentId));
+    return requestLaravelData(`/recruitment/vacancies${params.size ? `?${params}` : ''}`);
+  }
+
+  async createVacancy(data: Partial<JobVacancy>): Promise<JobVacancy> {
+    return requestLaravelData('/recruitment/vacancies', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getCandidates(filter?: { vacancyId?: number; status?: string }): Promise<Candidate[]> {
+    const params = new URLSearchParams();
+    if (filter?.vacancyId) params.set('vacancyId', String(filter.vacancyId));
+    if (filter?.status) params.set('status', filter.status);
+    return requestLaravelData(`/recruitment/candidates${params.size ? `?${params}` : ''}`);
+  }
+
+  async createCandidate(data: Partial<Candidate>): Promise<Candidate> {
+    return requestLaravelData('/recruitment/candidates', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCandidateStatus(id: number, status: string, notes?: string): Promise<Candidate> {
+    return requestLaravelData(`/recruitment/candidates/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, notes }),
+    });
+  }
+
+  async scheduleInterview(candidateId: number, data: Partial<CandidateInterview>): Promise<CandidateInterview> {
+    return requestLaravelData(`/recruitment/candidates/${candidateId}/interviews`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateInterviewResult(interviewId: number, result: 'Passed' | 'Failed', notes?: string): Promise<CandidateInterview> {
+    return requestLaravelData(`/recruitment/interviews/${interviewId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ result, notes }),
+    });
+  }
+}
+
+export class LaravelTrainingRepository implements ITrainingRepository {
+  async getCourses(activeOnly: boolean = true): Promise<TrainingCourse[]> {
+    return requestLaravelData(`/training/courses?activeOnly=${activeOnly}`);
+  }
+
+  async createCourse(data: Partial<TrainingCourse>): Promise<TrainingCourse> {
+    return requestLaravelData('/training/courses', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getSessions(filter?: { courseId?: number; status?: string }): Promise<TrainingSession[]> {
+    const params = new URLSearchParams();
+    if (filter?.courseId) params.set('courseId', String(filter.courseId));
+    if (filter?.status) params.set('status', filter.status);
+    return requestLaravelData(`/training/sessions${params.size ? `?${params}` : ''}`);
+  }
+
+  async createSession(data: Partial<TrainingSession>): Promise<TrainingSession> {
+    return requestLaravelData('/training/sessions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async enrollEmployee(sessionId: number, employeeId: number): Promise<EmployeeTraining> {
+    return requestLaravelData(`/training/sessions/${sessionId}/enroll`, {
+      method: 'POST',
+      body: JSON.stringify({ employeeId }),
+    });
+  }
+
+  async updateEmployeeTraining(enrollmentId: number, data: Partial<EmployeeTraining>): Promise<EmployeeTraining> {
+    return requestLaravelData(`/training/enrollments/${enrollmentId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+}
+
+export class LaravelReportRepository implements IReportRepository {
+  async getWorkforceReport(): Promise<WorkforceReport> {
+    return requestLaravelData('/reports/workforce');
+  }
+
+  async getLeaveReport(year?: number): Promise<LeaveReport> {
+    const query = year ? `?year=${year}` : '';
+    return requestLaravelData(`/reports/leave-utilization${query}`);
+  }
+
+  async getAttendanceReport(params?: { startDate?: string; endDate?: string }): Promise<AttendanceReport> {
+    const q = new URLSearchParams();
+    if (params?.startDate) q.set('startDate', params.startDate);
+    if (params?.endDate) q.set('endDate', params.endDate);
+    return requestLaravelData(`/reports/attendance-summary${q.size ? `?${q}` : ''}`);
+  }
+
+  async getRecruitmentReport(): Promise<RecruitmentReport> {
+    return requestLaravelData('/reports/recruitment-summary');
+  }
+}
+
+export class LaravelClaimRepository implements IClaimRepository {
+  async getClaimEvents(activeOnly = true): Promise<ClaimEvent[]> {
+    const q = activeOnly ? '?activeOnly=true' : '';
+    return requestLaravelData(`/claims/events${q}`);
+  }
+
+  async createClaimEvent(data: Partial<ClaimEvent>): Promise<ClaimEvent> {
+    return requestLaravelData('/claims/events', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getExpenseTypes(activeOnly = true): Promise<ExpenseType[]> {
+    const q = activeOnly ? '?activeOnly=true' : '';
+    return requestLaravelData(`/claims/expense-types${q}`);
+  }
+
+  async createExpenseType(data: Partial<ExpenseType>): Promise<ExpenseType> {
+    return requestLaravelData('/claims/expense-types', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getClaims(filter?: { employeeId?: string | number; status?: string; search?: string }): Promise<ClaimRequest[]> {
+    const params = new URLSearchParams();
+    if (filter?.employeeId) params.set('employee_id', String(filter.employeeId));
+    if (filter?.status && filter.status !== 'all') params.set('status', filter.status);
+    if (filter?.search) params.set('search', filter.search);
+    const q = params.toString() ? `?${params.toString()}` : '';
+    return requestLaravelData(`/claims/requests${q}`);
+  }
+
+  async getClaim(id: string | number): Promise<ClaimRequest> {
+    return requestLaravelData(`/claims/requests/${id}`);
+  }
+
+  async createClaim(data: CreateClaimRequestInput): Promise<ClaimRequest> {
+    return requestLaravelData('/claims/requests', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async addExpense(claimId: string | number, data: CreateExpenseItemInput): Promise<ClaimRequest> {
+    return requestLaravelData(`/claims/requests/${claimId}/expenses`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteExpense(expenseId: string | number): Promise<ClaimRequest> {
+    return requestLaravelData(`/claims/expenses/${expenseId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async performAction(claimId: string | number, action: ClaimAction, reason?: string): Promise<ClaimRequest> {
+    return requestLaravelData(`/claims/requests/${claimId}/action`, {
+      method: 'POST',
+      body: JSON.stringify({ action, reason }),
+    });
+  }
+}
+
 

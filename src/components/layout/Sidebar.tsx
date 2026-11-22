@@ -27,6 +27,7 @@ import {
   SlidersHorizontal,
   StickyNote,
   HelpCircle,
+  ReceiptText,
   X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -41,6 +42,7 @@ export type NavModule =
   | 'attendance'
   | 'projects'
   | 'payroll'
+  | 'claims'
   | 'calendar'
   | 'team-notes'
   | 'recruitment'
@@ -126,6 +128,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           label: 'Payroll',
           icon: Banknote,
           visible: canAccessModule(currentUser || currentRole, 'payroll'),
+        },
+        {
+          id: 'claims' as NavModule,
+          label: 'Claims & Expenses',
+          icon: ReceiptText,
+          visible: canAccessModule(currentUser || currentRole, 'claims'),
         },
       ],
     },

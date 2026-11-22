@@ -40,6 +40,9 @@ import { ProgressRing } from '../common/ProgressRing';
 import { ScheduleCalendar } from '../common/ScheduleCalendar';
 import { Card } from '../common/Card';
 import { ErrorBoundary } from '../common/ErrorBoundary';
+import { EmployeeDashboard } from './dashboard/EmployeeDashboard';
+import { DepartmentHeadDashboard } from './dashboard/DepartmentHeadDashboard';
+import { BusinessHeadDashboard } from './dashboard/BusinessHeadDashboard';
 
 interface DashboardViewProps {
   onNavigate: (module: NavModule) => void;
@@ -78,6 +81,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 }) => {
   const { currentUser, currentRole, selectedEntityFilter } = useAuth();
   const shouldReduceMotion = useReducedMotion();
+
+  // Role-specific Dashboards matching CGCC governance (active authenticated staff)
+  if (currentUser?.staffId && currentRole === 'EMPLOYEE') {
+    return <EmployeeDashboard onNavigate={onNavigate} onOpenLeaveModal={onOpenLeaveModal} />;
+  }
+
+  if (currentUser?.staffId && currentRole === 'DEPARTMENT_HEAD') {
+    return <DepartmentHeadDashboard onNavigate={onNavigate} onOpenLeaveModal={onOpenLeaveModal} />;
+  }
+
+  if (currentUser?.staffId && currentRole === 'BUSINESS_HEAD') {
+    return <BusinessHeadDashboard onNavigate={onNavigate} onOpenLeaveModal={onOpenLeaveModal} />;
+  }
 
   // Repository live data
   const [liveEmployees, setLiveEmployees] = useState<Employee[]>([]);

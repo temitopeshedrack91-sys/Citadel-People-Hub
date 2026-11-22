@@ -52,9 +52,21 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
   const [startDate, setStartDate] = useState('2026-11-02');
   const [endDate, setEndDate] = useState('2026-11-06');
   const [daysRequested, setDaysRequested] = useState(5);
+  const [managerName, setManagerName] = useState('Sussan Afuwape (PCCM Manager)');
+  const [managerId, setManagerId] = useState('');
   const [reason, setReason] = useState('');
   const [handoverColleague, setHandoverColleague] = useState('Engr. Femi Olatunji');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const diffTime = end.getTime() - start.getTime();
+      const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1);
+      setDaysRequested(diffDays);
+    }
+  }, [startDate, endDate]);
 
   useEffect(() => {
     setShowApplyModal(isApplyModalOpen);
@@ -94,6 +106,9 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
         endDate,
         totalDays: daysRequested,
         daysRequested,
+        managerId,
+        managerName,
+        approvalStage: 'DEPARTMENT_HEAD',
         reason,
         handoverColleague,
       });
@@ -107,7 +122,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
         recordAffectedId: created.id,
         recordAffectedTitle: `${leaveType} for ${currentUser.name} (${daysRequested} days)`,
         previousValue: 'Draft',
-        newValue: 'Submitted',
+        newValue: 'Submitted (Awaiting Manager Review)',
         severity: 'Info',
       });
 
@@ -116,7 +131,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
       setReason('');
       await loadRequests();
       setSelectedRequestId(created.id);
-      showToast(`Leave request for ${leaveType} submitted successfully.`);
+      showToast(`Leave request for ${leaveType} submitted and routed to ${managerName}.`);
     } catch (err: any) {
       showToast(`Submission error: ${err.message}`);
     } finally {
@@ -126,21 +141,27 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
 
   const handleApprove = async (id: string, name: string) => {
     try {
-      await leaveRepository.updateStatus(id, 'Approved', 'Approved via Citadel Governance Sign-Off');
+      const isManagerTier = currentRole === 'DEPARTMENT_HEAD' || currentRole === 'BUSINESS_HEAD';
+      const newStatus = isManagerTier ? 'Pending Review' : 'Approved';
+      const comments = isManagerTier
+        ? `Tier-1 Manager Recommendation granted by ${currentUser.name}. Forwarded to PCCM HR for final sign-off.`
+        : `Final PCCM HR Approval confirmed by ${currentUser.name}. Leave balance deducted.`;
+
+      await leaveRepository.updateStatus(id, newStatus, currentUser.name, comments);
       await auditRepository.logAction({
         userId: currentUser.id,
         userName: currentUser.name,
         userRole: currentRole,
         module: 'Leave Management',
-        action: 'Approved Leave Request',
+        action: isManagerTier ? 'Manager Recommended Leave' : 'Approved Leave Request',
         recordAffectedId: id,
         recordAffectedTitle: `Leave for ${name}`,
         previousValue: 'Pending',
-        newValue: 'Approved',
+        newValue: newStatus,
         severity: 'Info',
       });
       await loadRequests();
-      showToast(`Leave request for ${name} marked as Approved.`);
+      showToast(isManagerTier ? `Recommended and forwarded to HR for ${name}.` : `Leave request for ${name} marked as Approved.`);
     } catch (err: any) {
       showToast(`Error: ${err.message}`);
     }
@@ -299,21 +320,103 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
               <button
                 onClick={() => handleReject(req.id, req.employeeName)}
                 data-testid="leave-reject-btn"
-                className="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold flex items-center gap-1.5 transition shadow-2xs"
+                className="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
               >
                 <XCircle className="w-4 h-4 text-rose-600" />
-                <span>Reject</span>
+                <span>Decline Request</span>
               </button>
               <button
                 onClick={() => handleApprove(req.id, req.employeeName)}
                 data-testid="leave-approve-btn"
-                className="px-4 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#C59B27] transition"
+                className="px-4 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#C59B27] transition cursor-pointer"
               >
                 <CheckCircle2 className="w-4 h-4 text-slate-950" />
-                <span>Approve Request</span>
+                <span>
+                  {currentRole === 'DEPARTMENT_HEAD' || currentRole === 'BUSINESS_HEAD'
+                    ? 'Recommend & Forward to HR'
+                    : 'PCCM HR Final Sign-off'}
+                </span>
               </button>
             </div>
           )}
+        </div>
+
+        {/* Multi-tier Approval Lifecycle Tracker */}
+        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-[#083E34]" />
+              <span>CGCC Approval Chain & Audit Trail</span>
+            </h4>
+            <span className="text-[10px] font-mono text-slate-500 font-bold">
+              Routing: Employee → Manager ({req.managerName || 'Assigned Manager'}) → PCCM HR Final Sign-off
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+            {/* Stage 1: Employee Submission */}
+            <div className="p-3 rounded-lg border bg-emerald-50/70 border-emerald-200">
+              <div className="flex items-center justify-between text-[11px] font-bold text-emerald-900">
+                <span>1. Applied by Employee</span>
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              </div>
+              <p className="text-[10px] text-emerald-800 font-medium mt-1">
+                {req.appliedDate || 'Submitted'} • {req.employeeName}
+              </p>
+            </div>
+
+            {/* Stage 2: Manager Review */}
+            <div
+              className={`p-3 rounded-lg border ${
+                req.status === 'Approved' || req.status === 'Pending Review'
+                  ? 'bg-emerald-50/70 border-emerald-200'
+                  : req.status === 'Rejected'
+                  ? 'bg-rose-50/70 border-rose-200'
+                  : 'bg-amber-50/70 border-amber-200'
+              }`}
+            >
+              <div className="flex items-center justify-between text-[11px] font-bold text-slate-900">
+                <span>2. Line Manager Review</span>
+                {req.status === 'Approved' || req.status === 'Pending Review' ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                ) : (
+                  <Clock className="w-4 h-4 text-amber-600" />
+                )}
+              </div>
+              <p className="text-[10px] text-slate-600 font-medium mt-1">
+                {req.managerName || 'Department Manager'} •{' '}
+                {req.status === 'Approved' || req.status === 'Pending Review'
+                  ? 'Recommended & Approved'
+                  : 'Awaiting Manager Action'}
+              </p>
+            </div>
+
+            {/* Stage 3: PCCM HR Final Approval */}
+            <div
+              className={`p-3 rounded-lg border ${
+                req.status === 'Approved'
+                  ? 'bg-emerald-50/70 border-emerald-200'
+                  : req.status === 'Rejected'
+                  ? 'bg-rose-50/70 border-rose-200'
+                  : 'bg-slate-50 border-slate-200'
+              }`}
+            >
+              <div className="flex items-center justify-between text-[11px] font-bold text-slate-900">
+                <span>3. PCCM HR Sign-off</span>
+                {req.status === 'Approved' ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                ) : (
+                  <Clock className="w-4 h-4 text-slate-400" />
+                )}
+              </div>
+              <p className="text-[10px] text-slate-600 font-medium mt-1">
+                Sussan Afuwape (HR) •{' '}
+                {req.status === 'Approved'
+                  ? 'Final Approval Confirmed'
+                  : 'Pending Final Confirmation'}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* 2-Column Summary Cards */}
@@ -531,15 +634,34 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                 </div>
               </div>
 
-              <div>
-                <label className="block text-slate-800 font-bold mb-1">Handover Colleague</label>
-                <input
-                  type="text"
-                  value={handoverColleague}
-                  onChange={(e) => setHandoverColleague(e.target.value)}
-                  placeholder="Colleague who will cover responsibilities"
-                  className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-[#083E34]"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-800 font-bold mb-1">Select Reviewing Manager *</label>
+                  <select
+                    value={managerName}
+                    onChange={(e) => setManagerName(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 font-semibold focus:outline-none focus:border-[#083E34]"
+                  >
+                    <option value="Sussan Afuwape (PCCM Manager)">Sussan Afuwape (PCCM Manager)</option>
+                    <option value="Pastor Christian Ike (Executive Pastor / Facilities)">Pastor Christian Ike (Executive Pastor / Facilities)</option>
+                    <option value="Pastor Biola Adeyoola (Admin & Operations)">Pastor Biola Adeyoola (Admin & Operations)</option>
+                    <option value="Pastor Segun Bakare (Executive Pastor / ICT)">Pastor Segun Bakare (Executive Pastor / ICT)</option>
+                    <option value="Stephen Anuforo (Finance & Accounts Manager)">Stephen Anuforo (Finance & Accounts Manager)</option>
+                    <option value="Olubunmi Ojo-John (Chief Security Officer)">Olubunmi Ojo-John (Chief Security Officer)</option>
+                    <option value="Omoaholo Omoakhalen (Director CSG)">Omoaholo Omoakhalen (Director CSG)</option>
+                    <option value="Olufisayo Bakare (CEO Holdings)">Olufisayo Bakare (CEO Holdings)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-800 font-bold mb-1">Handover Colleague</label>
+                  <input
+                    type="text"
+                    value={handoverColleague}
+                    onChange={(e) => setHandoverColleague(e.target.value)}
+                    placeholder="Colleague who will cover responsibilities"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-[#083E34]"
+                  />
+                </div>
               </div>
 
               <div>

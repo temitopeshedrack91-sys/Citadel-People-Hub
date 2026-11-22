@@ -17,8 +17,8 @@ import {
   Download,
   RotateCcw,
 } from 'lucide-react';
-import { Employee } from '../../types';
-import { attendanceRepository, employeeRepository } from '../../services';
+import { Employee, Timesheet } from '../../types';
+import { attendanceRepository, employeeRepository, timesheetRepository } from '../../services';
 import { useAuth } from '../../context/AuthContext';
 import { normalizeRole } from '../../utils/rbac';
 import { Badge } from '../common/Badge';
@@ -72,8 +72,9 @@ function unmatchedReasonLabel(reason: UnmatchedDeviceRecord['reason']): string {
 
 export const AttendanceView: React.FC = () => {
   const { currentRole } = useAuth();
-  const [activeTab, setActiveTab] = useState<'daily_summary' | 'schedules'>('daily_summary');
+  const [activeTab, setActiveTab] = useState<'daily_summary' | 'schedules' | 'timesheets'>('daily_summary');
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [timesheets, setTimesheets] = useState<Timesheet[]>([]);
   const [summaries, setSummaries] = useState<DailyAttendanceSummary[]>([]);
   const [unmatched, setUnmatched] = useState<UnmatchedDeviceRecord[]>([]);
   const [storedPunchCount, setStoredPunchCount] = useState(0);
@@ -103,6 +104,13 @@ export const AttendanceView: React.FC = () => {
         const staff = await employeeRepository.getAll();
         if (cancelled) return;
         setEmployees(staff);
+
+        try {
+          const tsList = await timesheetRepository.getTimesheets();
+          if (!cancelled) setTimesheets(tsList);
+        } catch {
+          // Non-critical if timesheets empty
+        }
         if (staff.length === 0) {
           setImportError('No employee records were returned. Attendance punches cannot be reconciled.');
           return;
@@ -314,6 +322,20 @@ export const AttendanceView: React.FC = () => {
         >
           <Building className={`w-4 h-4 ${activeTab === 'schedules' ? 'text-slate-950' : 'text-[#D4AF37]'}`} />
           <span>Shift Schedules &amp; Policies</span>
+        </button>
+
+        <button
+          role="tab"
+          aria-selected={activeTab === 'timesheets'}
+          onClick={() => setActiveTab('timesheets')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 min-h-[40px] shrink-0 cursor-pointer ${
+            activeTab === 'timesheets'
+              ? 'bg-[#D4AF37] text-slate-950 shadow-xs border border-[#C59B27]'
+              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+          }`}
+        >
+          <Clock className={`w-4 h-4 ${activeTab === 'timesheets' ? 'text-slate-950' : 'text-slate-500'}`} />
+          <span>Weekly Timesheets</span>
         </button>
       </div>
 
@@ -766,7 +788,7 @@ export const AttendanceView: React.FC = () => {
             </div>
           </div>
         </div>
-      ) : (
+      ) : activeTab === 'schedules' ? (
         /* Sheet 7: Shift Schedules & Grace Period Policies */
         <div className="space-y-4">
           {/* Institutional Grace Period Highlight Card */}
@@ -936,6 +958,115 @@ export const AttendanceView: React.FC = () => {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-[#D4AF37]" />
+                <span>Weekly Employee Timesheets</span>
+              </h3>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Track project activities, weekly work hours, and supervisory approval logs.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold px-3 py-1.5 bg-slate-100 text-slate-800 rounded-xl">
+                {timesheets.length} Timesheets Logged
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {timesheets.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500 text-xs">
+                No timesheets recorded yet. Weekly timesheets submitted by staff will appear here for review.
+              </div>
+            ) : (
+              timesheets.map((ts) => (
+                <div key={ts.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-900 text-sm">{ts.employeeName || `Employee #${ts.employeeId}`}</span>
+                        {ts.employeeStaffId && (
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                            {ts.employeeStaffId}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Period: <span className="font-medium text-slate-700">{ts.periodStart} to {ts.periodEnd}</span> • Total Hours: <span className="font-bold text-slate-900">{ts.totalHours} hrs</span>
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={ts.status === 'APPROVED' ? 'success' : ts.status === 'SUBMITTED' ? 'info' : ts.status === 'REJECTED' ? 'danger' : 'warning'}>
+                        {ts.status}
+                      </Badge>
+                      {canImport && ts.status === 'SUBMITTED' && (
+                        <div className="flex items-center gap-1.5 ml-2">
+                          <button
+                            onClick={async () => {
+                              try {
+                                await timesheetRepository.approveTimesheet(ts.id);
+                                showToast(`Timesheet #${ts.id} approved successfully.`);
+                                const updated = await timesheetRepository.getTimesheets();
+                                setTimesheets(updated);
+                              } catch (e: any) {
+                                showToast(e.message || 'Approval failed');
+                              }
+                            }}
+                            className="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition cursor-pointer"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                await timesheetRepository.rejectTimesheet(ts.id, 'Hours require revision');
+                                showToast(`Timesheet #${ts.id} rejected.`);
+                                const updated = await timesheetRepository.getTimesheets();
+                                setTimesheets(updated);
+                              } catch (e: any) {
+                                showToast(e.message || 'Rejection failed');
+                              }
+                            }}
+                            className="px-2.5 py-1 text-xs font-bold rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition cursor-pointer"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {ts.items && ts.items.length > 0 && (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead>
+                          <tr className="text-slate-400 font-semibold border-b border-slate-100">
+                            <th className="pb-2">Date</th>
+                            <th className="pb-2">Activity</th>
+                            <th className="pb-2 text-right">Hours</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50 text-slate-700">
+                          {ts.items.map((item, idx) => (
+                            <tr key={idx} className="hover:bg-slate-50/50">
+                              <td className="py-2 font-mono text-[11px]">{item.date}</td>
+                              <td className="py-2 font-medium text-slate-800">{item.activityName}</td>
+                              <td className="py-2 text-right font-mono font-bold text-slate-900">{item.durationHours}h</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}

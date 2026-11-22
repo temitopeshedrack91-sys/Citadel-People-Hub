@@ -3,16 +3,24 @@
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\AuditController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ClaimController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\IdentityLinkController;
+use App\Http\Controllers\Api\JobTitleController;
 use App\Http\Controllers\Api\LeaveController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrganizationController;
+use App\Http\Controllers\Api\PayGradeController;
 use App\Http\Controllers\Api\PayrollController;
+use App\Http\Controllers\Api\PerformanceController;
 use App\Http\Controllers\Api\ProjectController;
+use App\Http\Controllers\Api\RecruitmentPipelineController;
+use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\TalentController;
 use App\Http\Controllers\Api\TaskController;
+use App\Http\Controllers\Api\TimesheetController;
+use App\Http\Controllers\Api\TrainingController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -40,6 +48,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/leave/categories', [LeaveController::class, 'categories']);
         Route::get('/leave/balances', [LeaveController::class, 'balances']);
         Route::get('/employees/{employeeId}/leave-balances', [LeaveController::class, 'balances']);
+        Route::post('/leave/entitlements', [LeaveController::class, 'storeEntitlement'])->middleware('throttle:30,1');
 
         // Payroll Backend Endpoints
         Route::prefix('payroll')->group(function () {
@@ -117,5 +126,74 @@ Route::prefix('v1')->group(function () {
         Route::get('/requisitions', [TalentController::class, 'requisitions']);
         Route::post('/requisitions', [TalentController::class, 'createRequisition'])->middleware('throttle:30,1');
         Route::patch('/requisitions/{requisition}/status', [TalentController::class, 'updateRequisitionStatus'])->middleware('throttle:30,1');
+
+        // Organizational Classifications (Job Titles & Pay Grades)
+        Route::apiResource('job-titles', JobTitleController::class)->middleware('throttle:60,1');
+        Route::apiResource('pay-grades', PayGradeController::class)->middleware('throttle:60,1');
+
+        // Timesheet Management & Workflow
+        Route::get('/timesheets', [TimesheetController::class, 'index']);
+        Route::get('/timesheets/{timesheet}', [TimesheetController::class, 'show']);
+        Route::post('/timesheets', [TimesheetController::class, 'store'])->middleware('throttle:30,1');
+        Route::post('/timesheets/{timesheet}/submit', [TimesheetController::class, 'submit'])->middleware('throttle:30,1');
+        Route::post('/timesheets/{timesheet}/approve', [TimesheetController::class, 'approve'])->middleware('throttle:30,1');
+        Route::post('/timesheets/{timesheet}/reject', [TimesheetController::class, 'reject'])->middleware('throttle:30,1');
+        Route::post('/timesheets/{timesheet}/reset', [TimesheetController::class, 'reset'])->middleware('throttle:30,1');
+
+        // Performance Reviews & KPIs
+        Route::get('/performance/kpis', [PerformanceController::class, 'kpis']);
+        Route::post('/performance/kpis', [PerformanceController::class, 'storeKpi'])->middleware('throttle:30,1');
+        Route::patch('/performance/kpis/{kpi}', [PerformanceController::class, 'updateKpi'])->middleware('throttle:30,1');
+        Route::delete('/performance/kpis/{kpi}', [PerformanceController::class, 'destroyKpi'])->middleware('throttle:30,1');
+        Route::get('/performance/reviews', [PerformanceController::class, 'reviews']);
+        Route::get('/performance/reviews/{performanceReview}', [PerformanceController::class, 'showReview']);
+        Route::post('/performance/reviews', [PerformanceController::class, 'storeReview'])->middleware('throttle:30,1');
+        Route::post('/performance/reviews/{performanceReview}/evaluate', [PerformanceController::class, 'evaluateReview'])->middleware('throttle:30,1');
+        Route::post('/performance/reviews/{performanceReview}/approve', [PerformanceController::class, 'approveReview'])->middleware('throttle:30,1');
+
+        // Recruitment Pipeline & Candidate ATS
+        Route::get('/recruitment/vacancies', [RecruitmentPipelineController::class, 'vacancies']);
+        Route::post('/recruitment/vacancies', [RecruitmentPipelineController::class, 'storeVacancy'])->middleware('throttle:30,1');
+        Route::patch('/recruitment/vacancies/{jobVacancy}', [RecruitmentPipelineController::class, 'updateVacancy'])->middleware('throttle:30,1');
+        Route::get('/recruitment/candidates', [RecruitmentPipelineController::class, 'candidates']);
+        Route::get('/recruitment/candidates/{candidate}', [RecruitmentPipelineController::class, 'showCandidate']);
+        Route::post('/recruitment/candidates', [RecruitmentPipelineController::class, 'storeCandidate'])->middleware('throttle:30,1');
+        Route::patch('/recruitment/candidates/{candidate}/status', [RecruitmentPipelineController::class, 'updateCandidateStatus'])->middleware('throttle:30,1');
+        Route::post('/recruitment/candidates/{candidate}/interviews', [RecruitmentPipelineController::class, 'scheduleInterview'])->middleware('throttle:30,1');
+        Route::patch('/recruitment/interviews/{candidateInterview}', [RecruitmentPipelineController::class, 'updateInterviewResult'])->middleware('throttle:30,1');
+
+        // Corporate Training & Learning Management
+        Route::get('/training/courses', [TrainingController::class, 'courses']);
+        Route::post('/training/courses', [TrainingController::class, 'storeCourse'])->middleware('throttle:30,1');
+        Route::patch('/training/courses/{trainingCourse}', [TrainingController::class, 'updateCourse'])->middleware('throttle:30,1');
+        Route::get('/training/sessions', [TrainingController::class, 'sessions']);
+        Route::post('/training/sessions', [TrainingController::class, 'storeSession'])->middleware('throttle:30,1');
+        Route::post('/training/sessions/{trainingSession}/enroll', [TrainingController::class, 'enrollEmployee'])->middleware('throttle:30,1');
+        Route::patch('/training/enrollments/{employeeTraining}', [TrainingController::class, 'updateEmployeeTraining'])->middleware('throttle:30,1');
+
+        // Enterprise HR Analytics & Reporting
+        Route::get('/reports/workforce', [ReportController::class, 'workforce']);
+        Route::get('/reports/leave-utilization', [ReportController::class, 'leaveUtilization']);
+        Route::get('/reports/attendance-summary', [ReportController::class, 'attendanceSummary']);
+        Route::get('/reports/recruitment-summary', [ReportController::class, 'recruitmentSummary']);
+
+        // Employee Claims & Expense Reimbursements (OrangeHRM Parity)
+        Route::get('/claims/events', [ClaimController::class, 'events']);
+        Route::post('/claims/events', [ClaimController::class, 'storeEvent'])->middleware('throttle:30,1');
+        Route::get('/claims/expense-types', [ClaimController::class, 'expenseTypes']);
+        Route::post('/claims/expense-types', [ClaimController::class, 'storeExpenseType'])->middleware('throttle:30,1');
+        Route::get('/claims', [ClaimController::class, 'requests']);
+        Route::get('/claims/requests', [ClaimController::class, 'requests']);
+        Route::get('/claims/requests/{claimRequest}', [ClaimController::class, 'show']);
+        Route::get('/claims/{claimRequest}', [ClaimController::class, 'show']);
+        Route::post('/claims', [ClaimController::class, 'store'])->middleware('throttle:30,1');
+        Route::post('/claims/requests', [ClaimController::class, 'store'])->middleware('throttle:30,1');
+        Route::post('/claims/requests/{claimRequest}/expenses', [ClaimController::class, 'addExpense'])->middleware('throttle:30,1');
+        Route::post('/claims/{claimRequest}/expenses', [ClaimController::class, 'addExpense'])->middleware('throttle:30,1');
+        Route::delete('/claims/expenses/{claimExpense}', [ClaimController::class, 'deleteExpense'])->middleware('throttle:30,1');
+        Route::delete('/claims/{claimRequest}/expenses/{claimExpense}', [ClaimController::class, 'deleteExpense'])->middleware('throttle:30,1');
+        Route::delete('/claims/requests/{claimRequest}/expenses/{claimExpense}', [ClaimController::class, 'deleteExpense'])->middleware('throttle:30,1');
+        Route::post('/claims/requests/{claimRequest}/action', [ClaimController::class, 'action'])->middleware('throttle:30,1');
+        Route::post('/claims/{claimRequest}/action', [ClaimController::class, 'action'])->middleware('throttle:30,1');
     });
 });

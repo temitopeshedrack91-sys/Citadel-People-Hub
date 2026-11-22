@@ -11,7 +11,7 @@ class LeaveRequest extends Model
     protected $fillable = [
         'employee_id', 'employee_staff_id', 'employee_name', 'entity_name', 'department_name',
         'leave_type', 'start_date', 'end_date', 'total_days', 'reason', 'relieving_staff_id',
-        'relieving_staff_name', 'handover_colleague', 'status', 'applied_date',
+        'relieving_staff_name', 'handover_colleague', 'manager_id', 'manager_name', 'status', 'applied_date',
         'approval_stage', 'approver_comments', 'approval_history',
     ];
 

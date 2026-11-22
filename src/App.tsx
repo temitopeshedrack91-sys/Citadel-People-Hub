@@ -36,13 +36,14 @@ import { AIAssistantView } from './components/views/AIAssistantView';
 import { ProjectsView } from './components/views/ProjectsView';
 import { TeamNotesView } from './components/views/TeamNotesView';
 import { PayrollView } from './components/views/PayrollView';
+import { ClaimManagementView } from './components/views/ClaimManagementView';
 import { LoginModal } from './components/auth/LoginModal';
 import { AuthPage } from './components/auth/AuthPage';
 import { AccessDeniedView } from './components/common/AccessDeniedView';
 import { checkRouteAccess } from './utils/rbac';
 
 const VALID_MODULES: NavModule[] = [
-  'dashboard', 'employees', 'directory', 'leave', 'attendance', 'projects', 'payroll',
+  'dashboard', 'employees', 'directory', 'leave', 'attendance', 'projects', 'payroll', 'claims',
   'calendar', 'team-notes', 'recruitment', 'onboarding', 'offboarding',
   'performance', 'documents', 'reports', 'notifications', 'integrations',
   'ai-assistant', 'settings', 'audit-logs'
@@ -255,6 +256,8 @@ const MainAppLayout: React.FC = () => {
         return <ProjectsView />;
       case 'payroll':
         return <PayrollView />;
+      case 'claims':
+        return <ClaimManagementView />;
       case 'team-notes':
         return <TeamNotesView />;
       case 'audit-logs':

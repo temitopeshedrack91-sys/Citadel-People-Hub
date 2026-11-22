@@ -264,3 +264,82 @@ export interface IPayrollRepository {
   getProrationRecords(filter?: { payroll_run_id?: string; employee_id?: string }): Promise<{ data: EmployeeProrationRecord[] }>;
 }
 
+export interface IClassificationRepository {
+  getJobTitles(activeOnly?: boolean): Promise<import('../types').JobTitle[]>;
+  createJobTitle(title: Partial<import('../types').JobTitle>): Promise<import('../types').JobTitle>;
+  getPayGrades(activeOnly?: boolean): Promise<import('../types').PayGrade[]>;
+  createPayGrade(grade: Partial<import('../types').PayGrade>): Promise<import('../types').PayGrade>;
+}
+
+export interface ITimesheetRepository {
+  getTimesheets(filter?: { employeeId?: number; status?: string }): Promise<import('../types').Timesheet[]>;
+  getTimesheet(id: number): Promise<import('../types').Timesheet>;
+  saveDraftTimesheet(data: {
+    employeeId: number;
+    periodStart: string;
+    periodEnd: string;
+    items: import('../types').TimesheetItem[];
+  }): Promise<import('../types').Timesheet>;
+  submitTimesheet(id: number): Promise<import('../types').Timesheet>;
+  approveTimesheet(id: number, comments?: string): Promise<import('../types').Timesheet>;
+  rejectTimesheet(id: number, comments: string): Promise<import('../types').Timesheet>;
+  resetTimesheet(id: number): Promise<import('../types').Timesheet>;
+}
+
+export interface IPerformanceRepository {
+  getKpis(jobTitleId?: number): Promise<import('../types').Kpi[]>;
+  createKpi(kpi: Partial<import('../types').Kpi>): Promise<import('../types').Kpi>;
+  getReviews(filter?: { employeeId?: number; status?: string }): Promise<import('../types').PerformanceReview[]>;
+  getReview(id: number): Promise<import('../types').PerformanceReview>;
+  createReview(data: Partial<import('../types').PerformanceReview>): Promise<import('../types').PerformanceReview>;
+  evaluateReview(
+    id: number,
+    data: {
+      ratings: import('../types').ReviewRating[];
+      reviewerComments?: string;
+      employeeComments?: string;
+    }
+  ): Promise<import('../types').PerformanceReview>;
+  approveReview(id: number): Promise<import('../types').PerformanceReview>;
+}
+
+export interface IRecruitmentPipelineRepository {
+  getVacancies(filter?: { activeOnly?: boolean; departmentId?: number }): Promise<import('../types').JobVacancy[]>;
+  createVacancy(data: Partial<import('../types').JobVacancy>): Promise<import('../types').JobVacancy>;
+  getCandidates(filter?: { vacancyId?: number; status?: string }): Promise<import('../types').Candidate[]>;
+  createCandidate(data: Partial<import('../types').Candidate>): Promise<import('../types').Candidate>;
+  updateCandidateStatus(id: number, status: string, notes?: string): Promise<import('../types').Candidate>;
+  scheduleInterview(candidateId: number, data: Partial<import('../types').CandidateInterview>): Promise<import('../types').CandidateInterview>;
+  updateInterviewResult(interviewId: number, result: 'Passed' | 'Failed', notes?: string): Promise<import('../types').CandidateInterview>;
+}
+
+export interface ITrainingRepository {
+  getCourses(activeOnly?: boolean): Promise<import('../types').TrainingCourse[]>;
+  createCourse(data: Partial<import('../types').TrainingCourse>): Promise<import('../types').TrainingCourse>;
+  getSessions(filter?: { courseId?: number; status?: string }): Promise<import('../types').TrainingSession[]>;
+  createSession(data: Partial<import('../types').TrainingSession>): Promise<import('../types').TrainingSession>;
+  enrollEmployee(sessionId: number, employeeId: number): Promise<import('../types').EmployeeTraining>;
+  updateEmployeeTraining(enrollmentId: number, data: Partial<import('../types').EmployeeTraining>): Promise<import('../types').EmployeeTraining>;
+}
+
+export interface IReportRepository {
+  getWorkforceReport(): Promise<import('../types').WorkforceReport>;
+  getLeaveReport(year?: number): Promise<import('../types').LeaveReport>;
+  getAttendanceReport(params?: { startDate?: string; endDate?: string }): Promise<import('../types').AttendanceReport>;
+  getRecruitmentReport(): Promise<import('../types').RecruitmentReport>;
+}
+
+export interface IClaimRepository {
+  getClaimEvents(activeOnly?: boolean): Promise<import('../types').ClaimEvent[]>;
+  createClaimEvent(data: Partial<import('../types').ClaimEvent>): Promise<import('../types').ClaimEvent>;
+  getExpenseTypes(activeOnly?: boolean): Promise<import('../types').ExpenseType[]>;
+  createExpenseType(data: Partial<import('../types').ExpenseType>): Promise<import('../types').ExpenseType>;
+  getClaims(filter?: { employeeId?: string | number; status?: string; search?: string }): Promise<import('../types').ClaimRequest[]>;
+  getClaim(id: string | number): Promise<import('../types').ClaimRequest>;
+  createClaim(data: import('../types').CreateClaimRequestInput): Promise<import('../types').ClaimRequest>;
+  addExpense(claimId: string | number, data: import('../types').CreateExpenseItemInput): Promise<import('../types').ClaimRequest>;
+  deleteExpense(expenseId: string | number): Promise<import('../types').ClaimRequest>;
+  performAction(claimId: string | number, action: import('../types').ClaimAction, reason?: string): Promise<import('../types').ClaimRequest>;
+}
+
+

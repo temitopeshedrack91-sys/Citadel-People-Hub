@@ -52,4 +52,7 @@ export interface LeaveRequest {
   appliedDate: string;
   approvalHistoryId?: string;
   approverComments?: string;
+  managerId?: string;
+  managerName?: string;
+  approvalStage?: 'LINE_MANAGER' | 'DEPARTMENT_HEAD' | 'BUSINESS_HEAD' | 'HR' | 'COMPLETE';
 }

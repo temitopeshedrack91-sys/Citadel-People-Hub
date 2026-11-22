@@ -95,6 +95,15 @@ class LeaveController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $empId = $request->input('employeeId');
+        if (! is_numeric($empId) || ! Employee::query()->where('id', $empId)->exists()) {
+            $staffId = $request->input('employeeStaffId') ?? $request->user()->staff_id;
+            $resolvedEmp = Employee::query()->where('staff_id', $staffId)->first();
+            if ($resolvedEmp) {
+                $request->merge(['employeeId' => $resolvedEmp->id]);
+            }
+        }
+
         $data = $request->validate([
             'employeeId' => ['required', 'exists:employees,id'],
             'employeeStaffId' => ['required', 'string', 'max:50'],
@@ -109,6 +118,10 @@ class LeaveController extends Controller
             'relievingStaffId' => ['nullable', 'string', 'max:50'],
             'relievingStaffName' => ['nullable', 'string', 'max:180'],
             'handoverColleague' => ['nullable', 'string', 'max:180'],
+            'managerId' => ['nullable', 'string', 'max:50'],
+            'managerName' => ['nullable', 'string', 'max:180'],
+            'manager_id' => ['nullable', 'string', 'max:50'],
+            'manager_name' => ['nullable', 'string', 'max:180'],
         ]);
         $employee = Employee::query()->findOrFail($data['employeeId']);
         $role = RoleAuthorization::canonical($request->user()->role);
@@ -118,8 +131,43 @@ class LeaveController extends Controller
             abort(422, 'Employee identity does not match the selected employee.');
         }
 
+        // OrangeHRM overlap rule: check for conflicting active leave requests
+        $hasOverlap = LeaveRecord::query()
+            ->where('employee_id', $employee->id)
+            ->whereNotIn('status', ['Cancelled', 'Rejected'])
+            ->where(function ($query) use ($data) {
+                $query->where('start_date', '<=', $data['endDate'])
+                    ->where('end_date', '>=', $data['startDate']);
+            })
+            ->exists();
+
+        if ($hasOverlap) {
+            abort(422, 'The requested leave period overlaps with an existing leave request.');
+        }
+
         $record = DB::transaction(function () use ($request, $employee, $data) {
-            $record = LeaveRecord::create([
+            // Deduct from pending days if balance record exists (OrangeHRM leave entitlement calculation)
+            $category = LeaveCategory::query()->where('name', $data['leaveType'])->first();
+            if ($category) {
+                $year = (int) date('Y', strtotime($data['startDate']));
+                $balance = EmployeeLeaveBalance::query()
+                    ->where('employee_id', $employee->id)
+                    ->where('leave_category_id', $category->id)
+                    ->where('year', $year)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($balance) {
+                    if ((float) $balance->remaining_days < (float) $data['totalDays']) {
+                        abort(422, "Insufficient leave balance for this request. Remaining: {$balance->remaining_days} days.");
+                    }
+                    $balance->pending_days = (float) $balance->pending_days + (float) $data['totalDays'];
+                    $balance->remaining_days = max(0, (float) $balance->remaining_days - (float) $data['totalDays']);
+                    $balance->save();
+                }
+            }
+
+            $payload = [
                 'employee_id' => $employee->id,
                 'employee_staff_id' => $employee->staff_id,
                 'employee_name' => $employee->full_name,
@@ -137,7 +185,14 @@ class LeaveController extends Controller
                 'approval_stage' => 'DEPARTMENT_HEAD',
                 'applied_date' => now(),
                 'approval_history' => [],
-            ]);
+            ];
+            if (\Illuminate\Support\Facades\Schema::hasColumn('leave_requests', 'manager_id')) {
+                $payload['manager_id'] = $data['managerId'] ?? $data['manager_id'] ?? null;
+            }
+            if (\Illuminate\Support\Facades\Schema::hasColumn('leave_requests', 'manager_name')) {
+                $payload['manager_name'] = $data['managerName'] ?? $data['manager_name'] ?? null;
+            }
+            $record = LeaveRecord::create($payload);
             AuditLogger::record($request, 'Leave Management', 'Submitted leave request', $record->id, "{$record->leave_type} for {$record->employee_name}", null, 'Submitted');
 
             return $record;
@@ -233,12 +288,82 @@ class LeaveController extends Controller
                 'approver_comments' => $data['comments'] ?? null,
                 'approval_history' => $history,
             ]);
+
+            // OrangeHRM leave balance calculation: adjust used/pending/remaining days upon state transition
+            $category = LeaveCategory::query()->where('name', $record->leave_type)->first();
+            if ($category) {
+                $year = (int) $record->start_date->format('Y');
+                $balance = EmployeeLeaveBalance::query()
+                    ->where('employee_id', $record->employee_id)
+                    ->where('leave_category_id', $category->id)
+                    ->where('year', $year)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($balance) {
+                    if ($newStatus === 'Approved' && $nextStage === 'COMPLETE') {
+                        // Fully approved: convert pending days into used days
+                        $balance->pending_days = max(0, (float) $balance->pending_days - (float) $record->total_days);
+                        $balance->used_days = (float) $balance->used_days + (float) $record->total_days;
+                        $balance->remaining_days = max(0, (float) $balance->total_days - (float) $balance->used_days - (float) $balance->pending_days);
+                        $balance->save();
+                    } elseif (in_array($newStatus, ['Rejected', 'Cancelled'], true)) {
+                        // If rejected or cancelled, release days back to remaining
+                        if ($previousStatus === 'Approved') {
+                            $balance->used_days = max(0, (float) $balance->used_days - (float) $record->total_days);
+                        } else {
+                            $balance->pending_days = max(0, (float) $balance->pending_days - (float) $record->total_days);
+                        }
+                        $balance->remaining_days = max(0, (float) $balance->total_days - (float) $balance->used_days - (float) $balance->pending_days);
+                        $balance->save();
+                    }
+                }
+            }
+
             AuditLogger::record($request, 'Leave Management', "Leave request {$newStatus}", $record->id, "{$record->leave_type} for {$record->employee_name}", $previousStatus, $newStatus);
 
             return $record;
         });
 
         return response()->json(['data' => $this->present($updated)]);
+    }
+
+    /**
+     * Allocate or adjust leave entitlement for an employee.
+     *
+     * POST /api/v1/leave/entitlements
+     */
+    public function storeEntitlement(Request $request): JsonResponse
+    {
+        $role = RoleAuthorization::canonical($request->user()->role);
+        abort_unless(in_array($role, ['ADMIN', 'HR_STAFF'], true), 403, 'You are not authorized to assign leave entitlements.');
+
+        $data = $request->validate([
+            'employeeId' => ['required', 'exists:employees,id'],
+            'leaveCategoryId' => ['required', 'exists:leave_categories,id'],
+            'year' => ['required', 'integer', 'min:2020', 'max:2050'],
+            'totalDays' => ['required', 'numeric', 'min:0', 'max:366'],
+        ]);
+
+        $balance = DB::transaction(function () use ($request, $data) {
+            $balance = EmployeeLeaveBalance::query()->firstOrNew([
+                'employee_id' => $data['employeeId'],
+                'leave_category_id' => $data['leaveCategoryId'],
+                'year' => $data['year'],
+            ]);
+
+            $balance->total_days = (float) $data['totalDays'];
+            $balance->used_days = $balance->used_days ?? 0;
+            $balance->pending_days = $balance->pending_days ?? 0;
+            $balance->remaining_days = max(0, $balance->total_days - $balance->used_days - $balance->pending_days);
+            $balance->save();
+
+            AuditLogger::record($request, 'Leave Management', 'Assigned leave entitlement', (string) $balance->id, "Employee {$data['employeeId']} Category {$data['leaveCategoryId']}", null, (string) $data['totalDays']);
+
+            return $balance->load(['category', 'employee:id,staff_id,full_name']);
+        });
+
+        return response()->json(['data' => $balance], 201);
     }
 
     /**
@@ -326,6 +451,8 @@ class LeaveController extends Controller
             'relievingStaffId' => $record->relieving_staff_id,
             'relievingStaffName' => $record->relieving_staff_name,
             'handoverColleague' => $record->handover_colleague,
+            'managerId' => $record->manager_id,
+            'managerName' => $record->manager_name,
             'status' => $record->status,
             'approvalStage' => $record->approval_stage,
             'appliedDate' => $record->applied_date->toISOString(),

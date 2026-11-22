@@ -1,10 +1,4 @@
-import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { PayrollView } from '../components/views/PayrollView';
-import { Sidebar } from '../components/layout/Sidebar';
-import { AuthProvider } from '../context/AuthContext';
-import { payrollRepository } from '../services';
 
 // The UI workflow tests use the repository's local test fixtures. The direct
 // Laravel repository contract is covered by the integration tests below.
@@ -12,6 +6,13 @@ vi.mock('../services/laravelClient', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../services/laravelClient')>();
   return { ...actual, isLaravelApiConfigured: () => false };
 });
+
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { PayrollView } from '../components/views/PayrollView';
+import { Sidebar } from '../components/layout/Sidebar';
+import { AuthProvider } from '../context/AuthContext';
+import { payrollRepository } from '../services';
 
 describe('Payroll Domain & Sidebar Integration', () => {
   beforeEach(() => {
@@ -137,6 +138,35 @@ describe('Payroll Domain & Sidebar Integration', () => {
     await waitFor(() => {
       expect(screen.getByText('LN-2026-004')).toBeDefined();
       expect(screen.getByText('Home Appliance & Device Advance')).toBeDefined();
+    }, { timeout: 4000 });
+  });
+
+  it('renders CGCC Worksheet & Template tab with 40/25/15/10/10 structure and preview', async () => {
+    render(
+      <AuthProvider>
+        <PayrollView />
+      </AuthProvider>
+    );
+
+    // Switch to CGCC Worksheet & Template tab
+    const worksheetTab = screen.getByRole('button', { name: /cgcc worksheet & template/i });
+    fireEvent.click(worksheetTab);
+
+    await waitFor(() => {
+      expect(screen.getByText('Official CGCC Structure')).toBeDefined();
+      expect(screen.getByText('Download Excel Template')).toBeDefined();
+      expect(screen.getByText('40%')).toBeDefined();
+      expect(screen.getByText('25%')).toBeDefined();
+      expect(screen.getByText('15%')).toBeDefined();
+    }, { timeout: 4000 });
+
+    // Click "Load Active CGCC Staff Data" button
+    const loadDataBtn = screen.getAllByRole('button', { name: /load active cgcc staff data/i })[0];
+    fireEvent.click(loadDataBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Gross Volume')).toBeDefined();
+      expect(screen.getByRole('button', { name: /commit worksheet to pay run/i })).toBeDefined();
     }, { timeout: 4000 });
   });
 

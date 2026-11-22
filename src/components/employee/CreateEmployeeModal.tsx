@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   X,
   Building2,
@@ -56,15 +56,49 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
 
   // Step 2: Employment Details
   const [staffId, setStaffId] = useState('CGCC/' + Math.floor(100 + Math.random() * 900));
-  const [entityId, setEntityId] = useState('entity-cgcc');
-  const [departmentId, setDepartmentId] = useState('dept-cgcc-pccm');
+  const [entityId, setEntityId] = useState('');
+  const [departmentId, setDepartmentId] = useState('');
   const [jobTitle, setJobTitle] = useState('');
   const [gradeLevel, setGradeLevel] = useState('Associate (A-1)');
   const [employmentType, setEmploymentType] = useState<EmploymentType>('Full-Time');
   const [employmentDate, setEmploymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [confirmationDate, setConfirmationDate] = useState('');
-  const [managerName, setManagerName] = useState('Dr. Bukola Adeleke (PCCM)');
+  const [managerName, setManagerName] = useState('Sussan Afuwape (PCCM)');
   const [status, setStatus] = useState<EmployeeStatus>('Probation');
+
+  // Synchronize entityId with loaded entities
+  useEffect(() => {
+    if (entities.length > 0 && (!entityId || !entities.some((e) => e.id === entityId))) {
+      setEntityId(entities[0].id);
+    }
+  }, [entities, entityId]);
+
+  // Robust department filtering supporting both string slugs (entity-cgcc) and uppercase codes (CGCC)
+  const filteredDepartments = useMemo(() => {
+    if (!departments || departments.length === 0) return [];
+    if (!entityId) return departments;
+
+    const matched = departments.filter((d) => {
+      if (d.entityId === entityId) return true;
+      const entLower = entityId.toLowerCase();
+      const dEntLower = (d.entityId || '').toLowerCase();
+      if (entLower.includes('cgcc') && dEntLower.includes('cgcc')) return true;
+      if (entLower.includes('csog') && dEntLower.includes('csog')) return true;
+      if (entLower.includes('holding') && dEntLower.includes('holding')) return true;
+      return false;
+    });
+
+    return matched.length > 0 ? matched : departments;
+  }, [departments, entityId]);
+
+  // Synchronize departmentId when filtered departments change
+  useEffect(() => {
+    if (filteredDepartments.length > 0) {
+      if (!departmentId || !filteredDepartments.some((d) => d.id === departmentId)) {
+        setDepartmentId(filteredDepartments[0].id);
+      }
+    }
+  }, [filteredDepartments, departmentId]);
 
   // Step 3: Emergency & Next of Kin
   const [emergName, setEmergName] = useState('');
@@ -406,11 +440,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                   <label className="block text-slate-700 font-semibold mb-1">Assigned Entity *</label>
                   <select
                     value={entityId}
-                    onChange={(e) => {
-                      setEntityId(e.target.value);
-                      const depts = departments.filter((d) => d.entityId === e.target.value);
-                      if (depts[0]) setDepartmentId(depts[0].id);
-                    }}
+                    onChange={(e) => setEntityId(e.target.value)}
                     className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none bg-white font-medium"
                   >
                     {entities.map((ent) => (
@@ -430,13 +460,11 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                     onChange={(e) => setDepartmentId(e.target.value)}
                     className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none bg-white font-medium"
                   >
-                    {departments
-                      .filter((d) => d.entityId === entityId)
-                      .map((d) => (
-                        <option key={d.id} value={d.id}>
-                          {d.name}
-                        </option>
-                      ))}
+                    {filteredDepartments.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name} {d.headOfDepartmentName ? `(${d.headOfDepartmentName})` : ''}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -507,13 +535,27 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">Reporting Manager / Supervisor</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Reporting Manager / Supervisor *</label>
                   <input
                     type="text"
+                    list="managers-list"
+                    required
                     value={managerName}
                     onChange={(e) => setManagerName(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none"
+                    placeholder="Select or enter supervisor"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none bg-white font-medium"
                   />
+                  <datalist id="managers-list">
+                    <option value="Sussan Afuwape (PCCM Manager)" />
+                    <option value="Pastor Christian Ike (Executive Pastor / Facilities & Logistics)" />
+                    <option value="Pastor Biola Adeyoola (Church Admin & Operations / Protocol)" />
+                    <option value="Pastor Segun Bakare (Executive Pastor / ICT)" />
+                    <option value="Stephen Anuforo (Finance & Accounts Manager)" />
+                    <option value="Olubunmi Ojo-John (Chief Security Officer)" />
+                    <option value="Omoaholo Omoakhalen (Director CSG / Business Head)" />
+                    <option value="Olufisayo Bakare (CEO Holdings / Managing Director)" />
+                    <option value="Anwuli Uzu (Business Dev / Sales Manager)" />
+                  </datalist>
                 </div>
               </div>
             </div>

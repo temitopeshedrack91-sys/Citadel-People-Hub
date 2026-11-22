@@ -10,3 +10,5 @@ export * from './audit';
 export * from './notifications';
 export * from './integrations';
 export * from './payroll';
+export * from './enterpriseParity';
+export * from './claim';

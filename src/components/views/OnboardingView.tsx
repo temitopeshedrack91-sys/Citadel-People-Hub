@@ -84,6 +84,15 @@ export const OnboardingView: React.FC = () => {
   const [newChecklistTarget, setNewChecklistTarget] = useState('');
   const [newChecklistDuration, setNewChecklistDuration] = useState('1 Month');
   const [newChecklistDesc, setNewChecklistDesc] = useState('');
+  const [templateCustomTasks, setTemplateCustomTasks] = useState<Array<{
+    title: string;
+    department: OnboardingDepartment;
+    timeline: OnboardingTimeline;
+    requiredDocument?: string;
+  }>>([]);
+  const [newTaskInputTitle, setNewTaskInputTitle] = useState('');
+  const [newTaskInputDept, setNewTaskInputDept] = useState<OnboardingDepartment>('Human Resources');
+  const [newTaskInputTimeline, setNewTaskInputTimeline] = useState<OnboardingTimeline>('Day 1');
 
   const [departmentFilter, setDepartmentFilter] = useState<'All' | OnboardingDepartment>('All');
   const [timelineFilter, setTimelineFilter] = useState<'All' | string>('All');
@@ -336,6 +345,59 @@ export const OnboardingView: React.FC = () => {
     }
   };
 
+  const handleLoadCgccStandardTasks = () => {
+    setNewChecklistTitle('The Citadel Global Community Church — Standard Onboarding Checklist');
+    setNewChecklistCategory('General');
+    setNewChecklistTarget('All Citadel Employees & Ministers');
+    setNewChecklistDuration('3 Months');
+    setNewChecklistDesc('Official induction schedule and task allocation breakdown coordinated by the Onboarding Team (PCCM, Line Manager, IT, Finance). Approved 30 March 2024.');
+
+    setTemplateCustomTasks([
+      // Manager Tasks
+      { title: 'Send welcome email introducing new hire', department: 'Manager', timeline: 'Day 1' },
+      { title: 'Coordinate welcome meeting to kick off first day and introduce team', department: 'Manager', timeline: 'Day 1' },
+      { title: 'Assign new hire a mentor and/or onboarding buddy', department: 'Manager', timeline: 'Day 1' },
+      { title: 'Schedule first day meetings and introduction calls', department: 'Manager', timeline: 'Day 1' },
+      { title: 'Give introduction to ministry, role expectations and KPIs', department: 'Manager', timeline: 'Day 2' },
+      { title: 'Conduct recurring one-on-one check-in meetings', department: 'Manager', timeline: '1st Three Months' },
+      // PCCM / HR Tasks
+      { title: 'Send new hire welcome packet (Bio-data, NDA, Handbook)', department: 'Human Resources', timeline: 'Day 1', requiredDocument: 'Welcome Packet' },
+      { title: 'Share essential ministry policies, hours of operation, dress code', department: 'Human Resources', timeline: 'Day 1', requiredDocument: 'Employee Handbook' },
+      { title: 'Document role & compensation in Citadel HRIS system', department: 'Human Resources', timeline: 'Week 1' },
+      { title: 'Complete background check (guarantors, reference checks)', department: 'Human Resources', timeline: 'Within 1st Month', requiredDocument: 'Guarantor Form' },
+      { title: 'Review policy understanding, Job Description & KPIs', department: 'Human Resources', timeline: '1st Three Weeks' },
+      { title: 'Periodic reviews of important milestones during 90-day probation', department: 'Human Resources', timeline: '1st Three Months' },
+      { title: 'New hire evaluation with manager and confirmation', department: 'Human Resources', timeline: 'End of Probation' },
+      // Finance Tasks
+      { title: 'Add new employee to monthly payroll template', department: 'Finance', timeline: 'Week 1', requiredDocument: 'Bank Bio-data' },
+      { title: 'Confirm employee financial and pension details (RSA PIN)', department: 'Finance', timeline: 'Week 1' },
+      // IT Tasks
+      { title: 'Create ministry email address for new hire', department: 'IT', timeline: 'Before Resumption' },
+      { title: 'Set up account permissions for platforms & software', department: 'IT', timeline: 'Before Resumption' },
+      { title: 'Prepare computer, phone equipment and tech accessories', department: 'IT', timeline: 'Before Resumption' },
+      // Mentor Tasks
+      { title: 'Office & Campus tour (parking spots, break room, chapel)', department: 'Mentor', timeline: 'Day 1' },
+    ]);
+    showToast('Loaded 19 official CGCC SOP tasks into checklist template builder.');
+  };
+
+  const handleAddTaskToTemplate = () => {
+    if (!newTaskInputTitle.trim()) return;
+    setTemplateCustomTasks([
+      ...templateCustomTasks,
+      {
+        title: newTaskInputTitle.trim(),
+        department: newTaskInputDept,
+        timeline: newTaskInputTimeline,
+      },
+    ]);
+    setNewTaskInputTitle('');
+  };
+
+  const handleRemoveTaskFromTemplate = (index: number) => {
+    setTemplateCustomTasks(templateCustomTasks.filter((_, i) => i !== index));
+  };
+
   const handleSaveNewChecklist = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChecklistTitle.trim() || !newChecklistTarget.trim() || !newChecklistDuration.trim()) {
@@ -349,9 +411,17 @@ export const OnboardingView: React.FC = () => {
       category: newChecklistCategory,
       targetAudience: newChecklistTarget.trim(),
       duration: newChecklistDuration.trim(),
-      taskCount: 0,
+      taskCount: templateCustomTasks.length,
       description: newChecklistDesc.trim(),
-      tasks: [],
+      tasks: templateCustomTasks.map((t, i) => ({
+        id: `task-tpl-${Date.now()}-${i}`,
+        title: t.title,
+        department: t.department,
+        timeline: t.timeline,
+        status: 'Pending',
+        isComplete: false,
+        requiredDocument: t.requiredDocument,
+      })),
     };
 
     try {
@@ -362,6 +432,7 @@ export const OnboardingView: React.FC = () => {
       setNewChecklistTitle('');
       setNewChecklistTarget('');
       setNewChecklistDesc('');
+      setTemplateCustomTasks([]);
       setIsAddChecklistModalOpen(false);
       await auditRepository.logAction({
         userId: currentUser.id,
@@ -374,9 +445,9 @@ export const OnboardingView: React.FC = () => {
         newValue: template.category,
         severity: 'Info',
       });
-      showToast(`Checklist "${template.title}" saved.`);
-    } catch (error) {
-      showToast(`Checklist could not be saved: ${errorMessage(error)}`, true);
+      showToast(`Checklist template "${template.title}" created with ${template.taskCount} tasks.`);
+    } catch (err: any) {
+      showToast(`Error saving template: ${err.message}`, true);
     }
   };
 
@@ -2362,19 +2433,44 @@ export const OnboardingView: React.FC = () => {
           MODAL: ADD ONBOARDING CHECKLIST TEMPLATE
          ========================================================================= */}
       {isAddChecklistModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-900">Add Onboarding Checklist</h3>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in overflow-y-auto">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full my-6 overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="px-6 py-4 bg-[#111111] text-white flex items-center justify-between border-b border-[#D4AF37]/30 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#D4AF37] text-black flex items-center justify-center font-bold">
+                  <ListChecks className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Create Onboarding Checklist Template</h3>
+                  <p className="text-[11px] text-slate-300">Design custom reusable onboarding workflows for CGCC staff.</p>
+                </div>
+              </div>
               <button
                 onClick={() => setIsAddChecklistModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveNewChecklist} className="p-6 space-y-4">
+            <form onSubmit={handleSaveNewChecklist} className="p-6 space-y-4 overflow-y-auto flex-1">
+              {/* Quick Load CGCC Standard Template Banner */}
+              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <span className="text-xs font-bold text-amber-900 block">Sussan Afuwape SOP Preset (30 March 2024)</span>
+                  <p className="text-[11px] text-amber-800">
+                    Auto-load the 19 standard tasks across Manager, HR, IT, Finance, and Mentor.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLoadCgccStandardTasks}
+                  className="px-3 py-1.5 rounded-lg bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold text-xs transition shadow-2xs cursor-pointer shrink-0"
+                >
+                  Load CGCC SOP Preset
+                </button>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   Checklist Title <span className="text-red-500">*</span>
@@ -2383,7 +2479,7 @@ export const OnboardingView: React.FC = () => {
                   type="text"
                   value={newChecklistTitle}
                   onChange={(e) => setNewChecklistTitle(e.target.value)}
-                  placeholder="e.g., Slack and Virtual Office Navigation"
+                  placeholder="e.g., The Citadel Global Community Church — Standard Induction"
                   className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] bg-white"
                   required
                 />
@@ -2430,7 +2526,7 @@ export const OnboardingView: React.FC = () => {
                   type="text"
                   value={newChecklistTarget}
                   onChange={(e) => setNewChecklistTarget(e.target.value)}
-                  placeholder="e.g., Legal Associates, Hybrid & Remote Staff"
+                  placeholder="e.g., All Pastoral, Operations & Administrative Joiners"
                   className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] bg-white"
                   required
                 />
@@ -2443,26 +2539,116 @@ export const OnboardingView: React.FC = () => {
                 <textarea
                   value={newChecklistDesc}
                   onChange={(e) => setNewChecklistDesc(e.target.value)}
-                  rows={3}
+                  rows={2}
                   placeholder="Outline the scope and mandatory procedures in this induction checklist..."
                   className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] bg-white resize-none"
                 />
               </div>
 
-              <div className="flex items-center gap-3 pt-3">
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 rounded-md bg-[#D4AF37] hover:bg-[#DFC15D] text-black font-black text-xs flex items-center gap-2 shadow-xs cursor-pointer active:scale-95 transition"
-                >
-                  <Check className="w-4 h-4 stroke-[2.5]" />
-                  <span>Save Checklist</span>
-                </button>
+              {/* Task Items Builder */}
+              <div className="pt-2 border-t border-slate-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-800">
+                    Template Tasks &amp; Milestones ({templateCustomTasks.length} tasks added)
+                  </label>
+                  <span className="text-[10px] text-slate-500 font-semibold">Stakeholder &amp; Timeline Allocated</span>
+                </div>
+
+                {/* Add Item Row */}
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                    <input
+                      type="text"
+                      placeholder="e.g., Conduct 1-on-1 milestone review"
+                      value={newTaskInputTitle}
+                      onChange={(e) => setNewTaskInputTitle(e.target.value)}
+                      className="sm:col-span-6 px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white font-medium focus:outline-none focus:border-[#083E34]"
+                    />
+                    <select
+                      value={newTaskInputDept}
+                      onChange={(e) => setNewTaskInputDept(e.target.value as any)}
+                      className="sm:col-span-3 px-2 py-1.5 rounded-lg border border-slate-300 text-xs bg-white font-medium focus:outline-none"
+                    >
+                      <option value="Manager">Manager</option>
+                      <option value="Human Resources">Human Resources</option>
+                      <option value="IT">IT</option>
+                      <option value="Finance">Finance</option>
+                      <option value="Mentor">Mentor</option>
+                    </select>
+                    <select
+                      value={newTaskInputTimeline}
+                      onChange={(e) => setNewTaskInputTimeline(e.target.value as any)}
+                      className="sm:col-span-3 px-2 py-1.5 rounded-lg border border-slate-300 text-xs bg-white font-medium focus:outline-none"
+                    >
+                      <option value="Before Resumption">Before Resumption</option>
+                      <option value="Day 1">Day 1</option>
+                      <option value="Day 2">Day 2</option>
+                      <option value="Week 1">Week 1</option>
+                      <option value="1st Two Weeks">1st Two Weeks</option>
+                      <option value="Within 1st Month">Within 1st Month</option>
+                      <option value="1st Three Weeks">1st Three Weeks</option>
+                      <option value="1st Three Months">1st Three Months</option>
+                      <option value="End of Probation">End of Probation</option>
+                    </select>
+                  </div>
+                  <div className="flex justify-end pt-1">
+                    <button
+                      type="button"
+                      onClick={handleAddTaskToTemplate}
+                      className="px-3 py-1 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition cursor-pointer flex items-center gap-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Task</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* List of Tasks in Template */}
+                {templateCustomTasks.length > 0 && (
+                  <div className="max-h-48 overflow-y-auto space-y-1.5 p-2 bg-slate-50 border border-slate-200 rounded-xl custom-scrollbar">
+                    {templateCustomTasks.map((t, idx) => (
+                      <div key={idx} className="p-2 rounded-lg bg-white border border-slate-200 flex items-center justify-between text-xs gap-2">
+                        <div className="min-w-0 pr-2 flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-mono text-[10px] font-bold shrink-0">
+                            {idx + 1}
+                          </span>
+                          <span className="font-semibold text-slate-800 truncate">{t.title}</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-bold">
+                            {t.department}
+                          </span>
+                          <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold">
+                            {t.timeline}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveTaskFromTemplate(idx)}
+                            className="text-rose-500 hover:text-rose-700 p-1 cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsAddChecklistModalOpen(false)}
                   className="text-xs font-semibold text-slate-500 hover:text-slate-800 px-3 py-2 cursor-pointer transition"
                 >
                   Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-[#DFC15D] text-black font-black text-xs flex items-center gap-2 shadow-xs cursor-pointer active:scale-95 transition"
+                >
+                  <Check className="w-4 h-4 stroke-[2.5]" />
+                  <span>Save Reusable Template</span>
                 </button>
               </div>
             </form>

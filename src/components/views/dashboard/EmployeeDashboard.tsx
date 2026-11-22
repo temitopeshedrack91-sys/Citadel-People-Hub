@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   CalendarDays,
@@ -65,6 +65,23 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
     loadEmployeeData();
   }, [currentUser]);
 
+  // Check for any scheduled exit interview for current user
+  const userExitRequest = useMemo(() => {
+    try {
+      const stored = localStorage.getItem('citadel_exit_requests');
+      if (!stored) return null;
+      const parsed = JSON.parse(stored);
+      return parsed.find(
+        (r: any) =>
+          r.employeeId === currentUser.id ||
+          (currentUser.staffId && r.staffId === currentUser.staffId) ||
+          (currentUser.name && r.employeeName === currentUser.name)
+      );
+    } catch {
+      return null;
+    }
+  }, [currentUser]);
+
   const activeLeave = myLeaves.length > 0 ? myLeaves[0] : null;
 
   return (
@@ -110,6 +127,36 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Active Exit & Scheduled Exit Interview Alert */}
+      {userExitRequest && userExitRequest.exitInterview && (
+        <div className="bg-blue-50 border-2 border-blue-300 rounded-2xl p-5 shadow-sm space-y-2 animate-fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
+                <CalendarDays className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-blue-950">Scheduled Exit Interview</h3>
+                  <span className="px-2 py-0.5 rounded bg-blue-200 text-blue-900 text-[10px] font-bold">
+                    PCCM Offboarding
+                  </span>
+                </div>
+                <p className="text-xs text-blue-900 font-medium mt-0.5">
+                  {userExitRequest.exitInterview.date} at {userExitRequest.exitInterview.time} ({userExitRequest.exitInterview.mode}) with {userExitRequest.exitInterview.interviewer}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => onNavigate('offboarding')}
+              className="px-3.5 py-1.5 rounded-xl bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs transition shadow-xs cursor-pointer self-start sm:self-auto"
+            >
+              View Exit Details &amp; Clearances
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 2. Personal Key Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

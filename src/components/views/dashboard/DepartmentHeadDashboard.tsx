@@ -62,17 +62,38 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
 
   const loadData = async () => {
     const [allEmps, allLeaves] = await Promise.all([
-      employeeRepository.getAll({ departmentId: currentUser.departmentId }),
+      employeeRepository.getAll(),
       leaveRepository.getAll(),
     ]);
 
-    setTeamMembers(allEmps);
+    const userNameLower = (currentUser.name || '').toLowerCase();
+    const userStaffId = (currentUser.staffId || '').toLowerCase();
+    const userId = (currentUser.id || '').toLowerCase();
+    const userDept = (currentUser.departmentName || currentUser.departmentId || '').toLowerCase();
+
+    const myTeam = allEmps.filter((e) => {
+      if (e.id === currentUser.id) return false;
+      // Direct report check by managerId or managerName
+      const mId = (e.managerId || '').toLowerCase();
+      const mName = (e.managerName || '').toLowerCase();
+      if ((userStaffId && mId === userStaffId) || (userId && mId === userId)) return true;
+      if (userNameLower && mName && (mName.includes(userNameLower) || userNameLower.includes(mName))) return true;
+
+      // Department check
+      const empDept = (e.departmentName || e.departmentId || '').toLowerCase();
+      if (userDept && empDept && (empDept === userDept || empDept.includes(userDept) || userDept.includes(empDept))) {
+        return true;
+      }
+      return false;
+    });
+
+    setTeamMembers(myTeam);
 
     // Filter leaves for this department or direct reports
     const deptLeaves = allLeaves.filter(
       (l) =>
-        (l.departmentName === currentUser.departmentName ||
-          allEmps.some((e) => e.id === l.employeeId)) &&
+        (myTeam.some((e) => e.id === l.employeeId || e.staffId === l.employeeStaffId) ||
+          (userDept && (l.departmentName || '').toLowerCase().includes(userDept))) &&
         l.employeeId !== currentUser.id // Exclude HOD's own leave from team approval queue
     );
     setTeamLeaves(deptLeaves);

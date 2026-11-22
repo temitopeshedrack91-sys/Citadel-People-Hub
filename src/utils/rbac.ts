@@ -93,6 +93,7 @@ export const ROLE_MODULE_PERMISSIONS: Record<CanonicalRole, NavModule[]> = {
     'attendance',
     'projects',
     'payroll',
+    'claims',
     'calendar',
     'team-notes',
     'recruitment',
@@ -117,6 +118,7 @@ export const ROLE_MODULE_PERMISSIONS: Record<CanonicalRole, NavModule[]> = {
     'attendance',
     'projects',
     'payroll',
+    'claims',
     'calendar',
     'team-notes',
     'recruitment',
@@ -136,6 +138,7 @@ export const ROLE_MODULE_PERMISSIONS: Record<CanonicalRole, NavModule[]> = {
     'leave',
     'projects',
     'payroll',
+    'claims',
     'calendar',
     'team-notes',
     'directory',
@@ -463,39 +466,64 @@ export function filterEmployeesForUser<
     departmentId?: string;
     id?: string;
     staffId?: string;
+    managerId?: string;
+    managerName?: string;
   }
 >(user: User | null | undefined, employees: T[]): T[] {
   if (!user) return [];
   const canonical = normalizeRole(user.role);
 
-  // Admin and HR Staff see all employees across all departments
+  // Admin, HR Staff, Viewer see all employees across all departments
   if (canonical === 'ADMIN' || canonical === 'HR_STAFF' || canonical === 'VIEWER') {
     return employees;
   }
 
-  // Employee: strictly scoped to their own department
+  // Employee: scoped to self, department, and direct reports (managers see their team)
   const userDept = user.departmentName || user.departmentId || '';
-  if (!userDept) {
-    // If no department specified, return only self
-    return employees.filter((e) => e.id === user.id || e.staffId === user.staffId);
-  }
+  const userNameLower = (user.name || '').toLowerCase();
+  const userStaffId = (user.staffId || '').toLowerCase();
+  const userId = (user.id || '').toLowerCase();
 
   return employees.filter((e) => {
-    const empDept = e.departmentName || e.departmentId || '';
-    return isDepartmentMatch(userDept, empDept) || e.id === user.id || e.staffId === user.staffId;
+    // 1. Direct reports: if user is designated as manager for this employee
+    const mId = (e.managerId || '').toLowerCase();
+    const mName = (e.managerName || '').toLowerCase();
+    const isDirectReport =
+      Boolean(userStaffId && mId && mId === userStaffId) ||
+      Boolean(userId && mId && mId === userId) ||
+      Boolean(userNameLower && mName && (mName.includes(userNameLower) || userNameLower.includes(mName)));
+
+    if (isDirectReport) return true;
+
+    // 2. Self
+    if (e.id === user.id || (userStaffId && e.staffId && e.staffId.toLowerCase() === userStaffId)) {
+      return true;
+    }
+
+    // 3. Department peer
+    if (userDept) {
+      const empDept = e.departmentName || e.departmentId || '';
+      return isDepartmentMatch(userDept, empDept);
+    }
+
+    return false;
   });
 }
 
 /**
- * Enforces department scoping on leave requests
+ * Enforces department scoping and manager line on leave requests
  * - Admin and HR Staff: see all requests across all departments
- * - Employee: see ONLY requests from their own department or self
+ * - Employee & Managers: see requests from direct reports, self, and department
  */
 export function filterLeaveRequestsForUser<
   T extends {
     department?: string;
+    departmentName?: string;
     employeeId?: string;
     staffId?: string;
+    employeeStaffId?: string;
+    managerId?: string;
+    managerName?: string;
   }
 >(user: User | null | undefined, requests: T[]): T[] {
   if (!user) return [];
@@ -506,9 +534,33 @@ export function filterLeaveRequestsForUser<
   }
 
   const userDept = user.departmentName || user.departmentId || '';
+  const userNameLower = (user.name || '').toLowerCase();
+  const userStaffId = (user.staffId || '').toLowerCase();
+  const userId = (user.id || '').toLowerCase();
+
   return requests.filter((r) => {
-    if (r.employeeId === user.id || r.staffId === user.staffId) return true;
-    if (userDept && r.department && isDepartmentMatch(userDept, r.department)) return true;
+    // 1. Self requests
+    if (r.employeeId === user.id) return true;
+    if (userStaffId && r.staffId && r.staffId.toLowerCase() === userStaffId) return true;
+    if (userStaffId && r.employeeStaffId && r.employeeStaffId.toLowerCase() === userStaffId) return true;
+
+    // 2. Manager of the request
+    const mId = (r.managerId || '').toLowerCase();
+    const mName = (r.managerName || '').toLowerCase();
+    if (
+      (userStaffId && mId && mId === userStaffId) ||
+      (userId && mId && mId === userId) ||
+      (userNameLower && mName && (mName.includes(userNameLower) || userNameLower.includes(mName)))
+    ) {
+      return true;
+    }
+
+    // 3. Department peer
+    const reqDept = r.department || r.departmentName;
+    if (userDept && reqDept && isDepartmentMatch(userDept, reqDept)) {
+      return true;
+    }
+
     return false;
   });
 }
