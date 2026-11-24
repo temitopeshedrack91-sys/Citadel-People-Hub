@@ -51,10 +51,11 @@ export interface EmployeeSalaryAssignment {
     first_name?: string;
     last_name?: string;
     name?: string;
+    full_name?: string;
     staff_id?: string;
     email?: string;
     job_title?: string;
-    department?: string;
+    department?: any;
     department_name?: string;
   };
   pay_frequency?: 'monthly' | 'weekly';
@@ -138,8 +139,10 @@ export interface PayrollItem {
     first_name?: string;
     last_name?: string;
     name?: string;
+    full_name?: string;
     staff_id?: string;
     email?: string;
+    department?: any;
     department_name?: string;
     position?: string;
     bank_name?: string;
@@ -201,7 +204,9 @@ export interface EmployeeLoan {
     first_name?: string;
     last_name?: string;
     name?: string;
+    full_name?: string;
     staff_id?: string;
+    department?: any;
     department_name?: string;
   };
   loan_number?: string;
@@ -294,7 +299,9 @@ export interface EmployeeProvidentFund {
     first_name?: string;
     last_name?: string;
     name?: string;
+    full_name?: string;
     staff_id?: string;
+    department?: any;
     department_name?: string;
   };
   employee_rate?: number;

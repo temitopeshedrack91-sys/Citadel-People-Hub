@@ -65,6 +65,7 @@ export interface Kpi {
   id: number;
   jobTitleId?: number | null;
   jobTitleName?: string;
+  jobTitle?: { id?: number; name?: string } | null;
   indicator: string;
   minRating: number;
   maxRating: number;
@@ -96,6 +97,11 @@ export interface PerformanceReview {
   reviewerComments?: string | null;
   completedAt?: string | null;
   ratings?: ReviewRating[];
+  kpis?: Array<{
+    kpiId: number;
+    title?: string;
+    weight?: number;
+  }>;
 }
 
 export interface JobVacancy {

@@ -53,7 +53,16 @@ export interface PreOnboardingItem {
   emailAccountCreated: boolean;
 }
 
-export type OnboardingDepartment = 'Manager' | 'PCCM' | 'IT' | 'Finance' | 'Mentor';
+export type OnboardingDepartment =
+  | 'Manager'
+  | 'PCCM'
+  | 'IT'
+  | 'Finance'
+  | 'Mentor'
+  | 'Human Resources'
+  | 'Operations'
+  | (string & {});
+
 export type OnboardingTimeline =
   | 'Before Resumption'
   | 'Day 1'
@@ -62,9 +71,13 @@ export type OnboardingTimeline =
   | '1st Two Weeks'
   | '1st Three Weeks'
   | '1st Month'
+  | 'Within 1st Month'
+  | '1st Three Months'
   | '60 Days'
   | '90 Days'
-  | 'Post-3-Months';
+  | 'Post-3-Months'
+  | 'End of Probation'
+  | (string & {});
 
 export interface OnboardingRequiredDoc {
   id: string;
@@ -93,21 +106,23 @@ export interface OnboardingTeamRoster {
 export interface OnboardingTask {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   category?: string;
   department: OnboardingDepartment;
   timeline: OnboardingTimeline;
-  assignedRole: 'PCCM' | 'Department Head' | 'Employee' | 'ICT' | 'Finance' | 'Mentor';
+  assignedRole?: 'PCCM' | 'Department Head' | 'Employee' | 'ICT' | 'Finance' | 'Mentor' | string;
   responsibleRole?: string;
   assignedToName?: string;
-  dueDate: string;
-  isCompleted: boolean;
+  dueDate?: string;
+  isCompleted?: boolean;
+  isComplete?: boolean;
   completedAt?: string;
   isConditional?: boolean;
   conditionNote?: string;
   requiresHrConfirmation?: boolean;
-  status?: 'Pending' | 'In Progress' | 'Completed' | 'Waived';
+  status?: 'Pending' | 'In Progress' | 'Completed' | 'Waived' | string;
   reminderSentAt?: string;
+  requiredDocument?: string;
 }
 
 export interface OnboardingChecklistTemplate {

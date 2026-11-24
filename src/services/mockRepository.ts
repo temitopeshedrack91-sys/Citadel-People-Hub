@@ -1413,6 +1413,19 @@ export class MockPerformanceRepository implements IPerformanceRepository {
     return newKpi;
   }
 
+  async updateKpi(id: number, kpi: Partial<Kpi>): Promise<Kpi> {
+    await sleep();
+    const existing = this.kpis.find((k) => k.id === id);
+    if (!existing) throw new Error('KPI not found');
+    Object.assign(existing, kpi);
+    return existing;
+  }
+
+  async deleteKpi(id: number): Promise<void> {
+    await sleep();
+    this.kpis = this.kpis.filter((k) => k.id !== id);
+  }
+
   async getReviews(): Promise<PerformanceReview[]> {
     await sleep();
     return [...this.reviews];
@@ -1989,7 +2002,7 @@ export class MockClaimRepository implements IClaimRepository {
         id: Date.now() + idx,
         expense_type_id: type.id,
         expense_type: type,
-        expense_date: exp.expense_date,
+        expense_date: exp.expense_date || exp.expenseDate || new Date().toISOString().split('T')[0],
         amount: Number(exp.amount),
         currency: data.currency || 'NGN',
         note: exp.note,
@@ -2038,7 +2051,7 @@ export class MockClaimRepository implements IClaimRepository {
       claim_request_id: claim.id,
       expense_type_id: type.id,
       expense_type: type,
-      expense_date: data.expense_date,
+      expense_date: data.expense_date || data.expenseDate || new Date().toISOString().split('T')[0],
       amount: Number(data.amount),
       currency: claim.currency,
       note: data.note,

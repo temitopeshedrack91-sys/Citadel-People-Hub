@@ -39,6 +39,7 @@ import {
   ExternalLink,
   Layers,
   ListChecks,
+  Trash2,
 } from 'lucide-react';
 import {
   OnboardingJourney,
@@ -466,7 +467,7 @@ export const OnboardingView: React.FC = () => {
     if (
       searchQuery &&
       !task.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      !task.description.toLowerCase().includes(searchQuery.toLowerCase())
+      !(task.description || '').toLowerCase().includes(searchQuery.toLowerCase())
     ) {
       return false;
     }
@@ -1355,7 +1356,7 @@ export const OnboardingView: React.FC = () => {
                         <td className="py-3.5 px-4 text-center align-top">
                           <button
                             type="button"
-                            onClick={() => handleToggleTask(currentJourney.id, task.id, task.isCompleted)}
+                            onClick={() => handleToggleTask(currentJourney.id, task.id, Boolean(task.isCompleted))}
                             className="cursor-pointer text-slate-400 hover:text-black transition"
                             title={task.isCompleted ? 'Mark as pending' : 'Mark as completed'}
                           >
@@ -1475,7 +1476,7 @@ export const OnboardingView: React.FC = () => {
                 >
                   <button
                     type="button"
-                    onClick={() => handleToggleTask(currentJourney.id, task.id, task.isCompleted)}
+                    onClick={() => handleToggleTask(currentJourney.id, task.id, Boolean(task.isCompleted))}
                     className="mt-0.5 shrink-0 text-slate-400 hover:text-black transition cursor-pointer"
                     title={task.isCompleted ? 'Mark as pending' : 'Mark as completed'}
                   >

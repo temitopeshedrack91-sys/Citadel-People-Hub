@@ -973,6 +973,19 @@ export class LaravelPerformanceRepository implements IPerformanceRepository {
     });
   }
 
+  async updateKpi(id: number, kpi: Partial<Kpi>): Promise<Kpi> {
+    return requestLaravelData(`/performance/kpis/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(kpi),
+    });
+  }
+
+  async deleteKpi(id: number): Promise<void> {
+    await requestLaravelData(`/performance/kpis/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   async getReviews(filter?: { employeeId?: number; status?: string }): Promise<PerformanceReview[]> {
     const params = new URLSearchParams();
     if (filter?.employeeId) params.set('employeeId', String(filter.employeeId));

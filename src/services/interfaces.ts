@@ -289,6 +289,8 @@ export interface ITimesheetRepository {
 export interface IPerformanceRepository {
   getKpis(jobTitleId?: number): Promise<import('../types').Kpi[]>;
   createKpi(kpi: Partial<import('../types').Kpi>): Promise<import('../types').Kpi>;
+  updateKpi(id: number, kpi: Partial<import('../types').Kpi>): Promise<import('../types').Kpi>;
+  deleteKpi(id: number): Promise<void>;
   getReviews(filter?: { employeeId?: number; status?: string }): Promise<import('../types').PerformanceReview[]>;
   getReview(id: number): Promise<import('../types').PerformanceReview>;
   createReview(data: Partial<import('../types').PerformanceReview>): Promise<import('../types').PerformanceReview>;
