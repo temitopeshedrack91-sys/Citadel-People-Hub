@@ -198,18 +198,18 @@ export const PayrollView: React.FC = () => {
 
   // Summary KPI Metrics
   const metrics = useMemo(() => {
-    const totalGrossYtd = runs.reduce((acc, r) => acc + (r.total_gross || 0), 0);
+    const totalGrossYtd = runs.reduce((acc, r) => acc + (Number(r.total_gross ?? r.gross_total) || 0), 0);
     const latestRun = runs[0];
-    const latestNet = latestRun ? latestRun.total_net : 0;
+    const latestNet = latestRun ? (Number(latestRun.total_net ?? latestRun.net_total) || 0) : 0;
     const activeLoans = loans.filter((l) => l.status === 'active' || l.status === 'approved');
-    const totalLoanRemaining = activeLoans.reduce((acc, l) => acc + (l.remaining_balance || 0), 0);
-    const pfReserve = providentFunds.reduce((acc, pf) => acc + (pf.current_balance || 0), 0);
+    const totalLoanRemaining = activeLoans.reduce((acc, l) => acc + (Number(l.remaining_balance) || 0), 0);
+    const pfReserve = providentFunds.reduce((acc, pf) => acc + (Number(pf.current_balance) || 0), 0);
 
     return {
       totalGrossYtd,
       latestNet,
       structuresCount: templates.length,
-      assignedStaffCount: assignments.filter((a) => a.is_active).length,
+      assignedStaffCount: assignments.filter((a) => a.is_active !== false).length,
       activeLoansCount: activeLoans.length,
       totalLoanRemaining,
       pfReserve,
@@ -478,7 +478,7 @@ export const PayrollView: React.FC = () => {
       });
 
       const csv = [headers.join(','), ...rows].join('\n');
-      if (typeof window !== 'undefined' && typeof window.Blob !== 'undefined' && window.URL?.createObjectURL) {
+      if (typeof window !== 'undefined' && typeof window.Blob !== 'undefined' && typeof window.URL?.createObjectURL === 'function') {
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -880,9 +880,9 @@ export const PayrollView: React.FC = () => {
                     .map((run) => (
                       <tr key={run.id} className="hover:bg-slate-50/80 transition-colors">
                         <td className="py-3.5 px-4">
-                          <div className="font-bold text-slate-900">{run.run_number}</div>
+                          <div className="font-bold text-slate-900">{run.run_number || `PR-${run.id}`}</div>
                           <div className="text-[11px] text-slate-500 font-medium truncate max-w-xs">
-                            {run.title}
+                            {run.title || run.period_label || `Period ${run.period_start} - ${run.period_end}`}
                           </div>
                         </td>
                         <td className="py-3.5 px-4">
@@ -890,15 +890,15 @@ export const PayrollView: React.FC = () => {
                             {run.period_start} → {run.period_end}
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 font-medium text-slate-700">{run.pay_date}</td>
+                        <td className="py-3.5 px-4 font-medium text-slate-700">{run.pay_date || '—'}</td>
                         <td className="py-3.5 px-4 text-right font-semibold text-slate-900">
-                          {formatMoney(run.total_gross)}
+                          {formatMoney(Number(run.total_gross ?? run.gross_total ?? 0))}
                         </td>
                         <td className="py-3.5 px-4 text-right font-medium text-rose-600">
-                          -{formatMoney(run.total_deduction)}
+                          -{formatMoney(Number(run.total_deduction ?? run.deduction_total ?? 0))}
                         </td>
                         <td className="py-3.5 px-4 text-right font-black text-emerald-700">
-                          {formatMoney(run.total_net)}
+                          {formatMoney(Number(run.total_net ?? run.net_total ?? 0))}
                         </td>
                         <td className="py-3.5 px-4 text-center">
                           <span
@@ -1439,10 +1439,10 @@ export const PayrollView: React.FC = () => {
                       <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
                         <td className="py-3.5 px-4">
                           <div className="font-bold text-slate-900">
-                            {item.employee?.name || item.employee_id}
+                            {item.employee?.name || item.employee?.full_name || item.employee_id}
                           </div>
                           <div className="text-[11px] text-slate-500">
-                            {item.employee?.staff_id} · {item.employee?.department_name}
+                            {item.employee?.staff_id} · {item.employee?.department?.name || item.employee?.department_name}
                           </div>
                         </td>
                         <td className="py-3.5 px-4">
@@ -1454,19 +1454,19 @@ export const PayrollView: React.FC = () => {
                           </div>
                         </td>
                         <td className="py-3.5 px-4 text-right font-medium text-slate-700">
-                          {formatMoney(item.basic_salary)}
+                          {formatMoney(Number(item.basic_salary))}
                         </td>
                         <td className="py-3.5 px-4 text-right font-medium text-emerald-600">
-                          +{formatMoney(item.allowance_total)}
+                          +{formatMoney(Number(item.allowance_total))}
                         </td>
                         <td className="py-3.5 px-4 text-right font-bold text-slate-900">
-                          {formatMoney(item.gross_salary)}
+                          {formatMoney(Number(item.gross_salary ?? (Number(item.basic_salary) + Number(item.allowance_total) + Number(item.bonus_total || 0))))}
                         </td>
                         <td className="py-3.5 px-4 text-right font-medium text-rose-600">
-                          -{formatMoney(item.deduction_total)}
+                          -{formatMoney(Number(item.deduction_total ?? item.total_deduction ?? 0))}
                         </td>
                         <td className="py-3.5 px-4 text-right font-black text-emerald-700">
-                          {formatMoney(item.net_salary)}
+                          {formatMoney(Number(item.net_salary ?? item.net_payable ?? 0))}
                         </td>
                         <td className="py-3.5 px-4 text-center">
                           <span
@@ -1531,33 +1531,33 @@ export const PayrollView: React.FC = () => {
                   {loans.map((loan) => (
                     <tr key={loan.id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="py-3.5 px-4">
-                        <div className="font-bold text-slate-900">{loan.loan_number}</div>
+                        <div className="font-bold text-slate-900">{loan.loan_number || loan.loan_reference || `LN-${loan.id}`}</div>
                         <div className="text-[11px] text-slate-500">
-                          {loan.employee?.name || loan.employee_id} · {loan.employee?.staff_id}
+                          {loan.employee?.name || loan.employee?.full_name || loan.employee_id} · {loan.employee?.staff_id}
                         </div>
                       </td>
                       <td className="py-3.5 px-4 font-medium text-slate-800">{loan.loan_type}</td>
                       <td className="py-3.5 px-4 text-right font-semibold text-slate-900">
-                        {formatMoney(loan.principal_amount)}
+                        {formatMoney(Number(loan.principal_amount))}
                       </td>
                       <td className="py-3.5 px-4 text-right font-medium text-rose-600">
-                        -{formatMoney(loan.monthly_installment)} / mo
+                        -{formatMoney(Number(loan.monthly_installment ?? loan.installment_amount ?? 0))} / mo
                       </td>
                       <td className="py-3.5 px-4 text-center">
                         <span className="font-mono text-slate-700">
-                          {loan.paid_installments} / {loan.total_installments} mos
+                          {loan.paid_installments ?? 0} / {loan.total_installments ?? loan.installment_count ?? 1} mos
                         </span>
                         <div className="w-20 bg-slate-200 h-1.5 rounded-full mx-auto mt-1 overflow-hidden">
                           <div
                             className="bg-emerald-600 h-full rounded-full"
                             style={{
-                              width: `${(loan.paid_installments / loan.total_installments) * 100}%`,
+                              width: `${Math.min(100, (((loan.paid_installments ?? 0) / (loan.total_installments ?? loan.installment_count ?? 1)) * 100))}%`,
                             }}
                           />
                         </div>
                       </td>
                       <td className="py-3.5 px-4 text-right font-black text-slate-900">
-                        {formatMoney(loan.remaining_balance)}
+                        {formatMoney(Number(loan.remaining_balance ?? loan.principal_amount ?? 0))}
                       </td>
                       <td className="py-3.5 px-4 text-center">
                         <span
@@ -2254,18 +2254,18 @@ export const PayrollView: React.FC = () => {
                 <div className="flex justify-between text-slate-600">
                   <span>Basic Base Pay</span>
                   <span className="font-semibold text-slate-900">
-                    {formatMoney(selectedPayslip.basic_salary)}
+                    {formatMoney(Number(selectedPayslip.basic_salary))}
                   </span>
                 </div>
                 <div className="flex justify-between text-slate-600">
                   <span>Allowances</span>
                   <span className="font-semibold text-emerald-600">
-                    +{formatMoney(selectedPayslip.allowance_total)}
+                    +{formatMoney(Number(selectedPayslip.allowance_total))}
                   </span>
                 </div>
                 <div className="flex justify-between font-bold text-slate-900 border-t border-slate-100 pt-1">
                   <span>Total Gross</span>
-                  <span>{formatMoney(selectedPayslip.gross_salary)}</span>
+                  <span>{formatMoney(Number(selectedPayslip.gross_salary ?? (Number(selectedPayslip.basic_salary) + Number(selectedPayslip.allowance_total))))}</span>
                 </div>
               </div>
 
@@ -2277,26 +2277,26 @@ export const PayrollView: React.FC = () => {
                 <div className="flex justify-between text-slate-600">
                   <span>PAYE Tax</span>
                   <span className="font-semibold text-rose-600">
-                    -{formatMoney(selectedPayslip.tax_amount)}
+                    -{formatMoney(Number(selectedPayslip.tax_amount ?? (selectedPayslip as any).tax_deduction ?? 0))}
                   </span>
                 </div>
                 <div className="flex justify-between text-slate-600">
                   <span>Pension / PF (8%)</span>
                   <span className="font-semibold text-rose-600">
-                    -{formatMoney(selectedPayslip.provident_fund_amount)}
+                    -{formatMoney(Number(selectedPayslip.provident_fund_amount ?? (selectedPayslip as any).provident_fund_deduction ?? 0))}
                   </span>
                 </div>
-                {(selectedPayslip.loan_repayment_amount ?? 0) > 0 && (
+                {(Number(selectedPayslip.loan_repayment_amount ?? (selectedPayslip as any).loan_deduction ?? 0)) > 0 && (
                   <div className="flex justify-between text-slate-600">
                     <span>Loan Installment</span>
                     <span className="font-semibold text-rose-600">
-                      -{formatMoney(selectedPayslip.loan_repayment_amount!)}
+                      -{formatMoney(Number(selectedPayslip.loan_repayment_amount ?? (selectedPayslip as any).loan_deduction))}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-rose-700 border-t border-slate-100 pt-1">
                   <span>Total Deductions</span>
-                  <span>-{formatMoney(selectedPayslip.deduction_total)}</span>
+                  <span>-{formatMoney(Number(selectedPayslip.deduction_total ?? (selectedPayslip as any).total_deduction ?? 0))}</span>
                 </div>
               </div>
             </div>

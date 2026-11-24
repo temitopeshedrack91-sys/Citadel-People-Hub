@@ -42,6 +42,21 @@ class EmployeeSalaryTemplate extends Model
         ];
     }
 
+    protected $appends = [
+        'effective_date',
+        'is_active',
+    ];
+
+    public function getEffectiveDateAttribute(): ?string
+    {
+        return $this->effective_from ? (is_string($this->effective_from) ? $this->effective_from : $this->effective_from->format('Y-m-d')) : null;
+    }
+
+    public function getIsActiveAttribute(): bool
+    {
+        return empty($this->effective_to) || (is_string($this->effective_to) ? $this->effective_to : $this->effective_to->format('Y-m-d')) >= date('Y-m-d');
+    }
+
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);

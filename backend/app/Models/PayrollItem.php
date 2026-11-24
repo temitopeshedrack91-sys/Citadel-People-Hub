@@ -42,6 +42,39 @@ class PayrollItem extends Model
         ];
     }
 
+    protected $appends = [
+        'gross_salary',
+        'net_salary',
+        'tax_amount',
+        'provident_fund_amount',
+        'loan_repayment_amount',
+    ];
+
+    public function getGrossSalaryAttribute(): float
+    {
+        return (float) ($this->basic_salary ?? 0) + (float) ($this->allowance_total ?? 0) + (float) ($this->bonus_total ?? 0);
+    }
+
+    public function getNetSalaryAttribute(): float
+    {
+        return (float) ($this->net_payable ?? 0);
+    }
+
+    public function getTaxAmountAttribute(): float
+    {
+        return (float) ($this->tax_deduction ?? 0);
+    }
+
+    public function getProvidentFundAmountAttribute(): float
+    {
+        return (float) ($this->provident_fund_deduction ?? 0);
+    }
+
+    public function getLoanRepaymentAmountAttribute(): float
+    {
+        return (float) ($this->loan_deduction ?? 0);
+    }
+
     public function payrollRun(): BelongsTo
     {
         return $this->belongsTo(PayrollRun::class);

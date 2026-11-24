@@ -42,6 +42,44 @@ class EmployeeLoan extends Model
         ];
     }
 
+    protected $appends = [
+        'loan_number',
+        'total_installments',
+        'monthly_installment',
+        'paid_installments',
+        'remaining_balance',
+    ];
+
+    public function getLoanNumberAttribute(): string
+    {
+        return $this->loan_reference ?: "LN-{$this->id}";
+    }
+
+    public function getTotalInstallmentsAttribute(): int
+    {
+        return (int) ($this->installment_count ?? 1);
+    }
+
+    public function getMonthlyInstallmentAttribute(): float
+    {
+        return (float) ($this->installment_amount ?? 0);
+    }
+
+    public function getPaidInstallmentsAttribute(): int
+    {
+        return $this->relationLoaded('installments')
+            ? $this->installments->where('status', 'paid')->count()
+            : $this->installments()->where('status', 'paid')->count();
+    }
+
+    public function getRemainingBalanceAttribute(): float
+    {
+        $paid = $this->relationLoaded('installments')
+            ? $this->installments->where('status', 'paid')->sum('amount')
+            : $this->installments()->where('status', 'paid')->sum('amount');
+        return max(0, (float) ($this->principal_amount ?? 0) - (float) $paid);
+    }
+
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);

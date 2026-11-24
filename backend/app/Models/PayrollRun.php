@@ -38,6 +38,40 @@ class PayrollRun extends Model
         ];
     }
 
+    protected $appends = [
+        'run_number',
+        'title',
+        'total_gross',
+        'total_deduction',
+        'total_net',
+    ];
+
+    public function getRunNumberAttribute(): string
+    {
+        $year = $this->payroll_year ?: date('Y');
+        return "PR-{$year}-" . str_pad((string) $this->id, 3, '0', STR_PAD_LEFT);
+    }
+
+    public function getTitleAttribute(): string
+    {
+        return $this->period_label ?: "Payroll Run ({$this->period_start} - {$this->period_end})";
+    }
+
+    public function getTotalGrossAttribute(): float
+    {
+        return (float) ($this->gross_total ?? 0);
+    }
+
+    public function getTotalDeductionAttribute(): float
+    {
+        return (float) ($this->deduction_total ?? 0);
+    }
+
+    public function getTotalNetAttribute(): float
+    {
+        return (float) ($this->net_total ?? 0);
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(PayrollItem::class);

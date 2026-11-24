@@ -444,27 +444,167 @@ function extractArray<T>(res: any): T[] {
   return [];
 }
 
+function mapPayrollItem(item: any): PayrollItem {
+  if (!item) return item;
+  const basic = Number(item.basic_salary ?? 0);
+  const allowance = Number(item.allowance_total ?? 0);
+  const bonus = Number(item.bonus_total ?? 0);
+  const gross = Number(item.gross_salary ?? (basic + allowance + bonus));
+  const deduction = Number(item.deduction_total ?? item.total_deduction ?? 0);
+  const net = Number(item.net_salary ?? item.net_payable ?? (gross - deduction));
+  const empName = item.employee?.full_name || item.employee?.name || `${item.employee?.first_name || ''} ${item.employee?.last_name || ''}`.trim();
+  return {
+    ...item,
+    id: String(item.id),
+    basic_salary: basic,
+    allowance_total: allowance,
+    bonus_total: bonus,
+    gross_salary: gross,
+    total_deduction: deduction,
+    deduction_total: deduction,
+    tax_amount: Number(item.tax_amount ?? item.tax_deduction ?? 0),
+    provident_fund_amount: Number(item.provident_fund_amount ?? item.provident_fund_deduction ?? 0),
+    loan_repayment_amount: Number(item.loan_repayment_amount ?? item.loan_deduction ?? 0),
+    net_salary: net,
+    net_payable: net,
+    payment_status: item.payment_status || 'unpaid',
+    employee: item.employee ? {
+      ...item.employee,
+      id: String(item.employee.id),
+      name: empName,
+      full_name: empName,
+      staff_id: item.employee.staff_id,
+      department_name: item.employee.department?.name || item.employee.department_name,
+      job_title: item.employee.job_title,
+    } : undefined,
+  };
+}
+
+function mapPayrollRun(r: any): PayrollRun {
+  if (!r) return r;
+  const items = Array.isArray(r.items) ? r.items.map(mapPayrollItem) : [];
+  const gross = Number(r.total_gross ?? r.gross_total ?? 0);
+  const deduction = Number(r.total_deduction ?? r.deduction_total ?? 0);
+  const net = Number(r.total_net ?? r.net_total ?? (gross - deduction));
+  return {
+    ...r,
+    id: String(r.id),
+    run_number: r.run_number || `PR-${r.payroll_year || new Date().getFullYear()}-${String(r.id).padStart(3, '0')}`,
+    title: r.title || r.period_label || `Payroll Run (${r.period_start} - ${r.period_end})`,
+    period_label: r.period_label || r.title,
+    total_gross: gross,
+    gross_total: gross,
+    total_deduction: deduction,
+    deduction_total: deduction,
+    total_net: net,
+    net_total: net,
+    status: r.status || 'draft',
+    items,
+  };
+}
+
+function mapSalaryTemplate(tpl: any): SalaryTemplate {
+  if (!tpl) return tpl;
+  const allowances = Array.isArray(tpl.allowances) && tpl.allowances.length > 0 ? tpl.allowances : [
+    { name: 'Housing Allowance', amount: Number(tpl.house_rent || 0) },
+    { name: 'Medical Allowance', amount: Number(tpl.medical_allowance || 0) },
+    { name: 'Transport Allowance', amount: Number(tpl.conveyance_allowance || 0) },
+    { name: 'Other Allowance', amount: Number(tpl.other_allowance || 0) },
+  ].filter((a) => a.amount > 0);
+
+  const deductions = Array.isArray(tpl.deductions) && tpl.deductions.length > 0 ? tpl.deductions : [
+    { name: 'Pension Contribution (8%)', amount: Number(tpl.provident_fund_percent || 0), is_percentage: true },
+    { name: 'PAYE Tax', amount: Number(tpl.tax_percent || 0), is_percentage: true },
+  ].filter((d) => d.amount > 0);
+
+  return {
+    ...tpl,
+    id: String(tpl.id),
+    name: tpl.name || 'Salary Structure',
+    basic_salary: Number(tpl.basic_salary || 0),
+    allowances,
+    deductions,
+    is_active: tpl.is_active !== false,
+  };
+}
+
+function mapSalaryAssignment(asgn: any): EmployeeSalaryAssignment {
+  if (!asgn) return asgn;
+  const empName = asgn.employee?.full_name || asgn.employee?.name || `${asgn.employee?.first_name || ''} ${asgn.employee?.last_name || ''}`.trim();
+  return {
+    ...asgn,
+    id: String(asgn.id),
+    employee_id: String(asgn.employee_id),
+    salary_template_id: String(asgn.salary_template_id),
+    effective_date: asgn.effective_date || asgn.effective_from || new Date().toISOString().split('T')[0],
+    basic_salary: Number(asgn.basic_salary ?? asgn.override_basic_salary ?? asgn.salary_template?.basic_salary ?? 0),
+    is_active: asgn.is_active !== false,
+    employee: asgn.employee ? {
+      ...asgn.employee,
+      id: String(asgn.employee.id),
+      name: empName,
+      full_name: empName,
+      staff_id: asgn.employee.staff_id,
+      department_name: asgn.employee.department?.name || asgn.employee.department_name,
+    } : undefined,
+    salary_template: asgn.salaryTemplate ? mapSalaryTemplate(asgn.salaryTemplate) : (asgn.salary_template ? mapSalaryTemplate(asgn.salary_template) : undefined),
+  };
+}
+
+function mapEmployeeLoan(loan: any): EmployeeLoan {
+  if (!loan) return loan;
+  const principal = Number(loan.principal_amount || 0);
+  const monthly = Number(loan.monthly_installment ?? loan.installment_amount ?? 0);
+  const totalInst = Number(loan.total_installments ?? loan.installment_count ?? 1);
+  const paidInst = Number(loan.paid_installments ?? (Array.isArray(loan.installments) ? loan.installments.filter((i: any) => i.status === 'paid').length : 0));
+  const remaining = Number(loan.remaining_balance ?? Math.max(0, principal - (paidInst * monthly)));
+  const empName = loan.employee?.full_name || loan.employee?.name || `${loan.employee?.first_name || ''} ${loan.employee?.last_name || ''}`.trim();
+
+  return {
+    ...loan,
+    id: String(loan.id),
+    employee_id: String(loan.employee_id),
+    loan_number: loan.loan_number || loan.loan_reference || `LN-${loan.id}`,
+    loan_type: loan.loan_type || loan.remarks || 'Staff Loan & Advance',
+    principal_amount: principal,
+    monthly_installment: monthly,
+    total_installments: totalInst,
+    paid_installments: paidInst,
+    remaining_balance: remaining,
+    status: loan.status || 'pending',
+    employee: loan.employee ? {
+      ...loan.employee,
+      id: String(loan.employee.id),
+      name: empName,
+      full_name: empName,
+      staff_id: loan.employee.staff_id,
+      department_name: loan.employee.department?.name || loan.employee.department_name,
+    } : undefined,
+  };
+}
+
 export class LaravelPayrollRepository implements IPayrollRepository {
   async getSalaryTemplates(): Promise<SalaryTemplate[]> {
     const res = await requestLaravelData('/payroll/templates');
-    return extractArray<SalaryTemplate>(res);
+    return extractArray<any>(res).map(mapSalaryTemplate);
   }
 
-  createSalaryTemplate(template: Omit<SalaryTemplate, 'id' | 'created_at' | 'updated_at'> & { code?: string; pay_frequency?: string }): Promise<SalaryTemplate> {
+  async createSalaryTemplate(template: Omit<SalaryTemplate, 'id' | 'created_at' | 'updated_at'> & { code?: string; pay_frequency?: string }): Promise<SalaryTemplate> {
     const payload = {
       code: template.code || 'TMPL-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
       pay_frequency: template.pay_frequency || 'monthly',
       ...template,
     };
-    return requestLaravelData('/payroll/templates', {
+    const res = await requestLaravelData('/payroll/templates', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+    return mapSalaryTemplate(res);
   }
 
   async getAssignments(): Promise<EmployeeSalaryAssignment[]> {
     const res = await requestLaravelData('/payroll/assignments');
-    return extractArray<EmployeeSalaryAssignment>(res);
+    return extractArray<any>(res).map(mapSalaryAssignment);
   }
 
   async assignSalaryTemplate(assignment: {
@@ -483,19 +623,21 @@ export class LaravelPayrollRepository implements IPayrollRepository {
       effective_from: assignment.effective_from || assignment.effective_date,
       basic_salary: assignment.basic_salary ?? assignment.override_basic_salary ?? 0,
     };
-    return requestLaravelData('/payroll/assignments', {
+    const res = await requestLaravelData('/payroll/assignments', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+    return mapSalaryAssignment(res);
   }
 
   async getPayrollRuns(): Promise<PayrollRun[]> {
     const res = await requestLaravelData('/payroll/runs');
-    return extractArray<PayrollRun>(res);
+    return extractArray<any>(res).map(mapPayrollRun);
   }
 
-  getPayrollRun(id: string): Promise<PayrollRun> {
-    return requestLaravelData(`/payroll/runs/${encodeURIComponent(id)}`);
+  async getPayrollRun(id: string): Promise<PayrollRun> {
+    const res = await requestLaravelData(`/payroll/runs/${encodeURIComponent(id)}`);
+    return mapPayrollRun(res);
   }
 
   async generatePayrollRun(data: {
@@ -512,25 +654,29 @@ export class LaravelPayrollRepository implements IPayrollRepository {
       period_label: data.period_label || data.title,
       ...data,
     };
-    return requestLaravelData('/payroll/runs', {
+    const res = await requestLaravelData('/payroll/runs', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+    return mapPayrollRun(res);
   }
 
-  finalizePayrollRun(id: string): Promise<PayrollRun> {
-    return requestLaravelData(`/payroll/runs/${encodeURIComponent(id)}/finalize`, { method: 'POST' });
+  async finalizePayrollRun(id: string): Promise<PayrollRun> {
+    const res = await requestLaravelData(`/payroll/runs/${encodeURIComponent(id)}/finalize`, { method: 'POST' });
+    return mapPayrollRun(res);
   }
 
-  getPayslip(id: string): Promise<PayrollItem> {
-    return requestLaravelData(`/payroll/payslips/${encodeURIComponent(id)}`);
+  async getPayslip(id: string): Promise<PayrollItem> {
+    const res = await requestLaravelData(`/payroll/payslips/${encodeURIComponent(id)}`);
+    return mapPayrollItem(res);
   }
 
-  markPayslipPaid(id: string, paymentMethod?: string): Promise<PayrollItem> {
-    return requestLaravelData(`/payroll/payslips/${encodeURIComponent(id)}/paid`, {
+  async markPayslipPaid(id: string, paymentMethod?: string): Promise<PayrollItem> {
+    const res = await requestLaravelData(`/payroll/payslips/${encodeURIComponent(id)}/paid`, {
       method: 'PATCH',
       body: JSON.stringify({ payment_method: paymentMethod || 'Direct Bank Transfer' }),
     });
+    return mapPayrollItem(res);
   }
 
   async getLoans(filter?: { employee_id?: string; status?: string }): Promise<EmployeeLoan[]> {
@@ -538,7 +684,7 @@ export class LaravelPayrollRepository implements IPayrollRepository {
     if (filter?.employee_id) params.set('employee_id', filter.employee_id);
     if (filter?.status) params.set('status', filter.status);
     const res = await requestLaravelData(`/payroll/loans${params.size ? `?${params}` : ''}`);
-    return extractArray<EmployeeLoan>(res);
+    return extractArray<any>(res).map(mapEmployeeLoan);
   }
 
   async createLoan(loan: {
@@ -563,14 +709,16 @@ export class LaravelPayrollRepository implements IPayrollRepository {
       issued_date: loan.issued_date || loan.disbursed_at || new Date().toISOString().split('T')[0],
       remarks: loan.remarks || loan.notes || '',
     };
-    return requestLaravelData('/payroll/loans', {
+    const res = await requestLaravelData('/payroll/loans', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+    return mapEmployeeLoan(res);
   }
 
-  approveLoan(id: string): Promise<EmployeeLoan> {
-    return requestLaravelData(`/payroll/loans/${encodeURIComponent(id)}/approve`, { method: 'PATCH' });
+  async approveLoan(id: string): Promise<EmployeeLoan> {
+    const res = await requestLaravelData(`/payroll/loans/${encodeURIComponent(id)}/approve`, { method: 'PATCH' });
+    return mapEmployeeLoan(res);
   }
 
   async getDeductions(filter?: { employee_id?: string }): Promise<EmployeeDeduction[]> {

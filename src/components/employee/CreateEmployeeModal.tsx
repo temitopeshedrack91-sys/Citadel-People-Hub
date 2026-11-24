@@ -104,7 +104,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
 
   const availableManagers = useMemo(() => {
     if (employees && employees.length > 0) {
-      return employees.map((emp) => `${emp.fullName || `${emp.firstName} ${emp.lastName}`.trim()} (${emp.jobTitle || emp.role || 'Staff'})`);
+      return employees.map((emp) => `${emp.fullName || `${emp.firstName} ${emp.lastName}`.trim()} (${emp.jobTitle || 'Staff'})`);
     }
     return [
       'Sussan Afuwape (PCCM Manager)',

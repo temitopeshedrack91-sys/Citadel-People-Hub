@@ -39,6 +39,31 @@ class SalaryTemplate extends Model
         ];
     }
 
+    protected $appends = [
+        'allowances',
+        'deductions',
+    ];
+
+    public function getAllowancesAttribute(): array
+    {
+        $allowances = [
+            ['name' => 'Housing Allowance', 'amount' => (float) ($this->house_rent ?? 0)],
+            ['name' => 'Medical Allowance', 'amount' => (float) ($this->medical_allowance ?? 0)],
+            ['name' => 'Transport Allowance', 'amount' => (float) ($this->conveyance_allowance ?? 0)],
+            ['name' => 'Other Allowance', 'amount' => (float) ($this->other_allowance ?? 0)],
+        ];
+        return array_values(array_filter($allowances, fn ($a) => $a['amount'] > 0));
+    }
+
+    public function getDeductionsAttribute(): array
+    {
+        $deductions = [
+            ['name' => 'Pension Contribution (8%)', 'amount' => (float) ($this->provident_fund_percent ?? 0), 'is_percentage' => true],
+            ['name' => 'PAYE Tax', 'amount' => (float) ($this->tax_percent ?? 0), 'is_percentage' => true],
+        ];
+        return array_values(array_filter($deductions, fn ($d) => $d['amount'] > 0));
+    }
+
     public function assignments(): HasMany
     {
         return $this->hasMany(EmployeeSalaryTemplate::class);
