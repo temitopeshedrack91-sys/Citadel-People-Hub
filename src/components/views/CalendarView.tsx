@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -8,10 +8,11 @@ import {
   CheckCircle2,
   X,
   CalendarDays,
-  Plus,
 } from 'lucide-react';
-import { auditRepository } from '../../services';
+import { auditRepository, leaveRepository } from '../../services';
 import { useAuth } from '../../context/AuthContext';
+import { useRealtimeTable } from '../../hooks/useRealtimeTable';
+import { isHrOrAdminUser, isManagerUser } from '../../utils/rbac';
 
 export interface CalendarEventItem {
   id: string;
@@ -24,6 +25,16 @@ export interface CalendarEventItem {
   monthKey: string; // e.g. '2026-10'
 }
 
+const formatDisplayDate = (isoDate: string): string => {
+  const parsed = new Date(`${isoDate}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return isoDate;
+  return parsed.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
 export const CalendarView: React.FC = () => {
   const { currentUser, currentRole } = useAuth();
   const [currentMonthDate, setCurrentMonthDate] = useState<Date>(() => {
@@ -33,6 +44,57 @@ export const CalendarView: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState('All');
   const [syncNotice, setSyncNotice] = useState<string | null>(null);
   const [filterByMonth, setFilterByMonth] = useState(false); // Default shows all upcoming, toggleable
+  const [liveLeaveEvents, setLiveLeaveEvents] = useState<CalendarEventItem[]>([]);
+
+  const isTeamOrHr = isHrOrAdminUser(currentUser) || isManagerUser(currentUser);
+
+  const loadCalendarLeaves = useCallback(async () => {
+    try {
+      if (isTeamOrHr) {
+        const events = await leaveRepository.getTeamCalendar();
+        setLiveLeaveEvents(
+          events.map((ev) => ({
+            id: `leave-${ev.id}`,
+            date: formatDisplayDate(ev.startDate),
+            monthKey: (ev.startDate || '').slice(0, 7),
+            time: `${ev.totalDays} day${ev.totalDays === 1 ? '' : 's'}`,
+            title: `${ev.employeeName} — ${ev.leaveType} (${ev.status})`,
+            category: 'Leave',
+            entity: ev.entityName || ev.departmentName || 'Team',
+            description: `${ev.startDate} to ${ev.endDate} · Stage: ${ev.approvalStage || 'Review'}`,
+          }))
+        );
+      } else {
+        const ownLeaves = await leaveRepository.getAll();
+        setLiveLeaveEvents(
+          ownLeaves.map((lv) => ({
+            id: `leave-${lv.id}`,
+            date: formatDisplayDate(lv.startDate),
+            monthKey: (lv.startDate || '').slice(0, 7),
+            time: `${lv.totalDays} day${lv.totalDays === 1 ? '' : 's'}`,
+            title: `${lv.employeeName} — ${lv.leaveType} (${lv.status})`,
+            category: 'Leave',
+            entity: lv.entityName || lv.departmentName || 'Personal',
+            description: `${lv.startDate} to ${lv.endDate} · ${
+              lv.status === 'Rejected' && lv.stoppedAtStage
+                ? `Stopped at ${lv.stoppedAtStage}`
+                : lv.approvalStage || lv.status
+            }`,
+          }))
+        );
+      }
+    } catch {
+      setLiveLeaveEvents([]);
+    }
+  }, [isTeamOrHr]);
+
+  useEffect(() => {
+    void loadCalendarLeaves();
+  }, [loadCalendarLeaves]);
+
+  useRealtimeTable('leave_requests', () => {
+    void loadCalendarLeaves();
+  });
 
   const currentMonthLabel = useMemo(() => {
     return currentMonthDate.toLocaleDateString('en-US', {
@@ -143,7 +205,12 @@ export const CalendarView: React.FC = () => {
     setCurrentMonthDate(new Date(today.getFullYear(), today.getMonth(), 1));
   };
 
-  const filteredEvents = allEvents.filter((e) => {
+  const combinedEvents = useMemo(() => {
+    const base = liveLeaveEvents.length > 0 ? allEvents.filter((e) => e.category !== 'Leave') : allEvents;
+    return [...liveLeaveEvents, ...base];
+  }, [liveLeaveEvents]);
+
+  const filteredEvents = combinedEvents.filter((e) => {
     if (activeCategory !== 'All' && e.category !== activeCategory) return false;
     if (filterByMonth && e.monthKey !== currentMonthKey) return false;
     return true;

@@ -12,6 +12,7 @@ import {
   LaravelEmployeeRepository,
   LaravelLeaveRepository,
   LaravelNotificationRepository,
+  LaravelOffboardingRepository,
   LaravelOrganizationRepository,
   LaravelTalentRepository,
   LaravelPayrollRepository,
@@ -25,7 +26,7 @@ import {
 } from './laravelAdapter';
 import { isLaravelApiConfigured } from './laravelClient';
 import { canUseSupabaseDirectAccess, shouldUseLaravelBackend } from '../utils/authMode';
-import { IAttendanceRepository, ITalentRepository } from './interfaces';
+import { IAttendanceRepository, IEmployeeRepository, ILeaveRepository, IOffboardingRepository, ITalentRepository } from './interfaces';
 import {
   MockAttendanceRepository,
   MockAuditRepository,
@@ -33,6 +34,7 @@ import {
   MockEmployeeRepository,
   MockLeaveRepository,
   MockNotificationRepository,
+  MockOffboardingRepository,
   MockOrganizationRepository,
   MockPayrollRepository,
   MockTalentRepository,
@@ -71,7 +73,7 @@ const useSupabaseDirectAccess = import.meta.env.MODE === 'test'
       import.meta.env.VITE_ENABLE_SUPABASE_DIRECT_DEV_ACCESS === 'true'
     );
 
-export const employeeRepository = useLaravelApi
+export const employeeRepository: IEmployeeRepository = useLaravelApi
   ? new LaravelEmployeeRepository()
   : useSupabaseDirectAccess ? new SupabaseEmployeeRepository() : new MockEmployeeRepository();
 
@@ -79,7 +81,7 @@ export const organizationRepository = useLaravelApi
   ? new LaravelOrganizationRepository()
   : useSupabaseDirectAccess ? new SupabaseOrganizationRepository() : new MockOrganizationRepository();
 
-export const leaveRepository = useLaravelApi
+export const leaveRepository: ILeaveRepository = useLaravelApi
   ? new LaravelLeaveRepository()
   : useSupabaseDirectAccess ? new SupabaseLeaveRepository() : new MockLeaveRepository();
 
@@ -134,5 +136,9 @@ export const reportRepository = useLaravelApi
 export const claimRepository = useLaravelApi
   ? new LaravelClaimRepository()
   : new MockClaimRepository();
+
+export const offboardingRepository: IOffboardingRepository = useLaravelApi
+  ? new LaravelOffboardingRepository()
+  : new MockOffboardingRepository();
 
 

@@ -10,7 +10,7 @@ import React, { createContext, useContext, useState, useMemo, useEffect } from '
 import { User, UserRole, RolePermissions } from '../types';
 import { getLaravelAccessToken, isLaravelApiConfigured, requestLaravel, requestLaravelData, setLaravelAccessToken } from '../services/laravelClient';
 import { authService, type AuthUser } from '../services/supabaseService';
-import { getRolePermissions } from '../utils/rbac';
+import { getRolePermissions, isManagerUser } from '../utils/rbac';
 import { canUseLocalPersonaAuthentication, canUseSupabaseDirectAccess, shouldUseLaravelBackend } from '../utils/authMode';
 
 export interface PersonaOption {
@@ -223,6 +223,7 @@ const DEFAULT_PERSONA: PersonaOption = {
 const SUPPORTED_ROLES: UserRole[] = [
   'ADMIN',
   'HR_STAFF',
+  'MANAGER',
   'EMPLOYEE',
   'VIEWER',
   'PCCM_SUPER_ADMIN',
@@ -264,6 +265,11 @@ function createLaravelPersona(user: {
   phone?: string | null;
   location?: string | null;
   role: UserRole;
+  effectiveRole?: 'HR' | 'MANAGER' | 'EMPLOYEE' | 'VIEWER';
+  isSupervisor?: boolean;
+  directReportsCount?: number;
+  managerId?: string | null;
+  managerName?: string | null;
   entityId: string | null;
   entityName: string | null;
   departmentId: string | null;
@@ -281,6 +287,11 @@ function createLaravelPersona(user: {
       phone: user.phone || undefined,
       location: user.location || undefined,
       role: user.role,
+      effectiveRole: user.effectiveRole,
+      isSupervisor: user.isSupervisor,
+      directReportsCount: user.directReportsCount,
+      managerId: user.managerId || undefined,
+      managerName: user.managerName || undefined,
       entityId: user.entityId || '',
       entityName: user.entityName || '',
       departmentId: user.departmentId || '',
@@ -328,6 +339,8 @@ interface AuthContextType {
   canApproveLeave: boolean;
   canManageSettings: boolean;
   isReadOnly: boolean;
+  isManager: boolean;
+  refreshUser: () => Promise<void>;
   updateProfile: (updates: Partial<Pick<User, 'name' | 'email' | 'phone' | 'location' | 'bio' | 'avatarUrl'>>) => Promise<void>;
 }
 
@@ -383,38 +396,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return false;
   });
 
-  // Laravel is the canonical auth provider when configured. A Supabase session
-  // cannot authenticate requests to the Sanctum-protected API.
+  // Laravel is the canonical auth provider when configured. Check Laravel first so
+  // page reloads with an active Bearer token rehydrate cleanly from /api/v1/auth/user.
   useEffect(() => {
     let isMounted = true;
 
-    const storedAuth = localStorage.getItem('citadel_authenticated');
-
-    // If user is already marked as authenticated in localStorage, preserve that state
-    // and only set up the auth listener without overriding the stored state
-    if (storedAuth === 'true') {
-      // Set up auth state listener but don't override the authenticated state
-      const { data: authListener } = authService.onAuthStateChange((user) => {
-        if (user) {
-          setCurrentPersona(createSupabasePersona(user));
-          try {
-            localStorage.setItem('citadel_authenticated', 'true');
-            localStorage.removeItem('citadel_logged_out');
-          } catch {}
-          setIsAuthenticated(true);
-        } else if (!localPersonaAuthenticationEnabled) {
-          setCurrentPersona(DEFAULT_PERSONA);
-          setIsAuthenticated(false);
-        }
-      });
-
-      return () => {
-        isMounted = false;
-        authListener?.subscription.unsubscribe();
-      };
-    }
-
-    // Only run auth backend checks if not already authenticated from storage
     if (backendEnabled) {
       const token = getLaravelAccessToken();
       if (!token) {
@@ -438,9 +424,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setLaravelAccessToken(null);
           setCurrentPersona(defaultPersona);
           setIsAuthenticated(false);
+          try {
+            localStorage.removeItem('citadel_authenticated');
+          } catch {}
         });
 
       return () => { isMounted = false; };
+    }
+
+    const storedAuth = localStorage.getItem('citadel_authenticated');
+    if (storedAuth === 'true' && typeof authService?.onAuthStateChange === 'function') {
+      const { data: authListener } = authService.onAuthStateChange((user) => {
+        if (user) {
+          setCurrentPersona(createSupabasePersona(user));
+          try {
+            localStorage.setItem('citadel_authenticated', 'true');
+            localStorage.removeItem('citadel_logged_out');
+          } catch {}
+          setIsAuthenticated(true);
+        } else if (!localPersonaAuthenticationEnabled) {
+          setCurrentPersona(DEFAULT_PERSONA);
+          setIsAuthenticated(false);
+        }
+      });
+
+      return () => {
+        isMounted = false;
+        authListener?.subscription.unsubscribe();
+      };
     }
 
     if (!supabaseAuthEnabled) {
@@ -679,6 +690,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return getRolePermissions(currentPersona.user.role);
   }, [currentPersona.user.role]);
 
+  const isManager = useMemo(() => isManagerUser(currentPersona.user), [currentPersona.user]);
+
+  const refreshUser = async () => {
+    if (!backendEnabled || !getLaravelAccessToken()) return;
+    try {
+      const { user } = await requestLaravel<{ user: Parameters<typeof createLaravelPersona>[0] }>('/auth/user');
+      setCurrentPersona(createLaravelPersona(user));
+    } catch {}
+  };
+
   const value = {
     currentUser: currentPersona.user,
     currentRole: currentPersona.user.role,
@@ -695,9 +716,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     canViewSensitiveData: permissions.canViewSensitiveData,
     canAccessAuditLogs: permissions.canViewAuditLogs,
     canManageEntities: permissions.canManageEntitiesAndDepts,
-    canApproveLeave: permissions.canApproveLeave,
+    canApproveLeave: permissions.canApproveLeave || isManager,
     canManageSettings: permissions.canManageSettings,
     isReadOnly: permissions.isReadOnly,
+    isManager,
+    refreshUser,
     updateProfile,
   };
 

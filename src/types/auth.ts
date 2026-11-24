@@ -6,11 +6,12 @@
 export type UserRole =
   | 'ADMIN'              // System Administrator (full access to all modules and system settings)
   | 'HR_STAFF'           // HR Staff / Manager (cross-department HR access, no system settings)
-  | 'EMPLOYEE'           // Self-service employee (department-scoped records only)
+  | 'MANAGER'            // Line Manager / Direct Supervisor (team-scoped approvals & team calendar)
+  | 'EMPLOYEE'           // Self-service employee (own profile, balance, history; plus manager actions if direct reports exist)
   | 'VIEWER'             // Read-only auditor / viewer (view access, zero mutations)
   | 'PCCM_SUPER_ADMIN'   // Legacy: People, Culture & Change Manager (Super Admin - primary HR admin)
-  | 'BUSINESS_HEAD'      // Legacy: Entity-scoped executive
-  | 'DEPARTMENT_HEAD'    // Legacy: Department/Team-scoped leader
+  | 'BUSINESS_HEAD'      // Legacy: Entity-scoped manager
+  | 'DEPARTMENT_HEAD'    // Legacy: Department/Team-scoped manager
   | 'SYSTEM_ADMIN';      // Legacy: Technical administration (maps to Admin)
 
 export interface User {
@@ -24,6 +25,11 @@ export interface User {
   location?: string;
   bio?: string;
   role: UserRole;
+  effectiveRole?: 'HR' | 'MANAGER' | 'EMPLOYEE' | 'VIEWER';
+  isSupervisor?: boolean;
+  directReportsCount?: number;
+  managerId?: string;
+  managerName?: string;
   entityId: string;
   entityName: string;
   departmentId: string;

@@ -12,7 +12,10 @@ class LeaveRequest extends Model
         'employee_id', 'employee_staff_id', 'employee_name', 'entity_name', 'department_name',
         'leave_type', 'start_date', 'end_date', 'total_days', 'reason', 'relieving_staff_id',
         'relieving_staff_name', 'handover_colleague', 'manager_id', 'manager_name', 'status', 'applied_date',
-        'approval_stage', 'approver_comments', 'approval_history',
+        'approval_stage', 'stopped_at_stage',
+        'manager_actor_id', 'manager_actor_name', 'manager_acted_at',
+        'hr_actor_id', 'hr_actor_name', 'hr_acted_at',
+        'approver_comments', 'approval_history',
     ];
 
     protected function casts(): array
@@ -21,6 +24,8 @@ class LeaveRequest extends Model
             'start_date' => 'date:Y-m-d',
             'end_date' => 'date:Y-m-d',
             'applied_date' => 'datetime',
+            'manager_acted_at' => 'datetime',
+            'hr_acted_at' => 'datetime',
             'approval_history' => 'array',
         ];
     }

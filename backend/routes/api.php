@@ -4,17 +4,20 @@ use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\AuditController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClaimController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\IdentityLinkController;
 use App\Http\Controllers\Api\JobTitleController;
 use App\Http\Controllers\Api\LeaveController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\OffboardingController;
 use App\Http\Controllers\Api\OrganizationController;
 use App\Http\Controllers\Api\PayGradeController;
 use App\Http\Controllers\Api\PayrollController;
 use App\Http\Controllers\Api\PerformanceController;
 use App\Http\Controllers\Api\ProjectController;
+use App\Http\Controllers\Api\RealtimeController;
 use App\Http\Controllers\Api\RecruitmentPipelineController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\TalentController;
@@ -25,7 +28,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
     Route::get('/health', fn () => response()->json(['status' => 'ok', 'service' => config('app.name')]));
-    Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('login');
+    Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:30,1')->name('login');
+    // Stream endpoint supports either Bearer header or ?token= for browser EventSource compatibility.
+    Route::get('/realtime/stream', [RealtimeController::class, 'stream'])->middleware('throttle:120,1');
 
     Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
         Route::get('/auth/user', [AuthController::class, 'me']);
@@ -38,13 +43,18 @@ Route::prefix('v1')->group(function () {
         Route::post('/departments', [OrganizationController::class, 'createDepartment'])->middleware('throttle:30,1');
         Route::patch('/departments/{department}', [OrganizationController::class, 'updateDepartment'])->middleware('throttle:30,1');
 
+        Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
+        Route::get('/realtime/events', [RealtimeController::class, 'events']);
+
         Route::apiResource('employees', EmployeeController::class)->except(['destroy'])->middleware('throttle:60,1');
+        Route::get('/employees/{employee}/hierarchy', [EmployeeController::class, 'hierarchy'])->middleware('throttle:60,1');
         Route::delete('/employees/{employee}', [EmployeeController::class, 'destroy'])->middleware('throttle:30,1');
 
         Route::get('/leave-requests', [LeaveController::class, 'index']);
         Route::get('/employees/{employeeId}/leave-requests', [LeaveController::class, 'forEmployee']);
         Route::post('/leave-requests', [LeaveController::class, 'store'])->middleware('throttle:30,1');
         Route::patch('/leave-requests/{leaveRequest}/status', [LeaveController::class, 'updateStatus'])->middleware('throttle:30,1');
+        Route::get('/leave/team-calendar', [LeaveController::class, 'teamCalendar']);
         Route::get('/leave/categories', [LeaveController::class, 'categories']);
         Route::get('/leave/balances', [LeaveController::class, 'balances']);
         Route::get('/employees/{employeeId}/leave-balances', [LeaveController::class, 'balances']);
@@ -118,11 +128,25 @@ Route::prefix('v1')->group(function () {
         Route::get('/onboarding-journeys', [TalentController::class, 'journeys']);
         Route::post('/onboarding-journeys', [TalentController::class, 'createJourney'])->middleware('throttle:30,1');
         Route::post('/onboarding-journeys/{journey}/tasks', [TalentController::class, 'createOnboardingTask'])->middleware('throttle:30,1');
+        Route::patch('/onboarding-journeys/{journey}/tasks/reorder', [TalentController::class, 'reorderTasks']);
+        Route::post('/onboarding-journeys/{journey}/tasks/{taskId}/reminder', [TalentController::class, 'remindTask']);
         Route::patch('/onboarding-journeys/{journey}/tasks/{taskId}', [TalentController::class, 'updateTask']);
+        Route::post('/onboarding-journeys/{journey}/reminders', [TalentController::class, 'remindBulkTasks']);
+        Route::post('/onboarding-journeys/{journey}/complete', [TalentController::class, 'completeJourney']);
         Route::patch('/onboarding-journeys/{journey}/documents/{documentId}', [TalentController::class, 'updateDocument']);
         Route::patch('/onboarding-journeys/{journey}/orientation/{itemId}', [TalentController::class, 'updateOrientation']);
         Route::get('/checklist-templates', [TalentController::class, 'checklistTemplates']);
         Route::post('/checklist-templates', [TalentController::class, 'createChecklistTemplate'])->middleware('throttle:30,1');
+        Route::patch('/checklist-templates/{template}', [TalentController::class, 'updateChecklistTemplate'])->middleware('throttle:30,1');
+
+        // 5-Stage Offboarding & Clearance Workflow
+        Route::get('/offboarding/requests', [OffboardingController::class, 'index']);
+        Route::post('/offboarding/requests', [OffboardingController::class, 'store'])->middleware('throttle:30,1');
+        Route::post('/offboarding/requests/{offboardingRequest}/manager-endorse', [OffboardingController::class, 'managerEndorse']);
+        Route::post('/offboarding/requests/{offboardingRequest}/verify-notice', [OffboardingController::class, 'verifyNotice']);
+        Route::post('/offboarding/requests/{offboardingRequest}/schedule-interview', [OffboardingController::class, 'scheduleInterview']);
+        Route::patch('/offboarding/requests/{offboardingRequest}/clearance', [OffboardingController::class, 'updateClearance']);
+        Route::post('/offboarding/requests/{offboardingRequest}/finalize', [OffboardingController::class, 'finalize']);
         Route::get('/requisitions', [TalentController::class, 'requisitions']);
         Route::post('/requisitions', [TalentController::class, 'createRequisition'])->middleware('throttle:30,1');
         Route::patch('/requisitions/{requisition}/status', [TalentController::class, 'updateRequisitionStatus'])->middleware('throttle:30,1');

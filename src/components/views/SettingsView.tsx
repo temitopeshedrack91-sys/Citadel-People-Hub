@@ -39,7 +39,7 @@ export const SettingsView: React.FC = () => {
   // New dept form
   const [deptName, setDeptName] = useState('');
   const [deptCode, setDeptCode] = useState('');
-  const [deptEntityId, setDeptEntityId] = useState('entity-cgcc');
+  const [deptEntityId, setDeptEntityId] = useState('');
   const [deptHeadName, setDeptHeadName] = useState('');
   const [deptDescription, setDeptDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,6 +51,9 @@ export const SettingsView: React.FC = () => {
     ]);
     setEntities(ents);
     setDepartments(depts);
+    if (ents.length > 0) {
+      setDeptEntityId((prev) => (prev && ents.some((e) => e.id === prev) ? prev : String(ents[0].id)));
+    }
   };
 
   useEffect(() => {

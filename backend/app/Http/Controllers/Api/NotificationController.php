@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\SystemNotification;
+use App\Services\RealtimeEventService;
 use App\Support\AuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -29,6 +30,7 @@ class NotificationController extends Controller
             $this->authorizeNotification($request, $lockedNotification);
             $lockedNotification->update(['read_at' => now()]);
             AuditLogger::record($request, 'Notifications', 'Marked notification as read', $lockedNotification->id, $lockedNotification->title);
+            RealtimeEventService::publish('notifications', 'UPDATE', $lockedNotification->id, [], (int) $request->user()->id);
         });
 
         return response()->json(['message' => 'Notification marked as read.']);

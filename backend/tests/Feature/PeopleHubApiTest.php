@@ -335,10 +335,20 @@ class PeopleHubApiTest extends TestCase
             ->assertJsonPath('data.address', 'Private home address');
     }
 
-    public function test_leave_approval_moves_through_department_business_and_hr_stages(): void
+    public function test_leave_approval_moves_through_manager_and_hr_stages(): void
     {
         $entity = Entity::create(['name' => 'Citadel', 'short_code' => 'CIT']);
         $department = Department::create(['entity_id' => $entity->id, 'name' => 'People', 'code' => 'PPL']);
+        $managerEmployee = Employee::create([
+            'staff_id' => 'MGR-3',
+            'full_name' => 'Direct Supervisor',
+            'first_name' => 'Direct',
+            'last_name' => 'Supervisor',
+            'entity_id' => $entity->id,
+            'department_id' => $department->id,
+            'job_title' => 'Team Lead',
+            'status' => 'Active',
+        ]);
         $employee = Employee::create([
             'staff_id' => 'STAFF-3',
             'full_name' => 'Example Employee',
@@ -346,6 +356,8 @@ class PeopleHubApiTest extends TestCase
             'last_name' => 'Employee',
             'entity_id' => $entity->id,
             'department_id' => $department->id,
+            'manager_id' => (string) $managerEmployee->id,
+            'manager_name' => $managerEmployee->full_name,
             'job_title' => 'Officer',
             'status' => 'Active',
         ]);
@@ -355,36 +367,44 @@ class PeopleHubApiTest extends TestCase
             'employee_name' => $employee->full_name,
             'entity_name' => $entity->name,
             'department_name' => $department->name,
+            'manager_id' => (string) $managerEmployee->id,
+            'manager_name' => $managerEmployee->full_name,
             'leave_type' => 'Annual Leave',
             'start_date' => now()->addDay()->toDateString(),
             'end_date' => now()->addDays(3)->toDateString(),
             'total_days' => 3,
             'reason' => 'Annual leave request',
             'status' => 'Submitted',
-            'approval_stage' => 'DEPARTMENT_HEAD',
+            'approval_stage' => 'MANAGER',
             'applied_date' => now(),
             'approval_history' => [],
         ]);
-        $departmentHead = User::factory()->create(['role' => 'DEPARTMENT_HEAD', 'department_id' => $department->id]);
-        $businessHead = User::factory()->create(['role' => 'BUSINESS_HEAD', 'entity_id' => $entity->id]);
+        $managerUser = User::factory()->create([
+            'role' => 'MANAGER',
+            'staff_id' => $managerEmployee->staff_id,
+            'entity_id' => $entity->id,
+            'department_id' => $department->id,
+        ]);
         $hr = User::factory()->create(['role' => 'PCCM_SUPER_ADMIN']);
 
-        $this->actingAs($businessHead)
+        // HR cannot bypass Stage 1 Manager approval
+        $this->actingAs($hr)
             ->patchJson("/api/v1/leave-requests/{$leave->id}/status", ['status' => 'Approved'])
             ->assertForbidden();
 
-        $this->actingAs($departmentHead)
-            ->patchJson("/api/v1/leave-requests/{$leave->id}/status", ['status' => 'Approved'])
-            ->assertOk()
-            ->assertJsonPath('data.status', 'Pending Review')
-            ->assertJsonPath('data.approvalStage', 'BUSINESS_HEAD');
-
-        $this->actingAs($businessHead)
+        // Direct supervisor approves Stage 1 -> advances to HR
+        $this->actingAs($managerUser)
             ->patchJson("/api/v1/leave-requests/{$leave->id}/status", ['status' => 'Approved'])
             ->assertOk()
             ->assertJsonPath('data.status', 'Pending Review')
             ->assertJsonPath('data.approvalStage', 'HR');
 
+        // Manager cannot perform Stage 2 HR approval
+        $this->actingAs($managerUser)
+            ->patchJson("/api/v1/leave-requests/{$leave->id}/status", ['status' => 'Approved'])
+            ->assertForbidden();
+
+        // HR completes Stage 2 approval
         $this->actingAs($hr)
             ->patchJson("/api/v1/leave-requests/{$leave->id}/status", ['status' => 'Approved'])
             ->assertOk()

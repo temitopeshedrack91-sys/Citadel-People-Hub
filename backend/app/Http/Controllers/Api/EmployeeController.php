@@ -5,7 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Employee;
+use App\Models\EmployeeLeaveBalance;
+use App\Models\Entity;
+use App\Models\LeavePolicy;
 use App\Models\User;
+use App\Repositories\EmployeeRepository;
+use App\Repositories\OrganizationRepository;
+use App\Services\EmployeeHierarchyService;
+use App\Services\RealtimeEventService;
 use App\Support\AuditLogger;
 use App\Support\RoleAuthorization;
 use Illuminate\Database\Eloquent\Builder;
@@ -13,56 +20,46 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
- * Manages employee master directory records, organizational assignments, and account synchronizations.
- *
- * Scope-controlled: Department heads view department staff; Business heads view entity staff;
- * HR and Admin roles have full institutional directory visibility.
+ * Manages employee master directory records, supervisor hierarchy, and organizational placement.
  */
 class EmployeeController extends Controller
 {
+    public function __construct(
+        private readonly EmployeeRepository $employees,
+        private readonly OrganizationRepository $organizations,
+        private readonly EmployeeHierarchyService $hierarchy,
+    ) {}
+
     /**
-     * List employees matching optional filters within caller's organizational scope.
+     * List employees matching optional filters within caller's organizational/hierarchy scope.
      *
      * GET /api/v1/employees
-     * Query params:
-     * - entityId: string (filter by entity UUID).
-     * - departmentId: integer (filter by department ID).
-     * - search: string (matches full_name, staff_id, or job_title).
      */
     public function index(Request $request): JsonResponse
     {
-        $query = $this->scopedQuery($request->user())->with(['entity', 'department']);
+        $query = $this->scopedQuery($request->user())
+            ->with(['entity', 'department', 'supervisor'])
+            ->withCount('directReports');
 
-        if ($request->filled('entityId')) {
-            $normEntity = \App\Models\Entity::normalizeEntityId($request->string('entityId')->toString());
-            if ($normEntity) {
-                $query->where('entity_id', $normEntity);
-            }
-        }
-        if ($request->filled('departmentId')) {
-            $normDept = Department::normalizeDepartmentId($request->input('departmentId'));
-            if ($normDept) {
-                $query->where('department_id', $normDept);
-            }
-        }
-        if ($request->filled('search')) {
-            $search = trim($request->string('search')->toString());
-            $query->where(function (Builder $builder) use ($search) {
-                $builder->where('full_name', 'like', "%{$search}%")
-                    ->orWhere('staff_id', 'like', "%{$search}%")
-                    ->orWhere('job_title', 'like', "%{$search}%");
-            });
-        }
+        $this->employees->applyDirectoryFilters(
+            $query,
+            $request->filled('entityId') ? $request->string('entityId')->toString() : null,
+            $request->filled('departmentId') ? $request->input('departmentId') : null,
+            $request->filled('search') ? $request->string('search')->toString() : null
+        );
 
         return response()->json([
-            'data' => $query->orderBy('full_name')->limit(500)->get()->map(fn (Employee $employee) => $this->present($employee, $request)),
+            'data' => $query->orderBy('full_name')->limit(500)->get()->map(
+                fn (Employee $employee) => $this->present($employee, $request)
+            ),
         ]);
     }
 
     /**
-     * Retrieve single employee profile and organization relationships.
+     * Retrieve single employee profile, organizational relationships, and hierarchy counts.
      *
      * GET /api/v1/employees/{employee}
      */
@@ -70,7 +67,31 @@ class EmployeeController extends Controller
     {
         abort_unless($this->scopedQuery($request->user())->whereKey($employee->id)->exists(), 404);
 
-        return response()->json(['data' => $this->present($employee->load(['entity', 'department']), $request)]);
+        $employee->load(['entity', 'department', 'supervisor'])->loadCount('directReports');
+
+        return response()->json(['data' => $this->present($employee, $request)]);
+    }
+
+    /**
+     * Retrieve an employee's upward supervisor chain and downward direct reports.
+     *
+     * GET /api/v1/employees/{employee}/hierarchy
+     */
+    public function hierarchy(Request $request, Employee $employee): JsonResponse
+    {
+        abort_unless($this->scopedQuery($request->user())->whereKey($employee->id)->exists(), 404);
+
+        $employee->load(['entity', 'department', 'supervisor']);
+        $supervisorChain = $this->hierarchy->getSupervisorChain($employee);
+        $directReports = $this->hierarchy->getDirectReports($employee);
+
+        return response()->json([
+            'data' => [
+                'employee' => $this->presentDirectorySummary($employee),
+                'supervisorChain' => array_map(fn (Employee $sup) => $this->presentDirectorySummary($sup), $supervisorChain),
+                'directReports' => $directReports->map(fn (Employee $rep) => $this->presentDirectorySummary($rep))->values(),
+            ],
+        ]);
     }
 
     /**
@@ -82,23 +103,29 @@ class EmployeeController extends Controller
     {
         $this->authorizeRole($request);
         $data = $this->validated($request);
+
         abort_unless(RoleAuthorization::canManageEmployeeScope(
             $request->user(),
             $data['entityId'],
             (int) $data['departmentId'],
         ), 403, 'You are not authorized to create an employee in this organization scope.');
+
         $employee = DB::transaction(function () use ($request, $data) {
             $employee = Employee::create($this->toDatabase($data));
+            $this->seedDefaultLeaveBalances($employee);
             AuditLogger::record($request, 'Employee Records', 'Created employee', $employee->id, $employee->full_name, null, 'Created');
+            RealtimeEventService::publish('employees', 'INSERT', $employee->id, ['staffId' => $employee->staff_id], (int) $request->user()->id);
 
             return $employee;
         });
 
-        return response()->json(['data' => $this->present($employee->load(['entity', 'department']), $request)], 201);
+        $employee->load(['entity', 'department', 'supervisor'])->loadCount('directReports');
+
+        return response()->json(['data' => $this->present($employee, $request)], 201);
     }
 
     /**
-     * Update employee personal details, department, or job title.
+     * Update employee details, department/entity placement, or supervisor.
      *
      * PATCH /api/v1/employees/{employee}
      */
@@ -107,20 +134,33 @@ class EmployeeController extends Controller
         $this->authorizeRole($request);
         abort_unless(RoleAuthorization::canManageEmployee($request->user(), $employee), 403, 'You are not authorized to update this employee.');
         $data = $this->validated($request, $employee);
+
         abort_unless(RoleAuthorization::canManageEmployeeScope(
             $request->user(),
             $data['entityId'] ?? $employee->entity_id,
             (int) ($data['departmentId'] ?? $employee->department_id),
         ), 403, 'You are not authorized to move an employee outside your organization scope.');
+
         DB::transaction(function () use ($request, $employee, $data): void {
             $lockedEmployee = Employee::query()->lockForUpdate()->findOrFail($employee->id);
             $previousStaffId = $lockedEmployee->staff_id;
+            $previousName = $lockedEmployee->full_name;
             $lockedEmployee->update($this->toDatabase($data));
+
+            if ($lockedEmployee->full_name !== $previousName) {
+                Employee::query()
+                    ->where('manager_id', (string) $lockedEmployee->id)
+                    ->update(['manager_name' => $lockedEmployee->full_name]);
+            }
+
             $this->syncUserAccounts($lockedEmployee, $previousStaffId);
             AuditLogger::record($request, 'Employee Records', 'Updated employee', $lockedEmployee->id, $lockedEmployee->full_name, null, 'Updated');
+            RealtimeEventService::publish('employees', 'UPDATE', $lockedEmployee->id, ['staffId' => $lockedEmployee->staff_id], (int) $request->user()->id);
         });
 
-        return response()->json(['data' => $this->present($employee->fresh()->load(['entity', 'department']), $request)]);
+        $fresh = $employee->fresh(['entity', 'department', 'supervisor'])->loadCount('directReports');
+
+        return response()->json(['data' => $this->present($fresh, $request)]);
     }
 
     /**
@@ -137,6 +177,7 @@ class EmployeeController extends Controller
             $lockedEmployee->update(['status' => 'Inactive']);
             $this->deactivateUserAccounts($lockedEmployee->staff_id);
             AuditLogger::record($request, 'Employee Records', 'Deactivated employee', $lockedEmployee->id, $lockedEmployee->full_name, 'Active', 'Inactive', 'Warning');
+            RealtimeEventService::publish('employees', 'UPDATE', $lockedEmployee->id, ['status' => 'Inactive'], (int) $request->user()->id);
         });
 
         return response()->json(['message' => 'Employee deactivated.']);
@@ -177,14 +218,43 @@ class EmployeeController extends Controller
         });
     }
 
+    private function seedDefaultLeaveBalances(Employee $employee): void
+    {
+        $year = (int) date('Y');
+        $policies = LeavePolicy::query()
+            ->where('is_active', true)
+            ->orderByDesc('effective_year')
+            ->get()
+            ->unique('leave_category_id');
+
+        foreach ($policies as $policy) {
+            EmployeeLeaveBalance::firstOrCreate(
+                [
+                    'employee_id' => $employee->id,
+                    'leave_category_id' => $policy->leave_category_id,
+                    'year' => $year,
+                ],
+                [
+                    'total_days' => (float) $policy->days_allowed,
+                    'used_days' => 0,
+                    'pending_days' => 0,
+                    'remaining_days' => (float) $policy->days_allowed,
+                ]
+            );
+        }
+    }
+
     private function validated(Request $request, ?Employee $employee = null): array
     {
         $input = $request->all();
-        if (isset($input['entityId'])) {
-            $input['entityId'] = \App\Models\Entity::normalizeEntityId($input['entityId']) ?? $input['entityId'];
+        if (array_key_exists('entityId', $input) && $input['entityId'] !== null && $input['entityId'] !== '') {
+            $input['entityId'] = Entity::normalizeEntityId((string) $input['entityId']) ?? $input['entityId'];
         }
-        if (isset($input['departmentId'])) {
+        if (array_key_exists('departmentId', $input) && $input['departmentId'] !== null && $input['departmentId'] !== '') {
             $input['departmentId'] = Department::normalizeDepartmentId($input['departmentId']) ?? $input['departmentId'];
+        }
+        if (array_key_exists('managerId', $input) && ($input['managerId'] === '' || $input['managerId'] === 'none')) {
+            $input['managerId'] = null;
         }
         $request->replace($input);
 
@@ -210,7 +280,7 @@ class EmployeeController extends Controller
             'employmentType' => ['nullable', 'string', 'max:50'],
             'employmentDate' => ['nullable', 'date_format:Y-m-d'],
             'confirmationDate' => ['nullable', 'date_format:Y-m-d'],
-            'managerId' => ['nullable', 'exists:employees,id'],
+            'managerId' => ['nullable', 'integer', 'exists:employees,id'],
             'managerName' => ['nullable', 'string', 'max:180'],
             'contractStatus' => ['nullable', 'string', 'max:50'],
             'yearsOfService' => ['sometimes', 'integer', 'min:0', 'max:80'],
@@ -222,10 +292,29 @@ class EmployeeController extends Controller
             'notes' => ['nullable', 'string', 'max:5000'],
         ]);
 
-        $department = Department::query()->whereKey($data['departmentId'] ?? $employee?->department_id)->first();
+        // Enforce Entity <-> Department consistency
+        $departmentId = $data['departmentId'] ?? $employee?->department_id;
         $entityId = $data['entityId'] ?? $employee?->entity_id;
+        $department = $departmentId ? $this->organizations->findDepartment($departmentId) : null;
         if ($department && $entityId && $department->entity_id !== $entityId) {
-            abort(422, 'The selected department does not belong to the selected entity.');
+            throw ValidationException::withMessages([
+                'departmentId' => ['The selected department does not belong to the selected entity.'],
+            ]);
+        }
+
+        // Enforce acyclic supervisor hierarchy and sync supervisor name from Phase 1 record
+        if (array_key_exists('managerId', $data)) {
+            $managerId = $data['managerId'] !== null ? (int) $data['managerId'] : null;
+            $this->hierarchy->assertNoCycle($employee?->id, $managerId);
+
+            if ($managerId !== null) {
+                $supervisor = $this->employees->findById($managerId);
+                $data['managerId'] = (string) $managerId;
+                $data['managerName'] = $supervisor?->full_name;
+            } else {
+                $data['managerId'] = null;
+                $data['managerName'] = null;
+            }
         }
 
         return $data;
@@ -251,9 +340,33 @@ class EmployeeController extends Controller
         return $result;
     }
 
-    private function present(Employee $employee, Request $request): array
+    private function presentDirectorySummary(Employee $employee): array
     {
         $employee->loadMissing(['entity', 'department']);
+
+        return [
+            'id' => (string) $employee->id,
+            'staffId' => $employee->staff_id,
+            'fullName' => $employee->full_name,
+            'firstName' => $employee->first_name,
+            'lastName' => $employee->last_name,
+            'jobTitle' => $employee->job_title,
+            'entityId' => $employee->entity_id,
+            'entityName' => $employee->entity?->name,
+            'departmentId' => $employee->department_id ? (string) $employee->department_id : null,
+            'departmentName' => $employee->department?->name,
+            'email' => $employee->email,
+            'phone' => $employee->phone,
+            'managerId' => $employee->manager_id ? (string) $employee->manager_id : null,
+            'managerName' => $employee->manager_name,
+            'status' => $employee->status,
+        ];
+    }
+
+    private function present(Employee $employee, Request $request): array
+    {
+        $employee->loadMissing(['entity', 'department', 'supervisor']);
+        $supervisorName = $employee->supervisor?->full_name ?? $employee->manager_name;
         $data = [
             'id' => $employee->id,
             'staffId' => $employee->staff_id,
@@ -277,8 +390,9 @@ class EmployeeController extends Controller
             'employmentType' => $employee->employment_type,
             'employmentDate' => $employee->employment_date?->format('Y-m-d'),
             'confirmationDate' => $employee->confirmation_date?->format('Y-m-d'),
-            'managerId' => $employee->manager_id,
-            'managerName' => $employee->manager_name,
+            'managerId' => $employee->manager_id ? (string) $employee->manager_id : null,
+            'managerName' => $supervisorName,
+            'directReportsCount' => (int) ($employee->direct_reports_count ?? $employee->directReports()->count()),
             'contractStatus' => $employee->contract_status,
             'yearsOfService' => $employee->years_of_service,
             'qualifications' => $employee->qualifications ?? [],

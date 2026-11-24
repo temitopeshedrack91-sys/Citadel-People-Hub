@@ -10,11 +10,14 @@ class OnboardingJourney extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['employee_id', 'employee_record_id', 'journey_data'];
+    protected $fillable = ['employee_id', 'employee_record_id', 'journey_data', 'version'];
 
     protected function casts(): array
     {
-        return ['journey_data' => 'array'];
+        return [
+            'journey_data' => 'array',
+            'version' => 'integer',
+        ];
     }
 
     public function employee(): BelongsTo

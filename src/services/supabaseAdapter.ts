@@ -19,9 +19,14 @@ import {
 } from './interfaces';
 import {
   Employee,
+  EmployeeHierarchy,
+  EmployeeHierarchyNode,
   CitadelEntity,
   CitadelDepartment,
   LeaveRequest,
+  LeaveBalanceRecord,
+  LeaveCategoryRecord,
+  TeamCalendarLeaveEvent,
   AttendanceRecord,
   AuditLogEntry,
   EmployeeDocumentInput,
@@ -237,6 +242,47 @@ export class SupabaseEmployeeRepository implements IEmployeeRepository {
     const { error } = await supabase.from('employees').delete().eq('id', id);
     return !error;
   }
+
+  async getHierarchy(id: string): Promise<EmployeeHierarchy | null> {
+    const all = await this.getAll();
+    const target = all.find((e) => e.id === id || e.staffId === id);
+    if (!target) return null;
+
+    const toNode = (emp: Employee): EmployeeHierarchyNode => ({
+      id: emp.id,
+      staffId: emp.staffId,
+      fullName: emp.fullName,
+      firstName: emp.firstName,
+      lastName: emp.lastName,
+      jobTitle: emp.jobTitle,
+      entityId: emp.entityId,
+      entityName: emp.entityName,
+      departmentId: emp.departmentId,
+      departmentName: emp.departmentName,
+      email: emp.email,
+      phone: emp.phone,
+      managerId: emp.managerId || null,
+      managerName: emp.managerName || null,
+      status: emp.status,
+    });
+
+    const supervisorChain: EmployeeHierarchyNode[] = [];
+    const seen = new Set<string>([target.id]);
+    let cursor = target.managerId;
+    while (cursor && !seen.has(cursor)) {
+      const sup = all.find((e) => e.id === cursor);
+      if (!sup) break;
+      supervisorChain.push(toNode(sup));
+      seen.add(sup.id);
+      cursor = sup.managerId;
+    }
+
+    return {
+      employee: toNode(target),
+      supervisorChain,
+      directReports: all.filter((e) => e.managerId === target.id).map(toNode),
+    };
+  }
 }
 
 export class SupabaseOrganizationRepository implements IOrganizationRepository {
@@ -375,6 +421,38 @@ export class SupabaseLeaveRepository implements ILeaveRepository {
     const all = await this.getAll();
     const found = all.find((l) => l.id === requestId);
     return found ? { ...found, status } : all[0];
+  }
+
+  async getCategories(): Promise<LeaveCategoryRecord[]> {
+    return [
+      { id: 1, name: 'Annual Leave', code: 'ANNUAL', is_paid: true, is_active: true },
+      { id: 2, name: 'Sick Leave', code: 'SICK', is_paid: true, is_active: true },
+      { id: 3, name: 'Casual Leave', code: 'CASUAL', is_paid: true, is_active: true },
+    ];
+  }
+
+  async getBalances(_employeeId?: string): Promise<LeaveBalanceRecord[]> {
+    return [];
+  }
+
+  async getTeamCalendar(): Promise<TeamCalendarLeaveEvent[]> {
+    const all = await this.getAll();
+    return all
+      .filter((l) => l.status !== 'Rejected' && l.status !== 'Cancelled')
+      .map((l) => ({
+        id: l.id,
+        employeeId: l.employeeId,
+        employeeStaffId: l.employeeStaffId,
+        employeeName: l.employeeName,
+        departmentName: l.departmentName,
+        entityName: l.entityName,
+        leaveType: l.leaveType,
+        startDate: l.startDate,
+        endDate: l.endDate,
+        totalDays: l.totalDays,
+        status: l.status,
+        approvalStage: l.approvalStage,
+      }));
   }
 }
 

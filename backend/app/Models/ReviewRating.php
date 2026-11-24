@@ -14,11 +14,13 @@ class ReviewRating extends Model
         'performance_review_id',
         'kpi_id',
         'kpi_title',
+        'weight',
         'rating',
         'comment',
     ];
 
     protected $casts = [
+        'weight' => 'decimal:2',
         'rating' => 'decimal:2',
     ];
 

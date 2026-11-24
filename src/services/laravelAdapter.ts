@@ -5,6 +5,7 @@ import {
   IEmployeeRepository,
   ILeaveRepository,
   INotificationRepository,
+  IOffboardingRepository,
   IOrganizationRepository,
   ITalentRepository,
   IPayrollRepository,
@@ -22,9 +23,16 @@ import {
   CitadelDepartment,
   CitadelEntity,
   Employee,
+  EmployeeHierarchy,
   EmployeeDocumentInput,
+  ExitClearances,
+  ExitInterviewDetails,
+  ExitRequest,
   HubDocument,
   LeaveRequest,
+  LeaveBalanceRecord,
+  LeaveCategoryRecord,
+  TeamCalendarLeaveEvent,
   ClaimEvent,
   ExpenseType,
   ClaimRequest,
@@ -91,6 +99,15 @@ export class LaravelEmployeeRepository implements IEmployeeRepository {
     }
   }
 
+  async getHierarchy(id: string): Promise<EmployeeHierarchy | null> {
+    try {
+      return await requestLaravelData(`/employees/${encodeURIComponent(id)}/hierarchy`);
+    } catch (error) {
+      if (error instanceof LaravelApiError && error.status === 404) return null;
+      throw error;
+    }
+  }
+
   create(employee: Omit<Employee, 'id'>): Promise<Employee> {
     return requestLaravelData('/employees', { method: 'POST', body: JSON.stringify(employee) });
   }
@@ -148,6 +165,24 @@ export class LaravelLeaveRepository implements ILeaveRepository {
 
   getByEmployee(employeeId: string): Promise<LeaveRequest[]> {
     return requestLaravelData(`/employees/${encodeURIComponent(employeeId)}/leave-requests`);
+  }
+
+  getCategories(): Promise<LeaveCategoryRecord[]> {
+    return requestLaravelData('/leave/categories');
+  }
+
+  getBalances(employeeId?: string): Promise<LeaveBalanceRecord[]> {
+    if (employeeId) {
+      return requestLaravelData(`/employees/${encodeURIComponent(employeeId)}/leave-balances`);
+    }
+    return requestLaravelData('/leave/balances');
+  }
+
+  getTeamCalendar(params?: { startDate?: string; endDate?: string }): Promise<TeamCalendarLeaveEvent[]> {
+    const q = new URLSearchParams();
+    if (params?.startDate) q.set('startDate', params.startDate);
+    if (params?.endDate) q.set('endDate', params.endDate);
+    return requestLaravelData(`/leave/team-calendar${q.size ? `?${q}` : ''}`);
   }
 
   submitRequest(request: Omit<LeaveRequest, 'id' | 'appliedDate' | 'status'>): Promise<LeaveRequest> {
@@ -362,37 +397,65 @@ export class LaravelTalentRepository implements ITalentRepository {
     return requestLaravelData('/onboarding-journeys');
   }
 
-  toggleTaskCompletion(journeyId: string, taskId: string, isCompleted: boolean): Promise<OnboardingJourney> {
+  toggleTaskCompletion(journeyId: string, taskId: string, isCompleted: boolean, version?: number): Promise<OnboardingJourney> {
+    const payload = version !== undefined ? { isCompleted, version } : { isCompleted };
     return requestLaravelData(
       `/onboarding-journeys/${encodeURIComponent(journeyId)}/tasks/${encodeURIComponent(taskId)}`,
-      { method: 'PATCH', body: JSON.stringify({ isCompleted }) }
+      { method: 'PATCH', body: JSON.stringify(payload) }
     );
   }
 
-  createOnboardingTask(journeyId: string, task: Omit<OnboardingTask, 'id' | 'isCompleted'>): Promise<OnboardingJourney> {
+  createOnboardingTask(journeyId: string, task: Omit<OnboardingTask, 'id' | 'isCompleted'>, version?: number): Promise<OnboardingJourney> {
+    const payload = version !== undefined ? { ...task, version } : task;
     return requestLaravelData(`/onboarding-journeys/${encodeURIComponent(journeyId)}/tasks`, {
       method: 'POST',
-      body: JSON.stringify(task),
+      body: JSON.stringify(payload),
+    });
+  }
+
+  reorderOnboardingTasks(journeyId: string, taskIds: string[], version?: number): Promise<OnboardingJourney> {
+    const payload = version !== undefined ? { taskIds, version } : { taskIds };
+    return requestLaravelData(`/onboarding-journeys/${encodeURIComponent(journeyId)}/tasks/reorder`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
     });
   }
 
   async sendTaskReminder(journeyId: string, taskId: string): Promise<boolean> {
-    void journeyId;
-    void taskId;
-    throw new Error('Reminder delivery is not configured. No reminder was sent.');
+    await requestLaravelData(
+      `/onboarding-journeys/${encodeURIComponent(journeyId)}/tasks/${encodeURIComponent(taskId)}/reminder`,
+      { method: 'POST' }
+    );
+    return true;
   }
 
-  toggleDocumentSubmission(journeyId: string, docId: string, isSubmitted: boolean): Promise<OnboardingJourney> {
+  sendBulkTaskReminders(journeyId: string): Promise<{ remindedCount: number; journey: OnboardingJourney }> {
+    return requestLaravelData(`/onboarding-journeys/${encodeURIComponent(journeyId)}/reminders`, {
+      method: 'POST',
+    });
+  }
+
+  completeOnboardingJourney(journeyId: string, version?: number): Promise<OnboardingJourney> {
+    const payload = version !== undefined ? { version } : undefined;
+    return requestLaravelData(`/onboarding-journeys/${encodeURIComponent(journeyId)}/complete`, {
+      method: 'POST',
+      ...(payload ? { body: JSON.stringify(payload) } : {}),
+    });
+  }
+
+  toggleDocumentSubmission(journeyId: string, docId: string, isSubmitted: boolean, version?: number): Promise<OnboardingJourney> {
+    const payload = version !== undefined ? { isSubmitted, version } : { isSubmitted };
     return requestLaravelData(
       `/onboarding-journeys/${encodeURIComponent(journeyId)}/documents/${encodeURIComponent(docId)}`,
-      { method: 'PATCH', body: JSON.stringify({ isSubmitted }) }
+      { method: 'PATCH', body: JSON.stringify(payload) }
     );
   }
 
-  toggleOrientationItem(journeyId: string, itemId: string, isCompleted: boolean): Promise<OnboardingJourney> {
+  toggleOrientationItem(journeyId: string, itemId: string, isCompleted: boolean, version?: number): Promise<OnboardingJourney> {
+    const payload = version !== undefined ? { isCompleted, version } : { isCompleted };
     return requestLaravelData(
       `/onboarding-journeys/${encodeURIComponent(journeyId)}/orientation/${encodeURIComponent(itemId)}`,
-      { method: 'PATCH', body: JSON.stringify({ isCompleted }) }
+      { method: 'PATCH', body: JSON.stringify(payload) }
     );
   }
 
@@ -433,6 +496,18 @@ export class LaravelTalentRepository implements ITalentRepository {
     return requestLaravelData('/checklist-templates', {
       method: 'POST',
       body: JSON.stringify(template),
+    });
+  }
+
+  updateChecklistTemplate(
+    id: string,
+    template: OnboardingChecklistTemplate,
+    version?: number
+  ): Promise<OnboardingChecklistTemplate> {
+    const payload = version !== undefined ? { ...template, version } : template;
+    return requestLaravelData(`/checklist-templates/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
     });
   }
 }
@@ -1010,6 +1085,7 @@ export class LaravelPerformanceRepository implements IPerformanceRepository {
       ratings: ReviewRating[];
       reviewerComments?: string;
       employeeComments?: string;
+      version?: number;
     }
   ): Promise<PerformanceReview> {
     return requestLaravelData(`/performance/reviews/${id}/evaluate`, {
@@ -1018,8 +1094,13 @@ export class LaravelPerformanceRepository implements IPerformanceRepository {
     });
   }
 
-  async approveReview(id: number): Promise<PerformanceReview> {
-    return requestLaravelData(`/performance/reviews/${id}/approve`, { method: 'POST' });
+  async approveReview(id: number, version?: number): Promise<PerformanceReview> {
+    return requestLaravelData(
+      `/performance/reviews/${id}/approve`,
+      version !== undefined
+        ? { method: 'POST', body: JSON.stringify({ version }) }
+        : { method: 'POST' }
+    );
   }
 }
 
@@ -1199,6 +1280,72 @@ export class LaravelClaimRepository implements IClaimRepository {
     return requestLaravelData(`/claims/requests/${claimId}/action`, {
       method: 'POST',
       body: JSON.stringify({ action, reason }),
+    });
+  }
+}
+
+export class LaravelOffboardingRepository implements IOffboardingRepository {
+  async getAll(): Promise<ExitRequest[]> {
+    return requestLaravelData('/offboarding/requests');
+  }
+
+  async create(payload: {
+    employeeId: string;
+    resignationDate: string;
+    proposedLastDay: string;
+    reason: string;
+    managerId?: string;
+  }): Promise<ExitRequest> {
+    return requestLaravelData('/offboarding/requests', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async endorseByManager(id: string, payload?: { comments?: string; version?: number }): Promise<ExitRequest> {
+    return requestLaravelData(`/offboarding/requests/${encodeURIComponent(id)}/endorse`, {
+      method: 'POST',
+      body: JSON.stringify(payload ?? {}),
+    });
+  }
+
+  async verifyNotice(
+    id: string,
+    payload?: { noticeCompliant?: boolean; contractNotes?: string; version?: number }
+  ): Promise<ExitRequest> {
+    return requestLaravelData(`/offboarding/requests/${encodeURIComponent(id)}/verify-notice`, {
+      method: 'POST',
+      body: JSON.stringify(payload ?? {}),
+    });
+  }
+
+  async scheduleInterview(id: string, payload: ExitInterviewDetails & { version?: number }): Promise<ExitRequest> {
+    return requestLaravelData(`/offboarding/requests/${encodeURIComponent(id)}/interview`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async updateClearance(
+    id: string,
+    department: keyof ExitClearances,
+    cleared: boolean,
+    payload?: { note?: string; version?: number }
+  ): Promise<ExitRequest> {
+    return requestLaravelData(`/offboarding/requests/${encodeURIComponent(id)}/clearances`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        department,
+        cleared,
+        ...(payload ?? {}),
+      }),
+    });
+  }
+
+  async finalize(id: string, payload?: { settlementNotes?: string; version?: number }): Promise<ExitRequest> {
+    return requestLaravelData(`/offboarding/requests/${encodeURIComponent(id)}/finalize`, {
+      method: 'POST',
+      body: JSON.stringify(payload ?? {}),
     });
   }
 }

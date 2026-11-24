@@ -11,12 +11,15 @@ class OnboardingChecklistTemplate extends Model
     use HasUuids;
 
     protected $fillable = [
-        'title', 'category', 'target_audience', 'duration', 'description', 'task_data', 'created_by_user_id',
+        'title', 'category', 'target_audience', 'duration', 'description', 'task_data', 'created_by_user_id', 'version',
     ];
 
     protected function casts(): array
     {
-        return ['task_data' => 'array'];
+        return [
+            'task_data' => 'array',
+            'version' => 'integer',
+        ];
     }
 
     public function creator(): BelongsTo

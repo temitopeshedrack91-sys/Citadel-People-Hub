@@ -52,6 +52,8 @@ describe('Sidebar RBAC & Visual Hierarchy (<Sidebar />)', () => {
       canApproveLeave: permissions.canApproveLeave,
       canManageSettings: permissions.canManageSettings,
       isReadOnly: permissions.isReadOnly,
+      isManager: role === 'MANAGER' || role === 'DEPARTMENT_HEAD' || role === 'BUSINESS_HEAD',
+      refreshUser: vi.fn(),
       updateProfile: vi.fn(),
     };
   };

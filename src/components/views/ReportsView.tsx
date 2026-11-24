@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   BarChart3,
-  Download,
   PieChart,
   Users,
   TrendingUp,
@@ -11,9 +10,18 @@ import {
   X,
   Building2,
   Shield,
+  AlertCircle,
 } from 'lucide-react';
-import { auditRepository, employeeRepository, organizationRepository, leaveRepository } from '../../services';
+import {
+  auditRepository,
+  employeeRepository,
+  organizationRepository,
+  leaveRepository,
+  reportRepository,
+} from '../../services';
 import { useAuth } from '../../context/AuthContext';
+import { useRealtimeTable } from '../../hooks/useRealtimeTable';
+import { isHrOrAdminUser } from '../../utils/rbac';
 import { Employee, CitadelEntity, CitadelDepartment, LeaveRequest } from '../../types';
 
 export const ReportsView: React.FC = () => {
@@ -22,37 +30,87 @@ export const ReportsView: React.FC = () => {
   const [entities, setEntities] = useState<CitadelEntity[]>([]);
   const [departments, setDepartments] = useState<CitadelDepartment[]>([]);
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
+  const [workforceSummary, setWorkforceSummary] = useState<Record<string, any> | null>(null);
+  const [leaveSummary, setLeaveSummary] = useState<Record<string, any> | null>(null);
+  const [reportError, setReportError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
 
+  const isHrOrAdmin = isHrOrAdminUser(currentUser);
+
+  const fetchData = React.useCallback(async () => {
+    setReportError(null);
+    if (!isHrOrAdmin) {
+      setReportError('Forbidden: HR or Admin privileges are required to view organizational reports.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const [empList, entList, deptList, leaveList, wfRep, lvRep] = await Promise.all([
+        employeeRepository.getAll(),
+        organizationRepository.getEntities(),
+        organizationRepository.getDepartments(),
+        leaveRepository.getAll(),
+        reportRepository.getWorkforceReport().catch(() => null),
+        reportRepository.getLeaveReport().catch(() => null),
+      ]);
+      setEmployees(empList);
+      setEntities(entList);
+      setDepartments(deptList);
+      setLeaves(leaveList);
+      setWorkforceSummary(wfRep);
+      setLeaveSummary(lvRep);
+    } catch (err: any) {
+      setReportError(err?.message || 'Unable to load reports.');
+    } finally {
+      setLoading(false);
+    }
+  }, [isHrOrAdmin]);
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [empList, entList, deptList, leaveList] = await Promise.all([
-          employeeRepository.getAll(),
-          organizationRepository.getEntities(),
-          organizationRepository.getDepartments(),
-          leaveRepository.getAll(),
-        ]);
-        setEmployees(empList);
-        setEntities(entList);
-        setDepartments(deptList);
-        setLeaves(leaveList);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+    void fetchData();
+  }, [fetchData]);
+
+  useRealtimeTable('employees', () => {
+    void fetchData();
+  });
+
+  useRealtimeTable('leave_requests', () => {
+    void fetchData();
+  });
+
+  const matchEntity = (emp: { entityId?: string; entityName?: string }, ent: CitadelEntity) =>
+    String(emp.entityId || '') === String(ent.id) ||
+    (emp.entityName || '').toLowerCase().includes(ent.shortCode.toLowerCase()) ||
+    (emp.entityName || '').toLowerCase() === ent.name.toLowerCase();
 
   // Compute live breakdown statistics
   const totalStaff = employees.length;
-  const cgccStaff = employees.filter((e) => e.entityId === 'entity-cgcc' || e.entityName.includes('CGCC') || e.entityName.includes('Community Church'));
-  const csogStaff = employees.filter((e) => e.entityId === 'entity-csog' || e.entityName.includes('CSOG') || e.entityName.includes('Government'));
-  const holdingsStaff = employees.filter((e) => e.entityId === 'entity-holdings' || e.entityName.includes('Holdings'));
+  const cgccStaff = employees.filter(
+    (e) =>
+      String(e.entityId) === 'entity-cgcc' ||
+      (e.entityName || '').toUpperCase().includes('CGCC') ||
+      (e.entityName || '').includes('Community Church')
+  );
+  const csogStaff = employees.filter(
+    (e) =>
+      String(e.entityId) === 'entity-csog' ||
+      (e.entityName || '').toUpperCase().includes('CSOG') ||
+      (e.entityName || '').includes('Government')
+  );
+  const holdingsStaff = employees.filter(
+    (e) =>
+      String(e.entityId) === 'entity-holdings' ||
+      (e.entityName || '').toUpperCase().includes('HOLDINGS') ||
+      (e.entityName || '').includes('Holdings')
+  );
 
   const activeLeaves = leaves.filter((l) => l.status === 'Approved');
+  const pendingLeaves = leaves.filter(
+    (l) => l.status === 'Submitted' || l.status === 'Pending Review'
+  );
 
   // Real CSV Generator
   const handleExportCSV = async () => {
@@ -134,6 +192,13 @@ export const ReportsView: React.FC = () => {
 
   return (
     <div className="space-y-5">
+      {reportError && (
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+          <span>{reportError}</span>
+        </div>
+      )}
+
       {exportNotice && (
         <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between shadow-xs animate-fade-in">
           <div className="flex items-center gap-2">
@@ -177,103 +242,85 @@ export const ReportsView: React.FC = () => {
 
       {/* Dynamic Entity Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* 1. CGCC */}
-        <div className="bg-white rounded-xl border border-slate-300 p-5 shadow-xs">
-          <span className="text-xs font-black text-black uppercase tracking-wider block">
-            Citadel Global Community Church (CGCC)
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-black text-black">{cgccStaff.length} Staff</span>
-            <span className="text-xs font-bold text-black">
-              {totalStaff > 0 ? ((cgccStaff.length / totalStaff) * 100).toFixed(1) : '0'}% of Total
-            </span>
+        {entities.length > 0 ? (
+          entities.map((ent) => {
+            const entStaff = employees.filter((e) => matchEntity(e, ent));
+            const entLeaves = leaves.filter(
+              (l) =>
+                (l.entityName || '').toLowerCase().includes(ent.shortCode.toLowerCase()) ||
+                (l.entityName || '').toLowerCase() === ent.name.toLowerCase()
+            );
+            const entPending = entLeaves.filter(
+              (l) => l.status === 'Submitted' || l.status === 'Pending Review'
+            );
+            return (
+              <div key={ent.id} className="bg-white rounded-xl border border-slate-300 p-5 shadow-xs">
+                <span className="text-xs font-black text-black uppercase tracking-wider block">
+                  {ent.name} ({ent.shortCode})
+                </span>
+                <div className="mt-2 flex items-baseline justify-between">
+                  <span className="text-2xl font-black text-black">{entStaff.length} Staff</span>
+                  <span className="text-xs font-bold text-black">
+                    {totalStaff > 0 ? ((entStaff.length / totalStaff) * 100).toFixed(1) : '0'}% of Total
+                  </span>
+                </div>
+                <div className="mt-3 text-xs text-black font-semibold space-y-1.5">
+                  <div className="flex justify-between">
+                    <span>Active Personnel:</span>
+                    <span className="font-extrabold text-emerald-800">
+                      {entStaff.filter((e) => e.status === 'Active' || e.status === 'Confirmed').length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Total Leave Requests:</span>
+                    <span className="font-extrabold text-black">{entLeaves.length}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Pending Leave Requests:</span>
+                    <span className="font-extrabold text-[#D97706] bg-[#FAF5EB] border border-[#F2E4B8] px-2 py-0.5 rounded-full text-[11px]">
+                      {entPending.length} pending
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="col-span-3 bg-white rounded-xl border border-slate-200 p-5 text-xs text-slate-500">
+            {loading ? 'Loading organizational report breakdown...' : 'No entity data available.'}
           </div>
-          <div className="mt-3 text-xs text-black font-semibold space-y-1.5">
-            <div className="flex justify-between">
-              <span>Confirmed Permanent:</span>
-              <span className="font-extrabold text-black">
-                {cgccStaff.filter((e) => e.contractStatus === 'Permanent').length}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>On Probation / Fixed-Term:</span>
-              <span className="font-extrabold text-black">
-                {cgccStaff.filter((e) => e.contractStatus !== 'Permanent').length}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span>Active Leave Requests:</span>
-              <span className="font-extrabold text-[#D97706] bg-[#FAF5EB] border border-[#F2E4B8] px-2 py-0.5 rounded-full text-[11px]">
-                {leaves.filter((l) => l.entityName.includes('CGCC') && l.status === 'Submitted').length} pending
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* 2. CSOG */}
-        <div className="bg-white rounded-xl border border-slate-300 p-5 shadow-xs">
-          <span className="text-xs font-black text-black uppercase tracking-wider block">
-            Citadel School of Government (CSOG)
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-black text-black">{csogStaff.length} Staff</span>
-            <span className="text-xs font-bold text-black">
-              {totalStaff > 0 ? ((csogStaff.length / totalStaff) * 100).toFixed(1) : '0'}% of Total
-            </span>
-          </div>
-          <div className="mt-3 text-xs text-black font-semibold space-y-1.5">
-            <div className="flex justify-between">
-              <span>Academic & Research:</span>
-              <span className="font-extrabold text-black">
-                {csogStaff.filter((e) => e.departmentName.includes('Academic') || e.departmentName.includes('Dean')).length || 1}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Operations & Registrar:</span>
-              <span className="font-extrabold text-black">
-                {Math.max(1, csogStaff.length - 1)}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Active Staff:</span>
-              <span className="font-extrabold text-emerald-800">
-                {csogStaff.filter((e) => e.status === 'Active').length}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* 3. Holdings */}
-        <div className="bg-white rounded-xl border border-slate-300 p-5 shadow-xs">
-          <span className="text-xs font-black text-black uppercase tracking-wider block">
-            Citadel Holdings
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-black text-black">{holdingsStaff.length} Staff</span>
-            <span className="text-xs font-bold text-black">
-              {totalStaff > 0 ? ((holdingsStaff.length / totalStaff) * 100).toFixed(1) : '0'}% of Total
-            </span>
-          </div>
-          <div className="mt-3 text-xs text-black font-semibold space-y-1.5">
-            <div className="flex justify-between">
-              <span>Commercial & Hospitality:</span>
-              <span className="font-extrabold text-black">
-                {holdingsStaff.filter((e) => e.departmentName.includes('Cafe') || e.departmentName.includes('Bookshop')).length || 1}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Active Leave Utilization:</span>
-              <span className="font-extrabold text-black">
-                {leaves.filter((l) => l.entityName.includes('Holdings')).length} applications
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Total Active Roster:</span>
-              <span className="font-extrabold text-emerald-800">{holdingsStaff.length}</span>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
+
+      {/* Live API Report Summary Strip */}
+      {(workforceSummary || leaveSummary) && (
+        <div className="bg-white rounded-xl border border-slate-200 p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div>
+            <span className="text-slate-500 block">Backend Staff Total</span>
+            <span className="text-base font-black text-[#083E34]">
+              {workforceSummary?.totalStaff ?? totalStaff}
+            </span>
+          </div>
+          <div>
+            <span className="text-slate-500 block">Total Leave Requests</span>
+            <span className="text-base font-black text-slate-900">
+              {leaveSummary?.totalRequests ?? leaves.length}
+            </span>
+          </div>
+          <div>
+            <span className="text-slate-500 block">Pending Two-Stage</span>
+            <span className="text-base font-black text-amber-700">
+              {pendingLeaves.length}
+            </span>
+          </div>
+          <div>
+            <span className="text-slate-500 block">Approved Requests</span>
+            <span className="text-base font-black text-emerald-700">
+              {activeLeaves.length}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Department Headcount Breakdown Table */}
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] overflow-hidden">

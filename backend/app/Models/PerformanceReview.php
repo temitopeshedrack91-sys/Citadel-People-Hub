@@ -23,6 +23,7 @@ class PerformanceReview extends Model
         'employee_comments',
         'reviewer_comments',
         'completed_at',
+        'version',
     ];
 
     protected $casts = [
@@ -31,6 +32,7 @@ class PerformanceReview extends Model
         'due_date' => 'date',
         'final_rating' => 'decimal:2',
         'completed_at' => 'datetime',
+        'version' => 'integer',
     ];
 
     public function employee(): BelongsTo

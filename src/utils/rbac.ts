@@ -1,20 +1,12 @@
 /**
  * Centralized Role-Based Access Control (RBAC) Module
  * Citadel People Hub
- *
- * Provides a single source of truth for:
- * 1. Role normalization and hierarchy (Admin, HR Staff, Employee, Viewer)
- * 2. Nav module and route-level authorization
- * 3. Granular action permissions and read-only enforcement
- * 4. Department-scoped record filtering for Employee role
- * 5. Sensitive data masking (salaries, bank records, confidential notes)
- * 6. Backend/API-level authorization verification
  */
 
 import { User, UserRole, RolePermissions } from '../types';
 import { NavModule } from '../components/layout/Sidebar';
 
-export type CanonicalRole = 'ADMIN' | 'HR_STAFF' | 'EMPLOYEE' | 'VIEWER';
+export type CanonicalRole = 'ADMIN' | 'HR_STAFF' | 'MANAGER' | 'EMPLOYEE' | 'VIEWER';
 
 export type PermissionAction =
   | 'manage_employees'
@@ -38,13 +30,6 @@ export type PermissionAction =
   | 'manage_payroll'
   | 'view_payroll';
 
-/**
- * Normalizes any role string (including legacy and alias roles) into canonical roles:
- * - Admin: Full access (SYSTEM_ADMIN, ADMIN)
- * - HR Staff: HR records across departments, no system settings (HR_STAFF, PCCM_SUPER_ADMIN, HR_MANAGER, BUSINESS_HEAD, DEPARTMENT_HEAD)
- * - Employee: Department-scoped & self-service access (EMPLOYEE)
- * - Viewer: Read-only access across allowed views (VIEWER, AUDITOR, READONLY)
- */
 export function normalizeRole(role?: string | null): CanonicalRole | null {
   if (!role || typeof role !== 'string') return null;
   const upper = role.trim().toUpperCase();
@@ -60,9 +45,12 @@ export function normalizeRole(role?: string | null): CanonicalRole | null {
     case 'HR':
     case 'HR_MANAGER':
     case 'PCCM_SUPER_ADMIN':
+      return 'HR_STAFF';
+
+    case 'MANAGER':
     case 'BUSINESS_HEAD':
     case 'DEPARTMENT_HEAD':
-      return 'HR_STAFF';
+      return 'MANAGER';
 
     case 'EMPLOYEE':
     case 'STAFF':
@@ -80,11 +68,19 @@ export function normalizeRole(role?: string | null): CanonicalRole | null {
   }
 }
 
-/**
- * Module access permissions matrix by canonical role
- */
+export function isHrOrAdminUser(user?: User | null): boolean {
+  const canonical = normalizeRole(user?.role);
+  return canonical === 'ADMIN' || canonical === 'HR_STAFF';
+}
+
+export function isManagerUser(user?: User | null): boolean {
+  if (!user || isHrOrAdminUser(user)) return false;
+  if (normalizeRole(user.role) === 'MANAGER') return true;
+  if (user.effectiveRole === 'MANAGER') return true;
+  return Boolean(user.isSupervisor) || (user.directReportsCount ?? 0) > 0;
+}
+
 export const ROLE_MODULE_PERMISSIONS: Record<CanonicalRole, NavModule[]> = {
-  // Admin: Complete, unrestricted access across all modules
   ADMIN: [
     'dashboard',
     'employees',
@@ -109,7 +105,6 @@ export const ROLE_MODULE_PERMISSIONS: Record<CanonicalRole, NavModule[]> = {
     'audit-logs',
   ],
 
-  // HR Staff: Cross-department HR records, strictly NO system-level settings
   HR_STAFF: [
     'dashboard',
     'employees',
@@ -131,7 +126,21 @@ export const ROLE_MODULE_PERMISSIONS: Record<CanonicalRole, NavModule[]> = {
     'ai-assistant',
   ],
 
-  // Employee: Department-scoped & self-service views
+  // Managers see team approvals & team calendar, NOT HR reports or HR master controls
+  MANAGER: [
+    'dashboard',
+    'directory',
+    'leave',
+    'attendance',
+    'projects',
+    'claims',
+    'calendar',
+    'team-notes',
+    'documents',
+    'notifications',
+    'ai-assistant',
+  ],
+
   EMPLOYEE: [
     'dashboard',
     'attendance',
@@ -147,7 +156,6 @@ export const ROLE_MODULE_PERMISSIONS: Record<CanonicalRole, NavModule[]> = {
     'ai-assistant',
   ],
 
-  // Viewer: Read-only access across standard public/reporting views
   VIEWER: [
     'dashboard',
     'directory',
@@ -161,9 +169,6 @@ export const ROLE_MODULE_PERMISSIONS: Record<CanonicalRole, NavModule[]> = {
   ],
 };
 
-/**
- * Evaluates whether a user or role has access to a specific sidebar/route module
- */
 export function canAccessModule(
   userOrRole: User | UserRole | string | null | undefined,
   module: NavModule
@@ -173,8 +178,7 @@ export function canAccessModule(
   const canonical = normalizeRole(roleStr);
   if (!canonical) return false;
 
-  const allowedModules = ROLE_MODULE_PERMISSIONS[canonical];
-  return allowedModules.includes(module);
+  return ROLE_MODULE_PERMISSIONS[canonical].includes(module);
 }
 
 export interface RouteAccessResult {
@@ -185,10 +189,6 @@ export interface RouteAccessResult {
   canonicalRole?: CanonicalRole;
 }
 
-/**
- * Route guard checking access to an active module for the current user
- * Returns explicit status codes (401 for unauthenticated, 403 for forbidden)
- */
 export function checkRouteAccess(
   user: User | null | undefined,
   module: NavModule
@@ -217,6 +217,8 @@ export function checkRouteAccess(
     let reason = `Your role (${canonical}) does not have permission to access '${module}'.`;
     if (canonical === 'HR_STAFF' && ['settings', 'integrations', 'audit-logs'].includes(module)) {
       reason = `System-level module '${module}' is restricted to Admin personnel only. HR Staff access is prohibited.`;
+    } else if (canonical === 'MANAGER') {
+      reason = `Manager access is scoped to team approvals and calendar. '${module}' requires HR or Admin privileges.`;
     } else if (canonical === 'EMPLOYEE') {
       reason = `Employee access is restricted to self-service and department views. '${module}' requires elevated privileges.`;
     } else if (canonical === 'VIEWER') {
@@ -239,9 +241,6 @@ export function checkRouteAccess(
   };
 }
 
-/**
- * Returns comprehensive action permissions for a given role
- */
 export function getRolePermissions(role?: string | null): RolePermissions {
   const canonical = normalizeRole(role);
 
@@ -271,17 +270,37 @@ export function getRolePermissions(role?: string | null): RolePermissions {
         canManageEmployees: true,
         canViewAllEmployees: true,
         canViewSensitiveData: true,
-        canManageEntitiesAndDepts: false, // System-level
+        canManageEntitiesAndDepts: false,
         canApproveLeave: true,
         canManageLeavePolicies: true,
-        canViewAuditLogs: false, // System-level
+        canViewAuditLogs: false,
         canManageOnboarding: true,
         canManagePerformance: true,
         canManageDocuments: true,
-        canConfigureIntegrations: false, // System-level
+        canConfigureIntegrations: false,
         canExportReports: true,
-        canManageSettings: false, // System-level
+        canManageSettings: false,
         canManagePayroll: true,
+        canViewPayroll: true,
+        isReadOnly: false,
+      };
+
+    case 'MANAGER':
+      return {
+        canManageEmployees: false,
+        canViewAllEmployees: false,
+        canViewSensitiveData: false,
+        canManageEntitiesAndDepts: false,
+        canApproveLeave: true,
+        canManageLeavePolicies: false,
+        canViewAuditLogs: false,
+        canManageOnboarding: false,
+        canManagePerformance: false,
+        canManageDocuments: false,
+        canConfigureIntegrations: false,
+        canExportReports: false,
+        canManageSettings: false,
+        canManagePayroll: false,
         canViewPayroll: true,
         isReadOnly: false,
       };
@@ -289,8 +308,8 @@ export function getRolePermissions(role?: string | null): RolePermissions {
     case 'EMPLOYEE':
       return {
         canManageEmployees: false,
-        canViewAllEmployees: false, // Department-scoped only
-        canViewSensitiveData: false, // No salary/bank records of others
+        canViewAllEmployees: false,
+        canViewSensitiveData: false,
         canManageEntitiesAndDepts: false,
         canApproveLeave: false,
         canManageLeavePolicies: false,
@@ -302,15 +321,15 @@ export function getRolePermissions(role?: string | null): RolePermissions {
         canExportReports: false,
         canManageSettings: false,
         canManagePayroll: false,
-        canViewPayroll: true, // Self-service payslips
-        isReadOnly: false, // Can clock-in, apply leave, manage personal tasks
+        canViewPayroll: true,
+        isReadOnly: false,
       };
 
     case 'VIEWER':
       return {
         canManageEmployees: false,
         canViewAllEmployees: true,
-        canViewSensitiveData: false, // Masked
+        canViewSensitiveData: false,
         canManageEntitiesAndDepts: false,
         canApproveLeave: false,
         canManageLeavePolicies: false,
@@ -346,9 +365,6 @@ export function getRolePermissions(role?: string | null): RolePermissions {
   }
 }
 
-/**
- * Checks whether user can execute a specific action, taking department context into account
- */
 export function canPerformAction(
   user: User | null | undefined,
   action: PermissionAction,
@@ -369,7 +385,6 @@ export function canPerformAction(
 
   const perms = getRolePermissions(canonical);
 
-  // Viewer is strictly read-only for any mutating action
   if (perms.isReadOnly && !['view_all_employees', 'export_reports'].includes(action)) {
     return {
       allowed: false,
@@ -378,12 +393,10 @@ export function canPerformAction(
     };
   }
 
-  // Admin has full access to all actions
   if (canonical === 'ADMIN') {
     return { allowed: true, status: 200 };
   }
 
-  // HR Staff has cross-department HR permissions, but blocked from system settings
   if (canonical === 'HR_STAFF') {
     if (['manage_settings', 'manage_integrations', 'view_audit_logs'].includes(action)) {
       return {
@@ -395,9 +408,18 @@ export function canPerformAction(
     return { allowed: true, status: 200 };
   }
 
-  // Employee: Scoped strictly to self & own department
+  if (canonical === 'MANAGER') {
+    if (['approve_leave', 'apply_leave', 'clock_in_out', 'create_task', 'edit_task'].includes(action)) {
+      return { allowed: true, status: 200 };
+    }
+    return {
+      allowed: false,
+      status: 403,
+      reason: `Managers cannot perform HR or system administration action '${action}'.`,
+    };
+  }
+
   if (canonical === 'EMPLOYEE') {
-    // Prohibited actions for Employee
     if (
       [
         'manage_employees',
@@ -423,7 +445,6 @@ export function canPerformAction(
       };
     }
 
-    // Check department scoping if target department is provided
     if (context?.targetDepartmentName || context?.targetDepartmentId) {
       const userDept = user.departmentName || user.departmentId;
       const targetDept = context.targetDepartmentName || context.targetDepartmentId;
@@ -436,7 +457,6 @@ export function canPerformAction(
       }
     }
 
-    // Allowed self-service actions
     if (['apply_leave', 'clock_in_out', 'create_task', 'edit_task'].includes(action)) {
       return { allowed: true, status: 200 };
     }
@@ -445,9 +465,6 @@ export function canPerformAction(
   return { allowed: true, status: 200 };
 }
 
-/**
- * Normalizes and checks department equality
- */
 export function isDepartmentMatch(deptA?: string, deptB?: string): boolean {
   if (!deptA || !deptB) return false;
   const cleanA = deptA.trim().toLowerCase().replace(/&/g, 'and').replace(/\s+/g, ' ');
@@ -455,11 +472,6 @@ export function isDepartmentMatch(deptA?: string, deptB?: string): boolean {
   return cleanA === cleanB || cleanA.includes(cleanB) || cleanB.includes(cleanA);
 }
 
-/**
- * Enforces department scoping on an employee list
- * - Admin, HR Staff, Viewer: see all employees
- * - Employee: see ONLY employees within their own department
- */
 export function filterEmployeesForUser<
   T extends {
     departmentName?: string;
@@ -473,19 +485,16 @@ export function filterEmployeesForUser<
   if (!user) return [];
   const canonical = normalizeRole(user.role);
 
-  // Admin, HR Staff, Viewer see all employees across all departments
   if (canonical === 'ADMIN' || canonical === 'HR_STAFF' || canonical === 'VIEWER') {
     return employees;
   }
 
-  // Employee: scoped to self, department, and direct reports (managers see their team)
   const userDept = user.departmentName || user.departmentId || '';
   const userNameLower = (user.name || '').toLowerCase();
   const userStaffId = (user.staffId || '').toLowerCase();
   const userId = (user.id || '').toLowerCase();
 
   return employees.filter((e) => {
-    // 1. Direct reports: if user is designated as manager for this employee
     const mId = (e.managerId || '').toLowerCase();
     const mName = (e.managerName || '').toLowerCase();
     const isDirectReport =
@@ -495,12 +504,14 @@ export function filterEmployeesForUser<
 
     if (isDirectReport) return true;
 
-    // 2. Self
-    if (e.id === user.id || (userStaffId && e.staffId && e.staffId.toLowerCase() === userStaffId)) {
+    if (String(e.id) === String(user.id) || (userStaffId && e.staffId && e.staffId.toLowerCase() === userStaffId)) {
       return true;
     }
 
-    // 3. Department peer
+    if (canonical === 'MANAGER') {
+      return false;
+    }
+
     if (userDept) {
       const empDept = e.departmentName || e.departmentId || '';
       return isDepartmentMatch(userDept, empDept);
@@ -510,11 +521,6 @@ export function filterEmployeesForUser<
   });
 }
 
-/**
- * Enforces department scoping and manager line on leave requests
- * - Admin and HR Staff: see all requests across all departments
- * - Employee & Managers: see requests from direct reports, self, and department
- */
 export function filterLeaveRequestsForUser<
   T extends {
     department?: string;
@@ -539,12 +545,10 @@ export function filterLeaveRequestsForUser<
   const userId = (user.id || '').toLowerCase();
 
   return requests.filter((r) => {
-    // 1. Self requests
-    if (r.employeeId === user.id) return true;
+    if (String(r.employeeId) === String(user.id)) return true;
     if (userStaffId && r.staffId && r.staffId.toLowerCase() === userStaffId) return true;
     if (userStaffId && r.employeeStaffId && r.employeeStaffId.toLowerCase() === userStaffId) return true;
 
-    // 2. Manager of the request
     const mId = (r.managerId || '').toLowerCase();
     const mName = (r.managerName || '').toLowerCase();
     if (
@@ -555,7 +559,10 @@ export function filterLeaveRequestsForUser<
       return true;
     }
 
-    // 3. Department peer
+    if (canonical === 'MANAGER') {
+      return false;
+    }
+
     const reqDept = r.department || r.departmentName;
     if (userDept && reqDept && isDepartmentMatch(userDept, reqDept)) {
       return true;
@@ -565,9 +572,6 @@ export function filterLeaveRequestsForUser<
   });
 }
 
-/**
- * Enforces department scoping on attendance records
- */
 export function filterAttendanceForUser<
   T extends {
     department?: string;
@@ -590,9 +594,6 @@ export function filterAttendanceForUser<
   });
 }
 
-/**
- * Masks sensitive compensation and personal identity records for roles lacking permission
- */
 export function maskSensitiveEmployeeData<
   T extends {
     salary?: string | number;
@@ -605,12 +606,10 @@ export function maskSensitiveEmployeeData<
 >(user: User | null | undefined, employee: T): T {
   const perms = getRolePermissions(user?.role);
 
-  // If user has permission, return data as is
   if (perms.canViewSensitiveData) {
     return employee;
   }
 
-  // Mask sensitive fields
   return {
     ...employee,
     salary: undefined,
@@ -622,10 +621,6 @@ export function maskSensitiveEmployeeData<
   };
 }
 
-/**
- * Backend/Service API authorization checker
- * Reusable across services, API routes, or repository layers
- */
 export function authorizeApiRequest(
   user: User | null | undefined,
   options: {
@@ -653,7 +648,6 @@ export function authorizeApiRequest(
     };
   }
 
-  // If module check specified
   if (options.module) {
     const routeCheck = checkRouteAccess(user, options.module);
     if (!routeCheck.allowed) {
@@ -665,7 +659,6 @@ export function authorizeApiRequest(
     }
   }
 
-  // If action check specified
   if (options.action) {
     const actionCheck = canPerformAction(user, options.action, {
       targetDepartmentName: options.targetDepartmentName,
@@ -684,4 +677,3 @@ export function authorizeApiRequest(
 
   return { success: true, status: 200 };
 }
-

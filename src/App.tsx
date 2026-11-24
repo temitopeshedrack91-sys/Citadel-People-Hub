@@ -40,7 +40,7 @@ import { ClaimManagementView } from './components/views/ClaimManagementView';
 import { LoginModal } from './components/auth/LoginModal';
 import { AuthPage } from './components/auth/AuthPage';
 import { AccessDeniedView } from './components/common/AccessDeniedView';
-import { checkRouteAccess } from './utils/rbac';
+import { checkRouteAccess, isManagerUser, isHrOrAdminUser } from './utils/rbac';
 
 const VALID_MODULES: NavModule[] = [
   'dashboard', 'employees', 'directory', 'leave', 'attendance', 'projects', 'payroll', 'claims',
@@ -131,10 +131,9 @@ const MainAppLayout: React.FC = () => {
   const getModuleTitle = (mod: NavModule): string => {
     switch (mod) {
       case 'dashboard':
-        if (currentRole === 'EMPLOYEE') return 'Dashboard';
-        if (currentRole === 'DEPARTMENT_HEAD') return `${currentUser.departmentName || 'Department'} Dashboard`;
-        if (currentRole === 'BUSINESS_HEAD') return 'Leadership Dashboard';
-        return 'Dashboard';
+        if (isHrOrAdminUser(currentUser)) return 'HR Executive Dashboard';
+        if (isManagerUser(currentUser)) return `${currentUser.departmentName || 'Team'} Manager Dashboard`;
+        return 'Employee Dashboard';
       case 'employees':
         return 'Employees';
       case 'directory':

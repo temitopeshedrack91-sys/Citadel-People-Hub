@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   X,
   Building2,
@@ -28,12 +28,15 @@ import {
   RefreshCw,
   Loader2,
   FileWarning,
+  Users,
+  GitBranch,
 } from 'lucide-react';
-import { Employee, DocumentCategory, HubDocument, UserRole } from '../../types';
+import { Employee, EmployeeHierarchy, DocumentCategory, HubDocument, PerformanceReview, UserRole } from '../../types';
 import { useAuth } from '../../context/AuthContext';
+import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import { SensitiveField } from '../common/SensitiveField';
 import { Badge } from '../common/Badge';
-import { documentRepository, auditRepository } from '../../services';
+import { documentRepository, auditRepository, employeeRepository, performanceRepository } from '../../services';
 import { EmployeeDocumentInput } from '../../types/documents';
 
 interface EmployeeProfileModalProps {
@@ -82,6 +85,10 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   const [replacing, setReplacing] = useState(false);
   const [downloadingDocId, setDownloadingDocId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [hierarchy, setHierarchy] = useState<EmployeeHierarchy | null>(null);
+  const [hierarchyLoading, setHierarchyLoading] = useState(false);
+  const [empReviews, setEmpReviews] = useState<PerformanceReview[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
   const replaceFileRef = useRef<HTMLInputElement>(null);
 
   const EMPLOYEE_DOCUMENT_CATEGORIES: DocumentCategory[] = [
@@ -95,7 +102,8 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
     'Other Supporting Document',
   ];
 
-  const canManageEmployeeDocs = permissions.canManageDocuments || currentUser.staffId === employee!.staffId;
+  const canManageEmployeeDocs =
+    permissions.canManageDocuments || Boolean(employee?.staffId && currentUser.staffId === employee.staffId);
 
   const formatDate = (dateString?: string | null): string => {
     if (!dateString) return 'Not set';
@@ -133,10 +141,67 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   };
 
   useEffect(() => {
-    if (activeTab === 'documents') {
+    if (activeTab === 'documents' && employee?.id) {
       loadEmployeeDocuments();
     }
-  }, [activeTab, employee!.id]);
+  }, [activeTab, employee?.id]);
+
+  useEffect(() => {
+    if (!employee?.id) {
+      setHierarchy(null);
+      return;
+    }
+    let cancelled = false;
+    setHierarchyLoading(true);
+    employeeRepository
+      .getHierarchy(employee.id)
+      .then((res) => {
+        if (!cancelled) setHierarchy(res);
+      })
+      .catch(() => {
+        if (!cancelled) setHierarchy(null);
+      })
+      .finally(() => {
+        if (!cancelled) setHierarchyLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [employee?.id]);
+
+  const loadEmployeePerformance = useCallback(async () => {
+    if (!employee?.id) {
+      setEmpReviews([]);
+      return;
+    }
+    const numericId = Number(employee.id);
+    if (!numericId) {
+      setEmpReviews([]);
+      return;
+    }
+    setReviewsLoading(true);
+    try {
+      const list = await performanceRepository.getReviews({ employeeId: numericId });
+      setEmpReviews(list.filter((r) => String(r.employeeId) === String(employee.id)));
+    } catch {
+      setEmpReviews([]);
+    } finally {
+      setReviewsLoading(false);
+    }
+  }, [employee?.id]);
+
+  useEffect(() => {
+    if (activeTab === 'performance' && employee?.id) {
+      void loadEmployeePerformance();
+    }
+  }, [activeTab, employee?.id, loadEmployeePerformance]);
+
+  useRealtimeTable('performance_reviews', () => {
+    if (employee?.id) {
+      void loadEmployeePerformance();
+    }
+  });
 
   const handleAuditLog = async (action: string, doc: HubDocument, previousValue: string | null = null) => {
     void auditRepository.logAction({
@@ -433,10 +498,82 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <span className="text-slate-400 block text-[10px]">Reporting Manager</span>
                     <span className="font-semibold text-slate-900 text-xs mt-0.5 block">
-                      {employee.managerName || 'PCCM Super Admin'}
+                      {employee.managerName || 'Executive / Top-Level (Routes to HR)'}
                     </span>
                   </div>
                 </div>
+              </div>
+
+              {/* Phase 1: Reporting Hierarchy (Upward Chain & Direct Reports) */}
+              <div>
+                <h3 className="font-bold text-slate-900 uppercase tracking-wider text-xs pb-1.5 border-b border-slate-200 flex items-center gap-2">
+                  <GitBranch className="w-4 h-4 text-[#083E34]" />
+                  <span>Reporting Hierarchy</span>
+                </h3>
+
+                {hierarchyLoading ? (
+                  <div className="mt-3 p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-500 flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-[#083E34]" />
+                    <span>Loading reporting chain and direct reports...</span>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                    <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                        Supervisor Chain (Upward)
+                      </span>
+                      {hierarchy?.supervisorChain && hierarchy.supervisorChain.length > 0 ? (
+                        <div className="space-y-1.5">
+                          {hierarchy.supervisorChain.map((sup, idx) => (
+                            <div
+                              key={sup.id}
+                              className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                            >
+                              <div>
+                                <span className="font-semibold text-slate-900">{sup.fullName}</span>
+                                <span className="text-[10px] text-slate-500 block">{sup.jobTitle}</span>
+                              </div>
+                              <span className="text-[10px] font-mono text-[#083E34] font-semibold">
+                                L{idx + 1}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-500">
+                          Top-level reporting line (no direct supervisor assigned).
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5 text-[#083E34]" />
+                        Direct Reports ({hierarchy?.directReports?.length ?? employee.directReportsCount ?? 0})
+                      </span>
+                      {hierarchy?.directReports && hierarchy.directReports.length > 0 ? (
+                        <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                          {hierarchy.directReports.map((rep) => (
+                            <div
+                              key={rep.id}
+                              className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                            >
+                              <div>
+                                <span className="font-semibold text-slate-900">{rep.fullName}</span>
+                                <span className="text-[10px] text-slate-500 block">
+                                  {rep.jobTitle} · {rep.departmentName || 'Department'}
+                                </span>
+                              </div>
+                              <span className="text-[10px] font-mono text-slate-400">{rep.staffId}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-500">No direct reports assigned.</p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Quick Contact Overview */}
@@ -1124,50 +1261,87 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
           {/* TAB 9: PERFORMANCE */}
           {activeTab === 'performance' && (
             <div className="space-y-6 animate-fade-in">
-              <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] text-amber-800 font-bold uppercase tracking-wider block">
-                    Latest PCCM Performance Calibration
-                  </span>
-                  <div className="text-2xl font-black text-slate-900 mt-1 flex items-center gap-2">
-                    <span>4.8</span>
-                    <span className="text-xs font-semibold text-slate-500">/ 5.0</span>
-                    <span className="text-xs px-2 py-0.5 rounded bg-amber-400 text-slate-950 font-bold">
-                      Exceeds Expectations
-                    </span>
-                  </div>
-                </div>
-                <Award className="w-10 h-10 text-amber-600" />
-              </div>
+              {(() => {
+                const latestScored = empReviews.find((r) => r.finalRating !== null && r.finalRating !== undefined) || empReviews[0];
+                const scoreVal = latestScored?.finalRating !== null && latestScored?.finalRating !== undefined
+                  ? Number(latestScored.finalRating)
+                  : null;
+                const bandLabel =
+                  scoreVal === null
+                    ? latestScored
+                      ? 'Pending Evaluation'
+                      : 'No Appraisals Yet'
+                    : scoreVal >= 4.5
+                    ? 'Exceeds Expectations'
+                    : scoreVal >= 3.5
+                    ? 'Strong Performance'
+                    : scoreVal >= 2.5
+                    ? 'Meets Expectations'
+                    : 'Needs Development';
 
-              <div className="space-y-3">
-                <h4 className="font-bold text-slate-900 uppercase tracking-wider text-xs pb-1 border-b border-slate-200">
-                  Core OKR & KPI Progress
-                </h4>
-                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
-                  <div className="flex justify-between text-xs">
-                    <span className="font-semibold text-slate-800">
-                      1. Deliver Key Q3 Department Objectives & Projects
-                    </span>
-                    <span className="font-mono font-bold text-emerald-700">95% Complete</span>
-                  </div>
-                  <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-600 rounded-full" style={{ width: '95%' }}></div>
-                  </div>
-                </div>
+                return (
+                  <>
+                    <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] text-amber-800 font-bold uppercase tracking-wider block">
+                          Latest PCCM Performance Calibration
+                        </span>
+                        {reviewsLoading ? (
+                          <p className="text-xs text-slate-600 mt-1">Loading appraisal records...</p>
+                        ) : (
+                          <div className="text-2xl font-black text-slate-900 mt-1 flex items-center gap-2 flex-wrap">
+                            <span>{scoreVal !== null ? scoreVal.toFixed(2) : '—'}</span>
+                            <span className="text-xs font-semibold text-slate-500">/ 5.0</span>
+                            <span className="text-xs px-2 py-0.5 rounded bg-amber-400 text-slate-950 font-bold">
+                              {bandLabel}
+                            </span>
+                            {latestScored && (
+                              <span className="text-[11px] font-semibold text-slate-600">
+                                ({latestScored.status} • {latestScored.reviewPeriodStart} – {latestScored.reviewPeriodEnd})
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <Award className="w-10 h-10 text-amber-600 shrink-0" />
+                    </div>
 
-                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
-                  <div className="flex justify-between text-xs">
-                    <span className="font-semibold text-slate-800">
-                      2. Alignment with Citadel Leadership Excellence Accord
-                    </span>
-                    <span className="font-mono font-bold text-amber-600">100% Exemplary</span>
-                  </div>
-                  <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-amber-500 rounded-full" style={{ width: '100%' }}></div>
-                  </div>
-                </div>
-              </div>
+                    <div className="space-y-3">
+                      <h4 className="font-bold text-slate-900 uppercase tracking-wider text-xs pb-1 border-b border-slate-200">
+                        Weighted KPI Breakdown &amp; Appraisal History
+                      </h4>
+                      {latestScored?.ratings && latestScored.ratings.length > 0 ? (
+                        latestScored.ratings.map((rating, idx) => {
+                          const rVal = Number(rating.rating ?? 0);
+                          const pct = rVal > 0 ? Math.min(100, Math.round((rVal / 5) * 100)) : 0;
+                          return (
+                            <div key={idx} className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
+                              <div className="flex justify-between gap-2 text-xs">
+                                <span className="font-semibold text-slate-800">
+                                  {idx + 1}. {rating.kpiTitle} ({Number(rating.weight ?? 0)}%)
+                                </span>
+                                <span className="font-mono font-bold text-emerald-700 shrink-0">
+                                  {rVal > 0 ? `${rVal.toFixed(1)} / 5.0` : 'Pending'}
+                                </span>
+                              </div>
+                              <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                                <div className="h-full bg-emerald-600 rounded-full" style={{ width: `${pct}%` }} />
+                              </div>
+                              {rating.comment && (
+                                <p className="text-[11px] text-slate-600 italic">"{rating.comment}"</p>
+                              )}
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600">
+                          No scored KPI deliverables recorded for {employee.fullName} yet.
+                        </div>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           )}
         </div>
@@ -1179,7 +1353,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            {isPCCM && onEdit && (
+            {(permissions.canManageEmployees || isAuthorizedHR) && onEdit && (
               <button
                 onClick={() => onEdit(employee)}
                 className="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-100 transition cursor-pointer"

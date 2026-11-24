@@ -37,52 +37,52 @@ interface DemoAccount {
 
 const DEMO_ACCOUNTS: DemoAccount[] = import.meta.env.DEV ? [
   {
-    label: 'Admin',
+    label: 'HR Admin',
     name: 'Dr. Bukola Adeleke',
     email: 'dr.adeleke@citadel.ng',
-    role: 'Chief People Officer',
+    role: 'HR Admin (ADMIN)',
     password: 'Password123!',
   },
   {
-    label: 'Site Lead',
+    label: 'HR Staff',
+    name: 'Mrs. Sussan Afuwape',
+    email: 's.afuwape@thecitadelglobal.org',
+    role: 'HR Staff (Stage 2)',
+    password: 'Password123!',
+  },
+  {
+    label: 'Manager (ICT)',
     name: 'Engr. Femi Olatunji',
     email: 'femi.olatunji@citadel.ng',
-    role: 'Head of Technology',
+    role: 'Manager (Stage 1)',
     password: 'Password123!',
   },
   {
-    label: 'Approver',
-    name: 'Pastor Tunde Bakare',
-    email: 'pastor.bakare@citadel.ng',
-    role: 'Business Head',
-    password: 'Password123!',
-  },
-  {
-    label: 'Designer',
+    label: 'Supervisor',
     name: 'Nadia Safitri',
     email: 'nadia@citadel.ng',
-    role: 'Product Designer',
+    role: 'Team Lead / Employee',
     password: 'Password123!',
   },
   {
-    label: 'Android Eng',
+    label: 'Employee (ICT)',
     name: 'Bayu Wirawan',
     email: 'bayu@citadel.ng',
-    role: 'Senior Android Engineer',
+    role: 'Employee',
     password: 'Password123!',
   },
   {
-    label: 'Executive',
+    label: 'Junior Staff',
     name: 'Jonathan Tan',
     email: 'jonathan@citadel.ng',
-    role: 'Backend Systems Lead',
+    role: 'Employee (2-Level)',
     password: 'Password123!',
   },
   {
     label: 'Viewer',
     name: 'Grace Okafor',
     email: 'grace.okafor@citadel.ng',
-    role: 'Compliance Auditor (Viewer)',
+    role: 'Read-Only Viewer',
     password: 'Password123!',
   },
 ] : [];
@@ -104,6 +104,9 @@ export const AuthPage: React.FC = () => {
     import.meta.env.VITE_ENABLE_LOCAL_DEMO_AUTH === 'true'
   );
 
+  const showDevSeededAccounts =
+    localDemoAuthenticationEnabled || (import.meta.env.DEV && backendEnabled && DEMO_ACCOUNTS.length > 0);
+
   const [activeTab, setActiveTab] = useState<'signin' | 'register'>('signin');
   const [email, setEmail] = useState(localDemoAuthenticationEnabled ? 'dr.adeleke@citadel.ng' : '');
   const [password, setPassword] = useState(localDemoAuthenticationEnabled ? 'Password123!' : '');
@@ -114,7 +117,7 @@ export const AuthPage: React.FC = () => {
   const [fullName, setFullName] = useState('');
 
   // UI state
-  const [isDemoAccordionOpen, setIsDemoAccordionOpen] = useState(localDemoAuthenticationEnabled);
+  const [isDemoAccordionOpen, setIsDemoAccordionOpen] = useState(showDevSeededAccounts);
   const [selectedDemoEmail, setSelectedDemoEmail] = useState<string>(localDemoAuthenticationEnabled ? 'dr.adeleke@citadel.ng' : '');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -438,7 +441,7 @@ export const AuthPage: React.FC = () => {
           </button>
         </form>
 
-        {localDemoAuthenticationEnabled && (
+        {showDevSeededAccounts && (
         <div className="border border-slate-200/90 rounded-2xl bg-white p-3.5 sm:p-4 shadow-2xs space-y-3">
           {/* Accordion Toggle Header */}
           <button
@@ -448,7 +451,11 @@ export const AuthPage: React.FC = () => {
           >
             <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
               <Fingerprint className="w-4 h-4 text-[#D4AF37]" />
-              <span>Demo Credentials (1-Click Fill)</span>
+              <span>
+                {localDemoAuthenticationEnabled
+                  ? 'Demo Credentials (1-Click Fill)'
+                  : 'Seeded Dev Accounts (1-Click Fill · API Auth)'}
+              </span>
             </div>
             {isDemoAccordionOpen ? (
               <ChevronUp className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition" />

@@ -96,6 +96,7 @@ export interface Employee {
   confirmationDate?: string;
   managerId?: string;
   managerName?: string;
+  directReportsCount?: number;
   contractStatus: ContractStatus;
   yearsOfService: number;
 
@@ -109,6 +110,30 @@ export interface Employee {
 
   status: EmployeeStatus;
   notes?: string;
+}
+
+export interface EmployeeHierarchyNode {
+  id: string;
+  staffId: string;
+  fullName: string;
+  firstName: string;
+  lastName: string;
+  jobTitle: string;
+  entityId: string;
+  entityName?: string;
+  departmentId?: string | null;
+  departmentName?: string;
+  email?: string;
+  phone?: string;
+  managerId?: string | null;
+  managerName?: string | null;
+  status: string;
+}
+
+export interface EmployeeHierarchy {
+  employee: EmployeeHierarchyNode;
+  supervisorChain: EmployeeHierarchyNode[];
+  directReports: EmployeeHierarchyNode[];
 }
 
 // Sensitive field categories

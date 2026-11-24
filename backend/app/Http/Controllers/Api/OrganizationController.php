@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Entity;
+use App\Repositories\OrganizationRepository;
+use App\Services\RealtimeEventService;
 use App\Support\AuditLogger;
 use App\Support\RoleAuthorization;
 use Illuminate\Http\JsonResponse;
@@ -14,11 +16,16 @@ use Illuminate\Validation\Rule;
 
 class OrganizationController extends Controller
 {
+    public function __construct(
+        private readonly OrganizationRepository $organizations
+    ) {}
+
     public function entities(Request $request): JsonResponse
     {
-        $entities = Entity::query()
-            ->when($request->user()->role === 'BUSINESS_HEAD', fn ($query) => $query->whereKey($request->user()->entity_id))
-            ->orderBy('name')->get();
+        $restrictedEntityId = $request->user()->role === 'BUSINESS_HEAD'
+            ? $request->user()->entity_id
+            : null;
+        $entities = $this->organizations->listEntities($restrictedEntityId);
 
         return response()->json(['data' => $entities->map(fn (Entity $entity) => [
             'id' => $entity->id,
@@ -52,6 +59,7 @@ class OrganizationController extends Controller
                 'is_active' => $data['isActive'] ?? true,
             ]);
             AuditLogger::record($request, 'Organization Settings', 'Created entity', $entity->id, $entity->name, null, $entity->short_code);
+            RealtimeEventService::publish('entities', 'INSERT', $entity->id, ['name' => $entity->name], (int) $request->user()->id);
 
             return $entity;
         });
@@ -68,27 +76,36 @@ class OrganizationController extends Controller
 
     public function departments(Request $request): JsonResponse
     {
-        $query = Department::query()->with('entity');
-        if ($request->filled('entityId')) {
-            $normEntity = Entity::normalizeEntityId($request->string('entityId')->toString());
-            if ($normEntity) {
-                $query->where('entity_id', $normEntity);
-            }
-        }
-        if ($request->user()->role === 'BUSINESS_HEAD') {
-            $query->where('entity_id', $request->user()->entity_id);
+        $entityId = $request->filled('entityId')
+            ? $request->string('entityId')->toString()
+            : null;
+
+        if ($request->user()->role === 'BUSINESS_HEAD' && $request->user()->entity_id !== null) {
+            $entityId = $request->user()->entity_id;
         }
 
-        return response()->json(['data' => $query->orderBy('name')->limit(500)->get()->map(fn (Department $department) => $this->presentDepartment($department))]);
+        $departments = $this->organizations->listDepartments($entityId, $request->boolean('activeOnly', false));
+
+        return response()->json(['data' => $departments->map(fn (Department $department) => $this->presentDepartment($department))]);
     }
 
     public function createDepartment(Request $request): JsonResponse
     {
         $this->authorizeAdmin($request);
+        if ($request->filled('entityId')) {
+            $request->merge(['entityId' => Entity::normalizeEntityId($request->string('entityId')->toString()) ?? $request->input('entityId')]);
+        }
+
         $data = $request->validate([
             'entityId' => ['required', 'string', 'exists:entities,id'],
             'name' => ['required', 'string', 'max:180'],
-            'code' => ['required', 'string', 'max:30', 'alpha_dash'],
+            'code' => [
+                'required',
+                'string',
+                'max:30',
+                'alpha_dash',
+                Rule::unique('departments', 'code')->where('entity_id', $request->input('entityId')),
+            ],
             'headOfDepartmentName' => ['nullable', 'string', 'max:180'],
             'description' => ['nullable', 'string', 'max:2000'],
             'isActive' => ['sometimes', 'boolean'],
@@ -103,6 +120,7 @@ class OrganizationController extends Controller
                 'is_active' => $data['isActive'] ?? true,
             ]);
             AuditLogger::record($request, 'Organization Settings', 'Created department', $department->id, $department->name, null, $department->code);
+            RealtimeEventService::publish('departments', 'INSERT', $department->id, ['entityId' => $department->entity_id], (int) $request->user()->id);
 
             return $department;
         });
@@ -128,6 +146,7 @@ class OrganizationController extends Controller
             $lockedDepartment = Department::query()->lockForUpdate()->findOrFail($department->id);
             $lockedDepartment->update(collect($data)->mapWithKeys(fn ($value, $key) => [$map[$key] ?? $key => $key === 'code' ? strtoupper($value) : $value])->all());
             AuditLogger::record($request, 'Organization Settings', 'Updated department', $lockedDepartment->id, $lockedDepartment->name, null, 'Updated');
+            RealtimeEventService::publish('departments', 'UPDATE', $lockedDepartment->id, ['entityId' => $lockedDepartment->entity_id], (int) $request->user()->id);
         });
 
         return response()->json(['data' => $this->presentDepartment($department->fresh()->load('entity'))]);

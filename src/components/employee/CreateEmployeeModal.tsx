@@ -30,6 +30,7 @@ interface CreateEmployeeModalProps {
   entities: CitadelEntity[];
   departments: CitadelDepartment[];
   employees?: Employee[];
+  editingEmployee?: Employee | null;
 }
 
 export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
@@ -39,15 +40,16 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
   entities,
   departments,
   employees,
+  editingEmployee = null,
 }) => {
   const { currentUser, currentRole } = useAuth();
+  const isEditing = Boolean(editingEmployee);
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   // Form State
-  // Step 1: Personal Information
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [gender, setGender] = useState<'Male' | 'Female'>('Male');
@@ -57,7 +59,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
   const [address, setAddress] = useState('Citadel Campus, 30 Kudirat Abiola Way, Oregun, Ikeja, Lagos');
 
   // Step 2: Employment Details
-  const [staffId, setStaffId] = useState('CGCC/' + Math.floor(100 + Math.random() * 900));
+  const [staffId, setStaffId] = useState('CGCC-' + Math.floor(100 + Math.random() * 900));
   const [entityId, setEntityId] = useState('');
   const [departmentId, setDepartmentId] = useState('');
   const [jobTitle, setJobTitle] = useState('');
@@ -65,23 +67,62 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
   const [employmentType, setEmploymentType] = useState<EmploymentType>('Full-Time');
   const [employmentDate, setEmploymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [confirmationDate, setConfirmationDate] = useState('');
-  const [managerName, setManagerName] = useState('Sussan Afuwape (PCCM)');
+  const [managerId, setManagerId] = useState('');
   const [status, setStatus] = useState<EmployeeStatus>('Probation');
+
+  // Populate form when opening for Create vs Edit
+  useEffect(() => {
+    if (!isOpen) return;
+    setValidationError(null);
+    if (editingEmployee) {
+      setCurrentStep(2);
+      setFirstName(editingEmployee.firstName || '');
+      setLastName(editingEmployee.lastName || '');
+      setGender(editingEmployee.gender || 'Male');
+      setDateOfBirth(editingEmployee.dateOfBirth || '1994-06-15');
+      setEmail(editingEmployee.email || '');
+      setPhone(editingEmployee.phone || '');
+      setAddress(editingEmployee.address || '');
+      setStaffId(editingEmployee.staffId || '');
+      setEntityId(String(editingEmployee.entityId || entities[0]?.id || ''));
+      setDepartmentId(String(editingEmployee.departmentId || ''));
+      setJobTitle(editingEmployee.jobTitle || '');
+      setGradeLevel(editingEmployee.gradeLevel || 'Associate (A-1)');
+      setEmploymentType(editingEmployee.employmentType || 'Full-Time');
+      setEmploymentDate(editingEmployee.employmentDate || new Date().toISOString().split('T')[0]);
+      setConfirmationDate(editingEmployee.confirmationDate || '');
+      setManagerId(editingEmployee.managerId ? String(editingEmployee.managerId) : '');
+      setStatus(editingEmployee.status || 'Active');
+    } else {
+      setCurrentStep(1);
+      setFirstName('');
+      setLastName('');
+      setEmail('');
+      setPhone('+234 800 ');
+      setStaffId('CGCC-' + Math.floor(100 + Math.random() * 900));
+      setEntityId(entities[0] ? String(entities[0].id) : '');
+      setDepartmentId('');
+      setJobTitle('');
+      setManagerId('');
+      setStatus('Probation');
+    }
+  }, [isOpen, editingEmployee, entities]);
 
   // Synchronize entityId with loaded entities
   useEffect(() => {
-    if (entities.length > 0 && (!entityId || !entities.some((e) => e.id === entityId))) {
-      setEntityId(entities[0].id);
+    if (entities.length > 0 && (!entityId || !entities.some((e) => String(e.id) === String(entityId)))) {
+      setEntityId(String(entities[0].id));
     }
   }, [entities, entityId]);
 
-  // Robust department filtering supporting both string slugs (entity-cgcc) and uppercase codes (CGCC)
+  // Strict entity-coupled department filtering (never fall back to departments from other entities)
   const filteredDepartments = useMemo(() => {
     if (!departments || departments.length === 0) return [];
-    if (!entityId) return departments;
+    if (!entityId) return [];
 
-    const matched = departments.filter((d) => {
-      if (d.entityId === entityId) return true;
+    return departments.filter((d) => {
+      if (!d.isActive && String(d.id) !== String(departmentId)) return false;
+      if (String(d.entityId) === String(entityId)) return true;
       const entLower = entityId.toLowerCase();
       const dEntLower = (d.entityId || '').toLowerCase();
       if (entLower.includes('cgcc') && dEntLower.includes('cgcc')) return true;
@@ -89,35 +130,23 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
       if (entLower.includes('holding') && dEntLower.includes('holding')) return true;
       return false;
     });
+  }, [departments, entityId, departmentId]);
 
-    return matched.length > 0 ? matched : departments;
-  }, [departments, entityId]);
-
-  // Synchronize departmentId when filtered departments change
+  // Keep department selection strictly consistent with selected entity
   useEffect(() => {
-    if (filteredDepartments.length > 0) {
-      if (!departmentId || !filteredDepartments.some((d) => String(d.id) === String(departmentId))) {
-        setDepartmentId(String(filteredDepartments[0].id));
-      }
+    if (filteredDepartments.length === 0) {
+      if (departmentId !== '') setDepartmentId('');
+      return;
+    }
+    if (!departmentId || !filteredDepartments.some((d) => String(d.id) === String(departmentId))) {
+      setDepartmentId(String(filteredDepartments[0].id));
     }
   }, [filteredDepartments, departmentId]);
 
-  const availableManagers = useMemo(() => {
-    if (employees && employees.length > 0) {
-      return employees.map((emp) => `${emp.fullName || `${emp.firstName} ${emp.lastName}`.trim()} (${emp.jobTitle || 'Staff'})`);
-    }
-    return [
-      'Sussan Afuwape (PCCM Manager)',
-      'Pastor Christian Ike (Executive Pastor / Facilities & Logistics)',
-      'Pastor Biola Adeyoola (Church Admin & Operations / Protocol)',
-      'Pastor Segun Bakare (Executive Pastor / ICT)',
-      'Stephen Anuforo (Finance & Accounts Manager)',
-      'Olubunmi Ojo-John (Chief Security Officer)',
-      'Omoaholo Omoakhalen (Director CSG / Business Head)',
-      'Olufisayo Bakare (CEO Holdings / Managing Director)',
-      'Anwuli Uzu (Business Dev / Sales Manager)',
-    ];
-  }, [employees]);
+  const availableSupervisors = useMemo(() => {
+    if (!employees) return [];
+    return employees.filter((emp) => !editingEmployee || String(emp.id) !== String(editingEmployee.id));
+  }, [employees, editingEmployee]);
 
   // Step 3: Emergency & Next of Kin
   const [emergName, setEmergName] = useState('');
@@ -182,28 +211,77 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setValidationError(null);
+
+    if (!entityId || !departmentId) {
+      setValidationError('Please select a valid entity and department.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const entityObj = entities.find((e) => e.id === entityId);
-      const deptObj = departments.find((d) => d.id === departmentId);
+      const entityObj = entities.find((ent) => String(ent.id) === String(entityId));
+      const deptObj = departments.find((d) => String(d.id) === String(departmentId));
+      const selectedSupervisor = availableSupervisors.find((s) => String(s.id) === String(managerId));
+
+      if (editingEmployee) {
+        const updated = await employeeRepository.update(String(editingEmployee.id), {
+          staffId,
+          firstName,
+          lastName,
+          fullName: `${firstName} ${lastName}`.trim(),
+          email,
+          phone,
+          dateOfBirth,
+          gender,
+          address,
+          entityId,
+          departmentId,
+          jobTitle,
+          gradeLevel,
+          employmentType,
+          employmentDate,
+          confirmationDate: confirmationDate || undefined,
+          managerId: managerId ? String(managerId) : undefined,
+          managerName: selectedSupervisor?.fullName || undefined,
+          status,
+        });
+
+        await auditRepository.logAction({
+          userId: currentUser.id,
+          userName: currentUser.name,
+          userRole: currentRole,
+          module: 'Employee Management',
+          action: 'Updated Employee Record',
+          recordAffectedId: updated.id,
+          recordAffectedTitle: `${updated.fullName} (${updated.staffId})`,
+          previousValue: editingEmployee.departmentName,
+          newValue: `${updated.entityName} • ${updated.departmentName}`,
+          severity: 'Info',
+        });
+
+        onSuccess();
+        onClose();
+        return;
+      }
 
       const newEmp: Omit<Employee, 'id'> = {
         staffId,
         firstName,
         lastName,
-        fullName: `${firstName} ${lastName}`,
+        fullName: `${firstName} ${lastName}`.trim(),
         email,
         phone,
         dateOfBirth,
         gender,
         address,
         emergencyContact: {
-          name: emergName,
+          name: emergName || `${firstName} Emergency Contact`,
           relationship: emergRelationship,
           phone: emergPhone,
         },
         nextOfKin: {
-          name: nokName,
+          name: nokName || `${firstName} Next of Kin`,
           relationship: nokRelationship,
           phone: nokPhone,
           address: nokAddress,
@@ -217,9 +295,10 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
         employmentType,
         employmentDate,
         confirmationDate: confirmationDate || undefined,
-        managerName,
+        managerId: managerId ? String(managerId) : undefined,
+        managerName: selectedSupervisor?.fullName || undefined,
         contractStatus: status === 'Probation' ? 'Probation' : 'Permanent',
-        yearsOfService: 1,
+        yearsOfService: 0,
         qualifications: [
           {
             id: 'q-1',
@@ -260,7 +339,6 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
 
       const created = await employeeRepository.create(newEmp);
 
-      // Audit Log Entry
       await auditRepository.logAction({
         userId: currentUser.id,
         userName: currentUser.name,
@@ -276,6 +354,8 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
 
       onSuccess();
       onClose();
+    } catch (err: any) {
+      setValidationError(err?.message || 'Unable to save employee record. Check fields and try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -302,9 +382,11 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
           </button>
 
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold text-white">Create Employee Master Record</h2>
+            <h2 className="text-lg font-bold text-white">
+              {isEditing ? `Edit Employee Record — ${editingEmployee?.fullName}` : 'Create Employee Master Record'}
+            </h2>
             <span className="px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 font-mono text-[10px] font-bold border border-amber-400/30">
-              PCCM Enrollment
+              {isEditing ? 'Update Placement & Hierarchy' : 'PCCM Enrollment'}
             </span>
           </div>
           <p className="text-xs text-blue-100 mt-1">
@@ -458,8 +540,12 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1">Assigned Entity *</label>
                   <select
+                    data-testid="employee-entity-select"
                     value={entityId}
-                    onChange={(e) => setEntityId(e.target.value)}
+                    onChange={(e) => {
+                      setEntityId(e.target.value);
+                      setDepartmentId('');
+                    }}
                     className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none bg-white font-medium"
                   >
                     {entities.map((ent) => (
@@ -475,15 +561,21 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1">Assigned Department *</label>
                   <select
+                    data-testid="employee-department-select"
                     value={departmentId}
                     onChange={(e) => setDepartmentId(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none bg-white font-medium"
+                    disabled={filteredDepartments.length === 0}
+                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none bg-white font-medium disabled:bg-slate-100"
                   >
-                    {filteredDepartments.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.name} {d.headOfDepartmentName ? `(${d.headOfDepartmentName})` : ''}
-                      </option>
-                    ))}
+                    {filteredDepartments.length === 0 ? (
+                      <option value="">No departments found for selected entity</option>
+                    ) : (
+                      filteredDepartments.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.name} {d.headOfDepartmentName ? `(${d.headOfDepartmentName})` : ''}
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
                 <div>
@@ -554,21 +646,20 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">Reporting Manager / Supervisor *</label>
-                  <input
-                    type="text"
-                    list="managers-list"
-                    required
-                    value={managerName}
-                    onChange={(e) => setManagerName(e.target.value)}
-                    placeholder="Select or enter supervisor"
+                  <label className="block text-slate-700 font-semibold mb-1">Direct Supervisor / Reporting Manager</label>
+                  <select
+                    data-testid="employee-supervisor-select"
+                    value={managerId}
+                    onChange={(e) => setManagerId(e.target.value)}
                     className="w-full p-2.5 border border-slate-300 rounded-lg focus:border-[#083E34] outline-none bg-white font-medium"
-                  />
-                  <datalist id="managers-list">
-                    {availableManagers.map((m) => (
-                      <option key={m} value={m} />
+                  >
+                    <option value="">No Direct Supervisor (Top-Level)</option>
+                    {availableSupervisors.map((sup) => (
+                      <option key={sup.id} value={String(sup.id)}>
+                        {sup.fullName} — {sup.jobTitle} ({sup.staffId})
+                      </option>
                     ))}
-                  </datalist>
+                  </select>
                 </div>
               </div>
             </div>
@@ -849,7 +940,17 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                 </button>
               )}
 
-              {currentStep < 5 ? (
+              {isEditing ? (
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  data-testid="employee-save-changes-btn"
+                  className="px-5 py-2 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{isSubmitting ? 'Saving Changes...' : 'Save Changes'}</span>
+                </button>
+              ) : currentStep < 5 ? (
                 <button
                   type="button"
                   onClick={handleNext}

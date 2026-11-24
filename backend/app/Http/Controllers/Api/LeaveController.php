@@ -7,336 +7,186 @@ use App\Models\Employee;
 use App\Models\EmployeeLeaveBalance;
 use App\Models\LeaveCategory;
 use App\Models\LeaveRequest as LeaveRecord;
+use App\Repositories\EmployeeRepository;
+use App\Repositories\LeaveRepository;
+use App\Services\LeaveWorkflowService;
+use App\Services\RealtimeEventService;
 use App\Support\AuditLogger;
 use App\Support\RoleAuthorization;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /**
- * Manages leave requests, balances, categories, and hierarchical approvals.
- *
- * Approval workflow advances sequentially:
- * DEPARTMENT_HEAD -> BUSINESS_HEAD -> HR -> COMPLETE.
- *
- * Scoped reviewers (Department and Business Heads) can only act on records within
- * their assigned organizational scope. Global administrators and HR staff have
- * broad review authority across entities.
+ * Manages leave requests, balances, categories, team calendar, and two-stage approval workflow.
  */
 class LeaveController extends Controller
 {
+    public function __construct(
+        private readonly LeaveRepository $leaves,
+        private readonly EmployeeRepository $employees,
+        private readonly LeaveWorkflowService $workflow,
+    ) {}
+
     /**
-     * List leave requests visible to the authenticated user.
+     * List leave requests visible to the authenticated user based on Phase 1 hierarchy & role.
      *
      * GET /api/v1/leave-requests
-     * Scoping rules:
-     * - EMPLOYEE: Returns only requests filed by the authenticated user.
-     * - DEPARTMENT_HEAD: Scoped to employees within user's department.
-     * - BUSINESS_HEAD: Scoped to employees within user's entity.
-     * - ADMIN / HR_STAFF: Global list up to 500 recent requests.
-     *
-     * Response:
-     * - data: Array of serialized leave request objects.
      */
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        $query = LeaveRecord::query();
-        $role = RoleAuthorization::canonical($user->role);
-        abort_unless(in_array($role, ['ADMIN', 'HR_STAFF', 'EMPLOYEE'], true), 403, 'You are not authorized to access leave requests.');
+        abort_unless(RoleAuthorization::canonical($user->role) !== 'VIEWER', 403, 'You are not authorized to access leave requests.');
 
-        if ($role === 'EMPLOYEE') {
-            $query->where('employee_staff_id', $user->staff_id);
-        } elseif (strtoupper(trim($user->role)) === 'BUSINESS_HEAD') {
-            $query->whereIn('employee_id', Employee::query()->select('id')->where('entity_id', $user->entity_id));
-        } elseif (strtoupper(trim($user->role)) === 'DEPARTMENT_HEAD') {
-            $query->whereIn('employee_id', Employee::query()->select('id')->where('department_id', $user->department_id));
-        }
+        $allowedEmployeeIds = RoleAuthorization::visibleLeaveEmployeeIds($user);
+        $records = $this->leaves->listScopedRequests($allowedEmployeeIds);
 
-        return response()->json(['data' => $query->latest('applied_date')->limit(500)->get()->map(fn (LeaveRecord $record) => $this->present($record))]);
+        return response()->json([
+            'data' => $records->map(fn (LeaveRecord $record) => $this->present($record)),
+        ]);
     }
 
     /**
-     * Retrieve leave history for a specific employee.
+     * Retrieve leave history for a specific employee (strictly scoped by hierarchy/HR).
      *
      * GET /api/v1/employees/{employeeId}/leave-requests
-     *
-     * @param  string  $employeeId  Target employee ID.
      */
     public function forEmployee(Request $request, string $employeeId): JsonResponse
     {
-        $employee = Employee::query()->findOrFail($employeeId);
-        $this->ensureCanViewEmployee($request, $employee);
+        $employee = $this->employees->findById($employeeId) ?? abort(404, 'Employee not found.');
+        $this->ensureCanViewEmployeeLeave($request, $employee);
 
-        return response()->json(['data' => LeaveRecord::query()->where('employee_id', $employee->id)->latest('applied_date')->get()->map(fn (LeaveRecord $record) => $this->present($record))]);
+        $records = LeaveRecord::query()
+            ->with(['employee.supervisor'])
+            ->where('employee_id', $employee->id)
+            ->latest('applied_date')
+            ->get();
+
+        return response()->json([
+            'data' => $records->map(fn (LeaveRecord $record) => $this->present($record)),
+        ]);
     }
 
     /**
      * Submit a new leave application.
      *
      * POST /api/v1/leave-requests
-     *
-     * Request body:
-     * - employeeId: Employee ID (required, exists:employees,id).
-     * - employeeStaffId: Staff code (required, max 50). Must match employee's staff_id.
-     * - employeeName: Full name (required, max 180).
-     * - entityName: Organizational entity name (required, max 180).
-     * - departmentName: Department name (required, max 180).
-     * - leaveType: Enum ('Annual Leave', 'Sick Leave', 'Maternity Leave', 'Paternity Leave', 'Exam Leave', 'Compassionate Leave', 'Casual Leave').
-     * - startDate: YYYY-MM-DD (required).
-     * - endDate: YYYY-MM-DD (required, after_or_equal:startDate).
-     * - totalDays: Positive integer (1-366).
-     * - reason: Text description (required, max 3000).
-     * - relievingStaffId, relievingStaffName, handoverColleague: Optional strings.
-     *
-     * Response:
-     * - data: Created leave record in 'Submitted' state, approval_stage 'DEPARTMENT_HEAD'.
      */
     public function store(Request $request): JsonResponse
     {
         $empId = $request->input('employeeId');
-        if (! is_numeric($empId) || ! Employee::query()->where('id', $empId)->exists()) {
+        $resolvedEmp = null;
+        if (! is_numeric($empId) || ! ($resolvedEmp = Employee::query()->find($empId))) {
             $staffId = $request->input('employeeStaffId') ?? $request->user()->staff_id;
-            $resolvedEmp = Employee::query()->where('staff_id', $staffId)->first();
+            $resolvedEmp = $staffId
+                ? Employee::query()->where('staff_id', $staffId)->first()
+                : Employee::query()->whereRaw('LOWER(email) = ?', [strtolower((string) $request->user()->email)])->first();
             if ($resolvedEmp) {
                 $request->merge(['employeeId' => $resolvedEmp->id]);
             }
         }
 
+        if ($resolvedEmp && ! $request->filled('employeeStaffId')) {
+            $request->merge(['employeeStaffId' => $resolvedEmp->staff_id]);
+        }
+
         $data = $request->validate([
             'employeeId' => ['required', 'exists:employees,id'],
-            'employeeStaffId' => ['required', 'string', 'max:50'],
-            'employeeName' => ['required', 'string', 'max:180'],
-            'entityName' => ['required', 'string', 'max:180'],
-            'departmentName' => ['required', 'string', 'max:180'],
+            'employeeStaffId' => ['sometimes', 'string', 'max:50'],
+            'employeeName' => ['sometimes', 'string', 'max:180'],
+            'entityName' => ['sometimes', 'string', 'max:180'],
+            'departmentName' => ['sometimes', 'string', 'max:180'],
             'leaveType' => ['required', Rule::in(['Annual Leave', 'Sick Leave', 'Maternity Leave', 'Paternity Leave', 'Exam Leave', 'Compassionate Leave', 'Casual Leave'])],
             'startDate' => ['required', 'date_format:Y-m-d'],
             'endDate' => ['required', 'date_format:Y-m-d', 'after_or_equal:startDate'],
-            'totalDays' => ['required', 'integer', 'min:1', 'max:366'],
+            'totalDays' => ['sometimes', 'integer', 'min:1', 'max:366'],
             'reason' => ['required', 'string', 'max:3000'],
             'relievingStaffId' => ['nullable', 'string', 'max:50'],
             'relievingStaffName' => ['nullable', 'string', 'max:180'],
             'handoverColleague' => ['nullable', 'string', 'max:180'],
-            'managerId' => ['nullable', 'string', 'max:50'],
-            'managerName' => ['nullable', 'string', 'max:180'],
-            'manager_id' => ['nullable', 'string', 'max:50'],
-            'manager_name' => ['nullable', 'string', 'max:180'],
         ]);
-        $employee = Employee::query()->findOrFail($data['employeeId']);
-        $role = RoleAuthorization::canonical($request->user()->role);
-        $isSelf = $role === 'EMPLOYEE' && $employee->staff_id === $request->user()->staff_id;
-        abort_unless($isSelf || RoleAuthorization::canManageEmployee($request->user(), $employee), 403, 'Leave requests must be submitted by the employee or an authorized HR administrator.');
-        if ($employee->staff_id !== $data['employeeStaffId']) {
-            abort(422, 'Employee identity does not match the selected employee.');
+
+        if (! isset($data['totalDays'])) {
+            $data['totalDays'] = (int) Carbon::parse($data['startDate'])->diffInDays(Carbon::parse($data['endDate'])) + 1;
         }
+        $data['employeeStaffId'] = $data['employeeStaffId'] ?? ($resolvedEmp?->staff_id ?? '');
 
-        // OrangeHRM overlap rule: check for conflicting active leave requests
-        $hasOverlap = LeaveRecord::query()
-            ->where('employee_id', $employee->id)
-            ->whereNotIn('status', ['Cancelled', 'Rejected'])
-            ->where(function ($query) use ($data) {
-                $query->where('start_date', '<=', $data['endDate'])
-                    ->where('end_date', '>=', $data['startDate']);
-            })
-            ->exists();
-
-        if ($hasOverlap) {
-            abort(422, 'The requested leave period overlaps with an existing leave request.');
-        }
-
-        $record = DB::transaction(function () use ($request, $employee, $data) {
-            // Deduct from pending days if balance record exists (OrangeHRM leave entitlement calculation)
-            $category = LeaveCategory::query()->where('name', $data['leaveType'])->first();
-            if ($category) {
-                $year = (int) date('Y', strtotime($data['startDate']));
-                $balance = EmployeeLeaveBalance::query()
-                    ->where('employee_id', $employee->id)
-                    ->where('leave_category_id', $category->id)
-                    ->where('year', $year)
-                    ->lockForUpdate()
-                    ->first();
-
-                if ($balance) {
-                    if ((float) $balance->remaining_days < (float) $data['totalDays']) {
-                        abort(422, "Insufficient leave balance for this request. Remaining: {$balance->remaining_days} days.");
-                    }
-                    $balance->pending_days = (float) $balance->pending_days + (float) $data['totalDays'];
-                    $balance->remaining_days = max(0, (float) $balance->remaining_days - (float) $data['totalDays']);
-                    $balance->save();
-                }
-            }
-
-            $payload = [
-                'employee_id' => $employee->id,
-                'employee_staff_id' => $employee->staff_id,
-                'employee_name' => $employee->full_name,
-                'entity_name' => $employee->entity()->value('name') ?? '',
-                'department_name' => $employee->department()->value('name') ?? '',
-                'leave_type' => $data['leaveType'],
-                'start_date' => $data['startDate'],
-                'end_date' => $data['endDate'],
-                'total_days' => $data['totalDays'],
-                'reason' => $data['reason'],
-                'relieving_staff_id' => $data['relievingStaffId'] ?? null,
-                'relieving_staff_name' => $data['relievingStaffName'] ?? null,
-                'handover_colleague' => $data['handoverColleague'] ?? null,
-                'status' => 'Submitted',
-                'approval_stage' => 'DEPARTMENT_HEAD',
-                'applied_date' => now(),
-                'approval_history' => [],
-            ];
-            if (\Illuminate\Support\Facades\Schema::hasColumn('leave_requests', 'manager_id')) {
-                $payload['manager_id'] = $data['managerId'] ?? $data['manager_id'] ?? null;
-            }
-            if (\Illuminate\Support\Facades\Schema::hasColumn('leave_requests', 'manager_name')) {
-                $payload['manager_name'] = $data['managerName'] ?? $data['manager_name'] ?? null;
-            }
-            $record = LeaveRecord::create($payload);
-            AuditLogger::record($request, 'Leave Management', 'Submitted leave request', $record->id, "{$record->leave_type} for {$record->employee_name}", null, 'Submitted');
-
-            return $record;
-        });
+        $record = $this->workflow->submit($request, $data);
 
         return response()->json(['data' => $this->present($record)], 201);
     }
 
     /**
-     * Advance approval stage, approve, reject, or cancel a leave request.
+     * Advance two-stage approval (Manager -> HR), reject, or cancel a leave request.
      *
      * PATCH /api/v1/leave-requests/{leaveRequest}/status
-     *
-     * Request body:
-     * - status: 'Approved' | 'Rejected' | 'Cancelled' | 'Requires Correction' (required).
-     * - comments: Optional reviewer note (max 2000).
-     *
-     * Workflow advancement on 'Approved':
-     * - At DEPARTMENT_HEAD stage -> advances to BUSINESS_HEAD (status: 'Pending Review').
-     * - At BUSINESS_HEAD stage -> advances to HR (status: 'Pending Review').
-     * - At HR stage -> marks COMPLETE (status: 'Approved').
      */
     public function updateStatus(Request $request, LeaveRecord $leaveRequest): JsonResponse
     {
-        $user = $request->user();
         $data = $request->validate([
             'status' => ['required', Rule::in(['Approved', 'Rejected', 'Cancelled', 'Requires Correction'])],
             'comments' => ['nullable', 'string', 'max:2000'],
         ]);
-        $updated = DB::transaction(function () use ($request, $user, $data, $leaveRequest) {
-            $record = LeaveRecord::query()->lockForUpdate()->findOrFail($leaveRequest->id);
-            $employee = Employee::query()->findOrFail($record->employee_id);
-            abort_if(! in_array($record->status, ['Pending', 'Submitted', 'Pending Review'], true), 409, 'Only open leave requests can be updated.');
 
-            $userRole = strtoupper(trim($user->role));
-            $canonicalRole = RoleAuthorization::canonical($userRole);
-            $stageRole = match ($record->approval_stage) {
-                'DEPARTMENT_HEAD' => 'DEPARTMENT_HEAD',
-                'BUSINESS_HEAD' => 'BUSINESS_HEAD',
-                'HR' => 'HR_STAFF',
-                default => null,
-            };
-            $stageScopeMatches = match ($stageRole) {
-                'DEPARTMENT_HEAD' => $employee->department_id === $user->department_id,
-                'BUSINESS_HEAD' => $employee->entity_id === $user->entity_id,
-                'HR_STAFF' => true,
-                default => false,
-            };
-            $isScopedHead = in_array($userRole, ['BUSINESS_HEAD', 'DEPARTMENT_HEAD'], true);
-            $isGlobalReviewer = $canonicalRole === 'ADMIN' || ($canonicalRole === 'HR_STAFF' && ! $isScopedHead);
-            $authorizedForStage = match ($stageRole) {
-                'DEPARTMENT_HEAD' => $userRole === 'DEPARTMENT_HEAD',
-                'BUSINESS_HEAD' => $userRole === 'BUSINESS_HEAD',
-                'HR_STAFF' => false,
-                default => false,
-            };
-            $authorizedReviewer = $isGlobalReviewer || ($authorizedForStage && $stageScopeMatches);
-            $isRequester = $canonicalRole === 'EMPLOYEE' && $employee->staff_id === $user->staff_id;
-            $authorized = $data['status'] === 'Cancelled'
-                ? ($authorizedReviewer || $isRequester)
-                : $authorizedReviewer;
-            abort_unless($authorized, 403, 'This request is not awaiting action from your role or scope.');
-
-            $history = $record->approval_history ?? [];
-            $previousStatus = $record->status;
-            $nextStage = $record->approval_stage;
-            $newStatus = $data['status'];
-            if ($data['status'] === 'Approved') {
-                if ($record->approval_stage === 'DEPARTMENT_HEAD') {
-                    $nextStage = 'BUSINESS_HEAD';
-                    $newStatus = 'Pending Review';
-                } elseif ($record->approval_stage === 'BUSINESS_HEAD') {
-                    $nextStage = 'HR';
-                    $newStatus = 'Pending Review';
-                } else {
-                    $nextStage = 'COMPLETE';
-                }
-            } elseif ($data['status'] !== 'Cancelled') {
-                $nextStage = 'COMPLETE';
-            }
-
-            $history[] = [
-                'actor' => $user->name,
-                'role' => $user->role,
-                'stage' => $record->approval_stage,
-                'status' => $newStatus,
-                'comments' => $data['comments'] ?? null,
-                'timestamp' => now()->toISOString(),
-            ];
-            $record->update([
-                'status' => $newStatus,
-                'approval_stage' => $nextStage,
-                'approver_comments' => $data['comments'] ?? null,
-                'approval_history' => $history,
-            ]);
-
-            // OrangeHRM leave balance calculation: adjust used/pending/remaining days upon state transition
-            $category = LeaveCategory::query()->where('name', $record->leave_type)->first();
-            if ($category) {
-                $year = (int) $record->start_date->format('Y');
-                $balance = EmployeeLeaveBalance::query()
-                    ->where('employee_id', $record->employee_id)
-                    ->where('leave_category_id', $category->id)
-                    ->where('year', $year)
-                    ->lockForUpdate()
-                    ->first();
-
-                if ($balance) {
-                    if ($newStatus === 'Approved' && $nextStage === 'COMPLETE') {
-                        // Fully approved: convert pending days into used days
-                        $balance->pending_days = max(0, (float) $balance->pending_days - (float) $record->total_days);
-                        $balance->used_days = (float) $balance->used_days + (float) $record->total_days;
-                        $balance->remaining_days = max(0, (float) $balance->total_days - (float) $balance->used_days - (float) $balance->pending_days);
-                        $balance->save();
-                    } elseif (in_array($newStatus, ['Rejected', 'Cancelled'], true)) {
-                        // If rejected or cancelled, release days back to remaining
-                        if ($previousStatus === 'Approved') {
-                            $balance->used_days = max(0, (float) $balance->used_days - (float) $record->total_days);
-                        } else {
-                            $balance->pending_days = max(0, (float) $balance->pending_days - (float) $record->total_days);
-                        }
-                        $balance->remaining_days = max(0, (float) $balance->total_days - (float) $balance->used_days - (float) $balance->pending_days);
-                        $balance->save();
-                    }
-                }
-            }
-
-            AuditLogger::record($request, 'Leave Management', "Leave request {$newStatus}", $record->id, "{$record->leave_type} for {$record->employee_name}", $previousStatus, $newStatus);
-
-            return $record;
-        });
+        $updated = $this->workflow->transition($request, $leaveRequest, $data['status'], $data['comments'] ?? null);
 
         return response()->json(['data' => $this->present($updated)]);
     }
 
     /**
-     * Allocate or adjust leave entitlement for an employee.
+     * Retrieve team leave calendar entries for Managers (reporting team only) and HR (all staff).
+     *
+     * GET /api/v1/leave/team-calendar
+     */
+    public function teamCalendar(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless(
+            RoleAuthorization::isGlobalHrOrAdmin($user) || RoleAuthorization::isSupervisor($user),
+            403,
+            'Only managers and HR can access the team leave calendar.'
+        );
+
+        $data = $request->validate([
+            'startDate' => ['nullable', 'date_format:Y-m-d'],
+            'endDate' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:startDate'],
+        ]);
+
+        $allowedIds = RoleAuthorization::visibleLeaveEmployeeIds($user);
+        $records = $this->leaves->listCalendarLeaves(
+            $allowedIds,
+            $data['startDate'] ?? null,
+            $data['endDate'] ?? null
+        );
+
+        return response()->json([
+            'data' => $records->map(fn (LeaveRecord $record) => [
+                'id' => $record->id,
+                'employeeId' => $record->employee_id,
+                'employeeStaffId' => $record->employee_staff_id,
+                'employeeName' => $record->employee_name,
+                'departmentName' => $record->department_name,
+                'entityName' => $record->entity_name,
+                'leaveType' => $record->leave_type,
+                'startDate' => $record->start_date->format('Y-m-d'),
+                'endDate' => $record->end_date->format('Y-m-d'),
+                'totalDays' => $record->total_days,
+                'status' => $record->status,
+                'approvalStage' => $record->approval_stage,
+            ]),
+        ]);
+    }
+
+    /**
+     * Allocate or adjust leave entitlement for an employee (HR/Admin only).
      *
      * POST /api/v1/leave/entitlements
      */
     public function storeEntitlement(Request $request): JsonResponse
     {
-        $role = RoleAuthorization::canonical($request->user()->role);
-        abort_unless(in_array($role, ['ADMIN', 'HR_STAFF'], true), 403, 'You are not authorized to assign leave entitlements.');
+        abort_unless(RoleAuthorization::isGlobalHrOrAdmin($request->user()), 403, 'You are not authorized to assign leave entitlements.');
 
         $data = $request->validate([
             'employeeId' => ['required', 'exists:employees,id'],
@@ -359,6 +209,7 @@ class LeaveController extends Controller
             $balance->save();
 
             AuditLogger::record($request, 'Leave Management', 'Assigned leave entitlement', (string) $balance->id, "Employee {$data['employeeId']} Category {$data['leaveCategoryId']}", null, (string) $data['totalDays']);
+            RealtimeEventService::publish('leave_balances', 'UPDATE', $data['employeeId'], ['employeeId' => $data['employeeId']], (int) $request->user()->id);
 
             return $balance->load(['category', 'employee:id,staff_id,full_name']);
         });
@@ -382,60 +233,49 @@ class LeaveController extends Controller
     }
 
     /**
-     * Retrieve accrued, used, and remaining leave balances.
+     * Retrieve accrued, used, and remaining leave balances within caller's scope.
      *
      * GET /api/v1/leave/balances
      * GET /api/v1/employees/{employeeId}/leave-balances
-     *
-     * @param  string|null  $employeeId  Optional employee filter.
      */
     public function balances(Request $request, ?string $employeeId = null): JsonResponse
     {
         $user = $request->user();
+        abort_unless(RoleAuthorization::canonical($user->role) !== 'VIEWER', 403, 'You are not authorized to access leave balances.');
+
         $query = EmployeeLeaveBalance::query()->with(['category', 'employee:id,staff_id,full_name']);
 
         if ($employeeId !== null) {
-            $employee = Employee::query()->findOrFail($employeeId);
-            $this->ensureCanViewEmployee($request, $employee);
+            $employee = $this->employees->findById($employeeId) ?? abort(404, 'Employee not found.');
+            $this->ensureCanViewEmployeeLeave($request, $employee);
 
             return response()->json(['data' => $query->where('employee_id', $employee->id)->get()]);
         }
 
-        $role = RoleAuthorization::canonical($user->role);
-        abort_unless(in_array($role, ['ADMIN', 'HR_STAFF', 'EMPLOYEE'], true), 403, 'You are not authorized to access leave balances.');
-
-        if ($role === 'EMPLOYEE') {
-            $employee = Employee::query()->where('staff_id', $user->staff_id)->first();
-            if ($employee === null) {
+        $allowedIds = RoleAuthorization::visibleLeaveEmployeeIds($user);
+        if ($allowedIds !== null) {
+            if ($allowedIds === []) {
                 return response()->json(['data' => []]);
             }
-
-            $query->where('employee_id', $employee->id);
-        } elseif (in_array(strtoupper(trim($user->role)), ['BUSINESS_HEAD', 'DEPARTMENT_HEAD'], true)) {
-            $query->whereIn('employee_id', RoleAuthorization::visibleEmployees($user)->select('id'));
+            $query->whereIn('employee_id', $allowedIds);
         }
 
         return response()->json(['data' => $query->get()]);
     }
 
-    /**
-     * Guard access ensuring caller can view target employee's leave records.
-     */
-    private function ensureCanViewEmployee(Request $request, Employee $employee): void
+    private function ensureCanViewEmployeeLeave(Request $request, Employee $employee): void
     {
-        $user = $request->user();
-        $role = RoleAuthorization::canonical($user->role);
-        $allowed = $role === 'ADMIN'
-            || ($role === 'HR_STAFF' && RoleAuthorization::canManageEmployee($user, $employee))
-            || ($role === 'EMPLOYEE' && $employee->staff_id === $user->staff_id);
+        $allowedIds = RoleAuthorization::visibleLeaveEmployeeIds($request->user());
+        $allowed = $allowedIds === null || in_array((int) $employee->id, $allowedIds, true);
         abort_unless($allowed, 403, 'You are not authorized to access this employee record.');
     }
 
-    /**
-     * Format a leave record for API consumers.
-     */
     private function present(LeaveRecord $record): array
     {
+        $record->loadMissing(['employee.supervisor']);
+        $supervisorName = $record->manager_name ?? $record->employee?->supervisor?->full_name ?? $record->employee?->manager_name;
+        $supervisorId = $record->manager_id ?? ($record->employee?->manager_id ? (string) $record->employee->manager_id : null);
+
         return [
             'id' => $record->id,
             'employeeId' => $record->employee_id,
@@ -451,10 +291,15 @@ class LeaveController extends Controller
             'relievingStaffId' => $record->relieving_staff_id,
             'relievingStaffName' => $record->relieving_staff_name,
             'handoverColleague' => $record->handover_colleague,
-            'managerId' => $record->manager_id,
-            'managerName' => $record->manager_name,
+            'managerId' => $supervisorId,
+            'managerName' => $supervisorName,
             'status' => $record->status,
             'approvalStage' => $record->approval_stage,
+            'stoppedAtStage' => $record->stopped_at_stage,
+            'managerActorName' => $record->manager_actor_name,
+            'managerActedAt' => $record->manager_acted_at?->toISOString(),
+            'hrActorName' => $record->hr_actor_name,
+            'hrActedAt' => $record->hr_acted_at?->toISOString(),
             'appliedDate' => $record->applied_date->toISOString(),
             'approverComments' => $record->approver_comments,
             'approvalHistory' => $record->approval_history ?? [],

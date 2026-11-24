@@ -11,6 +11,9 @@ import {
   Plus,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useRealtimeTable } from '../../hooks/useRealtimeTable';
+import { notificationRepository } from '../../services';
+import { SystemNotification } from '../../types';
 import { PWAInstallButton } from '../pwa/PWAInstallButton';
 import { CITADEL_BRAND } from '../../theme/branding';
 import { CitadelLogo } from '../brand/CitadelLogo';
@@ -52,7 +55,31 @@ export const Header: React.FC<HeaderProps> = ({
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [notifications, setNotifications] = useState<SystemNotification[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const loadNotifications = React.useCallback(async () => {
+    try {
+      const items = await notificationRepository.getAll();
+      setNotifications(items);
+    } catch {
+      setNotifications([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadNotifications();
+  }, [loadNotifications, currentUser.id]);
+
+  useRealtimeTable('notifications', () => {
+    void loadNotifications();
+  });
+
+  useRealtimeTable('leave_requests', () => {
+    void loadNotifications();
+  });
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const entities = [
     { id: 'all', name: 'All Citadel Entities', shortCode: 'All Entities' },
@@ -63,33 +90,6 @@ export const Header: React.FC<HeaderProps> = ({
     selectedEntityFilter === 'all'
       ? 'All Citadel Entities'
       : entities.find((e) => e.id === selectedEntityFilter)?.name || 'Citadel';
-
-  const mockNotifications = [
-    {
-      id: 'notif-1',
-      title: 'New Leave Application',
-      desc: 'Blessing Okafor submitted Casual Leave for 2 days.',
-      time: '10m ago',
-      unread: true,
-      module: 'leave' as NavModule,
-    },
-    {
-      id: 'notif-2',
-      title: 'Attendance Anomaly',
-      desc: '3 staff members flagged at Citadel Gatehouse biometrics.',
-      time: '45m ago',
-      unread: true,
-      module: 'attendance' as NavModule,
-    },
-    {
-      id: 'notif-3',
-      title: 'Onboarding Milestone',
-      desc: 'Engr. Daniel Alabi completed IT asset setup.',
-      time: '2h ago',
-      unread: false,
-      module: 'onboarding' as NavModule,
-    },
-  ];
 
   // Shortcut: Cmd+K or Ctrl+K focuses the search input matching Pillio reference
   useEffect(() => {
@@ -253,7 +253,9 @@ export const Header: React.FC<HeaderProps> = ({
                 aria-label="View notifications"
               >
                 <Bell className="w-4 h-4 text-slate-600" />
-                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#D4AF37] ring-2 ring-white" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#D4AF37] ring-2 ring-white" />
+                )}
               </button>
 
               {isNotificationsOpen && (
@@ -264,25 +266,41 @@ export const Header: React.FC<HeaderProps> = ({
                   <div className="p-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-900">Notifications</span>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFF3E0] text-[#D97706] border border-[#F2E4B8]">
-                      2 Unread
+                      {unreadCount} Unread
                     </span>
                   </div>
                   <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
-                    {mockNotifications.map((n) => (
-                      <div
-                        key={n.id}
-                        onClick={() => onNavigate(n.module)}
-                        className={`p-3 text-xs hover:bg-slate-50 cursor-pointer transition ${
-                          n.unread ? 'bg-amber-50/40' : ''
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-slate-900">{n.title}</span>
-                          <span className="text-[10px] text-slate-400">{n.time}</span>
+                    {notifications.length > 0 ? (
+                      notifications.slice(0, 6).map((n) => (
+                        <div
+                          key={n.id}
+                          onClick={async () => {
+                            if (!n.isRead) {
+                              await notificationRepository.markAsRead(n.id).catch(() => undefined);
+                              void loadNotifications();
+                            }
+                            onNavigate(
+                              (n.category || '').toLowerCase().includes('leave')
+                                ? 'leave'
+                                : 'notifications'
+                            );
+                          }}
+                          className={`p-3 text-xs hover:bg-slate-50 cursor-pointer transition ${
+                            !n.isRead ? 'bg-amber-50/40' : ''
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-bold text-slate-900">{n.title}</span>
+                            <span className="text-[10px] text-slate-400 shrink-0">{n.timestamp}</span>
+                          </div>
+                          <p className="text-xs text-slate-500 font-medium mt-0.5">{n.message}</p>
                         </div>
-                        <p className="text-xs text-slate-500 font-medium mt-0.5">{n.desc}</p>
+                      ))
+                    ) : (
+                      <div className="p-4 text-xs text-slate-500 text-center">
+                        No notifications right now.
                       </div>
-                    ))}
+                    )}
                   </div>
                   <div className="p-2.5 bg-slate-50 border-t border-slate-100 text-center">
                     <button

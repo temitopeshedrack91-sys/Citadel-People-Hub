@@ -37,6 +37,41 @@ export class LaravelApiError extends Error {
  */
 export const isLaravelApiConfigured = (): boolean => Boolean(baseUrl);
 
+function inferRealtimeTablesFromPath(path: string): string[] {
+  if (path.startsWith('/employees')) return ['employees'];
+  if (path.startsWith('/leave')) return ['leave_requests', 'leave_balances'];
+  if (path.startsWith('/entities')) return ['entities'];
+  if (path.startsWith('/departments')) return ['departments'];
+  if (path.startsWith('/notifications')) return ['notifications'];
+  if (path.startsWith('/attendance')) return ['attendance_records'];
+  if (path.startsWith('/performance/kpis')) return ['kpis'];
+  if (path.startsWith('/performance/reviews')) return ['performance_reviews'];
+  if (path.startsWith('/onboarding-journeys')) {
+    return path.includes('/reminder') ? ['onboarding_journeys', 'notifications'] : ['onboarding_journeys'];
+  }
+  if (path.startsWith('/checklist-templates')) return ['onboarding_checklist_templates'];
+  if (path.startsWith('/offboarding')) return ['offboarding_requests', 'employees', 'notifications'];
+  return [];
+}
+
+function notifyRealtimeMutation(path: string, method?: string): void {
+  const upper = (method || 'GET').toUpperCase();
+  if (!['POST', 'PATCH', 'PUT', 'DELETE'].includes(upper)) return;
+  const tables = inferRealtimeTablesFromPath(path);
+  if (tables.length === 0 || typeof window === 'undefined') return;
+  const eventType = upper === 'POST' ? 'INSERT' : upper === 'DELETE' ? 'DELETE' : 'UPDATE';
+  for (const table of tables) {
+    window.dispatchEvent(new CustomEvent('citadel:local-mutation', { detail: { table, eventType } }));
+    try {
+      if ('BroadcastChannel' in window) {
+        const ch = new BroadcastChannel('citadel_realtime');
+        ch.postMessage({ table, eventType, timestamp: Date.now() });
+        ch.close();
+      }
+    } catch {}
+  }
+}
+
 /**
  * Returns the active Sanctum bearer token from memory or local storage.
  */
@@ -118,8 +153,13 @@ export const requestLaravel = async <T>(
         );
       }
 
-      if (response.status === 204) return undefined as T;
-      return (await response.json()) as T;
+      if (response.status === 204) {
+        notifyRealtimeMutation(path, options.method);
+        return undefined as T;
+      }
+      const parsed = (await response.json()) as T;
+      notifyRealtimeMutation(path, options.method);
+      return parsed;
     } catch (err: any) {
       lastError = err;
 

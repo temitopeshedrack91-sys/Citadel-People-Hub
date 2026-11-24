@@ -26,14 +26,24 @@ import {
   FileText,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useRealtimeTable } from '../../hooks/useRealtimeTable';
+import { isHrOrAdminUser, isManagerUser } from '../../utils/rbac';
 import { NavModule } from '../layout/Sidebar';
 import {
   employeeRepository,
   leaveRepository,
   talentRepository,
   attendanceRepository,
+  organizationRepository,
 } from '../../services';
-import { Employee, LeaveRequest, OnboardingJourney, AttendanceRecord } from '../../types';
+import {
+  Employee,
+  LeaveRequest,
+  OnboardingJourney,
+  AttendanceRecord,
+  CitadelEntity,
+  LeaveBalanceRecord,
+} from '../../types';
 import { StatCard } from '../common/StatCard';
 import { StatusPill } from '../common/StatusPill';
 import { ProgressRing } from '../common/ProgressRing';
@@ -42,7 +52,6 @@ import { Card } from '../common/Card';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { EmployeeDashboard } from './dashboard/EmployeeDashboard';
 import { DepartmentHeadDashboard } from './dashboard/DepartmentHeadDashboard';
-import { BusinessHeadDashboard } from './dashboard/BusinessHeadDashboard';
 
 interface DashboardViewProps {
   onNavigate: (module: NavModule) => void;
@@ -79,26 +88,41 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenLeaveModal,
   onOpenAddEmployee,
 }) => {
-  const { currentUser, currentRole, selectedEntityFilter } = useAuth();
-  const shouldReduceMotion = useReducedMotion();
+  const { currentUser, isAuthenticated } = useAuth();
+  const hasActiveStaffIdentity = isAuthenticated || Boolean(currentUser?.staffId);
 
-  // Role-specific Dashboards matching CGCC governance (active authenticated staff)
-  if (currentUser?.staffId && currentRole === 'EMPLOYEE') {
-    return <EmployeeDashboard onNavigate={onNavigate} onOpenLeaveModal={onOpenLeaveModal} />;
-  }
-
-  if (currentUser?.staffId && currentRole === 'DEPARTMENT_HEAD') {
+  if (hasActiveStaffIdentity && isManagerUser(currentUser)) {
     return <DepartmentHeadDashboard onNavigate={onNavigate} onOpenLeaveModal={onOpenLeaveModal} />;
   }
 
-  if (currentUser?.staffId && currentRole === 'BUSINESS_HEAD') {
-    return <BusinessHeadDashboard onNavigate={onNavigate} onOpenLeaveModal={onOpenLeaveModal} />;
+  if (hasActiveStaffIdentity && !isHrOrAdminUser(currentUser)) {
+    return <EmployeeDashboard onNavigate={onNavigate} onOpenLeaveModal={onOpenLeaveModal} />;
   }
+
+  return (
+    <HrAdminDashboardContent
+      onNavigate={onNavigate}
+      onOpenLeaveModal={onOpenLeaveModal}
+      onOpenAddEmployee={onOpenAddEmployee}
+    />
+  );
+};
+
+const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
+  onNavigate,
+  onOpenLeaveModal,
+  onOpenAddEmployee,
+}) => {
+  const { currentUser, selectedEntityFilter } = useAuth();
+  const shouldReduceMotion = useReducedMotion();
 
   // Repository live data
   const [liveEmployees, setLiveEmployees] = useState<Employee[]>([]);
+  const [liveEntities, setLiveEntities] = useState<CitadelEntity[]>([]);
   const [liveLeaves, setLiveLeaves] = useState<LeaveRequest[]>([]);
+  const [liveBalances, setLiveBalances] = useState<LeaveBalanceRecord[]>([]);
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   // Interactive UI states
   const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
@@ -153,32 +177,44 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     },
   ]);
 
-  // Load repositories
-  useEffect(() => {
-    let isMounted = true;
-    const loadData = async () => {
-      try {
-        const [emp, lvs, att] = await Promise.all([
-          employeeRepository.getAll({
-            entityId: selectedEntityFilter === 'all' ? undefined : selectedEntityFilter,
-          }),
-          leaveRepository.getAll(),
-          attendanceRepository.getRecentLogs(),
-        ]);
-        if (isMounted) {
-          setLiveEmployees(emp);
-          setLiveLeaves(lvs);
-          setAttendanceLogs(att);
-        }
-      } catch (err) {
-        console.error('Failed to load dashboard data:', err);
-      }
-    };
-    loadData();
-    return () => {
-      isMounted = false;
-    };
+  // Load repositories & subscribe to realtime updates
+  const loadDashboardData = React.useCallback(async () => {
+    try {
+      const [emp, ents, lvs, bals, att] = await Promise.all([
+        employeeRepository.getAll({
+          entityId: selectedEntityFilter === 'all' ? undefined : selectedEntityFilter,
+        }),
+        organizationRepository.getEntities().catch(() => [] as CitadelEntity[]),
+        leaveRepository.getAll(),
+        leaveRepository.getBalances().catch(() => [] as LeaveBalanceRecord[]),
+        attendanceRepository.getRecentLogs().catch(() => [] as AttendanceRecord[]),
+      ]);
+      setLiveEmployees(emp);
+      setLiveEntities(ents);
+      setLiveLeaves(lvs);
+      setLiveBalances(bals);
+      setAttendanceLogs(att);
+      setHasLoadedOnce(true);
+    } catch (err) {
+      console.error('Failed to load dashboard data:', err);
+    }
   }, [selectedEntityFilter]);
+
+  useEffect(() => {
+    void loadDashboardData();
+  }, [loadDashboardData]);
+
+  useRealtimeTable('employees', () => {
+    void loadDashboardData();
+  });
+
+  useRealtimeTable('leave_requests', () => {
+    void loadDashboardData();
+  });
+
+  useRealtimeTable('leave_balances', () => {
+    void loadDashboardData();
+  });
 
   // Dynamic Greeting matching reference ("Good Morning John")
   const greeting = useMemo(() => {
@@ -768,7 +804,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <span>Citadel Workforce Distribution</span>
                   </h3>
                   <p className="text-xs text-slate-500 font-medium">
-                    Personnel distribution across Church, School of Government, and Commercial Holdings.
+                    Personnel distribution across entities.
                   </p>
                 </div>
                 <span className="text-xs font-mono font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
@@ -777,35 +813,70 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
 
               <div className="space-y-3">
-                <div>
-                  <div className="flex justify-between text-xs mb-1 font-semibold">
-                    <span className="text-slate-700">Citadel Global Community Church (CGCC)</span>
-                    <span className="font-mono font-bold text-slate-900">82 Staff (57.0%)</span>
-                  </div>
-                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#0A1E3F] rounded-full" style={{ width: '57%' }} />
-                  </div>
-                </div>
+                {liveEntities.length > 0 && liveEmployees.length > 0 ? (
+                  liveEntities.map((ent, idx) => {
+                    const count = liveEmployees.filter(
+                      (e) =>
+                        String(e.entityId) === String(ent.id) ||
+                        (e.entityName && e.entityName.includes(ent.shortCode))
+                    ).length;
+                    const pct =
+                      liveEmployees.length > 0
+                        ? Math.round((count / liveEmployees.length) * 1000) / 10
+                        : 0;
+                    const barColors = ['bg-[#0A1E3F]', 'bg-[#D4AF37]', 'bg-[#1E40AF]'];
+                    return (
+                      <div key={ent.id}>
+                        <div className="flex justify-between text-xs mb-1 font-semibold">
+                          <span className="text-slate-700">
+                            {ent.name} ({ent.shortCode})
+                          </span>
+                          <span className="font-mono font-bold text-slate-900">
+                            {count} Staff ({pct}%)
+                          </span>
+                        </div>
+                        <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${barColors[idx % barColors.length]}`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <>
+                    <div>
+                      <div className="flex justify-between text-xs mb-1 font-semibold">
+                        <span className="text-slate-700">Citadel Global Community Church (CGCC)</span>
+                        <span className="font-mono font-bold text-slate-900">82 Staff (57.0%)</span>
+                      </div>
+                      <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-[#0A1E3F] rounded-full" style={{ width: '57%' }} />
+                      </div>
+                    </div>
 
-                <div>
-                  <div className="flex justify-between text-xs mb-1 font-semibold">
-                    <span className="text-slate-700">Citadel School of Government (CSOG)</span>
-                    <span className="font-mono font-bold text-slate-900">28 Staff (19.4%)</span>
-                  </div>
-                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#D4AF37] rounded-full" style={{ width: '19.4%' }} />
-                  </div>
-                </div>
+                    <div>
+                      <div className="flex justify-between text-xs mb-1 font-semibold">
+                        <span className="text-slate-700">Citadel School of Government (CSOG)</span>
+                        <span className="font-mono font-bold text-slate-900">28 Staff (19.4%)</span>
+                      </div>
+                      <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-[#D4AF37] rounded-full" style={{ width: '19.4%' }} />
+                      </div>
+                    </div>
 
-                <div>
-                  <div className="flex justify-between text-xs mb-1 font-semibold">
-                    <span className="text-slate-700">Citadel Holdings (Commercial Units)</span>
-                    <span className="font-mono font-bold text-slate-900">34 Staff (23.6%)</span>
-                  </div>
-                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#1E40AF] rounded-full" style={{ width: '23.6%' }} />
-                  </div>
-                </div>
+                    <div>
+                      <div className="flex justify-between text-xs mb-1 font-semibold">
+                        <span className="text-slate-700">Citadel Holdings (Commercial Units)</span>
+                        <span className="font-mono font-bold text-slate-900">34 Staff (23.6%)</span>
+                      </div>
+                      <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-[#1E40AF] rounded-full" style={{ width: '23.6%' }} />
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -847,14 +918,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
               {/* Semicircular Gauge Chart via ProgressRing component */}
               <div className="my-2 flex flex-col items-center justify-center">
-                <ProgressRing
-                  value={65}
-                  max={100}
-                  label="65%"
-                  subtext="13 out of 20"
-                  type="semicircle"
-                  strokeColor="#083E34"
-                />
+                {(() => {
+                  const ownBal = liveBalances.find(
+                    (b) =>
+                      (currentUser.employeeId &&
+                        String(b.employee_id) === String(currentUser.employeeId)) ||
+                      (currentUser.staffId && b.employee?.staff_id === currentUser.staffId)
+                  );
+                  const total = ownBal ? Number(ownBal.total_days) : 20;
+                  const rem = ownBal ? Math.max(0, Number(ownBal.remaining_days)) : 13;
+                  const pct = ownBal && total > 0 ? Math.round((rem / total) * 100) : 65;
+                  return (
+                    <ProgressRing
+                      value={pct}
+                      max={100}
+                      label={`${pct}%`}
+                      subtext={`${rem} out of ${total}`}
+                      type="semicircle"
+                      strokeColor="#083E34"
+                    />
+                  );
+                })()}
               </div>
 
               {/* Recent Leave Requests List matching reference design */}
@@ -960,53 +1044,149 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
             {/* Pending Approvals Queue */}
             <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] space-y-3">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-[#083E34]" />
-                  <h3 className="text-sm font-bold text-slate-900">
-                    Pending Approvals Queue
-                  </h3>
-                </div>
-                <span className="text-xs font-mono font-bold text-[#D97706] bg-[#FAF5EB] border border-[#F2E4B8] px-2 py-0.5 rounded-full">
-                  {pendingActions.filter((a) => !resolvedActions[a.id]).length} Actions
-                </span>
-              </div>
+              {(() => {
+                const hrQueue = liveLeaves.filter(
+                  (l) =>
+                    l.approvalStage === 'HR' &&
+                    (l.status === 'Pending Review' || l.status === 'Submitted')
+                );
+                const mgrCount = liveLeaves.filter(
+                  (l) =>
+                    (l.approvalStage === 'MANAGER' || l.approvalStage === 'LINE_MANAGER') &&
+                    l.status === 'Submitted'
+                ).length;
 
-              <div className="divide-y divide-slate-100">
-                {pendingActions.map((act) => {
-                  const isResolved = resolvedActions[act.id];
+                if (hasLoadedOnce && (liveLeaves.length > 0 || liveEmployees.length > 0)) {
                   return (
-                    <div
-                      key={act.id}
-                      className={`py-3 flex items-center justify-between gap-3 text-xs ${
-                        isResolved ? 'opacity-40 line-through' : ''
-                      }`}
-                    >
-                      <div>
+                    <>
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-900">{act.title}</span>
-                          <StatusPill status="high" label={act.priority} size="sm" />
+                          <ShieldCheck className="w-4 h-4 text-[#083E34]" />
+                          <h3 className="text-sm font-bold text-slate-900">
+                            Stage 2 HR Approvals
+                          </h3>
                         </div>
-                        <p className="text-xs text-slate-500 font-medium mt-0.5">{act.subtitle}</p>
+                        <span className="text-xs font-mono font-bold text-[#D97706] bg-[#FAF5EB] border border-[#F2E4B8] px-2 py-0.5 rounded-full">
+                          {hrQueue.length} Ready
+                        </span>
                       </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          onClick={() => handleResolveAction(act.id, act.title)}
-                          disabled={isResolved}
-                          className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
-                            isResolved
-                              ? 'bg-emerald-100 text-emerald-900'
-                              : 'bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] border border-[#C59B27]'
-                          }`}
-                        >
-                          {isResolved ? 'Resolved' : 'Approve'}
-                        </button>
-                      </div>
-                    </div>
+                      {hrQueue.length > 0 ? (
+                        <div className="divide-y divide-slate-100">
+                          {hrQueue.slice(0, 4).map((lv) => (
+                            <div
+                              key={lv.id}
+                              className="py-3 flex items-center justify-between gap-2 text-xs"
+                            >
+                              <div>
+                                <span className="font-bold text-slate-900 block">
+                                  {lv.employeeName} — {lv.leaveType}
+                                </span>
+                                <span className="text-[11px] text-slate-500">
+                                  {lv.startDate} → {lv.endDate} ({lv.totalDays}d) • Mgr:{' '}
+                                  {lv.managerActorName || lv.managerName || 'Cleared'}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <button
+                                  onClick={async () => {
+                                    await leaveRepository.updateStatus(
+                                      lv.id,
+                                      'Rejected',
+                                      currentUser.name,
+                                      'Rejected at Stage 2 by HR.'
+                                    );
+                                    await loadDashboardData();
+                                    showToast(`Rejected leave request for ${lv.employeeName}.`);
+                                  }}
+                                  className="px-2 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold cursor-pointer"
+                                >
+                                  Reject
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    await leaveRepository.updateStatus(
+                                      lv.id,
+                                      'Approved',
+                                      currentUser.name,
+                                      'Final HR approval confirmed.'
+                                    );
+                                    await loadDashboardData();
+                                    showToast(`Final HR approval granted for ${lv.employeeName}.`);
+                                  }}
+                                  className="px-2.5 py-1 rounded-lg bg-[#D4AF37] text-slate-950 border border-[#C59B27] text-[11px] font-bold cursor-pointer"
+                                >
+                                  Approve
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-500 py-2">
+                          No requests currently awaiting HR final approval.
+                          {mgrCount > 0
+                            ? ` (${mgrCount} awaiting Stage 1 Manager review.)`
+                            : ''}
+                        </p>
+                      )}
+                    </>
                   );
-                })}
-              </div>
+                }
+
+                return (
+                  <>
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4 text-[#083E34]" />
+                        <h3 className="text-sm font-bold text-slate-900">
+                          Pending Approvals Queue
+                        </h3>
+                      </div>
+                      <span className="text-xs font-mono font-bold text-[#D97706] bg-[#FAF5EB] border border-[#F2E4B8] px-2 py-0.5 rounded-full">
+                        {pendingActions.filter((a) => !resolvedActions[a.id]).length} Actions
+                      </span>
+                    </div>
+
+                    <div className="divide-y divide-slate-100">
+                      {pendingActions.map((act) => {
+                        const isResolved = resolvedActions[act.id];
+                        return (
+                          <div
+                            key={act.id}
+                            className={`py-3 flex items-center justify-between gap-3 text-xs ${
+                              isResolved ? 'opacity-40 line-through' : ''
+                            }`}
+                          >
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-slate-900">{act.title}</span>
+                                <StatusPill status="high" label={act.priority} size="sm" />
+                              </div>
+                              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                                {act.subtitle}
+                              </p>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button
+                                onClick={() => handleResolveAction(act.id, act.title)}
+                                disabled={isResolved}
+                                className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                                  isResolved
+                                    ? 'bg-emerald-100 text-emerald-900'
+                                    : 'bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] border border-[#C59B27]'
+                                }`}
+                              >
+                                {isResolved ? 'Resolved' : 'Approve'}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>

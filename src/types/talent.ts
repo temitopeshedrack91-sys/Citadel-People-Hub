@@ -105,6 +105,7 @@ export interface OnboardingTeamRoster {
 
 export interface OnboardingTask {
   id: string;
+  order?: number;
   title: string;
   description?: string;
   category?: string;
@@ -114,6 +115,7 @@ export interface OnboardingTask {
   responsibleRole?: string;
   assignedToName?: string;
   dueDate?: string;
+  dependsOnTaskIds?: string[];
   isCompleted?: boolean;
   isComplete?: boolean;
   completedAt?: string;
@@ -134,6 +136,7 @@ export interface OnboardingChecklistTemplate {
   duration: string;
   taskCount: number;
   tasks?: OnboardingTask[];
+  version?: number;
   createdAt?: string;
 }
 
@@ -157,6 +160,8 @@ export interface OnboardingJourney {
   requiredDocuments?: OnboardingRequiredDoc[];
   orientationItems?: OnboardingOrientationItem[];
   teamRoster?: OnboardingTeamRoster;
+  version?: number;
+  updatedAt?: string;
 }
 
 export interface PerformanceGoal {
@@ -177,4 +182,58 @@ export interface AppraisalCycle {
   startDate: string;
   endDate: string;
   submissionRatePercent: number;
+}
+
+export type ExitStageStatus =
+  | 'SUBMITTED'
+  | 'MANAGER_REVIEWED'
+  | 'NOTICE_VERIFIED'
+  | 'INTERVIEW_SCHEDULED'
+  | 'CLEARANCE_IN_PROGRESS'
+  | 'OFFBOARDED';
+
+export interface ExitInterviewDetails {
+  date: string;
+  time: string;
+  interviewer: string;
+  mode: 'In-Person' | 'MS Teams';
+  feedback?: string;
+}
+
+export interface ExitClearances {
+  it: boolean;
+  facilities: boolean;
+  finance: boolean;
+  hr: boolean;
+}
+
+export interface ExitRequest {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  staffId: string;
+  departmentName: string;
+  entityName: string;
+  resignationDate: string;
+  proposedLastDay: string;
+  noticePeriodDays: number;
+  noticeCompliant: boolean;
+  reason: string;
+  managerId?: string | null;
+  managerName: string;
+  managerEndorsed: boolean;
+  managerEndorsedAt?: string | null;
+  managerComments?: string | null;
+  hrVerified: boolean;
+  hrVerifiedAt?: string | null;
+  contractNotes?: string | null;
+  status: ExitStageStatus;
+  exitInterview?: ExitInterviewDetails | null;
+  clearances: ExitClearances;
+  clearanceNotes?: Record<string, string>;
+  blockingLoans?: string[];
+  finalSettledAt?: string | null;
+  settlementNotes?: string | null;
+  version?: number;
+  updatedAt?: string;
 }

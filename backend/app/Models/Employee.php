@@ -58,6 +58,16 @@ class Employee extends Model
         return $this->belongsTo(Department::class);
     }
 
+    public function supervisor(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'manager_id');
+    }
+
+    public function directReports(): HasMany
+    {
+        return $this->hasMany(self::class, 'manager_id');
+    }
+
     public function salaryAssignments(): HasMany
     {
         return $this->hasMany(EmployeeSalaryTemplate::class);

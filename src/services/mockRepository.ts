@@ -16,6 +16,7 @@ import {
   IAuditRepository,
   IDocumentRepository,
   INotificationRepository,
+  IOffboardingRepository,
   ITalentRepository,
   IPayrollRepository,
   IClassificationRepository,
@@ -28,9 +29,13 @@ import {
 } from './interfaces';
 import {
   Employee,
+  EmployeeHierarchy,
   CitadelEntity,
   CitadelDepartment,
   LeaveRequest,
+  LeaveBalanceRecord,
+  LeaveCategoryRecord,
+  TeamCalendarLeaveEvent,
   ClaimEvent,
   ExpenseType,
   ClaimRequest,
@@ -49,6 +54,9 @@ import {
   OnboardingJourney,
   OnboardingTask,
   OnboardingChecklistTemplate,
+  ExitClearances,
+  ExitInterviewDetails,
+  ExitRequest,
   RecruitmentRequisition,
   SalaryTemplate,
   EmployeeSalaryAssignment,
@@ -196,8 +204,57 @@ export class MockEmployeeRepository implements IEmployeeRepository {
     return employees.find((e) => e.id === id) || null;
   }
 
+  async getHierarchy(id: string): Promise<EmployeeHierarchy | null> {
+    await sleep();
+    const target = employees.find((e) => e.id === id);
+    if (!target) return null;
+
+    const toNode = (e: Employee) => ({
+      id: String(e.id),
+      staffId: e.staffId,
+      fullName: e.fullName,
+      firstName: e.firstName,
+      lastName: e.lastName,
+      jobTitle: e.jobTitle,
+      entityId: e.entityId,
+      entityName: e.entityName,
+      departmentId: e.departmentId,
+      departmentName: e.departmentName,
+      email: e.email,
+      phone: e.phone,
+      managerId: e.managerId ?? null,
+      managerName: e.managerName ?? null,
+      status: e.status,
+    });
+
+    const supervisorChain: ReturnType<typeof toNode>[] = [];
+    const visited = new Set<string>([String(target.id)]);
+    let currMgrId = target.managerId;
+    while (currMgrId && !visited.has(String(currMgrId))) {
+      visited.add(String(currMgrId));
+      const sup = employees.find((e) => String(e.id) === String(currMgrId));
+      if (!sup) break;
+      supervisorChain.push(toNode(sup));
+      currMgrId = sup.managerId;
+    }
+
+    const directReports = employees
+      .filter((e) => e.managerId && String(e.managerId) === String(target.id))
+      .map(toNode);
+
+    return {
+      employee: toNode(target),
+      supervisorChain,
+      directReports,
+    };
+  }
+
   async create(newEmp: Omit<Employee, 'id'>): Promise<Employee> {
     await sleep();
+    const dept = departments.find((d) => String(d.id) === String(newEmp.departmentId));
+    if (dept && dept.entityId !== newEmp.entityId) {
+      throw new Error('The selected department does not belong to the selected entity.');
+    }
     const created: Employee = {
       ...newEmp,
       id: `emp-${Date.now()}`,
@@ -211,7 +268,27 @@ export class MockEmployeeRepository implements IEmployeeRepository {
     await sleep();
     const index = employees.findIndex((e) => e.id === id);
     if (index === -1) throw new Error('Employee not found');
-    employees[index] = { ...employees[index], ...updates };
+    const candidate = { ...employees[index], ...updates };
+    if (candidate.managerId) {
+      if (String(candidate.managerId) === String(id)) {
+        throw new Error('An employee cannot be assigned as their own supervisor.');
+      }
+      let curr: string | undefined = candidate.managerId;
+      const seen = new Set<string>([String(id)]);
+      while (curr) {
+        if (seen.has(String(curr))) {
+          throw new Error('Circular reporting lines are not allowed: an employee cannot become their own ancestor.');
+        }
+        seen.add(String(curr));
+        const nextEmp = employees.find((e) => String(e.id) === String(curr));
+        curr = nextEmp?.managerId;
+      }
+    }
+    const dept = departments.find((d) => String(d.id) === String(candidate.departmentId));
+    if (dept && dept.entityId !== candidate.entityId) {
+      throw new Error('The selected department does not belong to the selected entity.');
+    }
+    employees[index] = candidate;
     saveStorage('employees', employees);
     return employees[index];
   }
@@ -286,15 +363,83 @@ export class MockLeaveRepository implements ILeaveRepository {
     return leaveRequests.filter((l) => l.employeeId === employeeId);
   }
 
+  async getCategories(): Promise<LeaveCategoryRecord[]> {
+    await sleep();
+    return [
+      { id: 1, name: 'Annual Leave', code: 'AL', is_paid: true, is_active: true, policies: [{ id: 1, name: 'Annual', days_allowed: 24, effective_year: 2026 }] },
+      { id: 2, name: 'Casual Leave', code: 'CL', is_paid: true, is_active: true, policies: [{ id: 2, name: 'Casual', days_allowed: 7, effective_year: 2026 }] },
+      { id: 3, name: 'Sick Leave', code: 'SL', is_paid: true, is_active: true, policies: [{ id: 3, name: 'Sick', days_allowed: 12, effective_year: 2026 }] },
+      { id: 4, name: 'Maternity Leave', code: 'ML', is_paid: true, is_active: true, policies: [{ id: 4, name: 'Maternity', days_allowed: 84, effective_year: 2026 }] },
+      { id: 5, name: 'Compassionate Leave', code: 'CMPL', is_paid: true, is_active: true, policies: [{ id: 5, name: 'Compassionate', days_allowed: 5, effective_year: 2026 }] },
+    ];
+  }
+
+  async getBalances(employeeId?: string): Promise<LeaveBalanceRecord[]> {
+    await sleep();
+    const targetId = employeeId || 'emp-1';
+    return [
+      { id: 1, employee_id: targetId, leave_category_id: 1, year: 2026, total_days: 24, used_days: 4, pending_days: 2, remaining_days: 18, category: { id: 1, name: 'Annual Leave', code: 'AL', is_paid: true } },
+      { id: 2, employee_id: targetId, leave_category_id: 2, year: 2026, total_days: 7, used_days: 2, pending_days: 0, remaining_days: 5, category: { id: 2, name: 'Casual Leave', code: 'CL', is_paid: true } },
+      { id: 3, employee_id: targetId, leave_category_id: 3, year: 2026, total_days: 12, used_days: 0, pending_days: 0, remaining_days: 12, category: { id: 3, name: 'Sick Leave', code: 'SL', is_paid: true } },
+    ];
+  }
+
+  async getTeamCalendar(): Promise<TeamCalendarLeaveEvent[]> {
+    await sleep();
+    return leaveRequests
+      .filter((l) => l.status !== 'Rejected' && l.status !== 'Cancelled')
+      .map((l) => ({
+        id: l.id,
+        employeeId: l.employeeId,
+        employeeStaffId: l.employeeStaffId,
+        employeeName: l.employeeName,
+        departmentName: l.departmentName,
+        entityName: l.entityName,
+        leaveType: l.leaveType,
+        startDate: l.startDate,
+        endDate: l.endDate,
+        totalDays: l.totalDays || l.daysRequested || 1,
+        status: l.status,
+        approvalStage: l.approvalStage,
+      }));
+  }
+
   async submitRequest(request: Omit<LeaveRequest, 'id' | 'appliedDate' | 'status'>): Promise<LeaveRequest> {
     await sleep();
+    if (!request.startDate || !request.endDate || request.endDate < request.startDate) {
+      throw new Error('The end date must be on or after the start date.');
+    }
+
+    const overlapsExisting = leaveRequests.some(
+      (existing) =>
+        String(existing.employeeId) === String(request.employeeId) &&
+        existing.status !== 'Rejected' &&
+        existing.status !== 'Cancelled' &&
+        existing.startDate <= request.endDate &&
+        existing.endDate >= request.startDate
+    );
+    if (overlapsExisting) {
+      throw new Error('Leave dates overlap with an existing leave request.');
+    }
+
+    const stage = request.managerId ? 'MANAGER' : 'HR';
     const newRequest: LeaveRequest = {
       ...request,
       totalDays: request.totalDays || request.daysRequested || 1,
       id: `leave-${Date.now()}`,
-      appliedDate: new Date().toISOString().split('T')[0],
-      status: 'Submitted',
-      approvalStage: request.approvalStage || 'DEPARTMENT_HEAD',
+      appliedDate: new Date().toISOString(),
+      status: stage === 'MANAGER' ? 'Submitted' : 'Pending Review',
+      approvalStage: request.approvalStage || stage,
+      approvalHistory: [
+        {
+          actor: request.employeeName,
+          stage: 'SUBMITTED',
+          decision: 'Submitted',
+          status: stage === 'MANAGER' ? 'Submitted' : 'Pending Review',
+          comments: request.managerName ? `Routed to direct supervisor ${request.managerName}.` : 'Routed to HR.',
+          timestamp: new Date().toISOString(),
+        },
+      ],
     };
     leaveRequests.unshift(newRequest);
     saveStorage('leaves', leaveRequests);
@@ -311,13 +456,47 @@ export class MockLeaveRepository implements ILeaveRepository {
     const index = leaveRequests.findIndex((l) => l.id === requestId);
     if (index === -1) throw new Error('Leave request not found');
 
-    const nextStage = status === 'Approved' ? 'COMPLETE' : status === 'Pending Review' ? 'HR' : leaveRequests[index].approvalStage;
+    const current = leaveRequests[index];
+    const currStage = current.approvalStage || 'MANAGER';
+    const now = new Date().toISOString();
+    let nextStage = currStage;
+    let nextStatus = status;
+    let stoppedAtStage: string | null = null;
+
+    if (status === 'Approved') {
+      if (currStage === 'MANAGER' || currStage === 'DEPARTMENT_HEAD') {
+        nextStage = 'HR';
+        nextStatus = 'Pending Review';
+      } else {
+        nextStage = 'COMPLETE';
+        nextStatus = 'Approved';
+      }
+    } else if (status === 'Rejected') {
+      nextStage = currStage;
+      stoppedAtStage = currStage;
+    }
+
+    const history = [...(current.approvalHistory || [])];
+    history.push({
+      actor: actorName,
+      stage: currStage,
+      decision: status,
+      status: nextStatus,
+      comments: comments || null,
+      timestamp: now,
+    });
 
     leaveRequests[index] = {
-      ...leaveRequests[index],
-      status,
-      approvalStage: nextStage,
+      ...current,
+      status: nextStatus,
+      approvalStage: nextStage as any,
+      stoppedAtStage,
+      managerActorName: currStage === 'MANAGER' ? actorName : current.managerActorName,
+      managerActedAt: currStage === 'MANAGER' ? now : current.managerActedAt,
+      hrActorName: currStage === 'HR' ? actorName : current.hrActorName,
+      hrActedAt: currStage === 'HR' ? now : current.hrActedAt,
       approverComments: comments || `Actioned by ${actorName}`,
+      approvalHistory: history,
     };
     saveStorage('leaves', leaveRequests);
     return leaveRequests[index];
@@ -593,120 +772,313 @@ export class MockNotificationRepository implements INotificationRepository {
 }
 
 export class MockTalentRepository implements ITalentRepository {
+  private recalculateJourney(journey: OnboardingJourney): OnboardingJourney {
+    const tasks = (journey.tasks || []).map((t, idx) => ({ ...t, order: t.order ?? idx + 1 }));
+    const completedCount = tasks.filter((t) => Boolean(t.isCompleted)).length;
+    const progress = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
+    const docsComplete = (journey.requiredDocuments || []).every(
+      (d) => Boolean(d.isConditional) || Boolean(d.isSubmitted)
+    );
+    const oriComplete = (journey.orientationItems || []).every((i) => Boolean(i.isCompleted));
+    return {
+      ...journey,
+      tasks,
+      overallProgressPercent: progress,
+      status: tasks.length > 0 && completedCount === tasks.length && docsComplete && oriComplete
+        ? 'Completed'
+        : journey.status === 'Delayed'
+        ? 'Delayed'
+        : 'In Progress',
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
   async getOnboardingJourneys(): Promise<OnboardingJourney[]> {
     await sleep();
-    return [...onboardingJourneys];
+    return onboardingJourneys.map((j) => ({ ...j, version: j.version ?? 1 }));
   }
 
   async toggleTaskCompletion(
     journeyId: string,
     taskId: string,
-    isCompleted: boolean
+    isCompleted: boolean,
+    version?: number
   ): Promise<OnboardingJourney> {
     await sleep();
     const jIndex = onboardingJourneys.findIndex((j) => j.id === journeyId);
     if (jIndex === -1) throw new Error('Journey not found');
     const journey = onboardingJourneys[jIndex];
+    if (version !== undefined && (journey.version ?? 1) !== version) {
+      throw new Error('Conflict (409): This onboarding journey was updated by another user. Please refresh.');
+    }
     const taskIndex = journey.tasks.findIndex((t) => t.id === taskId);
     if (taskIndex === -1) throw new Error('Task not found');
 
-    journey.tasks[taskIndex].isCompleted = isCompleted;
+    const targetTask = journey.tasks[taskIndex];
+    const tasksById = new Map(journey.tasks.map((t) => [t.id, t]));
+
     if (isCompleted) {
-      journey.tasks[taskIndex].completedAt = new Date().toISOString().split('T')[0];
+      const blocking = (targetTask.dependsOnTaskIds || [])
+        .map((depId) => tasksById.get(depId))
+        .filter((dep): dep is OnboardingTask => Boolean(dep && !dep.isCompleted));
+      if (blocking.length > 0) {
+        throw new Error(`Cannot complete task until prerequisite(s) finish: ${blocking.map((b) => b.title).join(', ')}`);
+      }
     } else {
-      journey.tasks[taskIndex].completedAt = undefined;
+      const dependentsDone = journey.tasks.filter(
+        (t) => t.id !== taskId && t.isCompleted && (t.dependsOnTaskIds || []).includes(taskId)
+      );
+      if (dependentsDone.length > 0) {
+        throw new Error(
+          `Cannot reopen prerequisite task while dependent task(s) are completed: ${dependentsDone.map((d) => d.title).join(', ')}`
+        );
+      }
     }
 
-    const completedCount = journey.tasks.filter((t) => t.isCompleted).length;
-    journey.overallProgressPercent = Math.round((completedCount / journey.tasks.length) * 100);
-    if (journey.overallProgressPercent === 100) {
-      journey.status = 'Completed';
-    } else {
-      journey.status = 'In Progress';
-    }
+    const updatedTasks = [...journey.tasks];
+    updatedTasks[taskIndex] = {
+      ...targetTask,
+      isCompleted,
+      status: isCompleted ? 'Completed' : 'Pending',
+      completedAt: isCompleted ? new Date().toISOString().split('T')[0] : undefined,
+    };
 
-    onboardingJourneys[jIndex] = { ...journey };
+    const updated = this.recalculateJourney({
+      ...journey,
+      tasks: updatedTasks,
+      version: (journey.version ?? 1) + 1,
+    });
+    onboardingJourneys[jIndex] = updated;
     saveStorage('onboarding', onboardingJourneys);
-    return journey;
+    return updated;
   }
 
   async createOnboardingTask(
     journeyId: string,
-    newTask: Omit<OnboardingTask, 'id' | 'isCompleted'>
+    newTask: Omit<OnboardingTask, 'id' | 'isCompleted'>,
+    version?: number
   ): Promise<OnboardingJourney> {
     await sleep();
     const jIndex = onboardingJourneys.findIndex((j) => j.id === journeyId);
     if (jIndex === -1) throw new Error('Journey not found');
     const journey = onboardingJourneys[jIndex];
+    if (version !== undefined && (journey.version ?? 1) !== version) {
+      throw new Error('Conflict (409): This onboarding journey was updated by another user. Please refresh.');
+    }
+
+    const existingIds = new Set(journey.tasks.map((t) => t.id));
+    for (const depId of newTask.dependsOnTaskIds || []) {
+      if (!existingIds.has(depId)) {
+        throw new Error(`Invalid prerequisite task reference "${depId}".`);
+      }
+    }
 
     const task: OnboardingTask = {
       ...newTask,
       id: `task-custom-${Date.now()}`,
+      order: journey.tasks.length + 1,
+      dependsOnTaskIds: newTask.dependsOnTaskIds ? [...newTask.dependsOnTaskIds] : [],
       isCompleted: false,
+      status: 'Pending',
     };
 
-    journey.tasks.push(task);
-    const completedCount = journey.tasks.filter((t) => t.isCompleted).length;
-    journey.overallProgressPercent = Math.round((completedCount / journey.tasks.length) * 100);
-
-    onboardingJourneys[jIndex] = { ...journey };
+    const updated = this.recalculateJourney({
+      ...journey,
+      tasks: [...journey.tasks, task],
+      version: (journey.version ?? 1) + 1,
+    });
+    onboardingJourneys[jIndex] = updated;
     saveStorage('onboarding', onboardingJourneys);
-    return journey;
+    return updated;
+  }
+
+  async reorderOnboardingTasks(
+    journeyId: string,
+    taskIds: string[],
+    version?: number
+  ): Promise<OnboardingJourney> {
+    await sleep();
+    const jIndex = onboardingJourneys.findIndex((j) => j.id === journeyId);
+    if (jIndex === -1) throw new Error('Journey not found');
+    const journey = onboardingJourneys[jIndex];
+    if (version !== undefined && (journey.version ?? 1) !== version) {
+      throw new Error('Conflict (409): This onboarding journey was updated by another user. Please refresh.');
+    }
+    const existingMap = new Map(journey.tasks.map((t) => [t.id, t]));
+    if (taskIds.length !== journey.tasks.length) {
+      throw new Error('Reordered task list must include every task in the journey.');
+    }
+    const reordered = taskIds.map((id, idx) => {
+      const found = existingMap.get(id);
+      if (!found) throw new Error(`Unknown task ID ${id} in reorder payload.`);
+      return { ...found, order: idx + 1 };
+    });
+
+    const updated: OnboardingJourney = {
+      ...journey,
+      tasks: reordered,
+      version: (journey.version ?? 1) + 1,
+      updatedAt: new Date().toISOString(),
+    };
+    onboardingJourneys[jIndex] = updated;
+    saveStorage('onboarding', onboardingJourneys);
+    return updated;
   }
 
   async sendTaskReminder(journeyId: string, taskId: string): Promise<boolean> {
     await sleep();
-    const journey = onboardingJourneys.find((j) => j.id === journeyId);
-    if (!journey) return false;
-    const task = journey.tasks.find((t) => t.id === taskId);
-    if (!task) return false;
+    const jIndex = onboardingJourneys.findIndex((j) => j.id === journeyId);
+    if (jIndex === -1) return false;
+    const journey = onboardingJourneys[jIndex];
+    const tIndex = journey.tasks.findIndex((t) => t.id === taskId);
+    if (tIndex === -1) return false;
 
-    task.reminderSentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    journey.tasks[tIndex] = { ...journey.tasks[tIndex], reminderSentAt: sentAt };
     saveStorage('onboarding', onboardingJourneys);
+
+    notifications.unshift({
+      id: `notif-rem-${Date.now()}`,
+      title: `Onboarding Task Reminder — ${journey.employeeName}`,
+      message: `Reminder for "${journey.tasks[tIndex].title}" (${journey.tasks[tIndex].department} • Due ${journey.tasks[tIndex].dueDate || journey.tasks[tIndex].timeline}).`,
+      type: 'warning',
+      category: 'Talent',
+      isRead: false,
+      timestamp: 'Just now',
+    });
+    saveStorage('notifications', notifications);
     return true;
+  }
+
+  async sendBulkTaskReminders(journeyId: string): Promise<{ remindedCount: number; journey: OnboardingJourney }> {
+    await sleep();
+    const jIndex = onboardingJourneys.findIndex((j) => j.id === journeyId);
+    if (jIndex === -1) throw new Error('Journey not found');
+    const journey = onboardingJourneys[jIndex];
+    const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    let remindedCount = 0;
+    const updatedTasks = journey.tasks.map((t) => {
+      if (!t.isCompleted) {
+        remindedCount += 1;
+        return { ...t, reminderSentAt: sentAt };
+      }
+      return t;
+    });
+    const updated = {
+      ...journey,
+      tasks: updatedTasks,
+      version: (journey.version ?? 1) + 1,
+      updatedAt: new Date().toISOString(),
+    };
+    onboardingJourneys[jIndex] = updated;
+    saveStorage('onboarding', onboardingJourneys);
+    if (remindedCount > 0) {
+      notifications.unshift({
+        id: `notif-bulk-rem-${Date.now()}`,
+        title: `Onboarding Escalation Reminders — ${journey.employeeName}`,
+        message: `Sent ${remindedCount} reminders for pending onboarding deliverables.`,
+        type: 'warning',
+        category: 'Talent',
+        isRead: false,
+        timestamp: 'Just now',
+      });
+      saveStorage('notifications', notifications);
+    }
+    return { remindedCount, journey: updated };
+  }
+
+  async completeOnboardingJourney(journeyId: string, version?: number): Promise<OnboardingJourney> {
+    await sleep();
+    const jIndex = onboardingJourneys.findIndex((j) => j.id === journeyId);
+    if (jIndex === -1) throw new Error('Journey not found');
+    const journey = onboardingJourneys[jIndex];
+    if (version !== undefined && (journey.version ?? 1) !== version) {
+      throw new Error('Conflict (409): This onboarding journey was updated by another user. Please refresh.');
+    }
+    const blockers: string[] = [];
+    const pendingTasks = journey.tasks.filter((t) => !t.isCompleted).length;
+    if (pendingTasks > 0) blockers.push(`${pendingTasks} pending onboarding task(s)`);
+    const pendingDocs = (journey.requiredDocuments || []).filter((d) => !d.isConditional && !d.isSubmitted).length;
+    if (pendingDocs > 0) blockers.push(`${pendingDocs} mandatory compliance document(s)`);
+    const pendingOri = (journey.orientationItems || []).filter((i) => !i.isCompleted).length;
+    if (pendingOri > 0) blockers.push(`${pendingOri} orientation item(s)`);
+    if (blockers.length > 0) {
+      throw new Error(`Cannot mark onboarding completed with remaining items: ${blockers.join(', ')}.`);
+    }
+    const updated: OnboardingJourney = {
+      ...journey,
+      status: 'Completed',
+      overallProgressPercent: 100,
+      version: (journey.version ?? 1) + 1,
+      updatedAt: new Date().toISOString(),
+    };
+    onboardingJourneys[jIndex] = updated;
+    saveStorage('onboarding', onboardingJourneys);
+    return updated;
   }
 
   async toggleDocumentSubmission(
     journeyId: string,
     docId: string,
-    isSubmitted: boolean
+    isSubmitted: boolean,
+    version?: number
   ): Promise<OnboardingJourney> {
     await sleep();
     const jIndex = onboardingJourneys.findIndex((j) => j.id === journeyId);
     if (jIndex === -1) throw new Error('Journey not found');
     const journey = onboardingJourneys[jIndex];
-
-    if (!journey.requiredDocuments) journey.requiredDocuments = [];
-    const doc = journey.requiredDocuments.find((d) => d.id === docId);
-    if (doc) {
-      doc.isSubmitted = isSubmitted;
-      doc.submittedAt = isSubmitted ? new Date().toISOString().split('T')[0] : undefined;
+    if (version !== undefined && (journey.version ?? 1) !== version) {
+      throw new Error('Conflict (409): This onboarding journey was updated by another user. Please refresh.');
     }
 
-    onboardingJourneys[jIndex] = { ...journey };
+    const docs = [...(journey.requiredDocuments || [])];
+    const dIdx = docs.findIndex((d) => d.id === docId);
+    if (dIdx >= 0) {
+      docs[dIdx] = {
+        ...docs[dIdx],
+        isSubmitted,
+        submittedAt: isSubmitted ? new Date().toISOString().split('T')[0] : undefined,
+      };
+    }
+
+    const updated = this.recalculateJourney({
+      ...journey,
+      requiredDocuments: docs,
+      version: (journey.version ?? 1) + 1,
+    });
+    onboardingJourneys[jIndex] = updated;
     saveStorage('onboarding', onboardingJourneys);
-    return journey;
+    return updated;
   }
 
   async toggleOrientationItem(
     journeyId: string,
     itemId: string,
-    isCompleted: boolean
+    isCompleted: boolean,
+    version?: number
   ): Promise<OnboardingJourney> {
     await sleep();
     const jIndex = onboardingJourneys.findIndex((j) => j.id === journeyId);
     if (jIndex === -1) throw new Error('Journey not found');
     const journey = onboardingJourneys[jIndex];
-
-    if (!journey.orientationItems) journey.orientationItems = [];
-    const item = journey.orientationItems.find((i) => i.id === itemId);
-    if (item) {
-      item.isCompleted = isCompleted;
+    if (version !== undefined && (journey.version ?? 1) !== version) {
+      throw new Error('Conflict (409): This onboarding journey was updated by another user. Please refresh.');
     }
 
-    onboardingJourneys[jIndex] = { ...journey };
+    const items = [...(journey.orientationItems || [])];
+    const iIdx = items.findIndex((i) => i.id === itemId);
+    if (iIdx >= 0) {
+      items[iIdx] = { ...items[iIdx], isCompleted };
+    }
+
+    const updated = this.recalculateJourney({
+      ...journey,
+      orientationItems: items,
+      version: (journey.version ?? 1) + 1,
+    });
+    onboardingJourneys[jIndex] = updated;
     saveStorage('onboarding', onboardingJourneys);
-    return journey;
+    return updated;
   }
 
   async getRequisitions(): Promise<RecruitmentRequisition[]> {
@@ -736,21 +1108,84 @@ export class MockTalentRepository implements ITalentRepository {
 
   async createOnboardingJourney(journey: OnboardingJourney): Promise<OnboardingJourney> {
     await sleep();
-    onboardingJourneys = [journey, ...onboardingJourneys];
+    const enriched: OnboardingJourney = {
+      ...journey,
+      version: 1,
+      updatedAt: new Date().toISOString(),
+      requiredDocuments:
+        journey.requiredDocuments && journey.requiredDocuments.length > 0
+          ? journey.requiredDocuments
+          : [
+              { id: 'doc-bio', name: 'Employee Bio-Data Form', isSubmitted: false },
+              { id: 'doc-emg', name: 'Emergency Contact Information', isSubmitted: false },
+              { id: 'doc-ben', name: 'Benefits Enrollment Paperwork (HMO / Pension)', isSubmitted: false },
+              { id: 'doc-pay', name: 'Payroll & Bank Account Details', isSubmitted: false },
+              { id: 'doc-hbk', name: 'Employee Handbook featuring all company policies', isSubmitted: false },
+              { id: 'doc-sop', name: 'Standard Operating Procedure (SOP) manual', isSubmitted: false },
+              {
+                id: 'doc-nda',
+                name: 'Non-disclosure agreement, non-compete, or confidentiality agreement',
+                isSubmitted: false,
+                isConditional: true,
+                conditionNote: 'Conditional (if applicable): Required for roles with access to confidential data.',
+              },
+            ],
+      orientationItems:
+        journey.orientationItems && journey.orientationItems.length > 0
+          ? journey.orientationItems
+          : [
+              { id: 'ori-tour', name: 'Show new hires office space, parking spots & break room', isCompleted: false },
+              { id: 'ori-id', name: 'Create Employee ID & Biometric Access Pass', isCompleted: false },
+              { id: 'ori-desk', name: 'Set up work space, computer, phone, and supplies', isCompleted: false },
+              { id: 'ori-gift', name: 'Place Citadel Welcome Gift (Swag Mug, T-Shirt, Stationery) on desk', isCompleted: false },
+            ],
+    };
+    onboardingJourneys = [enriched, ...onboardingJourneys];
     saveStorage('onboarding', onboardingJourneys);
-    return journey;
+    return enriched;
   }
 
   async getChecklistTemplates(): Promise<OnboardingChecklistTemplate[]> {
     await sleep();
-    return [...checklistTemplates];
+    return checklistTemplates.map((t) => ({ ...t, version: t.version ?? 1 }));
   }
 
   async createChecklistTemplate(template: OnboardingChecklistTemplate): Promise<OnboardingChecklistTemplate> {
     await sleep();
-    checklistTemplates = [template, ...checklistTemplates];
+    const stored: OnboardingChecklistTemplate = {
+      ...template,
+      version: 1,
+      taskCount: template.tasks?.length ?? template.taskCount ?? 0,
+      tasks: (template.tasks || []).map((t, idx) => ({ ...t, order: t.order ?? idx + 1 })),
+    };
+    checklistTemplates = [stored, ...checklistTemplates];
     saveStorage('checklist_templates', checklistTemplates);
-    return template;
+    return stored;
+  }
+
+  async updateChecklistTemplate(
+    id: string,
+    template: OnboardingChecklistTemplate,
+    version?: number
+  ): Promise<OnboardingChecklistTemplate> {
+    await sleep();
+    const idx = checklistTemplates.findIndex((t) => t.id === id);
+    if (idx < 0) throw new Error('Checklist template not found');
+    const existing = checklistTemplates[idx];
+    if (version !== undefined && (existing.version ?? 1) !== version) {
+      throw new Error('Conflict (409): This checklist template was modified by another user. Please refresh.');
+    }
+    const updated: OnboardingChecklistTemplate = {
+      ...existing,
+      ...template,
+      id: existing.id,
+      tasks: (template.tasks || existing.tasks || []).map((t, i) => ({ ...t, order: i + 1 })),
+      taskCount: (template.tasks || existing.tasks || []).length,
+      version: (existing.version ?? 1) + 1,
+    };
+    checklistTemplates[idx] = updated;
+    saveStorage('checklist_templates', checklistTemplates);
+    return updated;
   }
 }
 
@@ -1369,9 +1804,9 @@ export class MockTimesheetRepository implements ITimesheetRepository {
 
 export class MockPerformanceRepository implements IPerformanceRepository {
   private kpis: Kpi[] = [
-    { id: 1, indicator: 'Quarterly Sprint Delivery & Reliability', minRating: 1, maxRating: 5, weight: 40, isActive: true },
-    { id: 2, indicator: 'Architecture Integrity & Code Review Coverage', minRating: 1, maxRating: 5, weight: 30, isActive: true },
-    { id: 3, indicator: 'Mentorship & Engineering Governance', minRating: 1, maxRating: 5, weight: 30, isActive: true },
+    { id: 1, indicator: 'Quarterly Sprint Delivery & Reliability', minRating: 1, maxRating: 5, weight: 40, isActive: true, version: 1 },
+    { id: 2, indicator: 'Architecture Integrity & Code Review Coverage', minRating: 1, maxRating: 5, weight: 30, isActive: true, version: 1 },
+    { id: 3, indicator: 'Mentorship & Engineering Governance', minRating: 1, maxRating: 5, weight: 30, isActive: true, version: 1 },
   ];
 
   private reviews: PerformanceReview[] = [
@@ -1385,11 +1820,13 @@ export class MockPerformanceRepository implements IPerformanceRepository {
       reviewPeriodEnd: '2026-06-30',
       dueDate: '2026-07-15',
       status: 'EVALUATED',
-      finalRating: 4.8,
+      finalRating: 4.91,
       reviewerComments: 'Exceeded strategic milestone commitments consistently.',
+      version: 1,
       ratings: [
-        { kpiId: 1, kpiTitle: 'Quarterly Sprint Delivery & Reliability', rating: 5, comment: 'Flawless execution' },
-        { kpiId: 2, kpiTitle: 'Architecture Integrity & Code Review Coverage', rating: 4.8, comment: 'High quality standards' },
+        { kpiId: 1, kpiTitle: 'Quarterly Sprint Delivery & Reliability', rating: 5, weight: 40, comment: 'Flawless execution' },
+        { kpiId: 2, kpiTitle: 'Architecture Integrity & Code Review Coverage', rating: 4.8, weight: 30, comment: 'High quality standards' },
+        { kpiId: 3, kpiTitle: 'Mentorship & Engineering Governance', rating: 4.9, weight: 30, comment: 'Strong team mentoring' },
       ],
     },
   ];
@@ -1408,6 +1845,7 @@ export class MockPerformanceRepository implements IPerformanceRepository {
       maxRating: kpi.maxRating ?? 5,
       weight: kpi.weight ?? 100,
       isActive: kpi.isActive ?? true,
+      version: 1,
     };
     this.kpis.push(newKpi);
     return newKpi;
@@ -1417,8 +1855,11 @@ export class MockPerformanceRepository implements IPerformanceRepository {
     await sleep();
     const existing = this.kpis.find((k) => k.id === id);
     if (!existing) throw new Error('KPI not found');
-    Object.assign(existing, kpi);
-    return existing;
+    if (kpi.version !== undefined && (existing.version ?? 1) !== kpi.version) {
+      throw new Error('Conflict (409): This KPI was modified by another user. Please refresh.');
+    }
+    Object.assign(existing, kpi, { version: (existing.version ?? 1) + 1 });
+    return { ...existing };
   }
 
   async deleteKpi(id: number): Promise<void> {
@@ -1435,48 +1876,124 @@ export class MockPerformanceRepository implements IPerformanceRepository {
     await sleep();
     const rev = this.reviews.find((r) => r.id === id);
     if (!rev) throw new Error('Review not found');
-    return rev;
+    return { ...rev };
   }
 
-  async createReview(data: Partial<PerformanceReview>): Promise<PerformanceReview> {
+  async createReview(data: Partial<PerformanceReview> & { kpis?: Array<{ kpiId: number; title?: string; weight?: number }> }): Promise<PerformanceReview> {
     await sleep();
+    const rawRatings: ReviewRating[] =
+      data.ratings && data.ratings.length > 0
+        ? data.ratings
+        : (data.kpis || []).map((k) => {
+            const linked = this.kpis.find((item) => item.id === k.kpiId);
+            return {
+              kpiId: k.kpiId,
+              kpiTitle: k.title || linked?.indicator || `KPI #${k.kpiId}`,
+              weight: k.weight ?? linked?.weight ?? 0,
+              rating: 0,
+            };
+          });
+    if (rawRatings.length > 0) {
+      const sum = rawRatings.reduce((acc, r) => acc + Number(r.weight ?? 0), 0);
+      if (Math.abs(sum - 100) > 0.01) {
+        throw new Error(`Assigned KPI weights must total exactly 100% (currently ${sum.toFixed(2)}%).`);
+      }
+    }
+    const emp = employees.find((e) => Number(e.id) === Number(data.employeeId));
+    const rev = employees.find((e) => Number(e.id) === Number(data.reviewerId));
     const newRev: PerformanceReview = {
       id: Date.now(),
       employeeId: data.employeeId || 1,
+      employeeName: data.employeeName || (emp ? `${emp.firstName} ${emp.lastName}` : undefined),
       reviewerId: data.reviewerId || 2,
+      reviewerName: data.reviewerName || (rev ? `${rev.firstName} ${rev.lastName}` : undefined),
       reviewPeriodStart: data.reviewPeriodStart || '2026-01-01',
       reviewPeriodEnd: data.reviewPeriodEnd || '2026-06-30',
       dueDate: data.dueDate || '2026-07-15',
       status: 'IN_PROGRESS',
-      ratings: data.ratings || [],
+      ratings: rawRatings,
+      version: 1,
     };
-    this.reviews.push(newRev);
+    this.reviews.unshift(newRev);
     return newRev;
   }
 
   async evaluateReview(
     id: number,
-    data: { ratings: ReviewRating[]; reviewerComments?: string; employeeComments?: string }
+    data: { ratings: ReviewRating[]; reviewerComments?: string; employeeComments?: string; version?: number }
   ): Promise<PerformanceReview> {
     await sleep();
-    const rev = await this.getReview(id);
-    rev.ratings = data.ratings;
+    const rev = this.reviews.find((r) => r.id === id);
+    if (!rev) throw new Error('Review not found');
+    if (data.version !== undefined && (rev.version ?? 1) !== data.version) {
+      throw new Error('Conflict (409): This appraisal was modified by another user. Please refresh.');
+    }
+    if (rev.status === 'APPROVED') {
+      throw new Error('Finalized appraisals are locked and cannot be re-scored.');
+    }
+
+    const assignedKpiIds = rev.ratings
+      .map((r) => r.kpiId)
+      .filter((kid): kid is number => typeof kid === 'number' && kid > 0);
+    if (assignedKpiIds.length > 0) {
+      const submittedIds = new Set(
+        data.ratings.map((r) => r.kpiId).filter((kid): kid is number => typeof kid === 'number' && kid > 0)
+      );
+      const missing = assignedKpiIds.filter((kid) => !submittedIds.has(kid));
+      if (missing.length > 0) {
+        throw new Error(`Incomplete appraisal submission: all ${assignedKpiIds.length} assigned KPIs must be scored.`);
+      }
+    }
+
+    let totalWeight = 0;
+    let totalWeighted = 0;
+    const normalizedRatings: ReviewRating[] = data.ratings.map((r) => {
+      const linkedKpi = r.kpiId ? this.kpis.find((k) => k.id === r.kpiId) : undefined;
+      const minR = Number(linkedKpi?.minRating ?? 1);
+      const maxR = Number(linkedKpi?.maxRating ?? 5);
+      if (r.rating < minR || r.rating > maxR) {
+        throw new Error(`Score for "${linkedKpi?.indicator || r.kpiTitle}" must be between ${minR} and ${maxR}.`);
+      }
+      const w = Number(r.weight ?? linkedKpi?.weight ?? 0);
+      if (w <= 0) {
+        throw new Error(`KPI "${linkedKpi?.indicator || r.kpiTitle}" must have a weight greater than 0%.`);
+      }
+      totalWeight += w;
+      totalWeighted += r.rating * w;
+      return {
+        ...r,
+        kpiTitle: linkedKpi?.indicator || r.kpiTitle,
+        weight: w,
+      };
+    });
+
+    if (Math.abs(totalWeight - 100) > 0.01) {
+      throw new Error(`Total KPI weights across scored items must equal 100% (currently ${totalWeight.toFixed(2)}%).`);
+    }
+
+    rev.ratings = normalizedRatings;
     rev.reviewerComments = data.reviewerComments;
     rev.employeeComments = data.employeeComments;
-    const totalWeighted = data.ratings.reduce((sum, r) => sum + r.rating * ((r as any).weight || 100), 0);
-    const totalWeight = data.ratings.reduce((sum, r) => sum + ((r as any).weight || 100), 0);
-    const avg = totalWeight > 0 ? totalWeighted / totalWeight : 0;
-    rev.finalRating = Number(avg.toFixed(2));
+    rev.finalRating = Number((totalWeighted / 100).toFixed(2));
     rev.status = 'EVALUATED';
-    return rev;
+    rev.version = (rev.version ?? 1) + 1;
+    return { ...rev };
   }
 
-  async approveReview(id: number): Promise<PerformanceReview> {
+  async approveReview(id: number, version?: number): Promise<PerformanceReview> {
     await sleep();
-    const rev = await this.getReview(id);
+    const rev = this.reviews.find((r) => r.id === id);
+    if (!rev) throw new Error('Review not found');
+    if (version !== undefined && (rev.version ?? 1) !== version) {
+      throw new Error('Conflict (409): This appraisal was modified by another user. Please refresh.');
+    }
+    if (rev.status !== 'EVALUATED') {
+      throw new Error('Only evaluated reviews can be finalized and approved.');
+    }
     rev.status = 'APPROVED';
     rev.completedAt = new Date().toISOString();
-    return rev;
+    rev.version = (rev.version ?? 1) + 1;
+    return { ...rev };
   }
 }
 
@@ -2113,6 +2630,249 @@ export class MockClaimRepository implements IClaimRepository {
 
     saveStorage('claim_requests', mockClaims);
     return claim;
+  }
+}
+
+let exitRequestsStore: ExitRequest[] = loadStorage<ExitRequest[]>('exit_requests', [
+  {
+    id: 'exit-001',
+    employeeId: '4',
+    employeeName: 'Adaobi Nwosu',
+    staffId: 'CSOG-002',
+    departmentName: 'Academy & Programmes',
+    entityName: 'Citadel School of Government',
+    resignationDate: '2026-11-20',
+    proposedLastDay: '2026-12-25',
+    noticePeriodDays: 35,
+    noticeCompliant: true,
+    reason: 'Relocation & Personal Family Transition',
+    managerId: '3',
+    managerName: 'Omoaholo Omoakhalen',
+    managerEndorsed: false,
+    hrVerified: false,
+    status: 'SUBMITTED',
+    clearances: { it: false, facilities: false, finance: false, hr: false },
+    clearanceNotes: {},
+    blockingLoans: [],
+    version: 1,
+  },
+]);
+
+export class MockOffboardingRepository implements IOffboardingRepository {
+  private getBlockingLoans(employeeId: string): string[] {
+    return employeeLoans
+      .filter((l) => String(l.employee_id) === String(employeeId) && !['paid', 'closed', 'rejected', 'cancelled'].includes(String(l.status || '').toLowerCase()))
+      .filter((l) => {
+        const rem = Number(l.remaining_balance ?? l.principal_amount ?? 0);
+        return rem > 0.01;
+      })
+      .map((l) => `${l.title || 'Staff Loan'} (₦${Number(l.remaining_balance ?? l.principal_amount ?? 0).toLocaleString()} outstanding)`);
+  }
+
+  private enrich(req: ExitRequest): ExitRequest {
+    return {
+      ...req,
+      blockingLoans: this.getBlockingLoans(req.employeeId),
+    };
+  }
+
+  private findOrThrow(id: string, version?: number): number {
+    const idx = exitRequestsStore.findIndex((r) => r.id === id);
+    if (idx < 0) throw new Error('Offboarding request not found.');
+    if (version !== undefined && (exitRequestsStore[idx].version ?? 1) !== version) {
+      throw new Error('Conflict (409): This offboarding record was updated by another user. Please refresh.');
+    }
+    return idx;
+  }
+
+  async getAll(): Promise<ExitRequest[]> {
+    await sleep();
+    return exitRequestsStore.map((r) => this.enrich(r));
+  }
+
+  async create(payload: {
+    employeeId: string;
+    resignationDate: string;
+    proposedLastDay: string;
+    reason: string;
+    managerId?: string;
+  }): Promise<ExitRequest> {
+    await sleep();
+    const emp = employees.find((e) => String(e.id) === String(payload.employeeId));
+    if (!emp) throw new Error('Employee not found.');
+    const existingActive = exitRequestsStore.find((r) => r.employeeId === emp.id && r.status !== 'OFFBOARDED');
+    if (existingActive) throw new Error(`${emp.firstName} ${emp.lastName} already has an active offboarding workflow.`);
+    const resDate = new Date(payload.resignationDate);
+    const lastDate = new Date(payload.proposedLastDay);
+    if (Number.isNaN(resDate.getTime()) || Number.isNaN(lastDate.getTime()) || lastDate <= resDate) {
+      throw new Error('Proposed last working day must be after the resignation submission date.');
+    }
+    const diffDays = Math.ceil((lastDate.getTime() - resDate.getTime()) / (1000 * 60 * 60 * 24));
+    const supervisor = payload.managerId
+      ? employees.find((e) => String(e.id) === String(payload.managerId))
+      : emp.managerId
+      ? employees.find((e) => String(e.id) === String(emp.managerId))
+      : undefined;
+
+    const req: ExitRequest = {
+      id: `exit-${Date.now()}`,
+      employeeId: String(emp.id),
+      employeeName: `${emp.firstName} ${emp.lastName}`,
+      staffId: emp.staffId,
+      departmentName: emp.departmentName || '',
+      entityName: emp.entityName || '',
+      resignationDate: payload.resignationDate,
+      proposedLastDay: payload.proposedLastDay,
+      noticePeriodDays: diffDays,
+      noticeCompliant: diffDays >= 30,
+      reason: payload.reason,
+      managerId: supervisor?.id ?? emp.managerId ?? null,
+      managerName: supervisor ? `${supervisor.firstName} ${supervisor.lastName}` : emp.managerName || 'PCCM Direct Review',
+      managerEndorsed: false,
+      hrVerified: false,
+      status: 'SUBMITTED',
+      clearances: { it: false, facilities: false, finance: false, hr: false },
+      clearanceNotes: {},
+      version: 1,
+      updatedAt: new Date().toISOString(),
+    };
+    exitRequestsStore = [req, ...exitRequestsStore];
+    saveStorage('exit_requests', exitRequestsStore);
+    return this.enrich(req);
+  }
+
+  async endorseByManager(id: string, payload?: { comments?: string; version?: number }): Promise<ExitRequest> {
+    await sleep();
+    const idx = this.findOrThrow(id, payload?.version);
+    const req = exitRequestsStore[idx];
+    if (req.status !== 'SUBMITTED') {
+      throw new Error(`Stage 2 endorsement requires status SUBMITTED (currently ${req.status}).`);
+    }
+    const updated: ExitRequest = {
+      ...req,
+      managerEndorsed: true,
+      managerEndorsedAt: new Date().toISOString(),
+      managerComments: payload?.comments || req.managerComments || null,
+      status: 'MANAGER_REVIEWED',
+      version: (req.version ?? 1) + 1,
+      updatedAt: new Date().toISOString(),
+    };
+    exitRequestsStore[idx] = updated;
+    saveStorage('exit_requests', exitRequestsStore);
+    return this.enrich(updated);
+  }
+
+  async verifyNotice(
+    id: string,
+    payload?: { noticeCompliant?: boolean; contractNotes?: string; version?: number }
+  ): Promise<ExitRequest> {
+    await sleep();
+    const idx = this.findOrThrow(id, payload?.version);
+    const req = exitRequestsStore[idx];
+    if (req.status !== 'MANAGER_REVIEWED' || !req.managerEndorsed) {
+      throw new Error('Stage 3 requires Stage 2 Manager Endorsement to be completed first.');
+    }
+    const updated: ExitRequest = {
+      ...req,
+      hrVerified: true,
+      hrVerifiedAt: new Date().toISOString(),
+      noticeCompliant: payload?.noticeCompliant ?? req.noticeCompliant,
+      contractNotes: payload?.contractNotes ?? req.contractNotes ?? null,
+      status: 'NOTICE_VERIFIED',
+      version: (req.version ?? 1) + 1,
+      updatedAt: new Date().toISOString(),
+    };
+    exitRequestsStore[idx] = updated;
+    saveStorage('exit_requests', exitRequestsStore);
+    return this.enrich(updated);
+  }
+
+  async scheduleInterview(id: string, payload: ExitInterviewDetails & { version?: number }): Promise<ExitRequest> {
+    await sleep();
+    const idx = this.findOrThrow(id, payload.version);
+    const req = exitRequestsStore[idx];
+    if (!['NOTICE_VERIFIED', 'INTERVIEW_SCHEDULED'].includes(req.status) || !req.hrVerified) {
+      throw new Error('Stage 4 requires Stage 3 HR Notice & Contract Verification first.');
+    }
+    const updated: ExitRequest = {
+      ...req,
+      exitInterview: {
+        date: payload.date,
+        time: payload.time,
+        interviewer: payload.interviewer,
+        mode: payload.mode,
+        feedback: payload.feedback,
+      },
+      status: 'INTERVIEW_SCHEDULED',
+      version: (req.version ?? 1) + 1,
+      updatedAt: new Date().toISOString(),
+    };
+    exitRequestsStore[idx] = updated;
+    saveStorage('exit_requests', exitRequestsStore);
+    return this.enrich(updated);
+  }
+
+  async updateClearance(
+    id: string,
+    department: keyof ExitClearances,
+    cleared: boolean,
+    payload?: { note?: string; version?: number }
+  ): Promise<ExitRequest> {
+    await sleep();
+    const idx = this.findOrThrow(id, payload?.version);
+    const req = exitRequestsStore[idx];
+    if (!['INTERVIEW_SCHEDULED', 'CLEARANCE_IN_PROGRESS'].includes(req.status)) {
+      throw new Error('Stage 5 Departmental Clearances require Stage 4 Exit Interview scheduling first.');
+    }
+    if (department === 'finance' && cleared) {
+      const loans = this.getBlockingLoans(req.employeeId);
+      if (loans.length > 0) {
+        throw new Error(`Finance clearance blocked: settle outstanding staff loans first (${loans.join('; ')}).`);
+      }
+    }
+    const nextClearances: ExitClearances = { ...req.clearances, [department]: cleared };
+    const nextNotes = { ...(req.clearanceNotes || {}) };
+    if (payload?.note) nextNotes[department] = payload.note;
+
+    const updated: ExitRequest = {
+      ...req,
+      clearances: nextClearances,
+      clearanceNotes: nextNotes,
+      status: 'CLEARANCE_IN_PROGRESS',
+      version: (req.version ?? 1) + 1,
+      updatedAt: new Date().toISOString(),
+    };
+    exitRequestsStore[idx] = updated;
+    saveStorage('exit_requests', exitRequestsStore);
+    return this.enrich(updated);
+  }
+
+  async finalize(id: string, payload?: { settlementNotes?: string; version?: number }): Promise<ExitRequest> {
+    await sleep();
+    const idx = this.findOrThrow(id, payload?.version);
+    const req = exitRequestsStore[idx];
+    if (!['INTERVIEW_SCHEDULED', 'CLEARANCE_IN_PROGRESS'].includes(req.status)) {
+      throw new Error('Cannot finalize settlement before Stages 2, 3, and 4 are completed.');
+    }
+    const pending = (Object.keys(req.clearances) as (keyof ExitClearances)[]).filter((k) => !req.clearances[k]);
+    if (pending.length > 0) {
+      throw new Error(`Cannot finalize settlement until all clearances complete: ${pending.join(', ')}.`);
+    }
+    const loans = this.getBlockingLoans(req.employeeId);
+    if (loans.length > 0) {
+      throw new Error(`Final settlement blocked by unpaid staff loans: ${loans.join('; ')}.`);
+    }
+    const updated: ExitRequest = {
+      ...req,
+      status: 'OFFBOARDED',
+      finalSettledAt: new Date().toISOString(),
+      settlementNotes: payload?.settlementNotes || null,
+      version: (req.version ?? 1) + 1,
+      updatedAt: new Date().toISOString(),
+    };
+    exitRequestsStore[idx] = updated;
+    saveStorage('exit_requests', exitRequestsStore);
+    return this.enrich(updated);
   }
 }
 

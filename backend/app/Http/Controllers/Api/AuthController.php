@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\IdentityLink;
 use App\Support\AuditLogger;
+use App\Support\RoleAuthorization;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -147,7 +148,7 @@ class AuthController extends Controller
     {
         $user->loadMissing(['entity', 'department']);
         $employee = $user->staff_id
-            ? Employee::query()->with(['entity', 'department'])->where('staff_id', $user->staff_id)->first()
+            ? Employee::query()->with(['entity', 'department', 'supervisor'])->withCount('directReports')->where('staff_id', $user->staff_id)->first()
             : null;
 
         $identityLink = IdentityLink::query()
@@ -156,6 +157,8 @@ class AuthController extends Controller
             ->where('status', IdentityLink::STATUS_VERIFIED)
             ->whereNull('revoked_at')
             ->first();
+
+        $directReportsCount = (int) ($employee?->direct_reports_count ?? 0);
 
         return [
             'id' => (string) ($employee?->id ?? $user->id),
@@ -166,6 +169,11 @@ class AuthController extends Controller
             'phone' => $employee?->phone,
             'location' => $employee?->address,
             'role' => $user->role,
+            'effectiveRole' => RoleAuthorization::effectiveDashboardRole($user),
+            'isSupervisor' => RoleAuthorization::isSupervisor($user),
+            'directReportsCount' => $directReportsCount,
+            'managerId' => $employee?->manager_id ? (string) $employee->manager_id : null,
+            'managerName' => $employee?->supervisor?->full_name ?? $employee?->manager_name,
             'staffId' => $user->staff_id,
             'entityId' => $user->entity_id ?? $employee?->entity_id,
             'entityName' => $user->entity?->name ?? $employee?->entity?->name,

@@ -71,12 +71,17 @@ export interface Kpi {
   maxRating: number;
   weight: number;
   isActive: boolean;
+  version?: number;
+  updatedAt?: string;
 }
 
 export interface ReviewRating {
   id?: number;
   kpiId?: number | null;
   kpiTitle: string;
+  weight?: number;
+  minRating?: number;
+  maxRating?: number;
   rating: number;
   comment?: string | null;
 }
@@ -96,9 +101,11 @@ export interface PerformanceReview {
   employeeComments?: string | null;
   reviewerComments?: string | null;
   completedAt?: string | null;
+  version?: number;
+  updatedAt?: string;
   ratings?: ReviewRating[];
   kpis?: Array<{
-    kpiId: number;
+    kpiId?: number;
     title?: string;
     weight?: number;
   }>;

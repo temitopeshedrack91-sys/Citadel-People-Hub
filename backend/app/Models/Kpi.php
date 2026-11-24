@@ -17,6 +17,7 @@ class Kpi extends Model
         'max_rating',
         'weight',
         'is_active',
+        'version',
     ];
 
     protected $casts = [
@@ -24,6 +25,7 @@ class Kpi extends Model
         'max_rating' => 'decimal:1',
         'weight' => 'decimal:2',
         'is_active' => 'boolean',
+        'version' => 'integer',
     ];
 
     public function jobTitle(): BelongsTo

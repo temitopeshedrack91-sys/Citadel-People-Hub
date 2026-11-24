@@ -34,6 +34,7 @@ import {
 } from '../../types';
 import { employeeRepository, organizationRepository } from '../../services';
 import { useAuth } from '../../context/AuthContext';
+import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import { Badge } from '../common/Badge';
 import { EmployeeProfileModal } from '../employee/EmployeeProfileModal';
 import { CreateEmployeeModal } from '../employee/CreateEmployeeModal';
@@ -87,6 +88,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
 
   // Selected Employee for Dossier Profile Modal
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
 
   // Add Employee Modal state
   const [showAddModal, setShowAddModal] = useState(isAddModalOpen);
@@ -124,6 +126,14 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
   useEffect(() => {
     loadData();
   }, [currentUser?.id, currentUser?.role, currentUser?.departmentName]);
+
+  useRealtimeTable('employees', () => {
+    void loadData();
+  });
+
+  useRealtimeTable('departments', () => {
+    void loadData();
+  });
 
   // Filter and Sort Pipeline
   const filteredAndSortedEmployees = useMemo(() => {
@@ -538,9 +548,11 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                         {canManageEmployees && (
                           <button
                             onClick={() => {
-                              setSelectedEmployee(emp);
+                              setEditingEmployee(emp);
+                              setShowAddModal(true);
                             }}
-                            className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                            data-testid={`edit-employee-${emp.staffId}`}
+                            className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
                             title="Edit employee record"
                           >
                             <Edit className="w-3.5 h-3.5" />
@@ -679,17 +691,24 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
       <EmployeeProfileModal
         employee={selectedEmployee}
         onClose={() => setSelectedEmployee(null)}
+        onEdit={(emp) => {
+          setSelectedEmployee(null);
+          setEditingEmployee(emp);
+          setShowAddModal(true);
+        }}
         onNavigateLeave={() => {
           setSelectedEmployee(null);
           if (onNavigate) onNavigate('leave');
         }}
       />
 
-      {/* 6. Sectioned 5-Step Create Employee Modal */}
+      {/* 6. Sectioned 5-Step Create / Edit Employee Modal */}
       <CreateEmployeeModal
         isOpen={showAddModal}
+        editingEmployee={editingEmployee}
         onClose={() => {
           setShowAddModal(false);
+          setEditingEmployee(null);
           if (onCloseAddModal) onCloseAddModal();
         }}
         onSuccess={() => {

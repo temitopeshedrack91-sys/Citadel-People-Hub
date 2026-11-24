@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Award,
   Target,
@@ -19,16 +19,31 @@ import {
   AlertCircle,
   HelpCircle,
   BookOpen,
+  RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useRealtimeTable } from '../../hooks/useRealtimeTable';
+import { isHrOrAdminUser } from '../../utils/rbac';
 import { Badge } from '../common/Badge';
 import { performanceRepository, employeeRepository } from '../../services';
 import { PerformanceReview, Kpi, Employee, ReviewRating } from '../../types';
+
+interface ScoringItemState {
+  kpiId?: number;
+  score: number;
+  comment: string;
+  weight: number;
+  title: string;
+  minRating: number;
+  maxRating: number;
+}
 
 export const PerformanceView: React.FC = () => {
   const { currentUser, currentRole } = useAuth();
   const [activeTab, setActiveTab] = useState<'reviews' | 'kpis' | 'framework' | 'okrs'>('reviews');
   const [checkinFeedback, setCheckinFeedback] = useState<string | null>(null);
+  const [errorBanner, setErrorBanner] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   // Data state
   const [reviews, setReviews] = useState<PerformanceReview[]>([]);
@@ -43,6 +58,7 @@ export const PerformanceView: React.FC = () => {
 
   // KPI Form state
   const [editingKpiId, setEditingKpiId] = useState<number | null>(null);
+  const [editingKpiVersion, setEditingKpiVersion] = useState<number | undefined>(undefined);
   const [kpiIndicator, setKpiIndicator] = useState('');
   const [kpiJobRole, setKpiJobRole] = useState('All Roles / General');
   const [kpiMinRating, setKpiMinRating] = useState(1);
@@ -51,19 +67,26 @@ export const PerformanceView: React.FC = () => {
 
   // Initiate Review Form state
   const [targetEmployeeId, setTargetEmployeeId] = useState('');
+  const [targetReviewerId, setTargetReviewerId] = useState('');
   const [reviewPeriodStart, setReviewPeriodStart] = useState('2026-07-01');
   const [reviewPeriodEnd, setReviewPeriodEnd] = useState('2026-12-31');
   const [reviewDueDate, setReviewDueDate] = useState('2026-12-15');
   const [assignedKpiIds, setAssignedKpiIds] = useState<number[]>([]);
+  const [assignedWeights, setAssignedWeights] = useState<Record<number, number>>({});
 
   // Scoring Form state
-  const [scoringRatings, setScoringRatings] = useState<Record<number, { score: number; comment: string; weight: number; title: string }>>({});
+  const [scoringRatings, setScoringRatings] = useState<Record<number, ScoringItemState>>({});
   const [scoringReviewerComments, setScoringReviewerComments] = useState('');
   const [isSubmittingScore, setIsSubmittingScore] = useState(false);
 
-  const isHrOrAdmin = currentRole === 'ADMIN' || currentRole === 'HR_STAFF' || currentRole === 'PCCM_SUPER_ADMIN';
+  const isHrOrAdmin = isHrOrAdminUser(currentUser);
+  const canInitiateAppraisal =
+    isHrOrAdmin ||
+    currentRole === 'MANAGER' ||
+    currentRole === 'DEPARTMENT_HEAD' ||
+    currentRole === 'BUSINESS_HEAD';
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [revList, kpiList, empList] = await Promise.all([
@@ -75,30 +98,81 @@ export const PerformanceView: React.FC = () => {
       setKpis(kpiList);
       setEmployees(empList);
       if (empList.length > 0 && !targetEmployeeId) {
-        setTargetEmployeeId(empList[0].id);
+        const firstNonSelf = empList.find((e) => String(e.id) !== String(currentUser.employeeId)) || empList[0];
+        setTargetEmployeeId(String(firstNonSelf.id));
+        const defaultMgr =
+          firstNonSelf.managerId ||
+          currentUser.employeeId ||
+          String(empList.find((e) => e.id !== firstNonSelf.id)?.id || empList[0].id);
+        setTargetReviewerId(String(defaultMgr));
       }
       if (kpiList.length > 0 && assignedKpiIds.length === 0) {
-        setAssignedKpiIds(kpiList.slice(0, 3).map((k) => k.id));
+        const activeList = kpiList.filter((k) => k.isActive !== false);
+        const activeSum = activeList.reduce((acc, k) => acc + Number(k.weight ?? 0), 0);
+        const initialSelection =
+          Math.abs(activeSum - 100) < 0.01 ? activeList : activeList.slice(0, 4);
+        setAssignedKpiIds(initialSelection.map((k) => k.id));
+        const nextWeights: Record<number, number> = {};
+        initialSelection.forEach((k) => {
+          nextWeights[k.id] = Number(k.weight ?? 25);
+        });
+        setAssignedWeights((prev) => (Object.keys(prev).length > 0 ? prev : nextWeights));
       }
-    } catch (err) {
-      console.error('Failed to load performance data:', err);
+    } catch (err: any) {
+      setErrorBanner(err?.message || 'Failed to load performance & appraisal records.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [assignedKpiIds.length, currentUser.employeeId, targetEmployeeId]);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    void loadData();
+  }, [loadData]);
 
-  const showNotification = (msg: string) => {
+  useRealtimeTable('kpis', () => {
+    void loadData();
+  });
+
+  useRealtimeTable('performance_reviews', () => {
+    void loadData();
+  });
+
+  const showSuccess = (msg: string) => {
+    setErrorBanner(null);
     setCheckinFeedback(msg);
-    setTimeout(() => setCheckinFeedback(null), 4000);
+    setTimeout(() => setCheckinFeedback(null), 5000);
+  };
+
+  const showError = (msg: string) => {
+    setCheckinFeedback(null);
+    setErrorBanner(msg);
+  };
+
+  const resolveErrorMessage = (err: any, fallback: string): string => {
+    const raw = err?.message || fallback;
+    if (err?.status === 409 || String(raw).toLowerCase().includes('modified by another user') || String(raw).toLowerCase().includes('conflict')) {
+      return `${raw} Click Refresh Data to pull the latest record before retrying.`;
+    }
+    return raw;
+  };
+
+  // Update default reviewer when target employee changes inside Initiate modal
+  const handleSelectTargetEmployee = (empId: string) => {
+    setTargetEmployeeId(empId);
+    const selectedEmp = employees.find((e) => String(e.id) === String(empId));
+    const fallbackMgr =
+      selectedEmp?.managerId ||
+      currentUser.employeeId ||
+      employees.find((e) => String(e.id) !== String(empId))?.id ||
+      '';
+    setTargetReviewerId(String(fallbackMgr));
   };
 
   // KPI Management Handlers
   const handleOpenCreateKpi = () => {
+    setModalError(null);
     setEditingKpiId(null);
+    setEditingKpiVersion(undefined);
     setKpiIndicator('');
     setKpiJobRole('All Roles / General');
     setKpiMinRating(1);
@@ -108,17 +182,24 @@ export const PerformanceView: React.FC = () => {
   };
 
   const handleEditKpi = (kpi: Kpi) => {
+    setModalError(null);
     setEditingKpiId(kpi.id);
+    setEditingKpiVersion(kpi.version);
     setKpiIndicator(kpi.indicator);
-    setKpiMinRating(kpi.minRating || 1);
-    setKpiMaxRating(kpi.maxRating || 5);
-    setKpiWeight(kpi.weight || 25);
+    setKpiMinRating(kpi.minRating ?? 1);
+    setKpiMaxRating(kpi.maxRating ?? 5);
+    setKpiWeight(Number(kpi.weight ?? 25));
     setIsKpiModalOpen(true);
   };
 
   const handleSaveKpi = async (e: React.FormEvent) => {
     e.preventDefault();
+    setModalError(null);
     if (!kpiIndicator.trim()) return;
+    if (kpiMaxRating <= kpiMinRating) {
+      setModalError('Max Rating must be greater than Min Rating.');
+      return;
+    }
 
     try {
       if (editingKpiId) {
@@ -127,8 +208,9 @@ export const PerformanceView: React.FC = () => {
           minRating: kpiMinRating,
           maxRating: kpiMaxRating,
           weight: kpiWeight,
+          version: editingKpiVersion,
         });
-        showNotification(`KPI "${kpiIndicator}" updated successfully.`);
+        showSuccess(`KPI "${kpiIndicator}" updated successfully.`);
       } else {
         await performanceRepository.createKpi({
           indicator: kpiIndicator,
@@ -137,12 +219,14 @@ export const PerformanceView: React.FC = () => {
           weight: kpiWeight,
           isActive: true,
         });
-        showNotification(`KPI "${kpiIndicator}" created and saved to library.`);
+        showSuccess(`KPI "${kpiIndicator}" created and saved to library.`);
       }
       setIsKpiModalOpen(false);
       await loadData();
     } catch (err: any) {
-      showNotification(`Error: ${err.message}`);
+      const msg = resolveErrorMessage(err, 'Failed to save KPI.');
+      setModalError(msg);
+      showError(msg);
     }
   };
 
@@ -150,120 +234,216 @@ export const PerformanceView: React.FC = () => {
     if (!confirm('Are you sure you want to deactivate this KPI?')) return;
     try {
       await performanceRepository.deleteKpi(id);
-      showNotification('KPI deactivated from library.');
+      showSuccess('KPI deactivated from library.');
       await loadData();
     } catch (err: any) {
-      showNotification(`Error: ${err.message}`);
+      showError(resolveErrorMessage(err, 'Unable to deactivate KPI.'));
     }
   };
+
+  const totalAssignedWeight = useMemo(
+    () =>
+      assignedKpiIds.reduce((sum, id) => {
+        const kpi = kpis.find((item) => item.id === id);
+        return sum + Number(assignedWeights[id] ?? kpi?.weight ?? 0);
+      }, 0),
+    [assignedKpiIds, assignedWeights, kpis]
+  );
+
+  const totalActiveLibraryWeight = useMemo(
+    () =>
+      kpis
+        .filter((k) => k.isActive !== false)
+        .reduce((sum, k) => sum + Number(k.weight ?? 0), 0),
+    [kpis]
+  );
 
   // Initiate Review Handler
   const handleInitiateReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    const emp = employees.find((e) => e.id === targetEmployeeId);
-    if (!emp) return;
+    setModalError(null);
+    const emp = employees.find((item) => String(item.id) === String(targetEmployeeId));
+    if (!emp) {
+      setModalError('Please select a valid employee.');
+      return;
+    }
+
+    const selectedKpis = kpis.filter((k) => assignedKpiIds.includes(k.id));
+    if (selectedKpis.length === 0) {
+      setModalError('Assign at least one KPI deliverable whose weight sums to 100%.');
+      return;
+    }
+    if (Math.abs(totalAssignedWeight - 100) > 0.01) {
+      setModalError(`Assigned KPI weights must sum to exactly 100% (currently ${totalAssignedWeight.toFixed(1)}%).`);
+      return;
+    }
+
+    const reviewerEmployeeId = Number(
+      targetReviewerId || emp.managerId || currentUser.employeeId
+    );
+    if (!reviewerEmployeeId) {
+      setModalError('Select a valid evaluating manager / supervisor employee.');
+      return;
+    }
 
     try {
-      const selectedKpis = kpis.filter((k) => assignedKpiIds.includes(k.id));
       await performanceRepository.createReview({
-        employeeId: Number(emp.id) || 1,
-        reviewerId: Number(currentUser.id) || 1,
+        employeeId: Number(emp.id),
+        reviewerId: reviewerEmployeeId,
         reviewPeriodStart,
         reviewPeriodEnd,
         dueDate: reviewDueDate,
         kpis: selectedKpis.map((k) => ({
           kpiId: k.id,
           title: k.indicator,
+          weight: Number(assignedWeights[k.id] ?? k.weight ?? 0),
         })),
-      });
+      } as Partial<PerformanceReview>);
 
-      showNotification(`Performance review initiated for ${emp.fullName}. Goals assigned.`);
+      showSuccess(`Performance review initiated for ${emp.fullName} (Total KPI Weight: 100%).`);
       setIsInitiateReviewModalOpen(false);
       await loadData();
     } catch (err: any) {
-      showNotification(`Error: ${err.message}`);
+      const msg = resolveErrorMessage(err, 'Unable to initiate appraisal.');
+      setModalError(msg);
+      showError(msg);
     }
   };
 
   // Scoring Handlers
   const handleOpenScoringModal = (rev: PerformanceReview) => {
+    setModalError(null);
     setSelectedReviewForScoring(rev);
-    const initialScores: Record<number, { score: number; comment: string; weight: number; title: string }> = {};
+    const initialScores: Record<number, ScoringItemState> = {};
 
     if (rev.ratings && rev.ratings.length > 0) {
       rev.ratings.forEach((r, idx) => {
+        const linked = r.kpiId ? kpis.find((k) => k.id === r.kpiId) : undefined;
+        const minR = Number(linked?.minRating ?? 1);
+        const maxR = Number(linked?.maxRating ?? 5);
+        const rawWeight = r.weight !== undefined && r.weight !== null ? Number(r.weight) : Number(linked?.weight ?? 0);
+        const defaultScore = r.rating && Number(r.rating) > 0 ? Number(r.rating) : Math.min(maxR, Math.max(minR, 4));
         initialScores[idx] = {
-          score: r.rating || 4,
+          kpiId: r.kpiId,
+          score: defaultScore,
           comment: r.comment || '',
-          weight: 25,
-          title: r.kpiTitle || `Deliverable #${idx + 1}`,
+          weight: rawWeight > 0 ? rawWeight : Math.round((100 / rev.ratings!.length) * 100) / 100,
+          title: r.kpiTitle || linked?.indicator || `Deliverable #${idx + 1}`,
+          minRating: minR,
+          maxRating: maxR,
         };
       });
     } else {
-      // Default standard CGCC deliverables if empty
-      const defaultDeliverables = [
-        { title: 'Core Functionality Delivery & SOP Compliance', weight: 40 },
-        { title: 'Citadel Core Values & Integrity in Ministry', weight: 20 },
-        { title: 'Punctuality, Attendance & Responsiveness', weight: 20 },
-        { title: 'Leadership & Team Collaboration', weight: 20 },
-      ];
-      defaultDeliverables.forEach((d, idx) => {
-        initialScores[idx] = {
-          score: 4,
-          comment: 'Consistent execution and reliable support.',
-          weight: d.weight,
-          title: d.title,
-        };
-      });
+      const activeKpis = kpis.filter((k) => k.isActive !== false);
+      const activeSum = activeKpis.reduce((acc, k) => acc + Number(k.weight ?? 0), 0);
+      if (activeKpis.length > 0 && Math.abs(activeSum - 100) < 0.01) {
+        activeKpis.forEach((k, idx) => {
+          const minR = Number(k.minRating ?? 1);
+          const maxR = Number(k.maxRating ?? 5);
+          initialScores[idx] = {
+            kpiId: k.id,
+            score: Math.min(maxR, Math.max(minR, 4)),
+            comment: 'Consistent execution and reliable support.',
+            weight: Number(k.weight),
+            title: k.indicator,
+            minRating: minR,
+            maxRating: maxR,
+          };
+        });
+      } else {
+        const defaultDeliverables = [
+          { title: 'Core Functionality Delivery & SOP Compliance', weight: 40 },
+          { title: 'Citadel Core Values & Integrity in Ministry', weight: 20 },
+          { title: 'Punctuality, Attendance & Responsiveness', weight: 20 },
+          { title: 'Leadership & Team Collaboration', weight: 20 },
+        ];
+        defaultDeliverables.forEach((d, idx) => {
+          initialScores[idx] = {
+            score: 4,
+            comment: 'Consistent execution and reliable support.',
+            weight: d.weight,
+            title: d.title,
+            minRating: 1,
+            maxRating: 5,
+          };
+        });
+      }
     }
 
     setScoringRatings(initialScores);
-    setScoringReviewerComments(rev.reviewerComments || 'Demonstrates strong dedication to ministry excellence and thorough execution of functional responsibilities.');
+    setScoringReviewerComments(
+      rev.reviewerComments ||
+        'Demonstrates strong dedication to ministry excellence and thorough execution of functional responsibilities.'
+    );
   };
+
+  const liveTotalScoringWeight = useMemo(
+    () => Object.values(scoringRatings).reduce((sum, item) => sum + Number(item.weight || 0), 0),
+    [scoringRatings]
+  );
 
   // Calculate live weighted score
   const liveWeightedScore = useMemo(() => {
     const items = Object.values(scoringRatings);
-    if (items.length === 0) return 0;
-    const totalWeighted = items.reduce((sum, item) => sum + item.score * item.weight, 0);
-    const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
+    if (items.length === 0) return '0.00';
+    const totalWeighted = items.reduce((sum, item) => sum + Number(item.score) * Number(item.weight), 0);
+    const totalWeight = items.reduce((sum, item) => sum + Number(item.weight), 0);
     return totalWeight > 0 ? (totalWeighted / totalWeight).toFixed(2) : '0.00';
   }, [scoringRatings]);
 
   const handleSubmitScore = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedReviewForScoring) return;
+    setModalError(null);
+
+    const items = Object.values(scoringRatings);
+    if (Math.abs(liveTotalScoringWeight - 100) > 0.01) {
+      setModalError(`Evaluation KPI weights must total 100% (currently ${liveTotalScoringWeight.toFixed(1)}%).`);
+      return;
+    }
+
+    for (const item of items) {
+      if (item.score < item.minRating || item.score > item.maxRating) {
+        setModalError(`Score for "${item.title}" must be between ${item.minRating} and ${item.maxRating}.`);
+        return;
+      }
+    }
 
     setIsSubmittingScore(true);
     try {
-      const ratingsPayload: ReviewRating[] = Object.entries(scoringRatings).map(([key, item]) => ({
+      const ratingsPayload: ReviewRating[] = items.map((item) => ({
+        ...(item.kpiId ? { kpiId: item.kpiId } : {}),
         kpiTitle: item.title,
         rating: item.score,
+        weight: item.weight,
         comment: item.comment,
       }));
 
       await performanceRepository.evaluateReview(selectedReviewForScoring.id, {
         ratings: ratingsPayload,
         reviewerComments: scoringReviewerComments,
+        version: selectedReviewForScoring.version,
       });
 
-      showNotification(`Appraisal scored successfully! Final weighted score: ${liveWeightedScore} / 5.0`);
+      showSuccess(`Appraisal scored successfully! Final weighted score: ${liveWeightedScore} / 5.0`);
       setSelectedReviewForScoring(null);
       await loadData();
     } catch (err: any) {
-      showNotification(`Error: ${err.message}`);
+      const msg = resolveErrorMessage(err, 'Failed to submit appraisal evaluation.');
+      setModalError(msg);
+      showError(msg);
     } finally {
       setIsSubmittingScore(false);
     }
   };
 
-  const handleApproveReview = async (revId: number) => {
+  const handleApproveReview = async (rev: PerformanceReview) => {
     try {
-      await performanceRepository.approveReview(revId);
-      showNotification('Appraisal formally approved and archived into employee profile record.');
+      await performanceRepository.approveReview(rev.id, rev.version);
+      showSuccess('Appraisal formally approved and archived into employee profile record.');
       await loadData();
     } catch (err: any) {
-      showNotification(`Error: ${err.message}`);
+      showError(resolveErrorMessage(err, 'Unable to finalize appraisal approval.'));
     }
   };
 
@@ -317,9 +497,12 @@ export const PerformanceView: React.FC = () => {
             </button>
           </div>
 
-          {isHrOrAdmin && (
+          {canInitiateAppraisal && (
             <button
-              onClick={() => setIsInitiateReviewModalOpen(true)}
+              onClick={() => {
+                setModalError(null);
+                setIsInitiateReviewModalOpen(true);
+              }}
               className="px-3.5 py-1.5 rounded-xl bg-[#083E34] hover:bg-[#062c25] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer shrink-0"
             >
               <Plus className="w-4 h-4" />
@@ -336,6 +519,36 @@ export const PerformanceView: React.FC = () => {
         </div>
       )}
 
+      {errorBanner && (
+        <div
+          role="alert"
+          className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-center justify-between gap-3 animate-fade-in shadow-2xs"
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>{errorBanner}</span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => void loadData()}
+              className="px-2.5 py-1 rounded-lg bg-white border border-rose-200 text-rose-800 hover:bg-rose-100 font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+            >
+              <RefreshCw className="w-3 h-3" />
+              <span>Refresh Data</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setErrorBanner(null)}
+              className="text-rose-500 hover:text-rose-700 p-0.5 cursor-pointer"
+              aria-label="Dismiss error"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* TAB 1: REVIEWS & APPRAISALS */}
       {activeTab === 'reviews' && (
         <div className="space-y-4">
@@ -349,9 +562,12 @@ export const PerformanceView: React.FC = () => {
                 Managers score deliverables against job descriptions with comments. Overall scores are dynamically calculated using weighted averages.
               </p>
             </div>
-            {isHrOrAdmin && (
+            {canInitiateAppraisal && (
               <button
-                onClick={() => setIsInitiateReviewModalOpen(true)}
+                onClick={() => {
+                  setModalError(null);
+                  setIsInitiateReviewModalOpen(true);
+                }}
                 className="px-3 py-1.5 rounded-lg bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition cursor-pointer flex items-center gap-1.5 shrink-0"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -369,7 +585,12 @@ export const PerformanceView: React.FC = () => {
           ) : (
             <div className="space-y-3">
               {reviews.map((rev) => {
-                const canScore = rev.status === 'IN_PROGRESS' || rev.status === 'SUBMITTED';
+                const isAssignedReviewer =
+                  Boolean(currentUser.employeeId) &&
+                  String(rev.reviewerId) === String(currentUser.employeeId);
+                const canScore =
+                  (rev.status === 'IN_PROGRESS' || rev.status === 'SUBMITTED') &&
+                  (isHrOrAdmin || isAssignedReviewer || currentRole === 'MANAGER');
                 const canApprove = (rev.status === 'EVALUATED' || rev.status === 'SUBMITTED') && isHrOrAdmin;
 
                 return (
@@ -409,7 +630,12 @@ export const PerformanceView: React.FC = () => {
                         {rev.ratings.map((r, idx) => (
                           <div key={idx} className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
                             <div className="min-w-0 pr-2">
-                              <span className="font-semibold text-slate-800 block truncate">{r.kpiTitle}</span>
+                              <span className="font-semibold text-slate-800 block truncate">
+                                {r.kpiTitle}{' '}
+                                {r.weight !== undefined && r.weight !== null && (
+                                  <span className="text-[10px] font-mono font-bold text-emerald-700">({Number(r.weight)}%)</span>
+                                )}
+                              </span>
                               {r.comment && <span className="text-[11px] text-slate-500 block truncate italic font-medium">"{r.comment}"</span>}
                             </div>
                             <span className="font-black text-slate-900 shrink-0 font-mono text-xs px-2 py-0.5 rounded bg-white border border-slate-200">
@@ -429,7 +655,9 @@ export const PerformanceView: React.FC = () => {
 
                     {/* Action Bar */}
                     <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
-                      <span className="text-[11px] text-slate-400 font-mono">Record ID: REV-2026-{rev.id}</span>
+                      <span className="text-[11px] text-slate-400 font-mono">
+                        Record ID: REV-2026-{rev.id} {rev.version ? `• v${rev.version}` : ''}
+                      </span>
                       <div className="flex items-center gap-2">
                         {canScore && (
                           <button
@@ -442,7 +670,7 @@ export const PerformanceView: React.FC = () => {
                         )}
                         {canApprove && (
                           <button
-                            onClick={() => handleApproveReview(rev.id)}
+                            onClick={() => handleApproveReview(rev)}
                             className="px-3.5 py-1.5 rounded-lg bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
                           >
                             <CheckCircle2 className="w-3.5 h-3.5" />
@@ -471,6 +699,10 @@ export const PerformanceView: React.FC = () => {
               <p className="text-xs text-slate-500 mt-0.5">
                 Standardized performance indicators aligned with CGCC job descriptions, evaluation scales, and percentage weights.
               </p>
+              <p className={`text-[11px] font-bold mt-1.5 ${Math.abs(totalActiveLibraryWeight - 100) < 0.01 ? 'text-emerald-700' : 'text-amber-700'}`}>
+                Active Library Weight Total: {totalActiveLibraryWeight.toFixed(0)}%{' '}
+                {Math.abs(totalActiveLibraryWeight - 100) < 0.01 ? '(Balanced at 100%)' : '(Adjust weights during appraisal initiation to total 100%)'}
+              </p>
             </div>
             {isHrOrAdmin && (
               <button
@@ -489,15 +721,15 @@ export const PerformanceView: React.FC = () => {
                 <div>
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
-                      Weight: {kpi.weight || 25}%
+                      Weight: {kpi.weight ?? 25}%
                     </span>
-                    <Badge variant={kpi.isActive ? 'success' : 'neutral'}>
-                      {kpi.isActive ? 'Active' : 'Inactive'}
+                    <Badge variant={kpi.isActive !== false ? 'success' : 'neutral'}>
+                      {kpi.isActive !== false ? 'Active' : 'Inactive'}
                     </Badge>
                   </div>
                   <h4 className="text-sm font-bold text-slate-900 mt-2.5 leading-snug">{kpi.indicator}</h4>
                   <p className="text-xs text-slate-500 mt-1">
-                    Rating Scale: <strong className="text-slate-800 font-mono">{kpi.minRating || 1}.0</strong> to <strong className="text-slate-800 font-mono">{kpi.maxRating || 5}.0 Stars</strong>
+                    Rating Scale: <strong className="text-slate-800 font-mono">{kpi.minRating ?? 1}.0</strong> to <strong className="text-slate-800 font-mono">{kpi.maxRating ?? 5}.0 Stars</strong>
                   </p>
                   <p className="text-[11px] text-slate-400 mt-0.5">
                     Job Role: {kpi.jobTitle?.name || 'All Functional Departments'}
@@ -702,6 +934,12 @@ export const PerformanceView: React.FC = () => {
             </div>
 
             <form onSubmit={handleSaveKpi} className="p-5 space-y-4 text-xs">
+              {modalError && (
+                <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>{modalError}</span>
+                </div>
+              )}
               <div>
                 <label className="block text-slate-800 font-bold mb-1">Performance Indicator / Goal *</label>
                 <textarea
@@ -785,20 +1023,42 @@ export const PerformanceView: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleInitiateReview} className="p-5 space-y-4 text-xs">
-              <div>
-                <label className="block text-slate-800 font-bold mb-1">Select Employee *</label>
-                <select
-                  value={targetEmployeeId}
-                  onChange={(e) => setTargetEmployeeId(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-bold bg-white"
-                >
-                  {employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.fullName} ({emp.staffId}) • {emp.departmentName}
-                    </option>
-                  ))}
-                </select>
+            <form onSubmit={handleInitiateReview} className="p-5 space-y-4 text-xs max-h-[82vh] overflow-y-auto">
+              {modalError && (
+                <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>{modalError}</span>
+                </div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-800 font-bold mb-1">Select Employee *</label>
+                  <select
+                    value={targetEmployeeId}
+                    onChange={(e) => handleSelectTargetEmployee(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-bold bg-white"
+                  >
+                    {employees.map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.fullName} ({emp.staffId}) • {emp.departmentName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-800 font-bold mb-1">Evaluating Supervisor *</label>
+                  <select
+                    value={targetReviewerId}
+                    onChange={(e) => setTargetReviewerId(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-bold bg-white"
+                  >
+                    {employees.map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.fullName} ({emp.staffId})
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -836,25 +1096,63 @@ export const PerformanceView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-slate-800 font-bold mb-1">Assign Deliverables / KPIs from Library</label>
-                <div className="space-y-1.5 max-h-36 overflow-y-auto p-2 border border-slate-200 rounded-xl bg-slate-50">
-                  {kpis.map((k) => (
-                    <label key={k.id} className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white transition cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={assignedKpiIds.includes(k.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setAssignedKpiIds([...assignedKpiIds, k.id]);
-                          } else {
-                            setAssignedKpiIds(assignedKpiIds.filter((id) => id !== k.id));
-                          }
-                        }}
-                        className="rounded border-slate-300 text-[#083E34] focus:ring-[#083E34]"
-                      />
-                      <span className="text-slate-800 font-medium truncate">{k.indicator} ({k.weight}%)</span>
-                    </label>
-                  ))}
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-slate-800 font-bold">Assign Deliverables / KPIs &amp; Weights (Must Sum to 100%)</label>
+                  <span
+                    className={`px-2 py-0.5 rounded font-mono text-[11px] font-bold border ${
+                      Math.abs(totalAssignedWeight - 100) < 0.01
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                        : 'bg-rose-50 text-rose-700 border-rose-200'
+                    }`}
+                  >
+                    Total: {totalAssignedWeight.toFixed(0)}% / 100%
+                  </span>
+                </div>
+                <div className="space-y-1.5 max-h-48 overflow-y-auto p-2 border border-slate-200 rounded-xl bg-slate-50">
+                  {kpis.filter((k) => k.isActive !== false).map((k) => {
+                    const checked = assignedKpiIds.includes(k.id);
+                    const weightVal = assignedWeights[k.id] ?? Number(k.weight ?? 25);
+                    return (
+                      <div key={k.id} className="flex items-center justify-between gap-2 p-1.5 rounded-lg hover:bg-white transition">
+                        <label className="flex items-center gap-2 min-w-0 flex-1 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setAssignedKpiIds([...assignedKpiIds, k.id]);
+                                setAssignedWeights((prev) => ({ ...prev, [k.id]: prev[k.id] ?? Number(k.weight ?? 25) }));
+                              } else {
+                                setAssignedKpiIds(assignedKpiIds.filter((id) => id !== k.id));
+                              }
+                            }}
+                            className="rounded border-slate-300 text-[#083E34] focus:ring-[#083E34]"
+                          />
+                          <span className="text-slate-800 font-medium truncate">{k.indicator}</span>
+                        </label>
+                        {checked && (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <input
+                              type="number"
+                              min={1}
+                              max={100}
+                              step="0.5"
+                              value={weightVal}
+                              onChange={(e) =>
+                                setAssignedWeights((prev) => ({
+                                  ...prev,
+                                  [k.id]: Number(e.target.value),
+                                }))
+                              }
+                              aria-label={`Weight for ${k.indicator}`}
+                              className="w-16 p-1 rounded border border-slate-300 text-right font-mono font-bold bg-white"
+                            />
+                            <span className="text-slate-500 font-bold">%</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -868,7 +1166,7 @@ export const PerformanceView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold rounded-xl transition shadow-xs"
+                  className="px-5 py-2 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold rounded-xl transition shadow-xs cursor-pointer"
                 >
                   Initiate Review
                 </button>
@@ -895,6 +1193,12 @@ export const PerformanceView: React.FC = () => {
             </div>
 
             <form onSubmit={handleSubmitScore} className="p-6 overflow-y-auto flex-1 space-y-5 text-xs">
+              {modalError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>{modalError}</span>
+                </div>
+              )}
               {/* Dynamic Live Score Header */}
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                 <div>
@@ -902,6 +1206,15 @@ export const PerformanceView: React.FC = () => {
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-2xl font-black text-[#083E34]">{liveWeightedScore}</span>
                     <span className="text-xs text-slate-500 font-bold">/ 5.0 Stars</span>
+                    <span
+                      className={`ml-2 px-2 py-0.5 rounded font-mono text-[10px] font-bold border ${
+                        Math.abs(liveTotalScoringWeight - 100) < 0.01
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-rose-50 text-rose-700 border-rose-200'
+                      }`}
+                    >
+                      Weight Sum: {liveTotalScoringWeight.toFixed(0)}%
+                    </span>
                   </div>
                 </div>
                 <div className="text-right">
@@ -919,6 +1232,10 @@ export const PerformanceView: React.FC = () => {
 
                 {Object.entries(scoringRatings).map(([key, item]) => {
                   const idx = Number(key);
+                  const scaleRange = Array.from(
+                    { length: Math.max(1, item.maxRating - item.minRating + 1) },
+                    (_, i) => item.minRating + i
+                  );
                   return (
                     <div key={idx} className="p-4 rounded-xl border border-slate-200 bg-white space-y-2.5 shadow-2xs">
                       <div className="flex items-center justify-between gap-2">
@@ -928,10 +1245,12 @@ export const PerformanceView: React.FC = () => {
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        <span className="text-slate-600 font-semibold shrink-0">Score (1-5):</span>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className="text-slate-600 font-semibold shrink-0">
+                          Score ({item.minRating}-{item.maxRating}):
+                        </span>
                         <div className="flex items-center gap-1">
-                          {[1, 2, 3, 4, 5].map((star) => (
+                          {scaleRange.map((star) => (
                             <button
                               key={star}
                               type="button"

@@ -105,6 +105,8 @@ class OrangeHrmEnterpriseParityTest extends TestCase
             'email' => 'staff@enterprise.test',
             'entity_id' => $this->entity->id,
             'department_id' => $this->department->id,
+            'manager_id' => (string) $this->deptHeadEmployee->id,
+            'manager_name' => $this->deptHeadEmployee->full_name,
             'job_title' => 'Senior Systems Engineer',
             'status' => 'Active',
         ]);
@@ -204,15 +206,15 @@ class OrangeHrmEnterpriseParityTest extends TestCase
         $this->assertEquals(4, (float) $balance->pending_days);
         $this->assertEquals(6, (float) $balance->remaining_days);
 
-        // Advance through approval stages: DEPARTMENT_HEAD -> BUSINESS_HEAD -> HR -> Approved
+        // Advance through two-stage approval: MANAGER (direct supervisor) -> HR -> COMPLETE
         $this->actingAs($this->deptHeadUser)->patchJson("/api/v1/leave-requests/{$leaveId}/status", ['status' => 'Approved'])
-            ->assertOk();
-
-        $this->actingAs($this->adminUser)->patchJson("/api/v1/leave-requests/{$leaveId}/status", ['status' => 'Approved'])
-            ->assertOk();
+            ->assertOk()
+            ->assertJsonPath('data.approvalStage', 'HR');
 
         $this->actingAs($this->hrUser)->patchJson("/api/v1/leave-requests/{$leaveId}/status", ['status' => 'Approved'])
-            ->assertOk();
+            ->assertOk()
+            ->assertJsonPath('data.status', 'Approved')
+            ->assertJsonPath('data.approvalStage', 'COMPLETE');
 
         // When fully approved: pending_days=0, used_days=4, remaining_days=6
         $balance->refresh();

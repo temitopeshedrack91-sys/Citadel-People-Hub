@@ -7,9 +7,13 @@
 
 import {
   Employee,
+  EmployeeHierarchy,
   CitadelEntity,
   CitadelDepartment,
   LeaveRequest,
+  LeaveBalanceRecord,
+  LeaveCategoryRecord,
+  TeamCalendarLeaveEvent,
   AttendanceRecord,
   WorkflowRequest,
   WorkflowActionRecord,
@@ -22,6 +26,9 @@ import {
   OnboardingJourney,
   OnboardingTask,
   OnboardingChecklistTemplate,
+  ExitRequest,
+  ExitClearances,
+  ExitInterviewDetails,
   RecruitmentRequisition,
   SalaryTemplate,
   EmployeeSalaryAssignment,
@@ -55,6 +62,7 @@ export interface BiometricImportBatchResult {
 export interface IEmployeeRepository {
   getAll(filter?: { entityId?: string; departmentId?: string; search?: string }): Promise<Employee[]>;
   getById(id: string): Promise<Employee | null>;
+  getHierarchy(id: string): Promise<EmployeeHierarchy | null>;
   create(employee: Omit<Employee, 'id'>): Promise<Employee>;
   update(id: string, updates: Partial<Employee>): Promise<Employee>;
   delete(id: string): Promise<boolean>;
@@ -72,6 +80,9 @@ export interface IOrganizationRepository {
 export interface ILeaveRepository {
   getAll(): Promise<LeaveRequest[]>;
   getByEmployee(employeeId: string): Promise<LeaveRequest[]>;
+  getCategories(): Promise<LeaveCategoryRecord[]>;
+  getBalances(employeeId?: string): Promise<LeaveBalanceRecord[]>;
+  getTeamCalendar(params?: { startDate?: string; endDate?: string }): Promise<TeamCalendarLeaveEvent[]>;
   submitRequest(request: Omit<LeaveRequest, 'id' | 'appliedDate' | 'status'>): Promise<LeaveRequest>;
   updateStatus(requestId: string, status: WorkflowStatus, actorName: string, comments?: string): Promise<LeaveRequest>;
 }
@@ -120,17 +131,21 @@ export interface INotificationRepository {
 
 export interface ITalentRepository {
   getOnboardingJourneys(): Promise<OnboardingJourney[]>;
-  toggleTaskCompletion(journeyId: string, taskId: string, isCompleted: boolean): Promise<OnboardingJourney>;
-  createOnboardingTask?(journeyId: string, task: Omit<OnboardingTask, 'id' | 'isCompleted'>): Promise<OnboardingJourney>;
+  toggleTaskCompletion(journeyId: string, taskId: string, isCompleted: boolean, version?: number): Promise<OnboardingJourney>;
+  createOnboardingTask?(journeyId: string, task: Omit<OnboardingTask, 'id' | 'isCompleted'>, version?: number): Promise<OnboardingJourney>;
+  reorderOnboardingTasks?(journeyId: string, taskIds: string[], version?: number): Promise<OnboardingJourney>;
   sendTaskReminder?(journeyId: string, taskId: string): Promise<boolean>;
-  toggleDocumentSubmission?(journeyId: string, docId: string, isSubmitted: boolean): Promise<OnboardingJourney>;
-  toggleOrientationItem?(journeyId: string, itemId: string, isCompleted: boolean): Promise<OnboardingJourney>;
+  sendBulkTaskReminders?(journeyId: string): Promise<{ remindedCount: number; journey: OnboardingJourney }>;
+  completeOnboardingJourney?(journeyId: string, version?: number): Promise<OnboardingJourney>;
+  toggleDocumentSubmission?(journeyId: string, docId: string, isSubmitted: boolean, version?: number): Promise<OnboardingJourney>;
+  toggleOrientationItem?(journeyId: string, itemId: string, isCompleted: boolean, version?: number): Promise<OnboardingJourney>;
   getRequisitions(): Promise<RecruitmentRequisition[]>;
   createRequisition?(requisition: RecruitmentRequisition): Promise<RecruitmentRequisition>;
   updateRequisitionStatus?(id: string, status: RecruitmentRequisition['status']): Promise<RecruitmentRequisition>;
   createOnboardingJourney?(journey: OnboardingJourney): Promise<OnboardingJourney>;
   getChecklistTemplates?(): Promise<OnboardingChecklistTemplate[]>;
   createChecklistTemplate?(template: OnboardingChecklistTemplate): Promise<OnboardingChecklistTemplate>;
+  updateChecklistTemplate?(id: string, template: OnboardingChecklistTemplate, version?: number): Promise<OnboardingChecklistTemplate>;
 }
 
 export interface IPayrollRepository {
@@ -300,9 +315,31 @@ export interface IPerformanceRepository {
       ratings: import('../types').ReviewRating[];
       reviewerComments?: string;
       employeeComments?: string;
+      version?: number;
     }
   ): Promise<import('../types').PerformanceReview>;
-  approveReview(id: number): Promise<import('../types').PerformanceReview>;
+  approveReview(id: number, version?: number): Promise<import('../types').PerformanceReview>;
+}
+
+export interface IOffboardingRepository {
+  getAll(): Promise<ExitRequest[]>;
+  create(payload: {
+    employeeId: string;
+    resignationDate: string;
+    proposedLastDay: string;
+    reason: string;
+    managerId?: string;
+  }): Promise<ExitRequest>;
+  endorseByManager(id: string, payload?: { comments?: string; version?: number }): Promise<ExitRequest>;
+  verifyNotice(id: string, payload?: { noticeCompliant?: boolean; contractNotes?: string; version?: number }): Promise<ExitRequest>;
+  scheduleInterview(id: string, payload: ExitInterviewDetails & { version?: number }): Promise<ExitRequest>;
+  updateClearance(
+    id: string,
+    department: keyof ExitClearances,
+    cleared: boolean,
+    payload?: { note?: string; version?: number }
+  ): Promise<ExitRequest>;
+  finalize(id: string, payload?: { settlementNotes?: string; version?: number }): Promise<ExitRequest>;
 }
 
 export interface IRecruitmentPipelineRepository {

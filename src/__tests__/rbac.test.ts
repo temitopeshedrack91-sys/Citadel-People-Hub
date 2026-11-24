@@ -101,13 +101,14 @@ describe('RBAC Centralized Module (src/utils/rbac.ts)', () => {
       expect(normalizeRole('admin')).toBe('ADMIN');
     });
 
-    it('normalizes HR management aliases to HR_STAFF', () => {
+    it('normalizes HR management aliases to HR_STAFF and line leadership aliases to MANAGER', () => {
       expect(normalizeRole('HR_STAFF')).toBe('HR_STAFF');
       expect(normalizeRole('PCCM_SUPER_ADMIN')).toBe('HR_STAFF');
       expect(normalizeRole('HR_MANAGER')).toBe('HR_STAFF');
-      expect(normalizeRole('BUSINESS_HEAD')).toBe('HR_STAFF');
-      expect(normalizeRole('DEPARTMENT_HEAD')).toBe('HR_STAFF');
       expect(normalizeRole('hr')).toBe('HR_STAFF');
+      expect(normalizeRole('MANAGER')).toBe('MANAGER');
+      expect(normalizeRole('BUSINESS_HEAD')).toBe('MANAGER');
+      expect(normalizeRole('DEPARTMENT_HEAD')).toBe('MANAGER');
     });
 
     it('normalizes employee aliases to EMPLOYEE', () => {
