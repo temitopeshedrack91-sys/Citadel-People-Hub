@@ -29,25 +29,25 @@ export const AccessDeniedView: React.FC<AccessDeniedViewProps> = ({
       data-testid="access-denied-view"
       className="p-4 sm:p-8 max-w-4xl mx-auto flex items-center justify-center min-h-[60vh] animate-fade-in"
     >
-      <div className="w-full bg-white rounded-3xl border border-slate-200/90 shadow-[0_4px_20px_rgba(15,23,42,0.04)] overflow-hidden">
+      <div className="w-full bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         {/* Top Accent Strip */}
-        <div className="h-2 bg-gradient-to-r from-amber-500 via-rose-500 to-amber-600" />
+        <div className="h-1.5 bg-[#083E34]" />
 
         <div className="p-6 sm:p-10 space-y-6">
           {/* Header Icon & Status Pill */}
           <div className="flex items-start justify-between gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center shrink-0 shadow-xs">
-              {status === 401 ? <Lock className="w-7 h-7" /> : <ShieldAlert className="w-7 h-7" />}
+            <div className="w-12 h-12 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 flex items-center justify-center shrink-0">
+              {status === 401 ? <Lock className="w-6 h-6" /> : <ShieldAlert className="w-6 h-6" />}
             </div>
 
-            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-rose-100 text-rose-800 border border-rose-200">
+            <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-semibold uppercase tracking-wider bg-rose-50 text-rose-800 border border-rose-200">
               HTTP {status} {status === 401 ? 'Unauthorized' : 'Forbidden'}
             </span>
           </div>
 
           {/* Heading and Reason */}
           <div className="space-y-2">
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
               {status === 401 ? 'Authentication Required' : `Access Restricted: ${moduleName}`}
             </h1>
             <p className="text-sm text-slate-600 leading-relaxed max-w-2xl">

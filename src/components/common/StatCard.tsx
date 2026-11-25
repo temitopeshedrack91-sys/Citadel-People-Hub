@@ -58,23 +58,23 @@ export const StatCard: React.FC<StatCardProps> = ({
       }
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
-      className={`bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] flex flex-col justify-between transition-all duration-200 ${
+      className={`bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs flex flex-col justify-between transition-colors duration-150 ${
         onClick
-          ? 'cursor-pointer hover:border-[#083E34]/40 hover:shadow-[0_4px_16px_rgba(15,23,42,0.06)] active:scale-[0.99]'
+          ? 'cursor-pointer hover:border-[#083E34]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#083E34] focus-visible:ring-offset-2'
           : ''
       } ${className}`}
     >
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center justify-between gap-2.5">
+        <span className="text-xs font-semibold text-slate-600 tracking-tight">{title}</span>
         <div
           className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${iconBg}`}
         >
           <Icon className={`w-4 h-4 ${iconColor}`} />
         </div>
-        <span className="text-xs font-semibold text-slate-600 tracking-tight">{title}</span>
       </div>
 
-      <div className="mt-4">
-        <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight tabular-nums block leading-none">
+      <div className="mt-3.5">
+        <span className="text-2xl sm:text-[28px] font-bold text-slate-900 tracking-tight tabular-nums block leading-none">
           {value}
         </span>
 
@@ -83,17 +83,17 @@ export const StatCard: React.FC<StatCardProps> = ({
             {supportingText}
           </div>
         ) : trend ? (
-          <div className="mt-2 flex items-center gap-1.5 text-xs flex-wrap">
+          <div className="mt-2 flex items-center gap-1.5 text-xs flex-wrap tabular-nums">
             <span
-              className={`font-black whitespace-nowrap ${
-                trend.isPositive === false ? 'text-rose-500' : 'text-emerald-600'
+              className={`font-semibold whitespace-nowrap ${
+                trend.isPositive === false ? 'text-rose-600' : 'text-emerald-700'
               }`}
             >
               {trend.value}
             </span>
             {trend.label && (
               <span className="text-slate-500 font-medium whitespace-nowrap">
-                • {trend.label}
+                · {trend.label}
               </span>
             )}
           </div>

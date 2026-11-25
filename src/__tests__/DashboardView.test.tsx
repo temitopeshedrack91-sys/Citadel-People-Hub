@@ -4,8 +4,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { DashboardView } from '../components/views/DashboardView';
 import { AuthProvider } from '../context/AuthContext';
 
-describe('DashboardView Component (Hrivio Reference Visuals)', () => {
-  it('renders greeting header and 3 core summary stat cards', async () => {
+describe('DashboardView Component', () => {
+  it('renders greeting header and live KPI strip without placeholder mock figures', async () => {
     render(
       <AuthProvider>
         <DashboardView
@@ -16,17 +16,22 @@ describe('DashboardView Component (Hrivio Reference Visuals)', () => {
       </AuthProvider>
     );
 
-    // Wait for greeting to show up
     await waitFor(() => {
       expect(screen.getByText(/Good Morning|Good Afternoon|Good Evening/)).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Total employees')).toBeInTheDocument();
-    expect(screen.getByText('Attendance')).toBeInTheDocument();
-    expect(screen.getByText('Active Staff')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Total Employees')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Stage 2 HR Approvals')).toBeInTheDocument();
+    expect(screen.getByText('Today Attendance')).toBeInTheDocument();
+    expect(screen.getByText('On Leave Today')).toBeInTheDocument();
+    expect(screen.queryByText('Mia Anderson')).not.toBeInTheDocument();
+    expect(screen.queryByText('Rest API Endpoint')).not.toBeInTheDocument();
   });
 
-  it('renders Leave Balance card with progress gauge and status pills', async () => {
+  it('renders live personal leave quota card and leave requests panel', async () => {
     render(
       <AuthProvider>
         <DashboardView
@@ -37,15 +42,32 @@ describe('DashboardView Component (Hrivio Reference Visuals)', () => {
       </AuthProvider>
     );
 
-    expect(screen.getByTestId('leave-balance-card')).toBeInTheDocument();
-    expect(screen.getByText('65%')).toBeInTheDocument();
-    expect(screen.getByText('13 out of 20')).toBeInTheDocument();
-    expect(screen.getByText('Pending')).toBeInTheDocument();
-    expect(screen.getByText('Confirmed')).toBeInTheDocument();
-    expect(screen.getByText('Rejected')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('leave-balance-card')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Personal Leave Balance')).toBeInTheDocument();
   });
 
-  it('renders Active Projects cards with High/Medium priority tags and team avatars', async () => {
+  it('routes Open Projects button to the projects module', async () => {
+    const onNavigate = vi.fn();
+    render(
+      <AuthProvider>
+        <DashboardView
+          onNavigate={onNavigate}
+          onOpenLeaveModal={vi.fn()}
+          onOpenAddEmployee={vi.fn()}
+        />
+      </AuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('projects-view-all')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId('projects-view-all'));
+    expect(onNavigate).toHaveBeenCalledWith('projects');
+  });
+
+  it('opens and closes Quick Actions modal via Escape', async () => {
     render(
       <AuthProvider>
         <DashboardView
@@ -56,26 +78,16 @@ describe('DashboardView Component (Hrivio Reference Visuals)', () => {
       </AuthProvider>
     );
 
-    expect(screen.getByText('Rest API Endpoint')).toBeInTheDocument();
-    expect(screen.getByText('UI System Planning')).toBeInTheDocument();
-    expect(screen.getByText('Visual Style Guide')).toBeInTheDocument();
-  });
+    await waitFor(() => {
+      expect(screen.getByTestId('quick-actions-btn')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId('quick-actions-btn'));
 
-  it('opens Quick Actions modal when Quick Actions button is clicked', async () => {
-    render(
-      <AuthProvider>
-        <DashboardView
-          onNavigate={vi.fn()}
-          onOpenLeaveModal={vi.fn()}
-          onOpenAddEmployee={vi.fn()}
-        />
-      </AuthProvider>
-    );
-
-    const quickActionsBtn = screen.getByTestId('quick-actions-btn');
-    fireEvent.click(quickActionsBtn);
-
-    expect(screen.getByTestId('quick-actions-modal')).toBeInTheDocument();
+    const modal = screen.getByTestId('quick-actions-modal');
+    expect(modal).toBeInTheDocument();
     expect(screen.getByText('Citadel People Hub — Quick Actions')).toBeInTheDocument();
+
+    fireEvent.keyDown(modal, { key: 'Escape' });
+    expect(screen.queryByTestId('quick-actions-modal')).not.toBeInTheDocument();
   });
 });

@@ -83,7 +83,7 @@ class RealtimeController extends Controller
         // Never block a single-worker PHP built-in server; stream continuously when multi-worker or FPM/Apache.
         $cliWorkers = (int) (getenv('PHP_CLI_SERVER_WORKERS') ?: env('PHP_CLI_SERVER_WORKERS', 1));
         $isSingleWorkerCliServer = PHP_SAPI === 'cli-server' && $cliWorkers < 2;
-        $maxSeconds = ($request->boolean('once') || $isSingleWorkerCliServer) ? 0 : 12;
+        $maxSeconds = ($request->boolean('once') || $isSingleWorkerCliServer) ? 0 : 25;
 
         return response()->stream(function () use ($since, $maxSeconds) {
             $cursor = $since;

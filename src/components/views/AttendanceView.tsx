@@ -342,8 +342,8 @@ export const AttendanceView: React.FC = () => {
       {activeTab === 'daily_summary' ? (
         <div className="space-y-5">
           {/* Biometric Import Panel */}
-          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] overflow-hidden">
-            <div className="p-5 bg-gradient-to-r from-[#083E34] via-[#062C25] to-[#0F5447] text-white">
+          <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+            <div className="p-5 bg-[#083E34] text-white">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
@@ -753,8 +753,8 @@ export const AttendanceView: React.FC = () => {
                 </h4>
               </div>
               <div className="flex items-center gap-1.5 text-[10px] text-emerald-400">
-                <Radio className="w-3 h-3 animate-pulse" />
-                <span>Telemetry Active</span>
+                <Radio className="w-3 h-3" />
+                <span>Telemetry Configured</span>
               </div>
             </div>
 

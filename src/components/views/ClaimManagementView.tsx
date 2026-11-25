@@ -449,16 +449,16 @@ export const ClaimManagementView: React.FC = () => {
         </div>
 
         {/* Approved / Awaiting Settlement */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
-          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs">
+          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-500">
             <span>Approved for Pay</span>
-            <CheckCircle2 className="w-4 h-4 text-blue-600" />
+            <CheckCircle2 className="w-4 h-4 text-[#083E34]" />
           </div>
-          <div className="mt-2 text-2xl font-black text-blue-600">
+          <div className="mt-2 text-2xl font-bold text-[#083E34] tabular-nums">
             {formatMoney(metrics.approvedTotal)}
           </div>
-          <div className="mt-1 text-xs text-slate-500 flex items-center gap-1 font-medium">
-            <span className="text-blue-600 font-bold">{metrics.approvedCount} claims</span>
+          <div className="mt-1 text-xs text-slate-500 flex items-center gap-1 font-medium tabular-nums">
+            <span className="text-[#083E34] font-semibold">{metrics.approvedCount} claims</span>
             <span>ready for disbursement</span>
           </div>
         </div>
@@ -600,7 +600,7 @@ export const ClaimManagementView: React.FC = () => {
                               claim.status === 'PAID'
                                 ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                                 : claim.status === 'APPROVED'
-                                ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                                ? 'bg-[#EBF5F2] text-[#083E34] border border-[#A3D4C7]/60'
                                 : claim.status === 'SUBMITTED'
                                 ? 'bg-amber-100 text-amber-800 border border-amber-200'
                                 : claim.status === 'REJECTED'
@@ -983,7 +983,7 @@ export const ClaimManagementView: React.FC = () => {
                       selectedClaim.status === 'PAID'
                         ? 'bg-emerald-100 text-emerald-800'
                         : selectedClaim.status === 'APPROVED'
-                        ? 'bg-blue-100 text-blue-800'
+                        ? 'bg-[#EBF5F2] text-[#083E34]'
                         : selectedClaim.status === 'SUBMITTED'
                         ? 'bg-amber-100 text-amber-800'
                         : selectedClaim.status === 'REJECTED'

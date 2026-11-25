@@ -330,7 +330,7 @@ export const SettingsView: React.FC = () => {
                           {member.roleType}
                         </span>
                         {member.roleType === 'Business Head' && (
-                          <span className="text-[10px] font-bold text-purple-900 bg-purple-100 px-2 py-0.5 rounded-md border border-purple-300">
+                          <span className="text-[10px] font-semibold text-[#B45309] bg-[#FAF5EB] px-2 py-0.5 rounded-md border border-[#F2E4B8]">
                             GEC Member
                           </span>
                         )}
@@ -378,13 +378,13 @@ export const SettingsView: React.FC = () => {
       {activeTab === 'roles_matrix' && (
         <div className="space-y-5">
           {/* Matrix Header Banner */}
-          <div className="p-4 bg-blue-50/80 border border-blue-200 rounded-2xl flex items-start gap-3 shadow-xs">
-            <ShieldCheck className="w-5 h-5 text-blue-800 shrink-0 mt-0.5" />
+          <div className="p-4 bg-[#EBF5F2]/80 border border-[#A3D4C7]/70 rounded-xl flex items-start gap-3 shadow-2xs">
+            <ShieldCheck className="w-5 h-5 text-[#083E34] shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-xs font-black text-blue-950 uppercase tracking-wider">
-                Citadel 5-Tier Role &amp; Permission Governance Charter (Workbook Sheet 4)
+              <h3 className="text-xs font-bold text-[#052C25] uppercase tracking-wider">
+                Citadel 5-Tier Role &amp; Permission Governance Charter
               </h3>
-              <p className="text-xs text-blue-900 mt-1 leading-relaxed font-medium">
+              <p className="text-xs text-[#083E34]/90 mt-1 leading-relaxed font-medium">
                 Access to Citadel People Hub is strictly partitioned into 5 hierarchical tiers. PCCM Super Admin maintains full multi-entity oversight; Business Heads govern entity subsidiaries; HODs manage departmental leaves and team attendance; Employees utilize self-service; and System Admins manage technical biometrics infrastructure without sensitive HR payroll access.
               </p>
             </div>
@@ -535,7 +535,7 @@ export const SettingsView: React.FC = () => {
               <ul className="mt-3 space-y-2 text-xs text-slate-700 font-medium">
                 {CITADEL_V1_REQUIREMENTS_FORM.attendanceRules.map((item) => (
                   <li key={item} className="flex items-start gap-2">
-                    <Clock className="w-3.5 h-3.5 text-indigo-700 mt-0.5 shrink-0" />
+                    <Clock className="w-3.5 h-3.5 text-[#083E34] mt-0.5 shrink-0" />
                     <span>{item}</span>
                   </li>
                 ))}

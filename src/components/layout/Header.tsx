@@ -91,16 +91,34 @@ export const Header: React.FC<HeaderProps> = ({
     }
   }, []);
 
+  const notifReloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const scheduleNotificationReload = React.useCallback(() => {
+    if (notifReloadTimerRef.current) {
+      clearTimeout(notifReloadTimerRef.current);
+    }
+    notifReloadTimerRef.current = setTimeout(() => {
+      notifReloadTimerRef.current = null;
+      void loadNotifications();
+    }, 200);
+  }, [loadNotifications]);
+
   useEffect(() => {
     void loadNotifications();
+    return () => {
+      if (notifReloadTimerRef.current) {
+        clearTimeout(notifReloadTimerRef.current);
+        notifReloadTimerRef.current = null;
+      }
+    };
   }, [loadNotifications, currentUser.id]);
 
   useRealtimeTable('notifications', () => {
-    void loadNotifications();
+    scheduleNotificationReload();
   });
 
   useRealtimeTable('leave_requests', () => {
-    void loadNotifications();
+    scheduleNotificationReload();
   });
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;

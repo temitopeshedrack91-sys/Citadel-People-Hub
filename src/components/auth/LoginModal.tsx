@@ -66,7 +66,7 @@ const DEMO_CREDENTIALS: {
     jobTitle: 'Head of Technology & Systems',
     department: 'Technology & Systems',
     password: 'Password123!',
-    color: 'bg-blue-600 text-white',
+    color: 'bg-[#083E34] text-white',
     permissions: [
       'Biometric hardware & terminal telemetry',
       'API endpoints & integration nodes',
@@ -473,8 +473,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               {localDemoAuthenticationEnabled && (
               <div className="pt-4 border-t border-slate-100 space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#083E34]" />
                     <span>Quick Fill Demo Credentials</span>
                   </span>
                   <span className="text-[10px] text-slate-400">Click to fill email &amp; password</span>
@@ -739,9 +739,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         {/* Modal Bottom Bar */}
         <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] text-slate-500 font-mono">
-              czbwedtrnzlfpdbzlnim.supabase.co
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="text-[10px] text-slate-500 font-medium">
+              Connected Session Guard
             </span>
           </div>
           {!required && (

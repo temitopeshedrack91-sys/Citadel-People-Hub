@@ -816,8 +816,8 @@ export const PerformanceView: React.FC = () => {
             {/* Section C */}
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                  Section C • Weight: 20%
+                <span className="text-[10px] font-semibold text-[#083E34] uppercase tracking-wider bg-[#EBF5F2] px-2 py-0.5 rounded border border-[#A3D4C7]/60">
+                  Section C · Weight: 20%
                 </span>
                 <Badge variant="info">Behavioral</Badge>
               </div>
@@ -835,8 +835,8 @@ export const PerformanceView: React.FC = () => {
             {/* Section D */}
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-purple-700 uppercase tracking-wider bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
-                  Section D • Weight: 20%
+                <span className="text-[10px] font-semibold text-[#B45309] uppercase tracking-wider bg-[#FAF5EB] px-2 py-0.5 rounded border border-[#F2E4B8]">
+                  Section D · Weight: 20%
                 </span>
                 <Badge variant="neutral">Growth</Badge>
               </div>

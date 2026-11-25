@@ -29,38 +29,38 @@ const initialNotes: TeamNoteItem[] = [
     title: 'Employee Onboarding',
     category: 'Incoming',
     description:
-      'Prepare onboarding access, security keycards, and HR documents for new employees joining CSOG and Church protocol divisions next Monday.',
-    collaborators: 'Collaborate with Mia, Harper',
-    date: 'Today, 09:30 AM',
+      'Prepare onboarding access, security keycards, and HR documents for new employees joining CSOG and Church protocol divisions.',
+    collaborators: 'Collaborate with Sussan, Femi',
+    date: 'Recent',
     avatars: [
-      { initials: 'MA', bg: 'bg-emerald-600', name: 'Mia Anderson' },
-      { initials: 'HL', bg: 'bg-indigo-600', name: 'Harper Lee' },
+      { initials: 'SA', bg: 'bg-emerald-700', name: 'Sussan Afuwape' },
+      { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
     ],
   },
   {
     id: 'note-2',
-    title: 'Performance Review',
+    title: 'Quarterly Appraisal Alignment',
     category: 'Ongoing',
     description:
-      'Review employee progress, attendance biometric scores, and quarterly OKRs for department head sign-offs before the GEC executive committee.',
-    collaborators: 'Collaborate with Chloe, Ethan',
-    date: 'Yesterday, 04:15 PM',
+      'Review employee progress, attendance scores, and quarterly KPI sign-offs for department heads across entities.',
+    collaborators: 'Collaborate with Dr. Bukola, Grace',
+    date: 'Recent',
     avatars: [
-      { initials: 'CM', bg: 'bg-rose-600', name: 'Chloe Martin' },
-      { initials: 'EB', bg: 'bg-amber-600', name: 'Ethan Brooks' },
+      { initials: 'BA', bg: 'bg-[#083E34]', name: 'Dr. Bukola Adeleke' },
+      { initials: 'GO', bg: 'bg-amber-600', name: 'Grace Okafor' },
     ],
   },
   {
     id: 'note-3',
-    title: 'Design system V2',
+    title: 'Design System Harmonization',
     category: 'In Progress',
     description:
-      'Finalize Hrivio visual standards, dark green primary action tokens, and Pillio list-detail components for production readiness.',
-    collaborators: 'Collaborate with Femi, Blessing',
-    date: 'Oct 24, 02:00 PM',
+      'Standardize Forest Green and Citadel Gold design tokens, responsive layouts, and keyboard accessibility across all views.',
+    collaborators: 'Collaborate with Nadia, Femi',
+    date: 'Recent',
     avatars: [
+      { initials: 'NS', bg: 'bg-teal-700', name: 'Nadia Safitri' },
       { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
-      { initials: 'BO', bg: 'bg-teal-600', name: 'Blessing Okafor' },
     ],
   },
 ];
@@ -82,7 +82,7 @@ export const TeamNotesView: React.FC = () => {
   const [newTitle, setNewTitle] = useState('');
   const [newCat, setNewCat] = useState<'Incoming' | 'Ongoing' | 'In Progress'>('Incoming');
   const [newDesc, setNewDesc] = useState('');
-  const [newCollab, setNewCollab] = useState('Mia, Harper');
+  const [newCollab, setNewCollab] = useState('Sussan, Femi');
 
   const filterTabs = [
     { id: 'all', label: 'All Notes', count: notes.length },

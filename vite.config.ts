@@ -25,8 +25,8 @@ export default defineConfig(({ mode, command }) => {
           name: 'Citadel People Hub',
           short_name: 'Citadel Hub',
           description: 'People • Culture • Performance • Growth - Official People, Culture & Change Management Platform for Citadel',
-          theme_color: '#0A1E3F',
-          background_color: '#F8FAFC',
+          theme_color: '#083E34',
+          background_color: '#F4F6F9',
           display: 'standalone',
           start_url: '/',
           scope: '/',
@@ -71,7 +71,7 @@ export default defineConfig(({ mode, command }) => {
               if (id.includes('lucide-react')) return 'vendor-lucide';
               if (id.includes('framer-motion') || id.includes('motion-dom')) return 'vendor-motion';
               if (id.includes('@supabase') || id.includes('supabase-js')) return 'vendor-supabase';
-              if (id.includes('react-bootstrap') || id.includes('bootstrap')) return 'vendor-bootstrap';
+              if (id.includes('xlsx')) return 'vendor-xlsx';
               return 'vendor';
             }
           },

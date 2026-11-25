@@ -1196,28 +1196,25 @@ export const OnboardingView: React.FC = () => {
             </div>
           </div>
 
-          {/* Official CGCC Brand Banner: Pure Black & Citadel Classic Gold (#D4AF37) */}
-          <div className="bg-[#111111] text-white rounded-2xl p-5 border-2 border-black shadow-md flex flex-col lg:flex-row lg:items-center justify-between gap-5 relative overflow-hidden">
-            {/* Subtle Gold Glow Accent */}
-            <div className="absolute -right-16 -top-16 w-48 h-48 bg-[#D4AF37]/15 rounded-full blur-2xl pointer-events-none" />
-
-            <div className="flex items-start sm:items-center gap-4 relative z-10">
-              <div className="w-12 h-12 rounded-xl bg-[#D4AF37] text-white flex items-center justify-center font-black shrink-0 shadow-md">
-                <FileCheck2 className="w-6 h-6 text-white" />
+          {/* Official CGCC Onboarding Banner */}
+          <div className="bg-[#083E34] text-white rounded-xl p-5 border border-emerald-950/30 shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+            <div className="flex items-start sm:items-center gap-4">
+              <div className="w-11 h-11 rounded-xl bg-[#D4AF37] text-slate-950 flex items-center justify-center font-bold shrink-0">
+                <FileCheck2 className="w-5 h-5" />
               </div>
               <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[10px] uppercase tracking-wider text-black font-black bg-[#D4AF37] px-2.5 py-0.5 rounded shadow-xs">
+                <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold">
+                  <span className="uppercase tracking-wider text-slate-950 bg-[#D4AF37] px-2 py-0.5 rounded">
                     CGCC Standard Operating Procedure
                   </span>
-                  <span className="text-xs text-slate-300 font-semibold">• Dated 30 March 2024</span>
-                  <span className="text-xs text-[#D4AF37] font-bold">• 3-Month Probation Cycle</span>
+                  <span className="text-emerald-100/80">· Dated 30 March 2024</span>
+                  <span className="text-[#D4AF37]">· 3-Month Probation Cycle</span>
                 </div>
-                <h1 className="text-lg sm:text-xl font-black text-white tracking-tight mt-1">
+                <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight mt-1">
                   The Citadel Global Community Church — Onboarding Checklist &amp; Schedule
                 </h1>
-                <p className="text-xs text-slate-300 mt-0.5 max-w-2xl font-medium">
-                  Three-month structured induction across Unit Managers, People, Culture &amp; Change (HR), IT, Finance &amp; Accounts, and Onboarding Buddies. Prepared by Sussan Afuwape.
+                <p className="text-xs text-emerald-100/90 mt-0.5 max-w-2xl font-medium">
+                  Three-month structured induction across Unit Managers, People, Culture &amp; Change (HR), IT, Finance &amp; Accounts, and Onboarding Buddies.
                 </p>
               </div>
             </div>

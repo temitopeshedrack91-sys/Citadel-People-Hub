@@ -38,15 +38,15 @@ export const Card: React.FC<CardProps> = ({
     <div
       id={id}
       data-testid={dataTestId || (title ? `card-${title.toLowerCase().replace(/\s+/g, '-')}` : 'card')}
-      className={`bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] ${className}`}
+      className={`bg-white rounded-xl border border-slate-200/90 shadow-2xs ${className}`}
     >
       {(title || headerAction) && (
-        <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
           <div className="flex items-center gap-2">
             {Icon && <Icon className={`w-4 h-4 shrink-0 ${iconColor}`} />}
             <div>
               {title && (
-                <h3 className="text-sm font-bold text-slate-900 tracking-tight">
+                <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
                   {title}
                 </h3>
               )}

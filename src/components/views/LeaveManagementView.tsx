@@ -121,7 +121,13 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
     }
   }, [isApplyModalOpen]);
 
+  const reloadTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const loadData = useCallback(async () => {
+    if (reloadTimerRef.current) {
+      clearTimeout(reloadTimerRef.current);
+      reloadTimerRef.current = null;
+    }
     try {
       const [reqData, balData, catData, empData] = await Promise.all([
         leaveRepository.getAll(),
@@ -143,16 +149,32 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
     }
   }, []);
 
+  const scheduleReload = useCallback(() => {
+    if (reloadTimerRef.current) {
+      clearTimeout(reloadTimerRef.current);
+    }
+    reloadTimerRef.current = setTimeout(() => {
+      reloadTimerRef.current = null;
+      void loadData();
+    }, 150);
+  }, [loadData]);
+
   useEffect(() => {
     void loadData();
+    return () => {
+      if (reloadTimerRef.current) {
+        clearTimeout(reloadTimerRef.current);
+        reloadTimerRef.current = null;
+      }
+    };
   }, [loadData]);
 
   useRealtimeTable('leave_requests', () => {
-    void loadData();
+    scheduleReload();
   });
 
   useRealtimeTable('leave_balances', () => {
-    void loadData();
+    scheduleReload();
   });
 
   const showToast = (msg: string) => {
@@ -191,10 +213,10 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
     return annual || personalBalances[0] || null;
   }, [personalBalances]);
 
-  const gaugeTotal = primaryAnnualBalance ? Number(primaryAnnualBalance.total_days) || 0 : 20;
+  const gaugeTotal = primaryAnnualBalance ? Number(primaryAnnualBalance.total_days) || 0 : 0;
   const gaugeRemaining = primaryAnnualBalance
     ? Math.max(0, Number(primaryAnnualBalance.remaining_days) || 0)
-    : 13;
+    : 0;
   const gaugePct =
     gaugeTotal > 0 ? Math.min(100, Math.round((gaugeRemaining / gaugeTotal) * 100)) : 0;
 

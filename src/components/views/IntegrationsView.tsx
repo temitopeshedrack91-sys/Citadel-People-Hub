@@ -18,7 +18,7 @@ export const IntegrationsView: React.FC = () => {
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-[#EBF5F2] text-[#083E34] border border-[#A3D4C7]/50 flex items-center justify-center">
                   <Fingerprint className="w-5 h-5" />
                 </div>
                 <div>
@@ -51,7 +51,7 @@ export const IntegrationsView: React.FC = () => {
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-700 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-[#FAF5EB] text-[#B45309] border border-[#F2E4B8] flex items-center justify-center">
                   <Cloud className="w-5 h-5" />
                 </div>
                 <div>

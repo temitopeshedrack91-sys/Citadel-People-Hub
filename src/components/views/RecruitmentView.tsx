@@ -314,14 +314,16 @@ export const RecruitmentView: React.FC = () => {
 
       {/* Success Notification Banner */}
       {successBanner && (
-        <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-xs flex items-center justify-between animate-fade-in shadow-xs">
+        <div role="status" className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center justify-between animate-fade-in shadow-2xs">
           <div className="flex items-center gap-2 font-semibold">
-            <CheckCircle2 className="w-4 h-4 text-blue-700 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
             <span>{successBanner}</span>
           </div>
           <button
+            type="button"
             onClick={() => setSuccessBanner(null)}
-            className="p-1 text-blue-600 hover:text-blue-900 transition rounded cursor-pointer"
+            aria-label="Dismiss notification"
+            className="p-1 text-emerald-700 hover:text-emerald-950 transition rounded cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -462,7 +464,7 @@ export const RecruitmentView: React.FC = () => {
                                   cand.status === 'Hired'
                                     ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                                     : cand.status.includes('Interview')
-                                    ? 'bg-purple-50 text-purple-800 border-purple-200'
+                                    ? 'bg-[#EBF5F2] text-[#083E34] border-[#A3D4C7]/60'
                                     : cand.status === 'Job Offered'
                                     ? 'bg-amber-50 text-amber-800 border-amber-200'
                                     : 'bg-slate-100 text-slate-700 border-slate-200'
@@ -537,30 +539,30 @@ export const RecruitmentView: React.FC = () => {
       {activeTab === 'candidates' && (
         <div className="space-y-4">
           {/* Top ATS Metrics Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Pool</span>
-              <span className="text-xl font-black text-slate-900">{atsStats.total}</span>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 tabular-nums">
+            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Total Pool</span>
+              <span className="text-xl font-bold text-slate-900">{atsStats.total}</span>
               <span className="text-[10px] text-slate-500 block mt-0.5">Active candidates</span>
             </div>
-            <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-              <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider block">Shortlisted</span>
-              <span className="text-xl font-black text-blue-900">{atsStats.shortlisted}</span>
+            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
+              <span className="text-[10px] font-semibold text-[#083E34] uppercase tracking-wider block">Shortlisted</span>
+              <span className="text-xl font-bold text-[#083E34]">{atsStats.shortlisted}</span>
               <span className="text-[10px] text-slate-500 block mt-0.5">Resume approved</span>
             </div>
-            <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-              <span className="text-[10px] font-bold text-purple-600 uppercase tracking-wider block">In Interview</span>
-              <span className="text-xl font-black text-purple-900">{atsStats.interviewing}</span>
+            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
+              <span className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider block">In Interview</span>
+              <span className="text-xl font-bold text-slate-900">{atsStats.interviewing}</span>
               <span className="text-[10px] text-slate-500 block mt-0.5">Tech &amp; Competency</span>
             </div>
-            <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-              <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">Offers Extended</span>
-              <span className="text-xl font-black text-amber-900">{atsStats.offers}</span>
+            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
+              <span className="text-[10px] font-semibold text-amber-700 uppercase tracking-wider block">Offers Extended</span>
+              <span className="text-xl font-bold text-amber-900">{atsStats.offers}</span>
               <span className="text-[10px] text-slate-500 block mt-0.5">Pending acceptance</span>
             </div>
-            <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">Hired</span>
-              <span className="text-xl font-black text-emerald-900">{atsStats.hired}</span>
+            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
+              <span className="text-[10px] font-semibold text-emerald-700 uppercase tracking-wider block">Hired</span>
+              <span className="text-xl font-bold text-emerald-900">{atsStats.hired}</span>
               <span className="text-[10px] text-slate-500 block mt-0.5">Ready for Onboarding</span>
             </div>
           </div>

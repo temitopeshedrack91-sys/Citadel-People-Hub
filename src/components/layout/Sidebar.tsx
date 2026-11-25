@@ -114,12 +114,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [currentUser]);
 
+  const leaveReloadTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
   React.useEffect(() => {
     void loadPendingLeaveCount();
+    return () => {
+      if (leaveReloadTimerRef.current) {
+        clearTimeout(leaveReloadTimerRef.current);
+        leaveReloadTimerRef.current = null;
+      }
+    };
   }, [loadPendingLeaveCount]);
 
   useRealtimeTable('leave_requests', () => {
-    void loadPendingLeaveCount();
+    if (leaveReloadTimerRef.current) {
+      clearTimeout(leaveReloadTimerRef.current);
+    }
+    leaveReloadTimerRef.current = setTimeout(() => {
+      leaveReloadTimerRef.current = null;
+      void loadPendingLeaveCount();
+    }, 200);
   });
 
   React.useEffect(() => {

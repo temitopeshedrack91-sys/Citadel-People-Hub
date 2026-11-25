@@ -395,7 +395,22 @@ class HierarchyAndTwoStageLeaveTest extends TestCase
         $this->actingAs($this->hrUser)->getJson('/api/v1/dashboard/summary')
             ->assertOk()
             ->assertJsonPath('data.effectiveRole', 'HR')
-            ->assertJsonPath('data.hrOverview.totalEmployees', 6);
+            ->assertJsonPath('data.hrOverview.totalEmployees', 6)
+            ->assertJsonStructure([
+                'data' => [
+                    'hrOverview' => [
+                        'totalEmployees',
+                        'activeEmployees',
+                        'recentHiresCount',
+                        'entityBreakdown',
+                        'onLeaveToday',
+                        'activeTasks',
+                        'attendanceToday',
+                        'attendanceTrend',
+                        'upcomingMilestones',
+                    ],
+                ],
+            ]);
 
         // Manager cannot call HR-only payroll, audit, entitlement, or cross-team attendance endpoints
         $this->actingAs($this->managerUser)->getJson('/api/v1/payroll/templates')->assertForbidden();
@@ -493,5 +508,43 @@ class HierarchyAndTwoStageLeaveTest extends TestCase
             ->get("/api/v1/realtime/stream?since={$initialLatest}&once=1");
         $sse->assertOk();
         $this->assertStringContainsString('text/event-stream', (string) $sse->headers->get('Content-Type'));
+    }
+
+    public function test_navigation_read_bursts_do_not_throttle_reads_leave_approvals_or_payroll(): void
+    {
+        for ($i = 0; $i < 70; $i++) {
+            $this->actingAs($this->hrUser)->getJson('/api/v1/employees')->assertOk();
+            $this->actingAs($this->hrUser)->getJson('/api/v1/tasks')->assertOk();
+        }
+
+        $leaveRes = $this->actingAs($this->icUser)->postJson('/api/v1/leave-requests', [
+            'employeeId' => $this->icEmp->id,
+            'employeeStaffId' => $this->icEmp->staff_id,
+            'leaveType' => 'Annual Leave',
+            'startDate' => '2026-12-28',
+            'endDate' => '2026-12-29',
+            'totalDays' => 2,
+            'reason' => 'Burst resilience check',
+        ])->assertCreated();
+
+        $leaveId = $leaveRes->json('data.id');
+
+        $this->actingAs($this->leadUser)
+            ->patchJson("/api/v1/leave-requests/{$leaveId}/status", ['status' => 'Approved'])
+            ->assertOk()
+            ->assertJsonPath('data.approvalStage', 'HR');
+
+        $this->actingAs($this->hrUser)
+            ->patchJson("/api/v1/leave-requests/{$leaveId}/status", ['status' => 'Approved'])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'Approved');
+
+        $payrollRes = $this->actingAs($this->hrUser)->postJson('/api/v1/payroll/runs', [
+            'title' => 'Burst Verification Run',
+            'period_start' => '2026-11-01',
+            'period_end' => '2026-11-30',
+            'pay_date' => '2026-11-28',
+        ]);
+        $this->assertNotEquals(429, $payrollRes->getStatusCode());
     }
 }

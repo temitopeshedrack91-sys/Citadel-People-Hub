@@ -755,17 +755,17 @@ export const PayrollView: React.FC = () => {
         </div>
 
         {/* Assigned Staff on Structure */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
-          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs">
+          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-500">
             <span>Structure Coverage</span>
-            <Users className="w-4 h-4 text-blue-600" />
+            <Users className="w-4 h-4 text-[#083E34]" />
           </div>
-          <div className="mt-2 text-2xl font-black text-slate-900">
+          <div className="mt-2 text-2xl font-bold text-slate-900 tabular-nums">
             {metrics.assignedStaffCount}{' '}
             <span className="text-sm font-normal text-slate-400">/ {employees.length} Staff</span>
           </div>
-          <div className="mt-1 text-xs text-slate-500 flex items-center gap-1 font-medium">
-            <span className="text-blue-600 font-bold">{metrics.structuresCount}</span>
+          <div className="mt-1 text-xs text-slate-500 flex items-center gap-1 font-medium tabular-nums">
+            <span className="text-[#083E34] font-semibold">{metrics.structuresCount}</span>
             <span>active compensation tiers</span>
           </div>
         </div>
@@ -906,7 +906,7 @@ export const PayrollView: React.FC = () => {
                               run.status === 'paid'
                                 ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                                 : run.status === 'approved'
-                                ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                                ? 'bg-[#EBF5F2] text-[#083E34] border border-[#A3D4C7]/60'
                                 : 'bg-amber-100 text-amber-800 border border-amber-200'
                             }`}
                           >

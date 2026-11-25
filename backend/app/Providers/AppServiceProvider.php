@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use RuntimeException;
 
@@ -20,6 +23,28 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('login', function (Request $request) {
+            $email = strtolower((string) $request->input('email', ''));
+
+            return Limit::perMinute(30)->by($email.'|'.$request->ip());
+        });
+
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(1000)->by((string) ($request->user()?->id ?: $request->ip()));
+        });
+
+        RateLimiter::for('realtime', function (Request $request) {
+            return Limit::perMinute(600)->by((string) ($request->user()?->id ?: $request->ip()));
+        });
+
+        RateLimiter::for('mutations', function (Request $request) {
+            return Limit::perMinute(180)->by((string) ($request->user()?->id ?: $request->ip()));
+        });
+
+        RateLimiter::for('payroll', function (Request $request) {
+            return Limit::perMinute(120)->by((string) ($request->user()?->id ?: $request->ip()));
+        });
+
         if (app()->runningInConsole() || ! app()->environment('production')) {
             return;
         }

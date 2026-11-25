@@ -7,39 +7,82 @@
  * Citadel School of Government (CSOG), and Citadel Holdings.
  */
 
-import React, { useState } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Header } from './components/layout/Header';
 import { Sidebar, NavModule } from './components/layout/Sidebar';
 import { OfflineIndicator } from './components/pwa/OfflineIndicator';
 
-// View modules
+// Eager dashboard & auth views for immediate first paint
 import { DashboardView } from './components/views/DashboardView';
-import { EmployeeManagementView } from './components/views/EmployeeManagementView';
-import { DirectoryView } from './components/views/DirectoryView';
-import { LeaveManagementView } from './components/views/LeaveManagementView';
-import { AttendanceView } from './components/views/AttendanceView';
-import { RecruitmentView } from './components/views/RecruitmentView';
-import { OnboardingView } from './components/views/OnboardingView';
-import { PerformanceView } from './components/views/PerformanceView';
-import { DocumentsView } from './components/views/DocumentsView';
-import { CalendarView } from './components/views/CalendarView';
-import { ReportsView } from './components/views/ReportsView';
-import { NotificationsView } from './components/views/NotificationsView';
-import { IntegrationsView } from './components/views/IntegrationsView';
-import { SettingsView } from './components/views/SettingsView';
-import { AuditLogsView } from './components/views/AuditLogsView';
-import { OffboardingView } from './components/views/OffboardingView';
-import { AIAssistantView } from './components/views/AIAssistantView';
-import { ProjectsView } from './components/views/ProjectsView';
-import { TeamNotesView } from './components/views/TeamNotesView';
-import { PayrollView } from './components/views/PayrollView';
-import { ClaimManagementView } from './components/views/ClaimManagementView';
 import { LoginModal } from './components/auth/LoginModal';
 import { AuthPage } from './components/auth/AuthPage';
 import { AccessDeniedView } from './components/common/AccessDeniedView';
+import { LoadingSkeleton } from './components/common/LoadingSkeleton';
 import { checkRouteAccess, isManagerUser, isHrOrAdminUser } from './utils/rbac';
+
+// Lazy-loaded feature views to keep initial JS bundle lean
+const EmployeeManagementView = lazy(() =>
+  import('./components/views/EmployeeManagementView').then((m) => ({ default: m.EmployeeManagementView }))
+);
+const DirectoryView = lazy(() =>
+  import('./components/views/DirectoryView').then((m) => ({ default: m.DirectoryView }))
+);
+const LeaveManagementView = lazy(() =>
+  import('./components/views/LeaveManagementView').then((m) => ({ default: m.LeaveManagementView }))
+);
+const AttendanceView = lazy(() =>
+  import('./components/views/AttendanceView').then((m) => ({ default: m.AttendanceView }))
+);
+const RecruitmentView = lazy(() =>
+  import('./components/views/RecruitmentView').then((m) => ({ default: m.RecruitmentView }))
+);
+const OnboardingView = lazy(() =>
+  import('./components/views/OnboardingView').then((m) => ({ default: m.OnboardingView }))
+);
+const PerformanceView = lazy(() =>
+  import('./components/views/PerformanceView').then((m) => ({ default: m.PerformanceView }))
+);
+const DocumentsView = lazy(() =>
+  import('./components/views/DocumentsView').then((m) => ({ default: m.DocumentsView }))
+);
+const CalendarView = lazy(() =>
+  import('./components/views/CalendarView').then((m) => ({ default: m.CalendarView }))
+);
+const ReportsView = lazy(() =>
+  import('./components/views/ReportsView').then((m) => ({ default: m.ReportsView }))
+);
+const NotificationsView = lazy(() =>
+  import('./components/views/NotificationsView').then((m) => ({ default: m.NotificationsView }))
+);
+const IntegrationsView = lazy(() =>
+  import('./components/views/IntegrationsView').then((m) => ({ default: m.IntegrationsView }))
+);
+const SettingsView = lazy(() =>
+  import('./components/views/SettingsView').then((m) => ({ default: m.SettingsView }))
+);
+const AuditLogsView = lazy(() =>
+  import('./components/views/AuditLogsView').then((m) => ({ default: m.AuditLogsView }))
+);
+const OffboardingView = lazy(() =>
+  import('./components/views/OffboardingView').then((m) => ({ default: m.OffboardingView }))
+);
+const AIAssistantView = lazy(() =>
+  import('./components/views/AIAssistantView').then((m) => ({ default: m.AIAssistantView }))
+);
+const ProjectsView = lazy(() =>
+  import('./components/views/ProjectsView').then((m) => ({ default: m.ProjectsView }))
+);
+const TeamNotesView = lazy(() =>
+  import('./components/views/TeamNotesView').then((m) => ({ default: m.TeamNotesView }))
+);
+const PayrollView = lazy(() =>
+  import('./components/views/PayrollView').then((m) => ({ default: m.PayrollView }))
+);
+const ClaimManagementView = lazy(() =>
+  import('./components/views/ClaimManagementView').then((m) => ({ default: m.ClaimManagementView }))
+);
 
 const VALID_MODULES: NavModule[] = [
   'dashboard', 'employees', 'directory', 'leave', 'attendance', 'projects', 'payroll', 'claims',
@@ -337,7 +380,16 @@ const MainAppLayout: React.FC = () => {
                     ease: [0.23, 1, 0.32, 1],
                   }}
                 >
-                  {renderActiveModule()}
+                  <Suspense
+                    fallback={
+                      <div className="space-y-5">
+                        <LoadingSkeleton type="stats" />
+                        <LoadingSkeleton type="table" rows={5} />
+                      </div>
+                    }
+                  >
+                    {renderActiveModule()}
+                  </Suspense>
                 </motion.div>
               </AnimatePresence>
             </div>

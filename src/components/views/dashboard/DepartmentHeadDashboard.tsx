@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Users,
   CheckCircle2,
@@ -14,6 +14,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { useRealtimeTable } from '../../../hooks/useRealtimeTable';
 import { NavModule } from '../../layout/Sidebar';
 import { leaveRepository, employeeRepository, auditRepository } from '../../../services';
+import { StatusPill } from '../../common/StatusPill';
 import {
   LeaveRequest,
   LeaveBalanceRecord,
@@ -48,10 +49,15 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const reloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const actorEmployeeId = String(currentUser.employeeId || currentUser.id || '');
 
   const loadData = useCallback(async () => {
+    if (reloadTimerRef.current) {
+      clearTimeout(reloadTimerRef.current);
+      reloadTimerRef.current = null;
+    }
     try {
       const [hierData, allEmps, allLeaves, balData, calData] = await Promise.all([
         actorEmployeeId
@@ -65,7 +71,6 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
 
       setHierarchy(hierData);
 
-      // Prefer Phase 1 hierarchy downward direct reports, fall back to managerId/name match
       let reports: Employee[] = [];
       if (hierData?.directReports && hierData.directReports.length > 0) {
         const directIds = new Set(hierData.directReports.map((d) => String(d.id)));
@@ -120,10 +125,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
         reports = allEmps.filter((e) => {
           if (e.id === actorEmployeeId) return false;
           if (actorEmployeeId && String(e.managerId || '') === actorEmployeeId) return true;
-          if (
-            userNameLower &&
-            (e.managerName || '').toLowerCase().includes(userNameLower)
-          ) {
+          if (userNameLower && (e.managerName || '').toLowerCase().includes(userNameLower)) {
             return true;
           }
           return false;
@@ -150,21 +152,27 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
     }
   }, [actorEmployeeId, currentUser.name]);
 
-  useEffect(() => {
-    void loadData();
+  const scheduleReload = useCallback(() => {
+    if (reloadTimerRef.current) clearTimeout(reloadTimerRef.current);
+    reloadTimerRef.current = setTimeout(() => {
+      reloadTimerRef.current = null;
+      void loadData();
+    }, 150);
   }, [loadData]);
 
-  useRealtimeTable('leave_requests', () => {
+  useEffect(() => {
     void loadData();
-  });
+    return () => {
+      if (reloadTimerRef.current) {
+        clearTimeout(reloadTimerRef.current);
+        reloadTimerRef.current = null;
+      }
+    };
+  }, [loadData]);
 
-  useRealtimeTable('leave_balances', () => {
-    void loadData();
-  });
-
-  useRealtimeTable('employees', () => {
-    void loadData();
-  });
+  useRealtimeTable('leave_requests', scheduleReload);
+  useRealtimeTable('leave_balances', scheduleReload);
+  useRealtimeTable('employees', scheduleReload);
 
   const handleManagerApprove = async (leave: LeaveRequest) => {
     setActionError(null);
@@ -244,9 +252,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
   const pendingQueue = useMemo(
     () =>
       teamLeaves.filter(
-        (l) =>
-          l.status === 'Submitted' &&
-          isStageManager(l.approvalStage || 'MANAGER')
+        (l) => l.status === 'Submitted' && isStageManager(l.approvalStage || 'MANAGER')
       ),
     [teamLeaves]
   );
@@ -257,9 +263,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
         (actorEmployeeId && String(b.employee_id) === actorEmployeeId) ||
         (currentUser.staffId && b.employee?.staff_id === currentUser.staffId)
     );
-    return (
-      own.find((b) => (b.category?.name || '').toLowerCase().includes('annual')) || own[0] || null
-    );
+    return own.find((b) => (b.category?.name || '').toLowerCase().includes('annual')) || own[0] || null;
   }, [actorEmployeeId, currentUser.staffId, myBalances]);
 
   const supervisorName =
@@ -268,118 +272,121 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
     'Executive Leadership (Direct to HR)';
 
   return (
-    <div className="space-y-6 animate-fade-in" data-testid="manager-dashboard">
-      {/* 1. Header Banner */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] p-5 sm:p-6">
+    <div className="space-y-5 animate-fade-in" data-testid="manager-dashboard">
+      {/* 1. Manager Workspace Header */}
+      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-5 sm:p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-bold">
-                Manager Workspace · Stage 1 Leave Approvals
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[11px] font-medium border border-slate-200">
-                {currentUser.entityName} · {currentUser.departmentName}
-              </span>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500">
+              <span className="uppercase tracking-wider text-[#083E34]">Manager Workspace</span>
+              <span aria-hidden="true">·</span>
+              <span>{currentUser.entityName}</span>
+              <span aria-hidden="true">·</span>
+              <span>{currentUser.departmentName}</span>
             </div>
-            <h1 className="text-xl font-bold tracking-tight text-slate-900">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
               {currentUser.name} — Team &amp; Approval Dashboard
             </h1>
             <p className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
-              <GitBranch className="w-3.5 h-3.5 text-[#083E34]" />
+              <GitBranch className="w-3.5 h-3.5 text-[#083E34]" aria-hidden="true" />
               <span>
-                {currentUser.jobTitle} • Reports to:{' '}
-                <strong className="text-slate-800">{supervisorName}</strong>
+                {currentUser.jobTitle} · Reports to{' '}
+                <strong className="font-semibold text-slate-800">{supervisorName}</strong>
               </span>
             </p>
           </div>
 
           <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
             <button
+              type="button"
               onClick={onOpenLeaveModal}
               id="hod-apply-leave-btn"
-              className="px-3.5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold text-xs shadow-xs transition flex items-center gap-2 active:scale-95 cursor-pointer min-h-[38px] border border-[#C59B27]"
+              className="px-3.5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-semibold text-xs shadow-2xs transition flex items-center gap-2 cursor-pointer min-h-[38px] border border-[#C59B27]"
             >
-              <CalendarDays className="w-4 h-4 text-slate-950" />
+              <CalendarDays className="w-4 h-4 text-slate-950" aria-hidden="true" />
               <span>Apply for Leave</span>
             </button>
             <button
+              type="button"
               onClick={() => onNavigate('leave')}
-              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-semibold text-xs border border-slate-200 transition flex items-center gap-2 cursor-pointer min-h-[38px]"
+              className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs border border-slate-200 transition flex items-center gap-1.5 cursor-pointer min-h-[38px]"
             >
               <span>All Team Requests</span>
-              <ArrowUpRight className="w-4 h-4 text-slate-500" />
+              <ArrowUpRight className="w-4 h-4 text-slate-500" aria-hidden="true" />
             </button>
           </div>
         </div>
 
         {actionFeedback && (
-          <div className="mt-4 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <div role="status" className="mt-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" aria-hidden="true" />
             <span>{actionFeedback}</span>
           </div>
         )}
 
         {actionError && (
-          <div className="mt-4 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+          <div role="alert" className="mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" aria-hidden="true" />
             <span>{actionError}</span>
           </div>
         )}
       </div>
 
-      {/* 2. Manager KPIs Row */}
+      {/* 2. Manager KPI Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs">
+        <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">Direct Reports</span>
-            <div className="w-8 h-8 rounded-xl bg-[#EBF5F2] text-[#083E34] flex items-center justify-center border border-[#A3D4C7]/50">
-              <Users className="w-4 h-4" />
+            <span className="text-xs font-semibold text-slate-600">Direct Reports</span>
+            <div className="w-8 h-8 rounded-lg bg-[#EBF5F2] text-[#083E34] flex items-center justify-center border border-[#A3D4C7]/50">
+              <Users className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5 tabular-nums">
-            <span className="text-2xl font-extrabold text-[#083E34]">{directReports.length}</span>
-            <span className="text-xs text-slate-500 font-semibold">reporting to you</span>
+            <span className="text-2xl font-bold text-slate-900">{directReports.length}</span>
+            <span className="text-xs text-slate-500 font-medium">reporting to you</span>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs">
+        <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">Pending Approvals</span>
-            <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center border border-rose-200">
-              <CalendarDays className="w-4 h-4" />
+            <span className="text-xs font-semibold text-slate-600">Pending Approvals</span>
+            <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-700 flex items-center justify-center border border-rose-200">
+              <CalendarDays className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5 tabular-nums">
-            <span className="text-2xl font-extrabold text-rose-600">{pendingQueue.length}</span>
-            <span className="text-xs text-slate-500 font-semibold">awaiting Stage 1</span>
+            <span className={`text-2xl font-bold ${pendingQueue.length > 0 ? 'text-rose-700' : 'text-slate-900'}`}>
+              {pendingQueue.length}
+            </span>
+            <span className="text-xs text-slate-500 font-medium">awaiting Stage 1</span>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs">
+        <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">Team Calendar</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200">
-              <CalendarDays className="w-4 h-4" />
+            <span className="text-xs font-semibold text-slate-600">Team Calendar</span>
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200">
+              <CalendarDays className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5 tabular-nums">
-            <span className="text-2xl font-extrabold text-[#083E34]">{calendarEvents.length}</span>
-            <span className="text-xs text-slate-500 font-semibold">scheduled leaves</span>
+            <span className="text-2xl font-bold text-slate-900">{calendarEvents.length}</span>
+            <span className="text-xs text-slate-500 font-medium">scheduled leaves</span>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs">
+        <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">My Annual Quota</span>
-            <div className="w-8 h-8 rounded-xl bg-[#FAF5EB] text-[#B45309] flex items-center justify-center border border-[#F2E4B8]">
-              <ShieldCheck className="w-4 h-4" />
+            <span className="text-xs font-semibold text-slate-600">My Annual Quota</span>
+            <div className="w-8 h-8 rounded-lg bg-[#FAF5EB] text-[#B45309] flex items-center justify-center border border-[#F2E4B8]">
+              <ShieldCheck className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5 tabular-nums">
-            <span className="text-2xl font-extrabold text-[#083E34]">
+            <span className="text-2xl font-bold text-slate-900">
               {ownAnnualBalance ? Number(ownAnnualBalance.remaining_days) : 0}
             </span>
-            <span className="text-xs text-slate-500 font-semibold">
+            <span className="text-xs text-slate-500 font-medium">
               / {ownAnnualBalance ? Number(ownAnnualBalance.total_days) : 0} days left
             </span>
           </div>
@@ -387,14 +394,14 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
       </div>
 
       {/* 3. Stage 1 Team Pending Approvals */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
           <div>
-            <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-              <CalendarDays className="w-4 h-4 text-[#083E34]" />
+            <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+              <CalendarDays className="w-4 h-4 text-[#083E34]" aria-hidden="true" />
               <span>Stage 1 Team Leave Approval Queue ({pendingQueue.length})</span>
-            </h3>
-            <p className="text-xs text-slate-600 mt-0.5">
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
               Approve direct reports to forward to HR for final approval, or reject to stop at Stage 1.
             </p>
           </div>
@@ -406,24 +413,23 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
               <div
                 key={req.id}
                 data-testid={`manager-pending-leave-${req.id}`}
-                className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-slate-50/70 transition"
+                className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-slate-50/70 transition-colors"
               >
                 <div className="space-y-1.5 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-black text-slate-900">{req.employeeName}</span>
+                    <span className="text-sm font-semibold text-slate-900">{req.employeeName}</span>
                     <span className="text-xs font-mono text-slate-500">({req.employeeStaffId})</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                      {req.leaveType}
-                    </span>
-                    <span className="text-xs font-bold text-slate-700">
+                    <StatusPill status="pending" label={req.leaveType} size="sm" />
+                    <span className="text-xs font-medium text-slate-700 tabular-nums">
                       {req.totalDays} days ({req.startDate} to {req.endDate})
                     </span>
                   </div>
                   <p className="text-xs text-slate-600">
-                    <strong className="text-slate-800">Reason:</strong> {req.reason}
+                    <strong className="font-semibold text-slate-800">Reason:</strong> {req.reason}
                   </p>
                   <input
                     type="text"
+                    aria-label={`Review note for ${req.employeeName}`}
                     value={reviewComments[req.id] || ''}
                     onChange={(e) =>
                       setReviewComments((prev) => ({ ...prev, [req.id]: e.target.value }))
@@ -435,19 +441,21 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
 
                 <div className="flex items-center gap-2 shrink-0">
                   <button
+                    type="button"
                     onClick={() => handleManagerReject(req)}
                     disabled={processingId === req.id}
-                    className="px-3.5 py-2 rounded-xl border border-rose-200 text-rose-700 hover:bg-rose-50 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                    className="px-3.5 py-2 rounded-xl border border-rose-200 text-rose-700 hover:bg-rose-50 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
                   >
-                    <X className="w-3.5 h-3.5" />
+                    <X className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Reject</span>
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleManagerApprove(req)}
                     disabled={processingId === req.id}
-                    className="px-4 py-2 rounded-xl bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] font-bold text-xs shadow-xs flex items-center gap-1.5 transition cursor-pointer border border-[#C59B27] disabled:opacity-50"
+                    className="px-4 py-2 rounded-xl bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] font-semibold text-xs shadow-2xs flex items-center gap-1.5 transition cursor-pointer border border-[#C59B27] disabled:opacity-50"
                   >
-                    <Check className="w-4 h-4 text-slate-950" />
+                    <Check className="w-4 h-4 text-slate-950" aria-hidden="true" />
                     <span>Approve &amp; Forward to HR</span>
                   </button>
                 </div>
@@ -455,9 +463,9 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
             ))}
           </div>
         ) : (
-          <div className="p-8 text-center space-y-2">
-            <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
-            <h4 className="text-sm font-bold text-slate-900">No Pending Team Leave Approvals</h4>
+          <div className="p-6 text-center space-y-1.5">
+            <CheckCircle2 className="w-6 h-6 text-emerald-600 mx-auto" aria-hidden="true" />
+            <h3 className="text-xs font-semibold text-slate-900">No Pending Team Leave Approvals</h3>
             <p className="text-xs text-slate-500">
               All leave requests submitted by your direct reports have been processed.
             </p>
@@ -466,25 +474,25 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
       </div>
 
       {/* 4. Team Leave Calendar & Direct Reports */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Team Calendar */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-          <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
             <div>
-              <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                <CalendarDays className="w-4 h-4 text-[#083E34]" />
+              <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <CalendarDays className="w-4 h-4 text-[#083E34]" aria-hidden="true" />
                 <span>Team Leave Calendar</span>
-              </h3>
-              <p className="text-xs text-slate-600 mt-0.5">
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
                 Upcoming and active leaves across your reporting line.
               </p>
             </div>
             <button
+              type="button"
               onClick={() => onNavigate('calendar')}
-              className="text-xs font-bold text-[#083E34] hover:text-amber-700 flex items-center gap-1 cursor-pointer"
+              className="text-xs font-semibold text-[#083E34] hover:underline flex items-center gap-1 cursor-pointer"
             >
               <span>Full Calendar</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
+              <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
 
@@ -493,23 +501,19 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
               calendarEvents.map((ev) => (
                 <div
                   key={String(ev.id)}
-                  className="p-3 rounded-xl border border-slate-200 bg-slate-50/60 flex items-center justify-between gap-3 text-xs"
+                  className="p-3 rounded-xl border border-slate-200/80 bg-slate-50/60 flex items-center justify-between gap-3 text-xs"
                 >
                   <div>
-                    <span className="font-bold text-slate-900 block">{ev.employeeName}</span>
-                    <span className="text-[11px] text-slate-600">
+                    <span className="font-semibold text-slate-900 block">{ev.employeeName}</span>
+                    <span className="text-[11px] text-slate-600 tabular-nums">
                       {ev.leaveType} · {ev.startDate} → {ev.endDate} ({ev.totalDays}d)
                     </span>
                   </div>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      ev.status === 'Approved'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-amber-100 text-amber-800'
-                    }`}
-                  >
-                    {ev.status}
-                  </span>
+                  <StatusPill
+                    status={ev.status === 'Approved' ? 'confirmed' : 'pending'}
+                    label={ev.status}
+                    size="sm"
+                  />
                 </div>
               ))
             ) : (
@@ -520,24 +524,24 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
           </div>
         </div>
 
-        {/* Direct Reports Table */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-          <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+        <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
             <div>
-              <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                <Users className="w-4 h-4 text-[#083E34]" />
+              <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <Users className="w-4 h-4 text-[#083E34]" aria-hidden="true" />
                 <span>Direct Reports ({directReports.length})</span>
-              </h3>
-              <p className="text-xs text-slate-600 mt-0.5">
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
                 Employees reporting directly to you in the hierarchy.
               </p>
             </div>
             <button
+              type="button"
               onClick={() => onNavigate('directory')}
-              className="text-xs font-bold text-[#083E34] hover:text-amber-700 flex items-center gap-1 cursor-pointer"
+              className="text-xs font-semibold text-[#083E34] hover:underline flex items-center gap-1 cursor-pointer"
             >
               <span>Directory</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
+              <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
 
@@ -546,10 +550,10 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
               directReports.map((member) => (
                 <div
                   key={member.id}
-                  className="p-4 flex items-center justify-between gap-3 hover:bg-slate-50/70 text-xs"
+                  className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/70 text-xs"
                 >
                   <div>
-                    <span className="font-bold text-slate-900 block">{member.fullName}</span>
+                    <span className="font-semibold text-slate-900 block">{member.fullName}</span>
                     <span className="text-[11px] text-slate-500">
                       {member.jobTitle} · {member.departmentName}
                     </span>

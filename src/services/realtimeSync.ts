@@ -67,6 +67,7 @@ class RealtimeSyncManager {
   private broadcastChannel: BroadcastChannel | null = null;
   private localMutationListenerBound = false;
   private pollingInFlight = false;
+  private lastPollAt = 0;
 
   private shouldUseLaravelRealtime(): boolean {
     if (import.meta.env.MODE === 'test') {
@@ -163,14 +164,13 @@ class RealtimeSyncManager {
     this.connectSseStream();
 
     if (!this.pollTimer) {
-      void this.pollLaravelEventsNow();
       this.pollTimer = setInterval(() => {
         if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
         // When SSE is healthy, polling acts only as a lightweight fallback sync
         if (!this.sseConnected) {
           void this.pollLaravelEventsNow();
         }
-      }, 2000);
+      }, 5000);
     }
   }
 
@@ -312,6 +312,9 @@ class RealtimeSyncManager {
 
   private pollLaravelEventsNow = async () => {
     if (this.pollingInFlight || this.channels.size === 0 || !getLaravelAccessToken()) return;
+    const now = Date.now();
+    if (now - this.lastPollAt < 1500) return;
+    this.lastPollAt = now;
     this.pollingInFlight = true;
     try {
       const query = this.lastEventId !== null ? `?since=${this.lastEventId}` : '';
