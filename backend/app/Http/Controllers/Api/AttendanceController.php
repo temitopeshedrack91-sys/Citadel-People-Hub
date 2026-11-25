@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AttendanceRecord;
 use App\Models\Employee;
+use App\Services\RealtimeEventService;
 use App\Support\AuditLogger;
 use App\Support\RoleAuthorization;
 use Illuminate\Http\JsonResponse;
@@ -283,6 +284,7 @@ class AttendanceController extends Controller
                 'verification_source' => 'Web_SelfService',
             ]);
             AuditLogger::record($request, 'Attendance & Biometrics', 'Clocked in', $record->id, $record->employee_name, null, 'Present');
+            RealtimeEventService::publish('attendance_records', 'INSERT', $record->id, ['employeeId' => $employee->id], (int) $request->user()->id);
 
             return $record;
         });
@@ -308,6 +310,7 @@ class AttendanceController extends Controller
             $hours = round($record->clock_in_time->diffInSeconds($out) / 3600, 2);
             $record->update(['clock_out_time' => $out, 'duration_hours' => $hours]);
             AuditLogger::record($request, 'Attendance & Biometrics', 'Clocked out', $record->id, $record->employee_name, 'Clocked in', 'Clocked out');
+            RealtimeEventService::publish('attendance_records', 'UPDATE', $record->id, ['employeeId' => $employee->id], (int) $request->user()->id);
 
             return $record;
         });
@@ -320,8 +323,7 @@ class AttendanceController extends Controller
         $role = RoleAuthorization::canonical($user->role);
         abort_if($role === null || $role === 'VIEWER', 403, 'You are not authorized to access attendance records.');
 
-        $rawRole = strtoupper(trim($user->role));
-        if ($role === 'EMPLOYEE' || in_array($rawRole, ['BUSINESS_HEAD', 'DEPARTMENT_HEAD'], true)) {
+        if (! RoleAuthorization::isGlobalHrOrAdmin($user)) {
             $query->whereIn('employee_id', RoleAuthorization::visibleEmployees($user)->select('id'));
         }
     }
@@ -330,7 +332,7 @@ class AttendanceController extends Controller
     {
         $user = $request->user();
         $canManageWithinScope = RoleAuthorization::canManageEmployee($user, $employee);
-        $canClockForSelf = RoleAuthorization::canonical($user->role) === 'EMPLOYEE'
+        $canClockForSelf = RoleAuthorization::canonical($user->role) !== 'VIEWER'
             && $user->staff_id !== null
             && $user->staff_id === $employee->staff_id;
         abort_unless($canManageWithinScope || $canClockForSelf, 403, 'You are not authorized to record attendance for this employee.');

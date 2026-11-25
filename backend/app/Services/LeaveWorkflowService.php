@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Employee;
-use App\Models\EmployeeLeaveBalance;
 use App\Models\LeaveRequest;
 use App\Models\SystemNotification;
 use App\Models\User;
@@ -185,7 +184,7 @@ class LeaveWorkflowService
                 && $employee->manager_id !== null
                 && (string) $employee->manager_id === (string) $actorEmployee->id;
 
-            // Support legacy test requests created explicitly with DEPARTMENT_HEAD / BUSINESS_HEAD
+            // Support legacy requests created explicitly with DEPARTMENT_HEAD / LINE_MANAGER
             $currentStage = match ($record->approval_stage) {
                 'DEPARTMENT_HEAD', 'LINE_MANAGER' => 'MANAGER',
                 default => $record->approval_stage ?: 'MANAGER',
@@ -368,7 +367,7 @@ class LeaveWorkflowService
             return;
         }
 
-        $this->notifyHr("Leave Request Awaiting HR Final Approval", "{$record->employee_name} requested {$record->total_days} day(s) of {$record->leave_type}.");
+        $this->notifyHr('Leave Request Awaiting HR Final Approval', "{$record->employee_name} requested {$record->total_days} day(s) of {$record->leave_type}.");
     }
 
     private function notifyTransition(LeaveRequest $record, Employee $employee, string $stage, string $decision): void

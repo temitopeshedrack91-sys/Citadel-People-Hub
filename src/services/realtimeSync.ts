@@ -2,13 +2,18 @@
  * Citadel Realtime Synchronization Service
  *
  * Supports two transports seamlessly:
- * 1. Laravel Realtime Event Stream + BroadcastChannel when connected to the PHP backend.
+ * 1. Laravel SSE Stream (/api/v1/realtime/stream) + incremental polling fallback + BroadcastChannel.
  * 2. Supabase Realtime Postgres Changes WebSocket when running directly against Supabase / unit tests.
  */
 
 import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { supabase } from '../utils/supabase/client';
-import { getLaravelAccessToken, isLaravelApiConfigured, requestLaravelData } from './laravelClient';
+import {
+  getLaravelAccessToken,
+  getLaravelApiBaseUrl,
+  isLaravelApiConfigured,
+  requestLaravelData,
+} from './laravelClient';
 import { shouldUseLaravelBackend } from '../utils/authMode';
 
 export type RealtimeTable =
@@ -38,6 +43,7 @@ interface ChannelSubscriptionState {
   channel: RealtimeChannel | null;
   subscribers: Set<RealtimeCallback<any>>;
   reconnectAttempts: number;
+  reconnectTimer?: ReturnType<typeof setTimeout> | null;
   status: 'SUBSCRIBED' | 'TIMED_OUT' | 'CHANNEL_ERROR' | 'CLOSED' | 'CONNECTING';
 }
 
@@ -54,6 +60,9 @@ class RealtimeSyncManager {
   private channels = new Map<string, ChannelSubscriptionState>();
   private readonly maxReconnectAttempts = 5;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
+  private eventSource: EventSource | null = null;
+  private sseConnected = false;
+  private sseReconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private lastEventId: number | null = null;
   private broadcastChannel: BroadcastChannel | null = null;
   private localMutationListenerBound = false;
@@ -95,6 +104,10 @@ class RealtimeSyncManager {
       currentState.subscribers.delete(callback);
 
       if (currentState.subscribers.size === 0) {
+        if (currentState.reconnectTimer) {
+          clearTimeout(currentState.reconnectTimer);
+          currentState.reconnectTimer = null;
+        }
         if (currentState.channel) {
           try {
             supabase.removeChannel(currentState.channel);
@@ -125,6 +138,7 @@ class RealtimeSyncManager {
 
     if (!this.localMutationListenerBound) {
       window.addEventListener('citadel:local-mutation', this.handleLocalOrBroadcastEvent as EventListener);
+      window.addEventListener('citadel:auth-changed', this.handleAuthChanged);
       window.addEventListener('focus', this.pollLaravelEventsNow);
       document.addEventListener('visibilitychange', this.handleVisibilityChange);
       this.localMutationListenerBound = true;
@@ -146,16 +160,119 @@ class RealtimeSyncManager {
       } catch {}
     }
 
+    this.connectSseStream();
+
     if (!this.pollTimer) {
       void this.pollLaravelEventsNow();
       this.pollTimer = setInterval(() => {
         if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
-        void this.pollLaravelEventsNow();
-      }, 1800);
+        // When SSE is healthy, polling acts only as a lightweight fallback sync
+        if (!this.sseConnected) {
+          void this.pollLaravelEventsNow();
+        }
+      }, 2000);
     }
   }
 
+  private connectSseStream(): void {
+    if (typeof window === 'undefined' || typeof EventSource === 'undefined') return;
+    const token = getLaravelAccessToken();
+    const apiBase = getLaravelApiBaseUrl();
+    if (!token || !apiBase || this.channels.size === 0) {
+      this.closeSseStream();
+      return;
+    }
+    if (this.eventSource && this.eventSource.readyState !== EventSource.CLOSED) {
+      return;
+    }
+
+    try {
+      const sinceParam = this.lastEventId !== null ? `&since=${this.lastEventId}` : '';
+      const streamUrl = `${apiBase}/api/v1/realtime/stream?token=${encodeURIComponent(token)}${sinceParam}`;
+      const es = new EventSource(streamUrl);
+      this.eventSource = es;
+
+      es.addEventListener('connected', (event: MessageEvent) => {
+        this.sseConnected = true;
+        try {
+          const parsed = JSON.parse(event.data || '{}');
+          if (typeof parsed.latestId === 'number' && this.lastEventId === null) {
+            this.lastEventId = parsed.latestId;
+          }
+        } catch {}
+      });
+
+      es.addEventListener('change', (event: MessageEvent) => {
+        this.sseConnected = true;
+        try {
+          const ev = JSON.parse(event.data || '{}') as RealtimeEventItem;
+          if (typeof ev.id === 'number') {
+            this.lastEventId = Math.max(this.lastEventId ?? 0, ev.id);
+          }
+          if (ev.table) {
+            this.emitToTable(ev.table, {
+              eventType: ev.eventType || 'UPDATE',
+              new: { id: ev.recordId, ...(ev.payload || {}) },
+              old: {},
+            } as any);
+          }
+        } catch {}
+      });
+
+      es.addEventListener('ping', (event: MessageEvent) => {
+        this.sseConnected = true;
+        try {
+          const parsed = JSON.parse(event.data || '{}');
+          if (typeof parsed.latestId === 'number') {
+            this.lastEventId = Math.max(this.lastEventId ?? 0, parsed.latestId);
+          }
+        } catch {}
+      });
+
+      es.onerror = () => {
+        this.sseConnected = false;
+        if (this.eventSource === es && es.readyState === EventSource.CLOSED) {
+          this.eventSource = null;
+          if (!this.sseReconnectTimer && this.channels.size > 0 && getLaravelAccessToken()) {
+            this.sseReconnectTimer = setTimeout(() => {
+              this.sseReconnectTimer = null;
+              this.connectSseStream();
+            }, 3000);
+          }
+        }
+      };
+    } catch {
+      this.sseConnected = false;
+    }
+  }
+
+  private closeSseStream(): void {
+    this.sseConnected = false;
+    if (this.sseReconnectTimer) {
+      clearTimeout(this.sseReconnectTimer);
+      this.sseReconnectTimer = null;
+    }
+    if (this.eventSource) {
+      try {
+        this.eventSource.close();
+      } catch {}
+      this.eventSource = null;
+    }
+  }
+
+  private handleAuthChanged = () => {
+    if (getLaravelAccessToken()) {
+      this.closeSseStream();
+      this.connectSseStream();
+      void this.pollLaravelEventsNow();
+    } else {
+      this.closeSseStream();
+      this.lastEventId = null;
+    }
+  };
+
   private teardownLaravelTransport(): void {
+    this.closeSseStream();
     if (this.pollTimer) {
       clearInterval(this.pollTimer);
       this.pollTimer = null;
@@ -168,6 +285,7 @@ class RealtimeSyncManager {
     }
     if (this.localMutationListenerBound && typeof window !== 'undefined') {
       window.removeEventListener('citadel:local-mutation', this.handleLocalOrBroadcastEvent as EventListener);
+      window.removeEventListener('citadel:auth-changed', this.handleAuthChanged);
       window.removeEventListener('focus', this.pollLaravelEventsNow);
       document.removeEventListener('visibilitychange', this.handleVisibilityChange);
       this.localMutationListenerBound = false;
@@ -187,6 +305,7 @@ class RealtimeSyncManager {
 
   private handleVisibilityChange = () => {
     if (document.visibilityState === 'visible') {
+      this.connectSseStream();
       void this.pollLaravelEventsNow();
     }
   };
@@ -200,7 +319,7 @@ class RealtimeSyncManager {
         `/realtime/events${query}`
       );
       if (typeof res?.latestId === 'number') {
-        this.lastEventId = res.latestId;
+        this.lastEventId = Math.max(this.lastEventId ?? 0, res.latestId);
       }
       if (Array.isArray(res?.events)) {
         for (const ev of res.events) {
@@ -298,6 +417,10 @@ class RealtimeSyncManager {
     const state = this.channels.get(channelKey);
     if (!state || state.subscribers.size === 0) return;
 
+    if (import.meta.env.MODE === 'test' && !(supabase.channel as any)?._isMockFunction) {
+      return;
+    }
+
     if (state.reconnectAttempts >= this.maxReconnectAttempts) {
       console.error(`[RealtimeSync] Max reconnection attempts reached for ${channelKey}.`);
       return;
@@ -306,17 +429,25 @@ class RealtimeSyncManager {
     state.reconnectAttempts++;
     const delay = Math.min(1000 * Math.pow(2, state.reconnectAttempts), 15000);
 
-    setTimeout(() => {
-      if (this.channels.has(channelKey)) {
-        try {
-          if (state.channel) {
-            supabase.removeChannel(state.channel);
-          }
-        } catch {}
+    if (state.reconnectTimer) {
+      clearTimeout(state.reconnectTimer);
+    }
+
+    state.reconnectTimer = setTimeout(async () => {
+      state.reconnectTimer = null;
+      if (!this.channels.has(channelKey) || state.subscribers.size === 0) return;
+      try {
+        if (state.channel) {
+          await supabase.removeChannel(state.channel);
+        }
+      } catch {}
+      try {
         const fresh = this.initSupabaseChannel(channelKey, table, event);
         fresh.subscribers = state.subscribers;
         fresh.reconnectAttempts = state.reconnectAttempts;
         this.channels.set(channelKey, fresh);
+      } catch (err) {
+        console.warn(`[RealtimeSync] Reconnect error for ${channelKey}:`, err);
       }
     }, delay);
   }

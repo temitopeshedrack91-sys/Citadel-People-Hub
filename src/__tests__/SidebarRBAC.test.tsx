@@ -99,6 +99,28 @@ describe('Sidebar RBAC & Visual Hierarchy (<Sidebar />)', () => {
       fireEvent.click(logoutBtn);
       expect(mockLogout).toHaveBeenCalledTimes(1);
     });
+
+    it('closes mobile drawer on Escape and omits hardcoded Leave badge when no pending leaves exist', () => {
+      const authValue = createMockAuthContext('ADMIN');
+      const closeMobile = vi.fn();
+      render(
+        <AuthContext.Provider value={authValue}>
+          <Sidebar
+            currentModule="dashboard"
+            onSelectModule={mockSelectModule}
+            isCollapsed={false}
+            onToggleCollapse={vi.fn()}
+            isOpenMobile={true}
+            onCloseMobile={closeMobile}
+            onOpenAddEmployee={mockOpenAddEmployee}
+          />
+        </AuthContext.Provider>
+      );
+
+      expect(screen.getByTestId('nav-item-leave')).not.toHaveTextContent('2');
+      fireEvent.keyDown(window, { key: 'Escape' });
+      expect(closeMobile).toHaveBeenCalledTimes(1);
+    });
   });
 
   // 2. ADMIN Role Visibility

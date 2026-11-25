@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('documents', function (Blueprint $table) {
-            $table->foreignUuid('employee_id')->nullable()->constrained('employees')->cascadeOnDelete()->after('id');
+            $table->foreignId('employee_id')->nullable()->after('id')->constrained('employees')->cascadeOnDelete();
             $table->date('issue_date')->nullable()->after('version');
             $table->date('expiry_date')->nullable()->after('issue_date');
             $table->unsignedInteger('version_number')->default(1)->after('expiry_date');

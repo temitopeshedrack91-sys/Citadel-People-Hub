@@ -363,7 +363,7 @@ class DocumentController extends Controller
             return (string) $employee->department_id === (string) $user->department_id;
         }
 
-        if ($role === 'EMPLOYEE') {
+        if (in_array($role, ['EMPLOYEE', 'MANAGER'], true)) {
             return (string) $employee->id === (string) $user->employee?->id;
         }
 
@@ -391,7 +391,7 @@ class DocumentController extends Controller
             return (string) $employee->department_id === (string) $user->department_id;
         }
 
-        if ($role === 'EMPLOYEE') {
+        if (in_array($role, ['EMPLOYEE', 'MANAGER'], true)) {
             return (string) $employee->id === (string) $user->employee?->id;
         }
 
@@ -415,7 +415,7 @@ class DocumentController extends Controller
             return true;
         }
 
-        if ($role === 'EMPLOYEE') {
+        if (in_array($role, ['EMPLOYEE', 'MANAGER'], true)) {
             return (string) $document->uploaded_by === (string) $user->id;
         }
 
@@ -439,7 +439,7 @@ class DocumentController extends Controller
             return true;
         }
 
-        if ($role === 'EMPLOYEE') {
+        if (in_array($role, ['EMPLOYEE', 'MANAGER'], true)) {
             return (string) $document->uploaded_by === (string) $user->id;
         }
 
@@ -463,7 +463,7 @@ class DocumentController extends Controller
             return (string) $employee->department_id === (string) $user->department_id;
         }
 
-        if ($role === 'EMPLOYEE') {
+        if (in_array($role, ['EMPLOYEE', 'MANAGER'], true)) {
             return (string) $employee->id === (string) $user->employee?->id;
         }
 

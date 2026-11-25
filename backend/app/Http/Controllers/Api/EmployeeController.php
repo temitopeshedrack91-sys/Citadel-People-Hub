@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\EmployeeLeaveBalance;
 use App\Models\Entity;
 use App\Models\LeavePolicy;
+use App\Models\LeaveRequest;
 use App\Models\User;
 use App\Repositories\EmployeeRepository;
 use App\Repositories\OrganizationRepository;
@@ -145,12 +146,32 @@ class EmployeeController extends Controller
             $lockedEmployee = Employee::query()->lockForUpdate()->findOrFail($employee->id);
             $previousStaffId = $lockedEmployee->staff_id;
             $previousName = $lockedEmployee->full_name;
+            $previousManagerId = $lockedEmployee->manager_id;
             $lockedEmployee->update($this->toDatabase($data));
 
             if ($lockedEmployee->full_name !== $previousName) {
                 Employee::query()
                     ->where('manager_id', (string) $lockedEmployee->id)
                     ->update(['manager_name' => $lockedEmployee->full_name]);
+
+                LeaveRequest::query()
+                    ->where('manager_id', (string) $lockedEmployee->id)
+                    ->whereIn('status', ['Pending', 'Submitted', 'Pending Review'])
+                    ->update(['manager_name' => $lockedEmployee->full_name]);
+            }
+
+            if ((string) $lockedEmployee->manager_id !== (string) $previousManagerId) {
+                $newManagerId = $lockedEmployee->manager_id ? (string) $lockedEmployee->manager_id : null;
+                $newManagerName = $lockedEmployee->manager_name;
+                LeaveRequest::query()
+                    ->where('employee_id', $lockedEmployee->id)
+                    ->whereIn('approval_stage', ['MANAGER', 'LINE_MANAGER', 'DEPARTMENT_HEAD'])
+                    ->whereIn('status', ['Pending', 'Submitted'])
+                    ->update([
+                        'manager_id' => $newManagerId,
+                        'manager_name' => $newManagerName,
+                    ]);
+                RealtimeEventService::publish('leave_requests', 'UPDATE', $lockedEmployee->id, ['managerUpdated' => true], (int) $request->user()->id);
             }
 
             $this->syncUserAccounts($lockedEmployee, $previousStaffId);

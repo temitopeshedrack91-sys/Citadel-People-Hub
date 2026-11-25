@@ -38,9 +38,9 @@ class Employee extends Model
     {
         static::saving(function (Employee $employee) {
             if (empty($employee->full_name)) {
-                $employee->full_name = trim(($employee->first_name ?? '') . ' ' . ($employee->last_name ?? ''));
+                $employee->full_name = trim(($employee->first_name ?? '').' '.($employee->last_name ?? ''));
             }
-            if (empty($employee->first_name) && !empty($employee->full_name)) {
+            if (empty($employee->first_name) && ! empty($employee->full_name)) {
                 $parts = explode(' ', trim($employee->full_name), 2);
                 $employee->first_name = $parts[0] ?? '';
                 $employee->last_name = $parts[1] ?? '';

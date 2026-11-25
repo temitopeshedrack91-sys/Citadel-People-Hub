@@ -31,8 +31,10 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useRealtimeTable } from '../../hooks/useRealtimeTable';
+import { leaveRepository } from '../../services';
 import { CitadelLogo } from '../brand/CitadelLogo';
-import { canAccessModule, canPerformAction } from '../../utils/rbac';
+import { canAccessModule, canPerformAction, isHrOrAdminUser, isManagerUser } from '../../utils/rbac';
 
 export type NavModule =
   | 'dashboard'
@@ -80,9 +82,54 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenAddEmployee,
   onOpenLoginModal,
 }) => {
-  const { currentRole, currentUser, currentPersona, logout } = useAuth();
+  const { currentRole, currentUser, logout } = useAuth();
 
   const canManageEmployees = canPerformAction(currentUser, 'manage_employees').allowed;
+  const [pendingLeaveCount, setPendingLeaveCount] = React.useState<number>(0);
+
+  const loadPendingLeaveCount = React.useCallback(async () => {
+    if (import.meta.env.MODE === 'test') return;
+    try {
+      const list = await leaveRepository.getAll();
+      const actorId = String(currentUser.employeeId || currentUser.id || '');
+      const isHr = isHrOrAdminUser(currentUser);
+      const isMgr = isManagerUser(currentUser);
+      const actionable = list.filter((req) => {
+        const isOpen = req.status === 'Submitted' || req.status === 'Pending Review';
+        if (!isOpen) return false;
+        const stage = req.approvalStage || (req.status === 'Pending Review' ? 'HR' : 'MANAGER');
+        if (isHr) return stage === 'HR' || req.status === 'Pending Review';
+        if (isMgr) {
+          return (
+            (stage === 'MANAGER' || stage === 'LINE_MANAGER') &&
+            Boolean(actorId) &&
+            String(req.employeeId) !== actorId
+          );
+        }
+        return Boolean(actorId) && String(req.employeeId) === actorId;
+      });
+      setPendingLeaveCount(actionable.length);
+    } catch {
+      setPendingLeaveCount(0);
+    }
+  }, [currentUser]);
+
+  React.useEffect(() => {
+    void loadPendingLeaveCount();
+  }, [loadPendingLeaveCount]);
+
+  useRealtimeTable('leave_requests', () => {
+    void loadPendingLeaveCount();
+  });
+
+  React.useEffect(() => {
+    if (!isOpenMobile) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCloseMobile();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpenMobile, onCloseMobile]);
 
   // Navigation structured into MENU, OPERATIONS, and SUPPORT with centralized RBAC visibility
   const navSections = [
@@ -107,14 +154,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           icon: Clock,
           visible: canAccessModule(currentUser || currentRole, 'attendance'),
           badge: 'Live',
-          badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+          badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
         },
         {
           id: 'leave' as NavModule,
           label: 'Leave',
           icon: CalendarDays,
           visible: canAccessModule(currentUser || currentRole, 'leave'),
-          badge: '2',
+          badge: pendingLeaveCount > 0 ? String(pendingLeaveCount) : undefined,
           badgeColor: 'bg-[#D4AF37]/20 text-[#D4AF37] border-[#D4AF37]/40',
         },
         {
@@ -317,7 +364,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             return (
               <div key={idx} className="space-y-1">
                 {!isCollapsed ? (
-                  <div className="px-3 pb-1 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                  <div className="px-3 pb-1 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
                     {section.label}
                   </div>
                 ) : (

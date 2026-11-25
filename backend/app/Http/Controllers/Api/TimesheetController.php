@@ -12,7 +12,6 @@ use App\Support\RoleAuthorization;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 /**
  * Manages weekly/monthly employee timesheets, activity logs, and approval workflows.
@@ -26,18 +25,23 @@ class TimesheetController extends Controller
         $query = Timesheet::query()->with(['employee:id,staff_id,full_name,department_id,entity_id', 'approver:id,name']);
 
         $role = RoleAuthorization::canonical($user->role);
-        abort_unless(in_array($role, ['ADMIN', 'HR_STAFF', 'EMPLOYEE'], true), 403, 'Unauthorized.');
+        abort_unless(in_array($role, ['ADMIN', 'HR_STAFF', 'MANAGER', 'EMPLOYEE'], true), 403, 'Unauthorized.');
 
-        if ($role === 'EMPLOYEE') {
-            $employee = Employee::query()->where('staff_id', $user->staff_id)->first();
-            if (! $employee) {
-                return response()->json(['data' => []]);
+        if (! RoleAuthorization::isGlobalHrOrAdmin($user)) {
+            if ($role === 'MANAGER') {
+                $allowedIds = RoleAuthorization::visibleLeaveEmployeeIds($user) ?? [];
+                $allowedIds === [] ? $query->whereRaw('1 = 0') : $query->whereIn('employee_id', $allowedIds);
+            } elseif ($role === 'EMPLOYEE') {
+                $employee = Employee::query()->where('staff_id', $user->staff_id)->first();
+                if (! $employee) {
+                    return response()->json(['data' => []]);
+                }
+                $query->where('employee_id', $employee->id);
+            } elseif (strtoupper(trim($user->role)) === 'DEPARTMENT_HEAD') {
+                $query->whereIn('employee_id', Employee::query()->select('id')->where('department_id', $user->department_id));
+            } elseif (strtoupper(trim($user->role)) === 'BUSINESS_HEAD') {
+                $query->whereIn('employee_id', Employee::query()->select('id')->where('entity_id', $user->entity_id));
             }
-            $query->where('employee_id', $employee->id);
-        } elseif (strtoupper(trim($user->role)) === 'DEPARTMENT_HEAD') {
-            $query->whereIn('employee_id', Employee::query()->select('id')->where('department_id', $user->department_id));
-        } elseif (strtoupper(trim($user->role)) === 'BUSINESS_HEAD') {
-            $query->whereIn('employee_id', Employee::query()->select('id')->where('entity_id', $user->entity_id));
         }
 
         if ($request->filled('employeeId')) {
@@ -246,10 +250,10 @@ class TimesheetController extends Controller
     {
         $user = $request->user();
         $employee = Employee::query()->findOrFail($timesheet->employee_id);
-        $role = RoleAuthorization::canonical($user->role);
+        $allowedIds = RoleAuthorization::visibleLeaveEmployeeIds($user);
 
-        $allowed = in_array($role, ['ADMIN', 'HR_STAFF'], true)
-            || ($role === 'EMPLOYEE' && $employee->staff_id === $user->staff_id)
+        $allowed = RoleAuthorization::isGlobalHrOrAdmin($user)
+            || ($allowedIds !== null && in_array((int) $employee->id, $allowedIds, true))
             || (strtoupper(trim($user->role)) === 'DEPARTMENT_HEAD' && $employee->department_id === $user->department_id)
             || (strtoupper(trim($user->role)) === 'BUSINESS_HEAD' && $employee->entity_id === $user->entity_id);
 
@@ -260,7 +264,7 @@ class TimesheetController extends Controller
     {
         $user = $request->user();
         $role = RoleAuthorization::canonical($user->role);
-        $allowed = ($role === 'EMPLOYEE' && $employee->staff_id === $user->staff_id)
+        $allowed = (in_array($role, ['EMPLOYEE', 'MANAGER'], true) && $user->staff_id !== null && $employee->staff_id === $user->staff_id)
             || RoleAuthorization::canManageEmployee($user, $employee);
 
         abort_unless($allowed, 403, 'You are not authorized to log timesheets for this employee.');
@@ -270,9 +274,11 @@ class TimesheetController extends Controller
     {
         $user = $request->user();
         $employee = Employee::query()->findOrFail($timesheet->employee_id);
-        $role = RoleAuthorization::canonical($user->role);
+        $selfEmployee = $user->staff_id ? Employee::query()->where('staff_id', $user->staff_id)->first() : null;
+        $isDirectSupervisor = $selfEmployee !== null && $employee->manager_id !== null && (string) $employee->manager_id === (string) $selfEmployee->id;
 
-        $allowed = in_array($role, ['ADMIN', 'HR_STAFF'], true)
+        $allowed = RoleAuthorization::isGlobalHrOrAdmin($user)
+            || $isDirectSupervisor
             || (strtoupper(trim($user->role)) === 'DEPARTMENT_HEAD' && $employee->department_id === $user->department_id)
             || (strtoupper(trim($user->role)) === 'BUSINESS_HEAD' && $employee->entity_id === $user->entity_id);
 

@@ -355,12 +355,22 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto animate-fade-in">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Employee Dossier — ${employee.fullName}`}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/75 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in"
+    >
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-6 flex flex-col max-h-[90vh]">
         {/* Modal Top Header */}
-        <div className="bg-[#0A1E3F] text-white p-5 sm:p-6 relative border-b border-blue-900/30 shrink-0">
+        <div className="bg-[#083E34] text-white p-5 sm:p-6 relative border-b border-emerald-950/30 shrink-0">
           <button
+            type="button"
             onClick={onClose}
+            aria-label="Close employee dossier"
             className="absolute top-4 right-4 text-slate-300 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition cursor-pointer"
             title="Close dossier"
           >
@@ -1164,25 +1174,25 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
           {/* TAB 7: LEAVE */}
           {activeTab === 'leave' && (
             <div className="space-y-6 animate-fade-in">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3.5 rounded-xl bg-indigo-50 border border-indigo-100 text-center">
-                  <span className="text-[10px] text-indigo-700 font-bold block">Annual Leave</span>
-                  <div className="text-xl font-bold text-indigo-900 mt-1">18 / 21</div>
-                  <span className="text-[10px] text-indigo-600">Days Remaining</span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 tabular-nums">
+                <div className="p-3.5 rounded-xl bg-[#EBF5F2] border border-[#A3D4C7]/60 text-center">
+                  <span className="text-[11px] text-[#083E34] font-bold block">Annual Leave</span>
+                  <div className="text-xl font-bold text-[#052C25] mt-1">18 / 21</div>
+                  <span className="text-[11px] text-[#083E34]/80">Days Remaining</span>
                 </div>
-                <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-100 text-center">
-                  <span className="text-[10px] text-emerald-700 font-bold block">Casual Leave</span>
+                <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-center">
+                  <span className="text-[11px] text-emerald-700 font-bold block">Casual Leave</span>
                   <div className="text-xl font-bold text-emerald-900 mt-1">3 / 5</div>
-                  <span className="text-[10px] text-emerald-600">Days Remaining</span>
+                  <span className="text-[11px] text-emerald-700">Days Remaining</span>
                 </div>
-                <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-100 text-center">
-                  <span className="text-[10px] text-amber-700 font-bold block">Sick Leave</span>
+                <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200/80 text-center">
+                  <span className="text-[11px] text-amber-800 font-bold block">Sick Leave</span>
                   <div className="text-xl font-bold text-amber-900 mt-1">10 / 12</div>
-                  <span className="text-[10px] text-amber-600">Days Remaining</span>
+                  <span className="text-[11px] text-amber-700">Days Remaining</span>
                 </div>
-                <div className="p-3.5 rounded-xl bg-purple-50 border border-purple-100 text-center">
-                  <span className="text-[10px] text-purple-700 font-bold block">Compassionate</span>
-                  <div className="text-xl font-bold text-purple-900 mt-1">3 / 3</div>
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                  <span className="text-[11px] text-slate-700 font-bold block">Compassionate</span>
+                  <div className="text-xl font-bold text-slate-900 mt-1">3 / 3</div>
                   <span className="text-[10px] text-purple-600">Days Remaining</span>
                 </div>
               </div>

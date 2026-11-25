@@ -9,7 +9,6 @@
 
 import React, { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { Col, Container, Row } from 'react-bootstrap';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Header } from './components/layout/Header';
 import { Sidebar, NavModule } from './components/layout/Sidebar';
@@ -168,6 +167,8 @@ const MainAppLayout: React.FC = () => {
         return 'Citadel People Hub';
       case 'payroll':
         return 'Payroll & Compensation';
+      case 'claims':
+        return 'Claims & Expenses';
       case 'team-notes':
         return 'Team Notes';
       case 'audit-logs':
@@ -280,7 +281,7 @@ const MainAppLayout: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F8FA] flex flex-col font-sans text-slate-800">
+    <div className="min-h-screen bg-[#F4F6F9] flex flex-col font-sans text-slate-900">
       {/* 1. Full-Width Top Navigation Bar: Spans top of screen, never covered by sidebar */}
       <Header
         activeModuleTitle={getModuleTitle(currentModule)}
@@ -301,12 +302,10 @@ const MainAppLayout: React.FC = () => {
         }}
       />
 
-      {/* 3. Main Workspace: Natural Flex container for Sidebar & Main Content */}
-      <Container fluid className="p-0 flex-grow-1">
-      <Row className="g-0 flex-grow-1">
-        {/* Role-Aware Modern Sidebar: sits naturally below Header, never covering it */}
-        <Col xs="auto" className="p-0">
-          <Sidebar
+      {/* 2. Main Workspace: Flex container for Sidebar & Dynamic View */}
+      <div className="flex flex-1 min-w-0">
+        {/* Role-Aware Sidebar: sits naturally below Header, never covering it */}
+        <Sidebar
           currentModule={currentModule}
           onSelectModule={(mod) => setCurrentModule(mod)}
           isOpenMobile={isMobileSidebarOpen}
@@ -321,29 +320,30 @@ const MainAppLayout: React.FC = () => {
             setLoginModalTab('personas');
             setIsLoginModalOpen(true);
           }}
-          />
-        </Col>
+        />
 
-        {/* Dynamic View Area: sits naturally to the right of the sidebar with generous margins */}
-        <Col className="min-w-0">
-        <main className="w-full px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 min-w-0 overflow-x-hidden">
-          <div className="w-full max-w-[1720px] mx-auto min-w-0">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentModule}
-                initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: shouldReduceMotion ? 0 : -8 }}
-                transition={{ duration: shouldReduceMotion ? 0.01 : 0.22, ease: 'easeOut' }}
-              >
-                {renderActiveModule()}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </main>
-        </Col>
-      </Row>
-      </Container>
+        {/* Dynamic View Area: sits cleanly to the right of the sidebar */}
+        <div className="flex-1 min-w-0">
+          <main className="w-full px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-7 min-w-0 overflow-x-hidden">
+            <div className="w-full max-w-[1680px] mx-auto min-w-0">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentModule}
+                  initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: shouldReduceMotion ? 0 : -4 }}
+                  transition={{
+                    duration: shouldReduceMotion ? 0.01 : 0.16,
+                    ease: [0.23, 1, 0.32, 1],
+                  }}
+                >
+                  {renderActiveModule()}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </main>
+        </div>
+      </div>
 
       {/* Login & Role Switcher Modal */}
       <LoginModal

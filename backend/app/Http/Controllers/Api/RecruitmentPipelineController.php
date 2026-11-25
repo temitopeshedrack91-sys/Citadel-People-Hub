@@ -337,8 +337,7 @@ class RecruitmentPipelineController extends Controller
 
     private function authorizeAdminOrHr(Request $request): void
     {
-        $role = RoleAuthorization::canonical($request->user()->role);
-        abort_unless(in_array($role, ['ADMIN', 'HR_STAFF'], true), 403, 'Unauthorized.');
+        abort_unless(RoleAuthorization::isGlobalHrOrAdmin($request->user()), 403, 'Unauthorized.');
     }
 
     private function presentCandidate(Candidate $c): array

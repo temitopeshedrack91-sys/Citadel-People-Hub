@@ -32,6 +32,15 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const getNewStatus = (action: WorkflowActionType): WorkflowStatus => {
@@ -73,16 +82,23 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Workflow Action: ${title}`}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in"
+    >
       <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 bg-[#0A1E3F] text-white shrink-0 border-b border-blue-900/30">
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 bg-[#083E34] text-white shrink-0 border-b border-emerald-950/30">
           <div>
             <h3 className="text-base font-semibold text-white">Workflow Action</h3>
             <p className="text-xs text-amber-300/90">{title}</p>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            aria-label="Close modal"
             className="text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
           >
             <X className="w-5 h-5" />

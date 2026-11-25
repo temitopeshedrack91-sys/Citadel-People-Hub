@@ -10,7 +10,6 @@ use App\Models\Employee;
 use App\Models\EmployeeLeaveBalance;
 use App\Models\Entity;
 use App\Models\JobVacancy;
-use App\Models\LeaveCategory;
 use App\Models\LeaveRequest;
 use App\Support\RoleAuthorization;
 use Illuminate\Http\JsonResponse;

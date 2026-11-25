@@ -130,7 +130,7 @@ const DEMO_CREDENTIALS: {
     jobTitle: 'QA & Review Lead',
     department: 'Technology & Systems',
     password: 'Password123!',
-    color: 'bg-purple-600 text-white',
+    color: 'bg-teal-700 text-white',
     permissions: [
       'Employee self-service portal',
       'Task QA review & verification',
@@ -310,13 +310,20 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Citadel People Hub Authentication"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/75 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in"
+    >
       <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-4 sm:my-6 flex flex-col max-h-[92vh]">
         {/* Modal Branded Header */}
-        <div className="bg-[#0A1E3F] text-white p-5 sm:p-6 relative border-b border-blue-900/40 shrink-0">
+        <div className="bg-[#083E34] text-white p-5 sm:p-6 relative border-b border-emerald-950/30 shrink-0">
           {!required && (
             <button
+              type="button"
               onClick={onClose}
+              aria-label="Close authentication modal"
               className="absolute top-4 right-4 text-slate-300 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition cursor-pointer"
               title="Close modal"
             >
@@ -339,7 +346,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex items-center justify-center gap-1.5 mt-4 bg-[#06152D] p-1 rounded-xl">
+          <div className="flex items-center justify-center gap-1.5 mt-4 bg-[#052C25] p-1 rounded-xl">
             <button
               type="button"
               onClick={() => {

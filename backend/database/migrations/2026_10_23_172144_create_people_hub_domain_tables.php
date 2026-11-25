@@ -36,7 +36,8 @@ return new class extends Migration
 
         Schema::create('departments', function (Blueprint $table) {
             $table->id();
-            $table->string('entity_id')->constrained('entities')->restrictOnDelete();
+            $table->string('entity_id');
+            $table->foreign('entity_id')->references('id')->on('entities')->restrictOnDelete();
             $table->string('name');
             $table->string('code');
             $table->string('head_of_department_name')->nullable();
@@ -50,7 +51,8 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->string('role')->default('EMPLOYEE')->index();
             $table->string('staff_id')->nullable()->unique();
-            $table->string('entity_id')->nullable()->constrained('entities')->nullOnDelete();
+            $table->string('entity_id')->nullable();
+            $table->foreign('entity_id')->references('id')->on('entities')->nullOnDelete();
             $table->foreignId('department_id')->nullable()->constrained('departments')->nullOnDelete();
             $table->string('job_title')->nullable();
             $table->boolean('is_active')->default(true);
@@ -70,7 +72,8 @@ return new class extends Migration
             $table->text('address')->nullable();
             $table->text('emergency_contact')->nullable();
             $table->text('next_of_kin')->nullable();
-            $table->string('entity_id')->constrained('entities')->restrictOnDelete();
+            $table->string('entity_id');
+            $table->foreign('entity_id')->references('id')->on('entities')->restrictOnDelete();
             $table->foreignId('department_id')->constrained('departments')->restrictOnDelete();
             $table->string('job_title');
             $table->string('grade_level')->nullable();
@@ -186,7 +189,7 @@ return new class extends Migration
 
         Schema::create('onboarding_journeys', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('employee_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('employee_id')->nullable()->constrained('employees')->nullOnDelete();
             $table->json('journey_data');
             $table->timestamps();
         });
@@ -195,8 +198,9 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('requisition_code')->unique();
             $table->string('job_title');
-            $table->foreignUuid('entity_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignUuid('department_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('entity_id')->nullable();
+            $table->foreign('entity_id')->references('id')->on('entities')->nullOnDelete();
+            $table->foreignId('department_id')->nullable()->constrained('departments')->nullOnDelete();
             $table->json('requisition_data');
             $table->timestamps();
         });
@@ -206,17 +210,17 @@ return new class extends Migration
     {
         Schema::dropIfExists('recruitment_requisitions');
         Schema::dropIfExists('onboarding_journeys');
-        Schema::dropIfExists('system_notifications');
+        Schema::dropIfExists('notifications');
         Schema::dropIfExists('audit_logs');
-        Schema::dropIfExists('hub_documents');
+        Schema::dropIfExists('documents');
         Schema::dropIfExists('attendance_records');
         Schema::dropIfExists('leave_requests');
         Schema::dropIfExists('employees');
 
         Schema::table('users', function (Blueprint $table) {
             $table->dropConstrainedForeignId('department_id');
-            $table->dropConstrainedForeignId('entity_id');
-            $table->dropColumn(['role', 'staff_id', 'job_title', 'is_active']);
+            $table->dropForeign(['entity_id']);
+            $table->dropColumn(['role', 'staff_id', 'entity_id', 'job_title', 'is_active']);
         });
 
         Schema::dropIfExists('departments');

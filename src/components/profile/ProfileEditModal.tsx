@@ -47,6 +47,15 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
     setSaveError(null);
   }, [currentUser, isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,19 +108,26 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
     .join('');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto animate-fade-in">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Edit Profile"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto animate-fade-in"
+    >
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-6">
         {/* Header */}
-        <div className="bg-[#0A1E3F] text-white p-5 relative border-b border-blue-900/30">
+        <div className="bg-[#083E34] text-white p-5 relative border-b border-emerald-950/30">
           <button
+            type="button"
             onClick={onClose}
             className="absolute top-4 right-4 text-slate-300 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition cursor-pointer"
             title="Close"
+            aria-label="Close modal"
           >
             <X className="w-5 h-5" />
           </button>
           <h2 className="text-lg font-bold text-white">Edit Profile</h2>
-          <p className="text-xs text-blue-100 mt-0.5">
+          <p className="text-xs text-emerald-100/90 mt-0.5">
             Update your personal information
           </p>
         </div>
@@ -128,7 +144,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                   className="w-20 h-20 rounded-full object-cover border-2 border-slate-200 shadow-md"
                 />
               ) : (
-                <div className="w-20 h-20 rounded-full bg-[#0A1E3F] text-white font-bold flex items-center justify-center text-xl shadow-md border-2 border-slate-200">
+                <div className="w-20 h-20 rounded-full bg-[#083E34] text-white font-bold flex items-center justify-center text-xl shadow-md border-2 border-slate-200">
                   {initials}
                 </div>
               )}

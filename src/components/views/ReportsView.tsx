@@ -254,30 +254,30 @@ export const ReportsView: React.FC = () => {
               (l) => l.status === 'Submitted' || l.status === 'Pending Review'
             );
             return (
-              <div key={ent.id} className="bg-white rounded-xl border border-slate-300 p-5 shadow-xs">
-                <span className="text-xs font-black text-black uppercase tracking-wider block">
+              <div key={ent.id} className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
                   {ent.name} ({ent.shortCode})
                 </span>
-                <div className="mt-2 flex items-baseline justify-between">
-                  <span className="text-2xl font-black text-black">{entStaff.length} Staff</span>
-                  <span className="text-xs font-bold text-black">
+                <div className="mt-2 flex items-baseline justify-between tabular-nums">
+                  <span className="text-2xl font-extrabold text-slate-900">{entStaff.length} Staff</span>
+                  <span className="text-xs font-semibold text-slate-600">
                     {totalStaff > 0 ? ((entStaff.length / totalStaff) * 100).toFixed(1) : '0'}% of Total
                   </span>
                 </div>
-                <div className="mt-3 text-xs text-black font-semibold space-y-1.5">
+                <div className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-700 font-medium space-y-1.5 tabular-nums">
                   <div className="flex justify-between">
                     <span>Active Personnel:</span>
-                    <span className="font-extrabold text-emerald-800">
+                    <span className="font-bold text-emerald-700">
                       {entStaff.filter((e) => e.status === 'Active' || e.status === 'Confirmed').length}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Total Leave Requests:</span>
-                    <span className="font-extrabold text-black">{entLeaves.length}</span>
+                    <span className="font-bold text-slate-900">{entLeaves.length}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Pending Leave Requests:</span>
-                    <span className="font-extrabold text-[#D97706] bg-[#FAF5EB] border border-[#F2E4B8] px-2 py-0.5 rounded-full text-[11px]">
+                    <span className="font-bold text-[#D97706] bg-[#FAF5EB] border border-[#F2E4B8] px-2 py-0.5 rounded-full text-[11px]">
                       {entPending.length} pending
                     </span>
                   </div>
@@ -298,13 +298,18 @@ export const ReportsView: React.FC = () => {
           <div>
             <span className="text-slate-500 block">Backend Staff Total</span>
             <span className="text-base font-black text-[#083E34]">
-              {workforceSummary?.totalStaff ?? totalStaff}
+              {workforceSummary?.totalEmployees ?? workforceSummary?.totalStaff ?? totalStaff}
             </span>
           </div>
           <div>
             <span className="text-slate-500 block">Total Leave Requests</span>
             <span className="text-base font-black text-slate-900">
-              {leaveSummary?.totalRequests ?? leaves.length}
+              {leaveSummary?.requestsByStatus
+                ? Object.values(leaveSummary.requestsByStatus as Record<string, number>).reduce(
+                    (sum, count) => sum + Number(count || 0),
+                    0
+                  )
+                : leaveSummary?.totalRequests ?? leaves.length}
             </span>
           </div>
           <div>

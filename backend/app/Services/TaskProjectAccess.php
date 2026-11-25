@@ -30,7 +30,7 @@ class TaskProjectAccess
             return $query->where('department_id', $user->department_id);
         }
 
-        if (RoleAuthorization::canonical($user->role) === 'EMPLOYEE') {
+        if (in_array(RoleAuthorization::canonical($user->role), ['EMPLOYEE', 'MANAGER'], true)) {
             $employeeId = $this->employeeIdFor($user);
 
             return $employeeId === null
@@ -51,7 +51,7 @@ class TaskProjectAccess
             return $query;
         }
 
-        if (RoleAuthorization::canonical($user->role) === 'EMPLOYEE') {
+        if (in_array(RoleAuthorization::canonical($user->role), ['EMPLOYEE', 'MANAGER'], true)) {
             $employee = $user->staff_id === null
                 ? null
                 : Employee::query()->where('staff_id', $user->staff_id)->first(['id', 'entity_id']);
@@ -164,7 +164,7 @@ class TaskProjectAccess
 
         $employeeId = $this->employeeIdFor($user);
 
-        return RoleAuthorization::canonical($user->role) === 'EMPLOYEE'
+        return in_array(RoleAuthorization::canonical($user->role), ['EMPLOYEE', 'MANAGER'], true)
             && $employeeId !== null
             && (int) $task->assigned_to_employee_id === $employeeId;
     }

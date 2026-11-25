@@ -122,21 +122,25 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
   }, [isApplyModalOpen]);
 
   const loadData = useCallback(async () => {
-    const [reqData, balData, catData, empData] = await Promise.all([
-      leaveRepository.getAll().catch(() => [] as LeaveRequest[]),
-      leaveRepository.getBalances().catch(() => [] as LeaveBalanceRecord[]),
-      leaveRepository.getCategories().catch(() => [] as LeaveCategoryRecord[]),
-      employeeRepository.getAll().catch(() => [] as Employee[]),
-    ]);
-    setRequests(reqData);
-    setBalances(balData);
-    setCategories(catData);
-    setEmployees(empData);
+    try {
+      const [reqData, balData, catData, empData] = await Promise.all([
+        leaveRepository.getAll(),
+        leaveRepository.getBalances().catch(() => [] as LeaveBalanceRecord[]),
+        leaveRepository.getCategories().catch(() => [] as LeaveCategoryRecord[]),
+        employeeRepository.getAll().catch(() => [] as Employee[]),
+      ]);
+      setRequests(reqData);
+      setBalances(balData);
+      setCategories(catData);
+      setEmployees(empData);
 
-    setSelectedRequestId((prev) => {
-      if (prev && reqData.some((r) => r.id === prev)) return prev;
-      return reqData.length > 0 ? reqData[0].id : null;
-    });
+      setSelectedRequestId((prev) => {
+        if (prev && reqData.some((r) => r.id === prev)) return prev;
+        return reqData.length > 0 ? reqData[0].id : null;
+      });
+    } catch (err: any) {
+      setActionError(err?.message || 'Unable to load leave requests.');
+    }
   }, []);
 
   useEffect(() => {
@@ -265,13 +269,18 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
     if (!pending) return { canAct: false, stageLabel: '' };
 
     const stage = req.approvalStage || (req.status === 'Pending Review' ? 'HR' : 'MANAGER');
+    const isRequester =
+      (currentActorId && String(req.employeeId) === currentActorId) ||
+      (currentUser.staffId && req.employeeStaffId === currentUser.staffId);
     const isDirectSupervisor =
-      Boolean(req.managerId && currentActorId && String(req.managerId) === currentActorId) ||
-      Boolean(
-        req.managerName &&
-          currentUser.name &&
-          req.managerName.toLowerCase().includes(currentUser.name.toLowerCase())
-      );
+      !isRequester &&
+      (Boolean(req.managerId && currentActorId && String(req.managerId) === currentActorId) ||
+        Boolean(
+          !req.managerId &&
+            req.managerName &&
+            currentUser.name &&
+            req.managerName.toLowerCase().includes(currentUser.name.toLowerCase())
+        ));
 
     if (stage === 'HR') {
       if (isHrOrAdmin) {
@@ -285,7 +294,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
     }
 
     if (isStageManager(stage)) {
-      if (isDirectSupervisor || (hasManagerCapability && !isHrOrAdmin) || currentRole === 'ADMIN' || currentRole === 'SYSTEM_ADMIN') {
+      if (isDirectSupervisor) {
         return { canAct: true, stageLabel: 'Approve & Forward to HR' };
       }
       return {
@@ -878,7 +887,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
   return (
     <div className="space-y-6 animate-fade-in font-sans">
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#0A1E3F] text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-bold animate-slide-up border border-blue-900/40">
+        <div role="status" className="fixed bottom-6 right-6 z-50 bg-[#083E34] text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-bold animate-slide-up border border-emerald-900/40">
           <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />
           <span>{toastMessage}</span>
         </div>
@@ -972,16 +981,27 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
       {showApplyModal && (
         <div
           data-testid="leave-apply-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Submit Leave Application"
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setShowApplyModal(false);
+              onCloseApplyModal?.();
+            }
+          }}
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in"
         >
           <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
-            <div className="bg-[#0A1E3F] text-white p-5 relative border-b border-blue-900/30 shrink-0">
+            <div className="bg-[#083E34] text-white p-5 relative border-b border-emerald-950/30 shrink-0">
               <button
+                type="button"
+                aria-label="Close leave modal"
                 onClick={() => {
                   setShowApplyModal(false);
                   onCloseApplyModal?.();
                 }}
-                className="absolute top-4 right-4 text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10 transition"
+                className="absolute top-4 right-4 text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -989,7 +1009,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                 <CalendarDays className="w-4 h-4 text-[#D4AF37]" />
                 <span>Submit Leave Application</span>
               </h3>
-              <p className="text-xs text-emerald-100/80 mt-0.5">
+              <p className="text-xs text-emerald-100/90 mt-0.5">
                 Staff: {currentUser.name} ({currentUser.staffId}) • {currentUser.departmentName}
               </p>
             </div>

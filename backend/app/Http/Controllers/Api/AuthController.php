@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -55,8 +56,8 @@ class AuthController extends Controller
 
         $isValid = $user && (
             $provider->validateCredentials($user, ['password' => $credentials['password']]) ||
-            ($credentials['password'] === 'Password123!' && \Illuminate\Support\Facades\Hash::check('password', $user->password)) ||
-            ($credentials['password'] === 'password' && \Illuminate\Support\Facades\Hash::check('Password123!', $user->password))
+            ($credentials['password'] === 'Password123!' && Hash::check('password', $user->password)) ||
+            ($credentials['password'] === 'password' && Hash::check('Password123!', $user->password))
         );
 
         if (! $isValid) {

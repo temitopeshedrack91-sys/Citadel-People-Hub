@@ -17,6 +17,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { useRealtimeTable } from '../../../hooks/useRealtimeTable';
 import { NavModule } from '../../layout/Sidebar';
 import { leaveRepository, employeeRepository } from '../../../services';
+import { LoadingSkeleton } from '../../common/LoadingSkeleton';
 import {
   LeaveRequest,
   LeaveBalanceRecord,
@@ -184,51 +185,53 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
       </div>
 
       {/* 2. Real Leave Balances Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {myBalances.length > 0 ? (
-          myBalances.slice(0, 4).map((bal) => {
-            const total = Number(bal.total_days) || 0;
-            const remaining = Math.max(0, Number(bal.remaining_days) || 0);
-            const used = Number(bal.used_days) || 0;
-            const pending = Number(bal.pending_days) || 0;
-            const pct = total > 0 ? Math.min(100, Math.round((remaining / total) * 100)) : 0;
-            return (
-              <div
-                key={String(bal.id)}
-                className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-amber-300 transition"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-black uppercase text-slate-700">
-                    {bal.category?.name || 'Leave Quota'}
-                  </span>
-                  <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-xs">
-                    <CalendarDays className="w-4 h-4" />
+      {loading && myBalances.length === 0 ? (
+        <LoadingSkeleton type="stats" />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {myBalances.length > 0 ? (
+            myBalances.slice(0, 4).map((bal) => {
+              const total = Number(bal.total_days) || 0;
+              const remaining = Math.max(0, Number(bal.remaining_days) || 0);
+              const used = Number(bal.used_days) || 0;
+              const pending = Number(bal.pending_days) || 0;
+              const pct = total > 0 ? Math.min(100, Math.round((remaining / total) * 100)) : 0;
+              return (
+                <div
+                  key={String(bal.id)}
+                  className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                      {bal.category?.name || 'Leave Quota'}
+                    </span>
+                    <div className="w-8 h-8 rounded-xl bg-[#FAF5EB] text-[#B45309] border border-[#F2E4B8] flex items-center justify-center font-bold text-xs">
+                      <CalendarDays className="w-4 h-4" />
+                    </div>
                   </div>
+                  <div className="flex items-baseline gap-1.5 tabular-nums">
+                    <span className="text-2xl font-extrabold text-[#083E34]">{remaining}</span>
+                    <span className="text-xs text-slate-500 font-semibold">/ {total} days left</span>
+                  </div>
+                  <div className="mt-3 w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="bg-[#083E34] h-full rounded-full transition-all duration-500"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-600 mt-2 font-medium tabular-nums">
+                    Used: {used}d {pending > 0 ? `• Pending: ${pending}d` : ''}
+                  </p>
                 </div>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl font-black text-[#083E34]">{remaining}</span>
-                  <span className="text-xs text-slate-500 font-bold">/ {total} days left</span>
-                </div>
-                <div className="mt-3 w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                  <div
-                    className="bg-[#083E34] h-full rounded-full transition-all duration-500"
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-                <p className="text-[11px] text-slate-600 mt-2 font-medium">
-                  Used: {used}d {pending > 0 ? `• Pending: ${pending}d` : ''}
-                </p>
-              </div>
-            );
-          })
-        ) : (
-          <div className="sm:col-span-2 lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200 text-xs text-slate-500">
-            {loading
-              ? 'Loading your leave entitlements...'
-              : 'Leave balance records will populate once annual allocations are initialized.'}
-          </div>
-        )}
-      </div>
+              );
+            })
+          ) : (
+            <div className="sm:col-span-2 lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200 text-xs text-slate-500">
+              Leave balance records will populate once annual allocations are initialized.
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 3. Latest Request Two-Stage Progress + Full Request History */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">

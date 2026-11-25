@@ -149,8 +149,8 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
       description: 'Prepare onboarding access and HR documents for new employees.',
       collaborators: 'Collaborate with Mia, Harper',
       avatars: [
-        { initials: 'MA', bg: 'bg-emerald-600', name: 'Mia Anderson' },
-        { initials: 'HL', bg: 'bg-indigo-600', name: 'Harper Lee' },
+        { initials: 'MA', bg: 'bg-emerald-700', name: 'Mia Anderson' },
+        { initials: 'HL', bg: 'bg-teal-700', name: 'Harper Lee' },
       ],
     },
     {
@@ -160,7 +160,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
       description: 'Review employee progress and attendance performance.',
       collaborators: 'Collaborate with Chloe, Ethan',
       avatars: [
-        { initials: 'CM', bg: 'bg-rose-600', name: 'Chloe Martin' },
+        { initials: 'CM', bg: 'bg-rose-700', name: 'Chloe Martin' },
         { initials: 'EB', bg: 'bg-amber-600', name: 'Ethan Brooks' },
       ],
     },
@@ -172,7 +172,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
       collaborators: 'Collaborate with Femi, Blessing',
       avatars: [
         { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
-        { initials: 'BO', bg: 'bg-teal-600', name: 'Blessing Okafor' },
+        { initials: 'BO', bg: 'bg-emerald-600', name: 'Blessing Okafor' },
       ],
     },
   ]);
@@ -266,7 +266,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
       attachmentsCount: 3,
       assignees: [
         { initials: 'NB', bg: 'bg-amber-600', name: 'Noah Bennett' },
-        { initials: 'BA', bg: 'bg-indigo-600', name: 'Dr. Bukola Adeleke' },
+        { initials: 'BA', bg: 'bg-[#083E34]', name: 'Dr. Bukola Adeleke' },
       ],
     },
     {
@@ -278,9 +278,9 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
       commentsCount: 5,
       attachmentsCount: 4,
       assignees: [
-        { initials: 'MA', bg: 'bg-emerald-600', name: 'Mia Anderson' },
-        { initials: 'HL', bg: 'bg-indigo-600', name: 'Harper Lee' },
-        { initials: 'EB', bg: 'bg-teal-600', name: 'Ethan Brooks' },
+        { initials: 'MA', bg: 'bg-emerald-700', name: 'Mia Anderson' },
+        { initials: 'HL', bg: 'bg-teal-700', name: 'Harper Lee' },
+        { initials: 'EB', bg: 'bg-slate-700', name: 'Ethan Brooks' },
       ],
     },
   ];
@@ -299,7 +299,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
       role: 'Design Team',
       status: '22 min',
       initials: 'MA',
-      bg: 'bg-emerald-600',
+      bg: 'bg-emerald-700',
     },
     {
       name: 'Noah Bennett',
@@ -313,14 +313,14 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
       role: 'Product Strategy',
       status: '9 min',
       initials: 'CM',
-      bg: 'bg-rose-600',
+      bg: 'bg-rose-700',
     },
     {
       name: 'Mila Jackson',
       role: 'Product Strategy',
       status: '1 min',
       initials: 'MJ',
-      bg: 'bg-indigo-600',
+      bg: 'bg-[#083E34]',
     },
   ];
 
@@ -432,7 +432,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
       <div className="space-y-6 pb-12 font-sans antialiased text-slate-900" data-testid="dashboard-view">
         {/* Toast Notification */}
         {toastMessage && (
-          <div className="fixed bottom-6 right-6 z-50 bg-[#0A1E3F] text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-bold animate-slide-up border border-blue-900/40">
+          <div role="status" className="fixed bottom-6 right-6 z-50 bg-[#083E34] text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-bold animate-slide-up border border-emerald-900/40">
             <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />
             <span>{toastMessage}</span>
           </div>
@@ -446,19 +446,18 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
           {/* LEFT MAJOR COLUMN (8 OF 12 COLS - ~67% WIDTH)            */}
           {/* ======================================================== */}
           <div className="lg:col-span-8 space-y-5">
-            {/* Greeting Header */}
-            <div className="flex items-center gap-3.5">
+              <div className="flex items-center gap-3.5">
               <img
                 src="/citadel-logo.png"
                 alt="Citadel Logo"
                 className="h-11 w-11 object-contain rounded-xl p-1 bg-white border border-slate-200/90 shadow-2xs shrink-0"
               />
               <div>
-                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
                   {greeting}, {greetingName}
                 </h1>
                 <p className="text-xs text-slate-500 font-medium mt-0.5">
-                  People, Culture & Performance • Workforce Overview.
+                  People, Culture &amp; Performance • Workforce Overview.
                 </p>
               </div>
             </div>
@@ -540,9 +539,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                         <h3 className="text-xs font-bold text-slate-900 group-hover:text-[#083E34] transition">
                           {proj.title}
                         </h3>
-                        <button className="text-slate-400 hover:text-slate-700 p-0.5">
-                          <MoreHorizontal className="w-3.5 h-3.5" />
-                        </button>
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#083E34] transition shrink-0" aria-hidden="true" />
                       </div>
                       <p className="text-xs text-slate-500 mt-1.5 font-medium leading-relaxed line-clamp-2">
                         {proj.subtitle}
@@ -762,13 +759,14 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                   const isActive = activeAttendanceDay === d.day;
                   return (
                     <button
+                      type="button"
                       key={d.day}
                       onClick={() => setActiveAttendanceDay(d.day as any)}
                       className={`flex flex-col items-center group cursor-pointer transition p-2 rounded-xl ${
                         isActive ? 'bg-slate-100' : 'hover:bg-slate-50'
                       }`}
                     >
-                      <span className="text-xs font-black text-slate-900 mb-1.5">
+                      <span className="text-xs font-bold text-slate-900 mb-1.5 tabular-nums">
                         {d.rate}%
                       </span>
 
@@ -776,7 +774,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                         <div
                           style={{ height: `${d.rate}%` }}
                           className={`w-full rounded-lg transition-all duration-500 ${
-                            d.isToday ? 'bg-[#0A1E3F]' : 'bg-[#1E3A8A]'
+                            d.isToday ? 'bg-[#083E34]' : 'bg-emerald-700/75'
                           }`}
                         />
                       </div>
@@ -784,7 +782,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                       <div className="mt-2 text-center">
                         <span className="text-xs font-bold text-slate-700 block">{d.day}</span>
                         {d.isToday && (
-                          <span className="text-[9px] font-black uppercase text-[#D97706] bg-[#FAF5EB] border border-[#F2E4B8] px-1 py-0.2 rounded">
+                          <span className="inline-block mt-0.5 text-[10px] font-bold uppercase text-[#B45309] bg-[#FAF5EB] border border-[#F2E4B8] px-1.5 py-0.2 rounded">
                             Today
                           </span>
                         )}
@@ -824,14 +822,14 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                       liveEmployees.length > 0
                         ? Math.round((count / liveEmployees.length) * 1000) / 10
                         : 0;
-                    const barColors = ['bg-[#0A1E3F]', 'bg-[#D4AF37]', 'bg-[#1E40AF]'];
+                    const barColors = ['bg-[#083E34]', 'bg-[#D4AF37]', 'bg-emerald-600'];
                     return (
                       <div key={ent.id}>
                         <div className="flex justify-between text-xs mb-1 font-semibold">
                           <span className="text-slate-700">
                             {ent.name} ({ent.shortCode})
                           </span>
-                          <span className="font-mono font-bold text-slate-900">
+                          <span className="font-mono font-bold text-slate-900 tabular-nums">
                             {count} Staff ({pct}%)
                           </span>
                         </div>
@@ -849,17 +847,17 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                     <div>
                       <div className="flex justify-between text-xs mb-1 font-semibold">
                         <span className="text-slate-700">Citadel Global Community Church (CGCC)</span>
-                        <span className="font-mono font-bold text-slate-900">82 Staff (57.0%)</span>
+                        <span className="font-mono font-bold text-slate-900 tabular-nums">82 Staff (57.0%)</span>
                       </div>
                       <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#0A1E3F] rounded-full" style={{ width: '57%' }} />
+                        <div className="h-full bg-[#083E34] rounded-full" style={{ width: '57%' }} />
                       </div>
                     </div>
 
                     <div>
                       <div className="flex justify-between text-xs mb-1 font-semibold">
                         <span className="text-slate-700">Citadel School of Government (CSOG)</span>
-                        <span className="font-mono font-bold text-slate-900">28 Staff (19.4%)</span>
+                        <span className="font-mono font-bold text-slate-900 tabular-nums">28 Staff (19.4%)</span>
                       </div>
                       <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
                         <div className="h-full bg-[#D4AF37] rounded-full" style={{ width: '19.4%' }} />
@@ -869,10 +867,10 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                     <div>
                       <div className="flex justify-between text-xs mb-1 font-semibold">
                         <span className="text-slate-700">Citadel Holdings (Commercial Units)</span>
-                        <span className="font-mono font-bold text-slate-900">34 Staff (23.6%)</span>
+                        <span className="font-mono font-bold text-slate-900 tabular-nums">34 Staff (23.6%)</span>
                       </div>
                       <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#1E40AF] rounded-full" style={{ width: '23.6%' }} />
+                        <div className="h-full bg-emerald-600 rounded-full" style={{ width: '23.6%' }} />
                       </div>
                     </div>
                   </>
@@ -1088,32 +1086,42 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                               </div>
                               <div className="flex items-center gap-1.5 shrink-0">
                                 <button
+                                  type="button"
                                   onClick={async () => {
-                                    await leaveRepository.updateStatus(
-                                      lv.id,
-                                      'Rejected',
-                                      currentUser.name,
-                                      'Rejected at Stage 2 by HR.'
-                                    );
-                                    await loadDashboardData();
-                                    showToast(`Rejected leave request for ${lv.employeeName}.`);
+                                    try {
+                                      await leaveRepository.updateStatus(
+                                        lv.id,
+                                        'Rejected',
+                                        currentUser.name,
+                                        'Rejected at Stage 2 by HR.'
+                                      );
+                                      await loadDashboardData();
+                                      showToast(`Rejected leave request for ${lv.employeeName}.`);
+                                    } catch (err: any) {
+                                      showToast(err?.message || 'Unable to reject leave request.');
+                                    }
                                   }}
-                                  className="px-2 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold cursor-pointer"
+                                  className="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold cursor-pointer transition"
                                 >
                                   Reject
                                 </button>
                                 <button
+                                  type="button"
                                   onClick={async () => {
-                                    await leaveRepository.updateStatus(
-                                      lv.id,
-                                      'Approved',
-                                      currentUser.name,
-                                      'Final HR approval confirmed.'
-                                    );
-                                    await loadDashboardData();
-                                    showToast(`Final HR approval granted for ${lv.employeeName}.`);
+                                    try {
+                                      await leaveRepository.updateStatus(
+                                        lv.id,
+                                        'Approved',
+                                        currentUser.name,
+                                        'Final HR approval confirmed.'
+                                      );
+                                      await loadDashboardData();
+                                      showToast(`Final HR approval granted for ${lv.employeeName}.`);
+                                    } catch (err: any) {
+                                      showToast(err?.message || 'Unable to approve leave request.');
+                                    }
                                   }}
-                                  className="px-2.5 py-1 rounded-lg bg-[#D4AF37] text-slate-950 border border-[#C59B27] text-[11px] font-bold cursor-pointer"
+                                  className="px-2.5 py-1 rounded-lg bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 border border-[#C59B27] text-[11px] font-bold cursor-pointer transition"
                                 >
                                   Approve
                                 </button>
@@ -1195,22 +1203,30 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
         {isQuickActionsOpen && (
           <div
             data-testid="quick-actions-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Citadel People Hub Quick Actions"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setIsQuickActionsOpen(false);
+            }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in"
           >
             <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
-              <div className="bg-[#0A1E3F] text-white p-5 relative border-b border-blue-900/30 shrink-0">
+              <div className="bg-[#083E34] text-white p-5 relative border-b border-emerald-950/30 shrink-0">
                 <button
+                  type="button"
                   onClick={() => setIsQuickActionsOpen(false)}
-                  className="absolute top-4 right-4 text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10 transition"
+                  aria-label="Close Quick Actions"
+                  className="absolute top-4 right-4 text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
                 <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-amber-300 fill-amber-300" />
+                  <Zap className="w-4 h-4 text-[#D4AF37] fill-[#D4AF37]" />
                   <span>Citadel People Hub — Quick Actions</span>
                 </h3>
-                <p className="text-xs text-blue-100 mt-0.5">
-                  Frequently executed People, Culture & Operations administrative workflows.
+                <p className="text-xs text-emerald-100/90 mt-0.5">
+                  Frequently executed People, Culture &amp; Operations administrative workflows.
                 </p>
               </div>
 
@@ -1278,7 +1294,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                   }}
                   className="p-3.5 rounded-xl border border-slate-200 hover:border-[#083E34] hover:bg-slate-50 transition text-left space-y-1 group"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-800 flex items-center justify-center border border-purple-200 group-hover:bg-[#083E34] group-hover:text-white transition">
+                  <div className="w-8 h-8 rounded-lg bg-[#FAF5EB] text-[#B45309] flex items-center justify-center border border-[#F2E4B8] group-hover:bg-[#083E34] group-hover:text-white transition">
                     <StickyNote className="w-4 h-4" />
                   </div>
                   <h4 className="font-bold text-slate-900">Add Team Note</h4>
@@ -1307,21 +1323,29 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
         {isAddNoteModalOpen && (
           <div
             data-testid="add-note-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Add Team Note"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setIsAddNoteModalOpen(false);
+            }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in"
           >
             <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
-              <div className="bg-[#0A1E3F] text-white p-5 relative border-b border-blue-900/30 shrink-0">
+              <div className="bg-[#083E34] text-white p-5 relative border-b border-emerald-950/30 shrink-0">
                 <button
+                  type="button"
                   onClick={() => setIsAddNoteModalOpen(false)}
-                  className="absolute top-4 right-4 text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10 transition"
+                  aria-label="Close Add Team Note Modal"
+                  className="absolute top-4 right-4 text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
                 <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <StickyNote className="w-4 h-4 text-amber-300" />
+                  <StickyNote className="w-4 h-4 text-[#D4AF37]" />
                   <span>Add Team Note</span>
                 </h3>
-                <p className="text-xs text-blue-100 mt-0.5">
+                <p className="text-xs text-emerald-100/90 mt-0.5">
                   Share an operational update or handover task with the team.
                 </p>
               </div>

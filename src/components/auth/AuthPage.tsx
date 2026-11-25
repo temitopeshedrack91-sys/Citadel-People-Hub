@@ -220,19 +220,19 @@ export const AuthPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#F8FAFC] flex flex-col justify-center items-center p-4 sm:p-6 font-sans antialiased text-slate-900">
-      {/* Container matching screenshot */}
-      <div className="w-full max-w-[450px] space-y-6">
+    <div className="min-h-screen w-full bg-[#F4F6F9] flex flex-col justify-center items-center p-4 sm:p-6 font-sans antialiased text-slate-900">
+      {/* Main Sign-In Card Container */}
+      <div className="w-full max-w-[440px] space-y-5">
         {/* Header Title & Subtitle */}
         <div className="text-left space-y-1.5 pt-2">
-          <div className="flex items-center gap-3 mb-2.5">
+          <div className="flex items-center gap-3 mb-3">
             <img
               src="/citadel-logo.png"
               alt="The Citadel Global Community Church"
-              className="h-10 w-10 object-contain rounded-lg shadow-2xs"
+              className="h-10 w-10 object-contain rounded-xl bg-white p-1 border border-slate-200 shadow-2xs"
             />
             <div>
-              <span className="text-xs font-black text-[#0A1E3F] uppercase tracking-wider block">
+              <span className="text-xs font-bold text-[#083E34] uppercase tracking-wider block">
                 Citadel People Hub
               </span>
               <span className="text-[11px] text-slate-500 font-medium block">
@@ -241,25 +241,25 @@ export const AuthPage: React.FC = () => {
             </div>
           </div>
 
-          <h1 className="text-3xl sm:text-[34px] font-black tracking-tight text-[#0F172A] leading-tight">
+          <h1 className="text-2xl sm:text-[32px] font-extrabold tracking-tight text-slate-900 leading-tight">
             {activeTab === 'signin' ? 'Sign in to Citadel' : 'Create Workspace'}
           </h1>
-          <p className="text-sm text-slate-500 font-medium">
+          <p className="text-sm text-slate-600 font-medium">
             {activeTab === 'signin'
               ? 'Enter your corporate email to access your workforce account.'
               : 'Enter your corporate details to set up your workforce account.'}
           </p>
         </div>
 
-        {/* Tab Segmented Control matching screenshot */}
-        <div className="bg-[#F1F5F9] p-1 rounded-xl flex items-center text-xs font-bold border border-slate-200/80">
+        {/* Tab Segmented Control */}
+        <div className="bg-slate-200/70 p-1 rounded-xl flex items-center text-xs font-bold border border-slate-200">
           <button
             type="button"
             onClick={() => setActiveTab('signin')}
             className={`flex-1 py-2.5 rounded-lg transition-all duration-150 cursor-pointer ${
               activeTab === 'signin'
                 ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-500 hover:text-slate-900'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Sign In
@@ -271,7 +271,7 @@ export const AuthPage: React.FC = () => {
               className={`flex-1 py-2.5 rounded-lg transition-all duration-150 cursor-pointer ${
                 activeTab === 'register'
                   ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Register
@@ -287,7 +287,7 @@ export const AuthPage: React.FC = () => {
               onClick={handleGoogleSignIn}
               className="w-full bg-white hover:bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 flex items-center justify-center gap-3 text-xs sm:text-sm font-semibold text-slate-800 shadow-2xs transition active:scale-[0.99] cursor-pointer"
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
@@ -298,7 +298,7 @@ export const AuthPage: React.FC = () => {
 
             <div className="relative flex items-center justify-center">
               <div className="border-t border-slate-200 w-full" />
-              <span className="bg-[#F8FAFC] px-3 text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest absolute">
+              <span className="bg-[#F4F6F9] px-3 text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-widest relative">
                 or with corporate email
               </span>
             </div>
@@ -307,35 +307,36 @@ export const AuthPage: React.FC = () => {
 
         {/* Alerts */}
         {errorMessage && (
-          <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+          <div role="alert" className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium rounded-xl flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
             <span>{errorMessage}</span>
           </div>
         )}
 
         {successMessage && (
-          <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center gap-2">
+          <div role="status" className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium rounded-xl flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
             <span>{successMessage}</span>
           </div>
         )}
 
-        {/* Form matching screenshot inputs */}
+        {/* Auth Form */}
         <form onSubmit={activeTab === 'signin' ? handleSignIn : handleRegister} className="space-y-4">
           {activeTab === 'register' && !backendEnabled && (
             <div>
-              <label className="block text-xs font-bold text-slate-800 mb-1.5">
+              <label htmlFor="auth-full-name" className="block text-xs font-bold text-slate-800 mb-1.5">
                 Full Legal Name
               </label>
               <div className="relative">
                 <User className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 pointer-events-none" />
                 <input
+                  id="auth-full-name"
                   type="text"
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="e.g. Dr. Bukola Adeleke"
-                  className="w-full pl-10 pr-4 py-3 bg-[#EEF4FF] focus:bg-white border border-blue-100/90 focus:border-slate-900 rounded-xl text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition"
+                  className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 focus:border-[#083E34] rounded-xl text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#083E34]/15 transition"
                 />
               </div>
             </div>
@@ -343,25 +344,26 @@ export const AuthPage: React.FC = () => {
 
           {/* Email Address */}
           <div>
-            <label className="block text-xs font-bold text-slate-800 mb-1.5">
+            <label htmlFor="auth-email" className="block text-xs font-bold text-slate-800 mb-1.5">
               Work Email Address
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 pointer-events-none" />
               <input
+                id="auth-email"
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="example@gmail.com"
-                className="w-full pl-10 pr-4 py-3 bg-[#EEF4FF] focus:bg-white border border-blue-100/90 focus:border-slate-900 rounded-xl text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition"
+                placeholder="name@citadel.ng"
+                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 focus:border-[#083E34] rounded-xl text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#083E34]/15 transition"
               />
             </div>
           </div>
 
           {/* Authorization is provisioned by an administrator, never selected at signup. */}
           {activeTab === 'register' && (
-            <p className="rounded-xl border border-blue-100 bg-[#EEF4FF] px-3.5 py-3 text-xs font-medium text-slate-700">
+            <p className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs font-medium text-slate-700">
               New accounts receive employee access. An administrator assigns organization, department, and elevated permissions after verification.
             </p>
           )}
@@ -369,7 +371,7 @@ export const AuthPage: React.FC = () => {
           {/* Password */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-bold text-slate-800">
+              <label htmlFor="auth-password" className="block text-xs font-bold text-slate-800">
                 Password
               </label>
               {activeTab === 'signin' && (
@@ -379,7 +381,7 @@ export const AuthPage: React.FC = () => {
                     setSuccessMessage('Password reset link dispatched to your registered work email.');
                     setTimeout(() => setSuccessMessage(''), 4000);
                   }}
-                  className="text-xs font-bold text-[#C59B27] hover:text-[#B8860B] hover:underline cursor-pointer"
+                  className="text-xs font-bold text-[#9A6E04] hover:text-[#083E34] hover:underline cursor-pointer"
                 >
                   Forgot password?
                 </button>
@@ -389,32 +391,34 @@ export const AuthPage: React.FC = () => {
             <div className="relative">
               <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 pointer-events-none" />
               <input
+                id="auth-password"
                 type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••••••"
-                className="w-full pl-10 pr-10 py-3 bg-[#EEF4FF] focus:bg-white border border-blue-100/90 focus:border-slate-900 rounded-xl text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition"
+                placeholder="Enter your password"
+                className="w-full pl-10 pr-10 py-3 bg-white border border-slate-200 focus:border-[#083E34] rounded-xl text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#083E34]/15 transition"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-700 cursor-pointer"
+                className="absolute right-3.5 top-3.5 text-slate-500 hover:text-slate-800 cursor-pointer"
                 title={showPassword ? 'Hide password' : 'Show password'}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
 
-          {/* Remember this device checkbox matching screenshot */}
+          {/* Remember this device checkbox */}
           <div className="flex items-center gap-2 pt-0.5">
             <input
               type="checkbox"
               id="rememberDevice"
               checked={rememberDevice}
               onChange={(e) => setRememberDevice(e.target.checked)}
-              className="w-4 h-4 rounded text-slate-950 accent-slate-950 border-slate-300 focus:ring-slate-900 cursor-pointer"
+              className="w-4 h-4 rounded text-[#083E34] accent-[#083E34] border-slate-300 focus:ring-[#083E34] cursor-pointer"
             />
             <label
               htmlFor="rememberDevice"
@@ -424,11 +428,11 @@ export const AuthPage: React.FC = () => {
             </label>
           </div>
 
-          {/* Primary Action Button matching user preference (Black background with sleek high contrast) */}
+          {/* Primary Action Button */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-slate-950 hover:bg-black active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl transition flex items-center justify-center gap-2 text-xs sm:text-sm shadow-md cursor-pointer disabled:opacity-60"
+            className="w-full bg-[#083E34] hover:bg-[#052C25] active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl transition flex items-center justify-center gap-2 text-xs sm:text-sm shadow-sm cursor-pointer disabled:opacity-60"
           >
             <span>
               {isSubmitting
@@ -437,7 +441,7 @@ export const AuthPage: React.FC = () => {
                 ? 'Sign In to Workspace'
                 : 'Create Workspace Account'}
             </span>
-            <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+            <ArrowRight className="w-4 h-4 text-[#D4AF37] stroke-[2.5]" />
           </button>
         </form>
 

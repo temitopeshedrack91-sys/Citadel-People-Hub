@@ -399,7 +399,7 @@ export const SettingsView: React.FC = () => {
                 </h3>
                 <p className="text-[11px] text-slate-500 font-medium">Cross-cutting permission rules from Super Admin to Self-Service Employee</p>
               </div>
-              <span className="text-xs font-black px-2.5 py-1 bg-[#0A1E3F] text-[#D4AF37] rounded-lg shadow-xs">
+              <span className="text-xs font-bold px-2.5 py-1 bg-[#083E34] text-[#D4AF37] rounded-lg shadow-xs">
                 5 Standard Tiers
               </span>
             </div>
@@ -434,7 +434,7 @@ export const SettingsView: React.FC = () => {
                       <td className="py-3.5 px-4">
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
                           tier.gecStatus.includes('GEC')
-                            ? 'bg-purple-100 text-purple-900 border border-purple-300'
+                            ? 'bg-[#FAF5EB] text-[#B45309] border border-[#F2E4B8]'
                             : 'bg-slate-100 text-slate-700 border border-slate-200'
                         }`}>
                           {tier.gecStatus}

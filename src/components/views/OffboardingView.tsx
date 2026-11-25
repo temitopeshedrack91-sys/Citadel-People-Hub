@@ -23,115 +23,19 @@ import {
 } from 'lucide-react';
 import { Badge } from '../common/Badge';
 import { useAuth } from '../../context/AuthContext';
-import { Employee } from '../../types';
-import { employeeRepository, auditRepository } from '../../services';
+import { useRealtimeTable } from '../../hooks/useRealtimeTable';
+import { Employee, ExitRequest } from '../../types';
+import { employeeRepository, offboardingRepository } from '../../services';
+import { isHrOrAdminUser } from '../../utils/rbac';
 
-export interface ExitRequest {
-  id: string;
-  employeeId: string;
-  employeeName: string;
-  staffId: string;
-  departmentName: string;
-  entityName: string;
-  resignationDate: string;
-  proposedLastDay: string;
-  noticePeriodDays: number;
-  noticeCompliant: boolean;
-  reason: string;
-  managerName: string;
-  managerEndorsed: boolean;
-  managerComments?: string;
-  hrVerified: boolean;
-  status:
-    | 'SUBMITTED'
-    | 'MANAGER_REVIEWED'
-    | 'NOTICE_VERIFIED'
-    | 'INTERVIEW_SCHEDULED'
-    | 'CLEARANCE_IN_PROGRESS'
-    | 'OFFBOARDED';
-  exitInterview?: {
-    date: string;
-    time: string;
-    interviewer: string;
-    mode: 'In-Person' | 'MS Teams';
-    feedback?: string;
-  };
-  clearances: {
-    it: boolean;
-    facilities: boolean;
-    finance: boolean;
-    hr: boolean;
-  };
-}
-
-const DEFAULT_EXIT_REQUESTS: ExitRequest[] = [
-  {
-    id: 'exit-101',
-    employeeId: 'emp-pastor-adeyoola',
-    employeeName: 'Engr. Femi Olatunji',
-    staffId: 'CGCC/008',
-    departmentName: 'Transport & Logistics',
-    entityName: 'Citadel Global Community Church (CGCC)',
-    resignationDate: '2026-11-01',
-    proposedLastDay: '2026-11-30',
-    noticePeriodDays: 30,
-    noticeCompliant: true,
-    reason: 'Pursuing higher academic research fellowship at CSOG partner university.',
-    managerName: 'Pastor Christian Ike (Executive Pastor)',
-    managerEndorsed: true,
-    managerComments: 'Handover of logistics schedules and fleet inventory completed. Warmly endorsed for fellowship.',
-    hrVerified: true,
-    status: 'INTERVIEW_SCHEDULED',
-    exitInterview: {
-      date: '2026-11-28',
-      time: '11:00 AM',
-      interviewer: 'Sussan Afuwape (PCCM Manager)',
-      mode: 'In-Person',
-      feedback: 'Excellent contributor to church operations over 3 years.',
-    },
-    clearances: {
-      it: true,
-      facilities: false,
-      finance: true,
-      hr: false,
-    },
-  },
-  {
-    id: 'exit-102',
-    employeeId: 'emp-associate-1',
-    employeeName: 'Kemi Adebayo',
-    staffId: 'CGCC/024',
-    departmentName: 'Media & Communications',
-    entityName: 'Citadel Global Community Church (CGCC)',
-    resignationDate: '2026-11-10',
-    proposedLastDay: '2026-12-10',
-    noticePeriodDays: 30,
-    noticeCompliant: true,
-    reason: 'Relocating to the United Kingdom for postgraduate studies.',
-    managerName: 'Pastor Segun Bakare (ICT Director)',
-    managerEndorsed: true,
-    managerComments: 'Camera equipment and video archives handed over to unit lead.',
-    hrVerified: true,
-    status: 'NOTICE_VERIFIED',
-    clearances: {
-      it: false,
-      facilities: false,
-      finance: false,
-      hr: false,
-    },
-  },
-];
+export type { ExitRequest };
 
 export const OffboardingView: React.FC = () => {
-  const { currentUser, currentRole } = useAuth();
-  const [exitRequests, setExitRequests] = useState<ExitRequest[]>(() => {
-    try {
-      const saved = localStorage.getItem('citadel_exit_requests');
-      return saved ? JSON.parse(saved) : DEFAULT_EXIT_REQUESTS;
-    } catch {
-      return DEFAULT_EXIT_REQUESTS;
-    }
-  });
+  const { currentUser } = useAuth();
+  const [exitRequests, setExitRequests] = useState<ExitRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [activeTab, setActiveTab] = useState<'requests' | 'clearance' | 'lifecycle'>('requests');
@@ -148,7 +52,7 @@ export const OffboardingView: React.FC = () => {
   const [resignationNoticeDate, setResignationNoticeDate] = useState(new Date().toISOString().split('T')[0]);
   const [resignationLastDay, setResignationLastDay] = useState('2026-12-31');
   const [resignationReason, setResignationReason] = useState('');
-  const [resignationManager, setResignationManager] = useState('Sussan Afuwape (PCCM Manager)');
+  const [resignationManagerId, setResignationManagerId] = useState('');
 
   // Exit Interview Form state
   const [interviewDate, setInterviewDate] = useState('2026-12-15');
@@ -160,25 +64,47 @@ export const OffboardingView: React.FC = () => {
   // Manager Review Form state
   const [managerRemarks, setManagerRemarks] = useState('');
 
-  const isHrOrAdmin = currentRole === 'ADMIN' || currentRole === 'HR_STAFF' || currentRole === 'PCCM_SUPER_ADMIN';
+  const isHrOrAdmin = isHrOrAdminUser(currentUser);
+
+  const loadOffboardingData = React.useCallback(async () => {
+    try {
+      const [exitList, empList] = await Promise.all([
+        offboardingRepository.getAll(),
+        employeeRepository.getAll(),
+      ]);
+      setExitRequests(exitList);
+      setEmployees(empList);
+      setSelectedExitForClearance((prev) =>
+        prev ? exitList.find((r) => r.id === prev.id) ?? null : null
+      );
+      if (empList.length > 0 && !resignationEmpId) {
+        const selfMatch =
+          empList.find((e) => String(e.id) === String(currentUser.id) || e.staffId === currentUser.staffId) ??
+          empList[0];
+        setResignationEmpId(selfMatch.id);
+        if (selfMatch.managerId) {
+          setResignationManagerId(String(selfMatch.managerId));
+        }
+      }
+      setActionError(null);
+    } catch (err: any) {
+      setActionError(err?.message || 'Unable to load offboarding records.');
+    } finally {
+      setLoading(false);
+    }
+  }, [currentUser.id, currentUser.staffId, resignationEmpId]);
 
   useEffect(() => {
-    employeeRepository.getAll().then((list) => {
-      setEmployees(list);
-      if (list.length > 0 && !resignationEmpId) {
-        setResignationEmpId(list[0].id);
-      }
-    });
-  }, []);
+    void loadOffboardingData();
+  }, [loadOffboardingData]);
 
-  const saveRequests = (updated: ExitRequest[]) => {
-    setExitRequests(updated);
-    try {
-      localStorage.setItem('citadel_exit_requests', JSON.stringify(updated));
-    } catch (e) {
-      console.error('Failed to save exit requests:', e);
-    }
-  };
+  useRealtimeTable('offboarding_requests', () => {
+    void loadOffboardingData();
+  });
+
+  useRealtimeTable('employees', () => {
+    void loadOffboardingData();
+  });
 
   const showToast = (msg: string) => {
     setNotification(msg);
@@ -188,119 +114,63 @@ export const OffboardingView: React.FC = () => {
   // Submit Resignation
   const handleSubmitResignation = async (e: React.FormEvent) => {
     e.preventDefault();
-    const emp = employees.find((e) => e.id === resignationEmpId);
+    const emp = employees.find((item) => item.id === resignationEmpId);
     if (!emp) return;
 
-    // Check notice period calculation
-    const start = new Date(resignationNoticeDate);
-    const end = new Date(resignationLastDay);
-    const diffDays = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-    const noticeCompliant = diffDays >= 30;
-
-    const newExit: ExitRequest = {
-      id: `exit-${Date.now()}`,
-      employeeId: emp.id,
-      employeeName: emp.fullName,
-      staffId: emp.staffId,
-      departmentName: emp.departmentName,
-      entityName: emp.entityName,
-      resignationDate: resignationNoticeDate,
-      proposedLastDay: resignationLastDay,
-      noticePeriodDays: diffDays,
-      noticeCompliant,
-      reason: resignationReason,
-      managerName: resignationManager,
-      managerEndorsed: false,
-      hrVerified: false,
-      status: 'SUBMITTED',
-      clearances: {
-        it: false,
-        facilities: false,
-        finance: false,
-        hr: false,
-      },
-    };
-
-    const updated = [newExit, ...exitRequests];
-    saveRequests(updated);
-
-    await auditRepository.logAction({
-      userId: currentUser.id,
-      userName: currentUser.name,
-      userRole: currentRole,
-      module: 'Offboarding',
-      action: 'Submitted Resignation',
-      recordAffectedId: newExit.id,
-      recordAffectedTitle: `Exit for ${newExit.employeeName}`,
-      previousValue: 'Active',
-      newValue: 'Resignation Submitted',
-      severity: 'Info',
-    });
-
-    setIsSubmitModalOpen(false);
-    setResignationReason('');
-    showToast(`Resignation submitted for ${emp.fullName} and forwarded to ${resignationManager}.`);
+    setSubmitting(true);
+    setActionError(null);
+    try {
+      const created = await offboardingRepository.create({
+        employeeId: emp.id,
+        resignationDate: resignationNoticeDate,
+        proposedLastDay: resignationLastDay,
+        reason: resignationReason,
+        ...(resignationManagerId ? { managerId: resignationManagerId } : {}),
+      });
+      setExitRequests((prev) => [created, ...prev.filter((r) => r.id !== created.id)]);
+      setIsSubmitModalOpen(false);
+      setResignationReason('');
+      showToast(`Resignation submitted for ${created.employeeName} and routed to ${created.managerName}.`);
+    } catch (err: any) {
+      setActionError(err?.message || 'Failed to submit resignation.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // Manager Forwards to HR
   const handleManagerEndorse = async (exit: ExitRequest) => {
-    const updated = exitRequests.map((r) =>
-      r.id === exit.id
-        ? {
-            ...r,
-            managerEndorsed: true,
-            managerComments: managerRemarks || 'Handover plan verified by manager and recommended to HR.',
-            status: 'MANAGER_REVIEWED' as const,
-          }
-        : r
-    );
-    saveRequests(updated);
-
-    await auditRepository.logAction({
-      userId: currentUser.id,
-      userName: currentUser.name,
-      userRole: currentRole,
-      module: 'Offboarding',
-      action: 'Manager Endorsed Resignation',
-      recordAffectedId: exit.id,
-      recordAffectedTitle: `Resignation for ${exit.employeeName}`,
-      previousValue: 'SUBMITTED',
-      newValue: 'MANAGER_REVIEWED',
-      severity: 'Info',
-    });
-
-    setSelectedExitForReview(null);
-    setManagerRemarks('');
-    showToast(`Resignation for ${exit.employeeName} endorsed and forwarded to PCCM HR.`);
+    setSubmitting(true);
+    setActionError(null);
+    try {
+      const updated = await offboardingRepository.endorseByManager(exit.id, {
+        comments: managerRemarks || 'Handover plan verified by manager and recommended to HR.',
+        version: exit.version,
+      });
+      setExitRequests((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+      setSelectedExitForReview(null);
+      setManagerRemarks('');
+      showToast(`Resignation for ${updated.employeeName} endorsed and forwarded to PCCM HR.`);
+    } catch (err: any) {
+      setActionError(err?.message || 'Unable to endorse offboarding request.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // HR Verifies Contract & Notice Period
   const handleHrVerifyNotice = async (exit: ExitRequest) => {
-    const updated = exitRequests.map((r) =>
-      r.id === exit.id
-        ? {
-            ...r,
-            hrVerified: true,
-            status: 'NOTICE_VERIFIED' as const,
-          }
-        : r
-    );
-    saveRequests(updated);
-
-    await auditRepository.logAction({
-      userId: currentUser.id,
-      userName: currentUser.name,
-      userRole: currentRole,
-      module: 'Offboarding',
-      action: 'HR Verified Contract & Notice',
-      recordAffectedId: exit.id,
-      recordAffectedTitle: `Exit contract check for ${exit.employeeName}`,
-      previousValue: exit.status,
-      newValue: 'NOTICE_VERIFIED',
-      severity: 'Info',
-    });
-
-    showToast(`Contract and notice period verified for ${exit.employeeName}. Ready for exit interview scheduling.`);
+    setActionError(null);
+    try {
+      const updated = await offboardingRepository.verifyNotice(exit.id, {
+        noticeCompliant: exit.noticeCompliant,
+        version: exit.version,
+      });
+      setExitRequests((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+      showToast(`Contract and notice period verified for ${updated.employeeName}. Ready for exit interview scheduling.`);
+    } catch (err: any) {
+      setActionError(err?.message || 'Unable to verify notice compliance.');
+    }
   };
 
   // HR Schedules Exit Interview
@@ -308,54 +178,60 @@ export const OffboardingView: React.FC = () => {
     e.preventDefault();
     if (!selectedExitForInterview) return;
 
-    const updated = exitRequests.map((r) =>
-      r.id === selectedExitForInterview.id
-        ? {
-            ...r,
-            status: 'INTERVIEW_SCHEDULED' as const,
-            exitInterview: {
-              date: interviewDate,
-              time: interviewTime,
-              interviewer: interviewerName,
-              mode: interviewMode,
-              feedback: interviewFeedbackNotes,
-            },
-          }
-        : r
-    );
-    saveRequests(updated);
-
-    await auditRepository.logAction({
-      userId: currentUser.id,
-      userName: currentUser.name,
-      userRole: currentRole,
-      module: 'Offboarding',
-      action: 'Scheduled Exit Interview',
-      recordAffectedId: selectedExitForInterview.id,
-      recordAffectedTitle: `Exit Interview for ${selectedExitForInterview.employeeName}`,
-      previousValue: selectedExitForInterview.status,
-      newValue: 'INTERVIEW_SCHEDULED',
-      severity: 'Info',
-    });
-
-    setSelectedExitForInterview(null);
-    showToast(`Exit interview scheduled for ${selectedExitForInterview.employeeName} on ${interviewDate} at ${interviewTime}. Visible on employee dashboard.`);
+    setSubmitting(true);
+    setActionError(null);
+    try {
+      const updated = await offboardingRepository.scheduleInterview(selectedExitForInterview.id, {
+        date: interviewDate,
+        time: interviewTime,
+        interviewer: interviewerName,
+        mode: interviewMode,
+        feedback: interviewFeedbackNotes || undefined,
+        version: selectedExitForInterview.version,
+      });
+      setExitRequests((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+      setSelectedExitForInterview(null);
+      showToast(`Exit interview scheduled for ${updated.employeeName} on ${interviewDate} at ${interviewTime}.`);
+    } catch (err: any) {
+      setActionError(err?.message || 'Unable to schedule exit interview.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // Update Department Clearance
-  const handleToggleClearance = (exitId: string, departmentKey: keyof ExitRequest['clearances']) => {
-    const updated = exitRequests.map((r) => {
-      if (r.id !== exitId) return r;
-      const newClearances = { ...r.clearances, [departmentKey]: !r.clearances[departmentKey] };
-      const allDone = Object.values(newClearances).every(Boolean);
-      return {
-        ...r,
-        clearances: newClearances,
-        status: allDone ? ('OFFBOARDED' as const) : ('CLEARANCE_IN_PROGRESS' as const),
-      };
-    });
-    saveRequests(updated);
-    showToast('Department clearance sign-off updated.');
+  const handleToggleClearance = async (exitId: string, departmentKey: keyof ExitRequest['clearances']) => {
+    const target =
+      exitRequests.find((r) => r.id === exitId) ??
+      (selectedExitForClearance?.id === exitId ? selectedExitForClearance : undefined);
+    if (!target) return;
+
+    setActionError(null);
+    try {
+      const updated = await offboardingRepository.updateClearance(
+        exitId,
+        departmentKey,
+        !target.clearances[departmentKey],
+        { version: target.version }
+      );
+      setExitRequests((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+      setSelectedExitForClearance((prev) => (prev && prev.id === updated.id ? updated : prev));
+      showToast('Department clearance sign-off updated.');
+    } catch (err: any) {
+      setActionError(err?.message || 'Unable to update clearance sign-off.');
+    }
+  };
+
+  // Finalize Offboarding
+  const handleFinalizeExit = async (exit: ExitRequest) => {
+    setActionError(null);
+    try {
+      const updated = await offboardingRepository.finalize(exit.id, { version: exit.version });
+      setExitRequests((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+      showToast(`Offboarding finalized for ${updated.employeeName}.`);
+    } catch (err: any) {
+      setActionError(err?.message || 'Unable to finalize offboarding.');
+    }
   };
 
   const pendingExitsCount = exitRequests.filter((r) => r.status !== 'OFFBOARDED').length;
@@ -418,6 +294,22 @@ export const OffboardingView: React.FC = () => {
         <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2 animate-fade-in shadow-2xs">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{notification}</span>
+        </div>
+      )}
+
+      {actionError && (
+        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center justify-between gap-2 animate-fade-in shadow-2xs">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>{actionError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActionError(null)}
+            className="text-rose-500 hover:text-rose-700"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 
@@ -599,9 +491,16 @@ export const OffboardingView: React.FC = () => {
                 <div className="pt-2 flex items-center justify-between gap-2 flex-wrap text-xs">
                   <span className="text-[11px] text-slate-400 font-mono">Exit ID: {req.id}</span>
 
-                  <div className="flex items-center gap-2">
-                    {/* Stage 1 action for Managers */}
-                    {!req.managerEndorsed && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Stage 1 action for direct Supervisor / HR */}
+                    {!req.managerEndorsed &&
+                      (isHrOrAdmin ||
+                        String(currentUser.id) === String(req.managerId || '') ||
+                        employees.some(
+                          (e) =>
+                            String(e.id) === String(req.employeeId) &&
+                            String(e.managerId || '') === String(currentUser.id)
+                        )) && (
                       <button
                         onClick={() => {
                           setSelectedExitForReview(req);
@@ -617,7 +516,7 @@ export const OffboardingView: React.FC = () => {
                     {/* Stage 2 action for HR: verify notice */}
                     {req.managerEndorsed && !req.hrVerified && isHrOrAdmin && (
                       <button
-                        onClick={() => handleHrVerifyNotice(req)}
+                        onClick={() => void handleHrVerifyNotice(req)}
                         className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
                       >
                         <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" />
@@ -647,6 +546,21 @@ export const OffboardingView: React.FC = () => {
                       <FileCheck2 className="w-3.5 h-3.5 text-[#083E34]" />
                       <span>Clearance Checklist ({Object.values(req.clearances).filter(Boolean).length}/4)</span>
                     </button>
+
+                    {/* Stage 5 action for HR: finalize offboarding once interview and all clearances complete */}
+                    {req.hrVerified &&
+                      req.exitInterview &&
+                      Object.values(req.clearances).every(Boolean) &&
+                      req.status !== 'OFFBOARDED' &&
+                      isHrOrAdmin && (
+                        <button
+                          onClick={() => void handleFinalizeExit(req)}
+                          className="px-3.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Finalize Offboarding</span>
+                        </button>
+                      )}
                   </div>
                 </div>
               </div>
@@ -783,14 +697,27 @@ export const OffboardingView: React.FC = () => {
 
       {/* MODAL 1: SUBMIT RESIGNATION */}
       {isSubmitModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Submit Employee Resignation"
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setIsSubmitModalOpen(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in"
+        >
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden">
-            <div className="p-5 bg-[#0A1E3F] text-white flex items-center justify-between">
+            <div className="p-5 bg-[#083E34] text-white flex items-center justify-between border-b border-emerald-950/30">
               <div>
                 <h3 className="text-base font-bold text-white">Submit Employee Resignation</h3>
-                <p className="text-xs text-blue-200">Initiate formal exit notice and route to designated manager.</p>
+                <p className="text-xs text-emerald-100/90">Initiate formal exit notice and route to designated manager.</p>
               </div>
-              <button onClick={() => setIsSubmitModalOpen(false)} className="text-slate-300 hover:text-white p-1 rounded-lg">
+              <button
+                type="button"
+                aria-label="Close resignation modal"
+                onClick={() => setIsSubmitModalOpen(false)}
+                className="text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -800,7 +727,12 @@ export const OffboardingView: React.FC = () => {
                 <label className="block text-slate-800 font-bold mb-1">Select Employee *</label>
                 <select
                   value={resignationEmpId}
-                  onChange={(e) => setResignationEmpId(e.target.value)}
+                  onChange={(e) => {
+                    const nextId = e.target.value;
+                    setResignationEmpId(nextId);
+                    const matched = employees.find((item) => item.id === nextId);
+                    setResignationManagerId(matched?.managerId ? String(matched.managerId) : '');
+                  }}
                   className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-bold bg-white"
                 >
                   {employees.map((emp) => (
@@ -835,20 +767,20 @@ export const OffboardingView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-slate-800 font-bold mb-1">Designated Reviewing Manager *</label>
+                <label className="block text-slate-800 font-bold mb-1">Designated Reviewing Manager</label>
                 <select
-                  value={resignationManager}
-                  onChange={(e) => setResignationManager(e.target.value)}
+                  value={resignationManagerId}
+                  onChange={(e) => setResignationManagerId(e.target.value)}
                   className="w-full p-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-900"
                 >
-                  <option value="Sussan Afuwape (PCCM Manager)">Sussan Afuwape (PCCM Manager)</option>
-                  <option value="Pastor Christian Ike (Executive Pastor / Facilities)">Pastor Christian Ike (Executive Pastor / Facilities)</option>
-                  <option value="Pastor Biola Adeyoola (Admin & Operations)">Pastor Biola Adeyoola (Admin & Operations)</option>
-                  <option value="Pastor Segun Bakare (Executive Pastor / ICT)">Pastor Segun Bakare (Executive Pastor / ICT)</option>
-                  <option value="Stephen Anuforo (Finance & Accounts Manager)">Stephen Anuforo (Finance & Accounts Manager)</option>
-                  <option value="Olubunmi Ojo-John (Chief Security Officer)">Olubunmi Ojo-John (Chief Security Officer)</option>
-                  <option value="Omoaholo Omoakhalen (Director CSG)">Omoaholo Omoakhalen (Director CSG)</option>
-                  <option value="Olufisayo Bakare (CEO Holdings)">Olufisayo Bakare (CEO Holdings)</option>
+                  <option value="">Employee Direct Supervisor / PCCM HR</option>
+                  {employees
+                    .filter((emp) => emp.id !== resignationEmpId)
+                    .map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.fullName} ({emp.jobTitle || emp.departmentName})
+                      </option>
+                    ))}
                 </select>
               </div>
 
@@ -943,16 +875,29 @@ export const OffboardingView: React.FC = () => {
 
       {/* MODAL 3: SCHEDULE EXIT INTERVIEW (HR) */}
       {selectedExitForInterview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Schedule Exit Interview"
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setSelectedExitForInterview(null);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in"
+        >
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden">
-            <div className="p-5 bg-[#0A1E3F] text-white flex items-center justify-between">
+            <div className="p-5 bg-[#083E34] text-white flex items-center justify-between border-b border-emerald-950/30">
               <div>
                 <h3 className="text-base font-bold text-white">Schedule Exit Interview</h3>
-                <p className="text-xs text-blue-200">
+                <p className="text-xs text-emerald-100/90">
                   Staff: {selectedExitForInterview.employeeName} ({selectedExitForInterview.staffId})
                 </p>
               </div>
-              <button onClick={() => setSelectedExitForInterview(null)} className="text-slate-300 hover:text-white p-1 rounded-lg">
+              <button
+                type="button"
+                aria-label="Close interview modal"
+                onClick={() => setSelectedExitForInterview(null)}
+                className="text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>

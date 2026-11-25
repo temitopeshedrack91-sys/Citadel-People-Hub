@@ -242,8 +242,8 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
           employmentType,
           employmentDate,
           confirmationDate: confirmationDate || undefined,
-          managerId: managerId ? String(managerId) : undefined,
-          managerName: selectedSupervisor?.fullName || undefined,
+          managerId: (managerId ? String(managerId) : null) as any,
+          managerName: (selectedSupervisor?.fullName || null) as any,
           status,
         });
 
@@ -370,26 +370,36 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto animate-fade-in">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={isEditing ? `Edit Employee Record — ${editingEmployee?.fullName}` : 'Create Employee Master Record'}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/75 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in"
+    >
       <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-6 flex flex-col max-h-[90vh]">
         {/* Modal Header */}
-        <div className="bg-[#0A1E3F] text-white p-5 sm:p-6 relative shrink-0 border-b border-blue-900/30">
+        <div className="bg-[#083E34] text-white p-5 sm:p-6 relative shrink-0 border-b border-emerald-950/30">
           <button
+            type="button"
             onClick={onClose}
+            aria-label="Close employee modal"
             className="absolute top-4 right-4 text-slate-300 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 pr-8 flex-wrap">
             <h2 className="text-lg font-bold text-white">
               {isEditing ? `Edit Employee Record — ${editingEmployee?.fullName}` : 'Create Employee Master Record'}
             </h2>
-            <span className="px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 font-mono text-[10px] font-bold border border-amber-400/30">
+            <span className="px-2 py-0.5 rounded bg-amber-400/20 text-amber-200 font-mono text-[10px] font-bold border border-amber-400/30">
               {isEditing ? 'Update Placement & Hierarchy' : 'PCCM Enrollment'}
             </span>
           </div>
-          <p className="text-xs text-blue-100 mt-1">
+          <p className="text-xs text-emerald-100/90 mt-1">
             Sectioned personnel onboarding wizard with automatic credential indexing.
           </p>
 

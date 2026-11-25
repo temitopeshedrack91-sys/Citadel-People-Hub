@@ -23,8 +23,30 @@ export const DirectoryView: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [entities, setEntities] = useState<CitadelEntity[]>([]);
   const [departments, setDepartments] = useState<CitadelDepartment[]>([]);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(() => {
+    try {
+      const pending = sessionStorage.getItem('citadel_pending_search') || '';
+      if (pending) sessionStorage.removeItem('citadel_pending_search');
+      return pending;
+    } catch {
+      return '';
+    }
+  });
   const [activeTab, setActiveTab] = useState('all');
+
+  useEffect(() => {
+    const onGlobalSearch = (ev: Event) => {
+      const detail = (ev as CustomEvent<string>).detail;
+      if (typeof detail === 'string') {
+        setSearch(detail);
+        try {
+          sessionStorage.removeItem('citadel_pending_search');
+        } catch {}
+      }
+    };
+    window.addEventListener('citadel:global-search', onGlobalSearch);
+    return () => window.removeEventListener('citadel:global-search', onGlobalSearch);
+  }, []);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [hierarchy, setHierarchy] = useState<EmployeeHierarchy | null>(null);
   const [hierarchyLoading, setHierarchyLoading] = useState(false);

@@ -174,7 +174,7 @@ const citadelEvents: ScheduleEvent[] = [
     description: 'Deep dive into Citadel People Hub V2 release, attendance tracking logs, and leave approval UI.',
     attendees: [
       { initials: 'BA', bg: 'bg-[#083E34]', name: 'Dr. Bukola Adeleke' },
-      { initials: 'FO', bg: 'bg-indigo-600', name: 'Engr. Femi Olatunji' },
+      { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
     ],
   },
   {
@@ -206,7 +206,7 @@ const citadelEvents: ScheduleEvent[] = [
     category: 'Meeting',
     description: 'Weekly campus facilities review, maintenance inspection, and logistics dispatch.',
     attendees: [
-      { initials: 'FO', bg: 'bg-indigo-600', name: 'Engr. Femi Olatunji' },
+      { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
       { initials: 'MA', bg: 'bg-emerald-600', name: 'Mia Anderson' },
     ],
   },
@@ -257,7 +257,7 @@ const citadelEvents: ScheduleEvent[] = [
     description: 'Deep dive into Citadel People Hub V2 release, attendance tracking logs, and leave approval UI.',
     attendees: [
       { initials: 'BA', bg: 'bg-[#083E34]', name: 'Dr. Bukola Adeleke' },
-      { initials: 'FO', bg: 'bg-indigo-600', name: 'Engr. Femi Olatunji' },
+      { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
     ],
   },
   {
@@ -304,7 +304,7 @@ const citadelEvents: ScheduleEvent[] = [
     category: 'Meeting',
     description: 'Identity server audit, role-based access tokens expiration, and multi-factor compliance.',
     attendees: [
-      { initials: 'FO', bg: 'bg-indigo-600', name: 'Engr. Femi Olatunji' },
+      { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
       { initials: 'BA', bg: 'bg-[#083E34]', name: 'Dr. Bukola Adeleke' },
     ],
   },
@@ -321,7 +321,7 @@ const citadelEvents: ScheduleEvent[] = [
     category: 'Events',
     description: 'Citadel culture orientation, governance standards, and systems walkthrough for new hires.',
     attendees: [
-      { initials: 'HL', bg: 'bg-indigo-600', name: 'Harper Lee' },
+      { initials: 'HL', bg: 'bg-[#083E34]', name: 'Harper Lee' },
       { initials: 'MA', bg: 'bg-emerald-600', name: 'Mia Anderson' },
     ],
   },
@@ -337,7 +337,7 @@ const citadelEvents: ScheduleEvent[] = [
     description: 'Review collaborative programs with academic and health affiliates across Nigeria.',
     attendees: [
       { initials: 'CI', bg: 'bg-slate-700', name: 'Pastor Christian Ike' },
-      { initials: 'FO', bg: 'bg-indigo-600', name: 'Engr. Femi Olatunji' },
+      { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
     ],
   },
 

@@ -38,7 +38,7 @@ export const Card: React.FC<CardProps> = ({
     <div
       id={id}
       data-testid={dataTestId || (title ? `card-${title.toLowerCase().replace(/\s+/g, '-')}` : 'card')}
-      className={`bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] transition-all duration-200 hover:border-slate-300 ${className}`}
+      className={`bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] ${className}`}
     >
       {(title || headerAction) && (
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100">

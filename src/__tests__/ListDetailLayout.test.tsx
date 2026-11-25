@@ -77,4 +77,24 @@ describe('ListDetailLayout Component (Pillio Pattern)', () => {
     fireEvent.click(item2);
     expect(handleSelect).toHaveBeenCalledWith(mockDoctors[1]);
   });
+
+  it('supports keyboard Enter/Space activation and exposes aria-pressed selection state', () => {
+    const handleSelect = vi.fn();
+    render(
+      <ListDetailLayout<MockDoctor>
+        items={mockDoctors}
+        selectedId="doc-1"
+        onSelectItem={handleSelect}
+        renderDetail={() => <div>Detail</div>}
+      />
+    );
+
+    const item1 = screen.getByTestId('list-item-doc-1');
+    const item2 = screen.getByTestId('list-item-doc-2');
+    expect(item1).toHaveAttribute('aria-pressed', 'true');
+    expect(item2).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.keyDown(item2, { key: 'Enter' });
+    expect(handleSelect).toHaveBeenCalledWith(mockDoctors[1]);
+  });
 });

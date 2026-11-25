@@ -7,17 +7,11 @@ use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeLeaveBalance;
 use App\Models\Entity;
-use App\Models\JobTitle;
-use App\Models\JobVacancy;
 use App\Models\Kpi;
 use App\Models\LeaveCategory;
 use App\Models\LeaveRequest;
-use App\Models\PayGrade;
-use App\Models\PerformanceReview;
 use App\Models\Project;
 use App\Models\Timesheet;
-use App\Models\TrainingCourse;
-use App\Models\TrainingSession;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -27,12 +21,19 @@ class OrangeHrmEnterpriseParityTest extends TestCase
     use RefreshDatabase;
 
     private User $adminUser;
+
     private User $hrUser;
+
     private User $deptHeadUser;
+
     private User $staffUser;
+
     private Entity $entity;
+
     private Department $department;
+
     private Employee $staffEmployee;
+
     private Employee $deptHeadEmployee;
 
     protected function setUp(): void

@@ -36,6 +36,7 @@ export class LaravelApiError extends Error {
  * Checks whether the Laravel backend API base URL is configured in the environment.
  */
 export const isLaravelApiConfigured = (): boolean => Boolean(baseUrl);
+export const getLaravelApiBaseUrl = (): string => baseUrl;
 
 function inferRealtimeTablesFromPath(path: string): string[] {
   if (path.startsWith('/employees')) return ['employees'];
@@ -51,6 +52,8 @@ function inferRealtimeTablesFromPath(path: string): string[] {
   }
   if (path.startsWith('/checklist-templates')) return ['onboarding_checklist_templates'];
   if (path.startsWith('/offboarding')) return ['offboarding_requests', 'employees', 'notifications'];
+  if (path.startsWith('/tasks') || path.startsWith('/projects')) return ['tasks'];
+  if (path.startsWith('/documents')) return ['documents'];
   return [];
 }
 
@@ -90,6 +93,7 @@ export const setLaravelAccessToken = (token: string | null): void => {
     } else {
       localStorage.removeItem(TOKEN_KEY);
     }
+    window.dispatchEvent(new Event('citadel:auth-changed'));
   }
 };
 

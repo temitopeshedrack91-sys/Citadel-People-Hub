@@ -905,19 +905,19 @@ export const RecruitmentView: React.FC = () => {
           <div className="bg-white rounded-2xl border border-slate-300 shadow-xs overflow-hidden">
             <div className="p-4 border-b border-slate-200 flex items-center justify-between">
               <div>
-                <h3 className="text-xs font-black text-black uppercase tracking-wider">
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                   Full 10-Stage Recruitment Protocol Specification
                 </h3>
                 <p className="text-[11px] text-slate-600">Roles, responsibilities, SLA days, and stage deliverables</p>
               </div>
-              <span className="text-xs font-black px-2.5 py-1 bg-[#0A1E3F] text-[#D4AF37] rounded-md">
+              <span className="text-xs font-bold px-2.5 py-1 bg-[#083E34] text-[#D4AF37] rounded-md">
                 Sheet 8 Mandate
               </span>
             </div>
 
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[#0A1E3F] text-white uppercase tracking-wider text-xs font-bold">
+                <thead className="bg-[#083E34] text-white uppercase tracking-wider text-xs font-bold">
                   <tr>
                     <th className="py-3.5 px-4 w-12 text-center">Step</th>
                     <th className="py-3.5 px-4">Stage Name</th>

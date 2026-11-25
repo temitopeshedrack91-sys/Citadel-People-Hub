@@ -46,10 +46,22 @@ export const StatCard: React.FC<StatCardProps> = ({
       id={id}
       data-testid={dataTestId || `stat-card-${title.toLowerCase().replace(/\s+/g, '-')}`}
       onClick={onClick}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
-      className={`bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] flex flex-col justify-between transition-all duration-200 hover:border-slate-300 hover:shadow-[0_4px_16px_rgba(15,23,42,0.05)] ${
-        onClick ? 'cursor-pointer' : ''
+      className={`bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] flex flex-col justify-between transition-all duration-200 ${
+        onClick
+          ? 'cursor-pointer hover:border-[#083E34]/40 hover:shadow-[0_4px_16px_rgba(15,23,42,0.06)] active:scale-[0.99]'
+          : ''
       } ${className}`}
     >
       <div className="flex items-center gap-2.5">
@@ -58,11 +70,11 @@ export const StatCard: React.FC<StatCardProps> = ({
         >
           <Icon className={`w-4 h-4 ${iconColor}`} />
         </div>
-        <span className="text-xs font-bold text-slate-800 tracking-tight">{title}</span>
+        <span className="text-xs font-semibold text-slate-600 tracking-tight">{title}</span>
       </div>
 
       <div className="mt-4">
-        <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight block leading-none">
+        <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight tabular-nums block leading-none">
           {value}
         </span>
 

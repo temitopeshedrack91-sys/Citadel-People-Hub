@@ -36,6 +36,7 @@ import { employeeRepository, organizationRepository } from '../../services';
 import { useAuth } from '../../context/AuthContext';
 import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import { Badge } from '../common/Badge';
+import { LoadingSkeleton } from '../common/LoadingSkeleton';
 import { EmployeeProfileModal } from '../employee/EmployeeProfileModal';
 import { CreateEmployeeModal } from '../employee/CreateEmployeeModal';
 import { NavModule } from '../layout/Sidebar';
@@ -256,24 +257,30 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
 
         <div className="flex items-center gap-2">
           {/* View Mode Toggle */}
-          <div className="flex items-center p-1 bg-slate-100 rounded-lg border border-slate-300">
+          <div className="flex items-center p-1 bg-slate-100 rounded-lg border border-slate-200" role="group" aria-label="Employee view mode">
             <button
+              type="button"
               onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-md transition ${
+              aria-pressed={viewMode === 'table'}
+              aria-label="Table View"
+              className={`p-1.5 rounded-md transition cursor-pointer ${
                 viewMode === 'table'
-                  ? 'bg-white text-black shadow-xs font-bold'
-                  : 'text-black hover:bg-slate-200'
+                  ? 'bg-white text-slate-900 shadow-xs font-bold'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
               }`}
               title="Table View"
             >
-              <TableIcon className="w-4 h-4 text-black" />
+              <TableIcon className="w-4 h-4" />
             </button>
             <button
+              type="button"
               onClick={() => setViewMode('card')}
-              className={`p-1.5 rounded-md transition ${
+              aria-pressed={viewMode === 'card'}
+              aria-label="Card Grid View"
+              className={`p-1.5 rounded-md transition cursor-pointer ${
                 viewMode === 'card'
-                  ? 'bg-white text-black shadow-xs font-bold'
-                  : 'text-black hover:bg-slate-200'
+                  ? 'bg-white text-slate-900 shadow-xs font-bold'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
               }`}
               title="Card Grid View"
             >
@@ -408,9 +415,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
 
       {/* 3. Employee List Representation: Table or Card View */}
       {loading ? (
-        <div className="bg-white p-12 rounded-xl border border-slate-200 text-center text-xs text-slate-500">
-          Loading Citadel personnel master records...
-        </div>
+        <LoadingSkeleton type="card" count={4} />
       ) : paginatedEmployees.length === 0 ? (
         <div className="bg-white p-12 rounded-xl border border-slate-200 text-center space-y-2">
           <p className="text-sm font-semibold text-slate-700">No personnel records matched your filter criteria.</p>
@@ -577,7 +582,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
             >
               <div>
                 <div className="flex items-start justify-between gap-2">
-                  <div className="w-11 h-11 rounded-xl bg-[#15345b] text-white font-bold flex items-center justify-center text-sm shadow-xs shrink-0">
+                  <div className="w-11 h-11 rounded-xl bg-[#083E34] text-white font-bold flex items-center justify-center text-sm shadow-xs shrink-0">
                     {emp.firstName[0]}
                     {emp.lastName[0]}
                   </div>
@@ -601,23 +606,23 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 </div>
 
                 <div className="mt-3">
-                  <h3 className="font-extrabold text-black text-sm group-hover:text-[#083E34] transition line-clamp-1">
+                  <h3 className="font-bold text-slate-900 text-sm group-hover:text-[#083E34] transition line-clamp-1">
                     {emp.fullName}
                   </h3>
-                  <p className="text-xs text-[#083E34] font-bold line-clamp-1 mt-0.5">
+                  <p className="text-xs text-[#083E34] font-semibold line-clamp-1 mt-0.5">
                     {emp.jobTitle}
                   </p>
-                  <p className="text-xs text-black font-semibold mt-1 line-clamp-1">
+                  <p className="text-xs text-slate-700 font-semibold mt-1 line-clamp-1">
                     {emp.departmentName}
                   </p>
-                  <p className="text-xs text-slate-900 font-medium line-clamp-1">
+                  <p className="text-xs text-slate-500 font-medium line-clamp-1">
                     {emp.entityName}
                   </p>
                 </div>
               </div>
 
               <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between text-xs">
-                <span className="text-black font-bold">
+                <span className="text-slate-700 font-semibold">
                   {emp.employmentType}
                 </span>
                 <button
@@ -649,11 +654,13 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
           of <strong className="text-slate-900 font-mono">{totalItems}</strong> employees
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 tabular-nums">
           <button
+            type="button"
             onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
             disabled={currentPage === 1}
-            className="p-1.5 rounded border border-slate-200 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            aria-label="Previous page"
+            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
             title="Previous Page"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -663,9 +670,11 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
             const pNum = i + 1;
             return (
               <button
+                type="button"
                 key={pNum}
                 onClick={() => setCurrentPage(pNum)}
-                className={`w-7 h-7 rounded text-xs font-bold transition ${
+                aria-current={currentPage === pNum ? 'page' : undefined}
+                className={`w-7 h-7 rounded-lg text-xs font-bold transition cursor-pointer ${
                   currentPage === pNum
                     ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
                     : 'border border-slate-200 hover:bg-slate-100 text-slate-700'
@@ -677,9 +686,11 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
           })}
 
           <button
+            type="button"
             onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
             disabled={currentPage === totalPages}
-            className="p-1.5 rounded border border-slate-200 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            aria-label="Next page"
+            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
             title="Next Page"
           >
             <ChevronRight className="w-4 h-4" />

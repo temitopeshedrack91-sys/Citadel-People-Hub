@@ -131,11 +131,11 @@ class ClaimController extends Controller
         }
 
         if ($request->filled('search')) {
-            $search = '%' . $request->input('search') . '%';
+            $search = '%'.$request->input('search').'%';
             $query->where(function ($q) use ($search) {
                 $q->where('claim_number', 'like', $search)
-                  ->orWhere('description', 'like', $search)
-                  ->orWhereHas('employee', fn ($eq) => $eq->where('full_name', 'like', $search)->orWhere('staff_id', 'like', $search));
+                    ->orWhere('description', 'like', $search)
+                    ->orWhereHas('employee', fn ($eq) => $eq->where('full_name', 'like', $search)->orWhere('staff_id', 'like', $search));
             });
         }
 
@@ -216,7 +216,7 @@ class ClaimController extends Controller
             'Claims',
             'Added Expense Line Item',
             (string) $expense->id,
-            "Claim {$claimRequest->claim_number}: ₦" . number_format($expense->amount, 2),
+            "Claim {$claimRequest->claim_number}: ₦".number_format($expense->amount, 2),
             null,
             'Added'
         );
@@ -300,8 +300,7 @@ class ClaimController extends Controller
 
     private function authorizeAdminOrHr(Request $request): void
     {
-        $role = RoleAuthorization::canonical($request->user()->role);
-        abort_unless(in_array($role, ['ADMIN', 'HR_STAFF'], true), 403, 'Unauthorized.');
+        abort_unless(RoleAuthorization::isGlobalHrOrAdmin($request->user()), 403, 'Unauthorized.');
     }
 
     private function authorizeClaimAccess(Request $request, ClaimRequest $claim): void

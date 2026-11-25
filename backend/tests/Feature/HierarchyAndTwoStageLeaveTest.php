@@ -16,20 +16,35 @@ class HierarchyAndTwoStageLeaveTest extends TestCase
     use RefreshDatabase;
 
     private Entity $entityA;
+
     private Entity $entityB;
+
     private Department $deptEng;
+
     private Department $deptHr;
+
     private Department $deptOpsB;
+
     private Employee $directorEmp;
+
     private Employee $managerEmp;
+
     private Employee $leadEmp;
+
     private Employee $icEmp;
+
     private Employee $otherTeamEmp;
+
     private Employee $hrEmp;
+
     private User $hrUser;
+
     private User $managerUser;
+
     private User $leadUser;
+
     private User $icUser;
+
     private User $otherTeamUser;
 
     protected function setUp(): void
@@ -366,6 +381,12 @@ class HierarchyAndTwoStageLeaveTest extends TestCase
         $this->actingAs($this->hrUser)->getJson('/api/v1/reports/leave-utilization')->assertOk();
 
         // 5. Role-scoped dashboard summary enforces same boundary on server
+        $this->actingAs($this->icUser)->getJson('/api/v1/dashboard/summary')
+            ->assertOk()
+            ->assertJsonPath('data.effectiveRole', 'EMPLOYEE')
+            ->assertJsonMissingPath('data.team')
+            ->assertJsonMissingPath('data.hrOverview');
+
         $this->actingAs($this->managerUser)->getJson('/api/v1/dashboard/summary')
             ->assertOk()
             ->assertJsonPath('data.effectiveRole', 'MANAGER')
@@ -375,6 +396,72 @@ class HierarchyAndTwoStageLeaveTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.effectiveRole', 'HR')
             ->assertJsonPath('data.hrOverview.totalEmployees', 6);
+
+        // Manager cannot call HR-only payroll, audit, entitlement, or cross-team attendance endpoints
+        $this->actingAs($this->managerUser)->getJson('/api/v1/payroll/templates')->assertForbidden();
+        $this->actingAs($this->managerUser)->getJson('/api/v1/audit-logs')->assertForbidden();
+        $this->actingAs($this->managerUser)->postJson('/api/v1/leave/entitlements', [])->assertForbidden();
+        $this->actingAs($this->otherTeamUser)->postJson('/api/v1/attendance/clock-in', [
+            'employeeId' => $this->otherTeamEmp->id,
+            'employeeName' => $this->otherTeamEmp->full_name,
+            'staffId' => $this->otherTeamEmp->staff_id,
+            'entity' => $this->entityB->name,
+            'department' => $this->deptOpsB->name,
+        ])->assertCreated();
+        $mgrAttendance = $this->actingAs($this->managerUser)->getJson('/api/v1/attendance')->assertOk();
+        $this->assertCount(0, $mgrAttendance->json('data'));
+
+        // Consistent JSON error formats for 404 and 422
+        $this->actingAs($this->hrUser)->getJson('/api/v1/employees/999999')
+            ->assertNotFound()
+            ->assertJsonPath('error', 'Not Found');
+    }
+
+    public function test_reassigning_or_clearing_supervisor_in_phase_1_updates_phase_2_leave_routing(): void
+    {
+        $leaveId = $this->actingAs($this->icUser)->postJson('/api/v1/leave-requests', [
+            'employeeId' => $this->icEmp->id,
+            'employeeStaffId' => $this->icEmp->staff_id,
+            'leaveType' => 'Annual Leave',
+            'startDate' => '2026-12-20',
+            'endDate' => '2026-12-21',
+            'totalDays' => 2,
+            'reason' => 'Reassignment check',
+        ])->assertCreated()->json('data.id');
+
+        // Reassign Jonathan from Nadia to Engr. Femi
+        $this->actingAs($this->hrUser)->patchJson("/api/v1/employees/{$this->icEmp->id}", [
+            'managerId' => $this->managerEmp->id,
+        ])->assertOk()->assertJsonPath('data.managerId', (string) $this->managerEmp->id);
+
+        // Previous supervisor Nadia can no longer approve Stage 1; new supervisor Femi can
+        $this->actingAs($this->leadUser)
+            ->patchJson("/api/v1/leave-requests/{$leaveId}/status", ['status' => 'Approved'])
+            ->assertForbidden();
+
+        $this->actingAs($this->managerUser)
+            ->patchJson("/api/v1/leave-requests/{$leaveId}/status", ['status' => 'Approved'])
+            ->assertOk()
+            ->assertJsonPath('data.approvalStage', 'HR')
+            ->assertJsonPath('data.managerActorName', 'Engr. Femi Olatunji');
+
+        // Clearing supervisor (null) routes future requests directly to HR
+        $this->actingAs($this->hrUser)->patchJson("/api/v1/employees/{$this->icEmp->id}", [
+            'managerId' => null,
+        ])->assertOk()->assertJsonPath('data.managerId', null);
+
+        $directHrRes = $this->actingAs($this->icUser)->postJson('/api/v1/leave-requests', [
+            'employeeId' => $this->icEmp->id,
+            'employeeStaffId' => $this->icEmp->staff_id,
+            'leaveType' => 'Annual Leave',
+            'startDate' => '2026-12-24',
+            'endDate' => '2026-12-25',
+            'totalDays' => 2,
+            'reason' => 'Direct to HR check',
+        ])->assertCreated();
+
+        $directHrRes->assertJsonPath('data.approvalStage', 'HR')
+            ->assertJsonPath('data.status', 'Pending Review');
     }
 
     public function test_realtime_events_and_sse_stream_emit_mutations(): void

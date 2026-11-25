@@ -57,6 +57,30 @@ export const Header: React.FC<HeaderProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [notifications, setNotifications] = useState<SystemNotification[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const rightActionsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (rightActionsRef.current && !rightActionsRef.current.contains(event.target as Node)) {
+        setIsEntityMenuOpen(false);
+        setIsNotificationsOpen(false);
+        setIsProfileMenuOpen(false);
+      }
+    };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsEntityMenuOpen(false);
+        setIsNotificationsOpen(false);
+        setIsProfileMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    window.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
 
   const loadNotifications = React.useCallback(async () => {
     try {
@@ -105,7 +129,12 @@ export const Header: React.FC<HeaderProps> = ({
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
+    const q = searchQuery.trim();
+    if (q) {
+      try {
+        sessionStorage.setItem('citadel_pending_search', q);
+      } catch {}
+      window.dispatchEvent(new CustomEvent('citadel:global-search', { detail: q }));
       onNavigate('directory');
     }
   };
@@ -149,10 +178,12 @@ export const Header: React.FC<HeaderProps> = ({
             )}
 
             {/* Brand Logo & Name */}
-            <div
+            <button
+              type="button"
               onClick={() => onNavigate('dashboard')}
-              className="cursor-pointer hover:opacity-95 transition flex items-center gap-2.5 shrink-0"
+              className="cursor-pointer hover:opacity-90 transition flex items-center gap-2.5 shrink-0 text-left rounded-xl p-1 -ml-1"
               title="Citadel People Hub Dashboard"
+              aria-label="Go to Citadel People Hub Dashboard"
             >
               <img
                 src="/citadel-logo.png"
@@ -160,14 +191,14 @@ export const Header: React.FC<HeaderProps> = ({
                 className="h-7 w-7 object-contain rounded shadow-2xs"
               />
               <div className="hidden min-[420px]:flex flex-col">
-                <span className="text-xs font-black text-slate-900 tracking-tight leading-none">
+                <span className="text-xs font-extrabold text-slate-900 tracking-tight leading-none">
                   Citadel
                 </span>
-                <span className="text-[10px] text-slate-400 font-medium mt-0.5">
+                <span className="text-[10px] text-slate-500 font-medium mt-0.5">
                   People Hub
                 </span>
               </div>
-            </div>
+            </button>
           </div>
 
           {/* Center: Global Search Bar matching Hrivio/Pillio layout */}
@@ -175,63 +206,73 @@ export const Header: React.FC<HeaderProps> = ({
             onSubmit={handleSearchSubmit}
             className="relative flex-1 max-w-md hidden sm:block mx-auto"
           >
-            <Search className="w-4 h-4 absolute left-3.5 top-2.5 text-slate-400" />
+            <Search className="w-4 h-4 absolute left-3.5 top-2.5 text-slate-400 pointer-events-none" />
             <input
               ref={searchInputRef}
               type="text"
               data-testid="header-search-input"
+              aria-label="Search employees, documents or resources"
               placeholder="Search for employees, documents or resources..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-14 py-2 bg-slate-50/80 hover:bg-slate-50 border border-slate-200/90 rounded-full text-xs text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#D4AF37] focus:bg-white focus:ring-1 focus:ring-[#D4AF37]/30 transition"
+              className="w-full pl-9 pr-14 py-2 bg-slate-50/90 hover:bg-slate-50 border border-slate-200 rounded-full text-xs text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34] focus:bg-white focus:ring-2 focus:ring-[#083E34]/15 transition"
             />
-            <div className="absolute right-3 top-2 flex items-center gap-0.5 text-[10px] font-bold text-slate-400 bg-white border border-slate-200 px-1.5 py-0.5 rounded-md pointer-events-none">
+            <div className="absolute right-3 top-2 flex items-center gap-0.5 text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded-md pointer-events-none">
               <Command className="w-2.5 h-2.5" />
               <span>K</span>
             </div>
           </form>
 
           {/* Right Group: Entity Selector + Action Icons + Profile Pill */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div ref={rightActionsRef} className="flex items-center gap-2 sm:gap-2.5 shrink-0">
             {/* Entity Selector Filter */}
             <div className="hidden md:flex items-center relative">
               <button
                 id="btn-entity-scope-filter"
                 type="button"
-                onClick={() => setIsEntityMenuOpen(!isEntityMenuOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-slate-300 text-xs text-slate-700 font-semibold transition"
+                aria-expanded={isEntityMenuOpen}
+                aria-haspopup="menu"
+                onClick={() => {
+                  setIsEntityMenuOpen(!isEntityMenuOpen);
+                  setIsNotificationsOpen(false);
+                  setIsProfileMenuOpen(false);
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-slate-300 text-xs text-slate-700 font-semibold transition cursor-pointer"
               >
-                <Building2 className="w-3.5 h-3.5 text-slate-500" />
+                <Building2 className="w-3.5 h-3.5 text-[#083E34]" />
                 <span className="truncate max-w-[140px] text-xs font-bold">{currentEntityName}</span>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
               </button>
 
               {isEntityMenuOpen && (
                 <div
+                  role="menu"
                   className="absolute right-0 top-full mt-2 w-72 rounded-2xl bg-white shadow-xl border border-slate-200 py-1.5 z-50 animate-fade-in"
                   onClick={() => setIsEntityMenuOpen(false)}
                 >
-                  <div className="px-3 py-1.5 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                  <div className="px-3.5 py-2 border-b border-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                     Select Citadel Entity Scope
                   </div>
                   {entities.map((ent) => (
                     <button
+                      type="button"
+                      role="menuitem"
                       key={ent.id}
                       onClick={() => setSelectedEntityFilter(ent.id)}
-                      className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition ${
+                      className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition cursor-pointer ${
                         selectedEntityFilter === ent.id
-                          ? 'bg-[#FAF5EB] font-bold text-[#D97706]'
+                          ? 'bg-[#EBF5F2] font-bold text-[#083E34]'
                           : 'text-slate-700 font-medium'
                       }`}
                     >
                       <div className="flex flex-col">
                         <span className="font-bold">{ent.name}</span>
                         {'shortCode' in ent && (
-                          <span className="text-[10px] text-slate-400">{ent.shortCode}</span>
+                          <span className="text-[10px] text-slate-500">{ent.shortCode}</span>
                         )}
                       </div>
                       {selectedEntityFilter === ent.id && (
-                        <span className="w-2 h-2 rounded-full bg-[#D4AF37]" />
+                        <span className="w-2 h-2 rounded-full bg-[#083E34]" />
                       )}
                     </button>
                   ))}
@@ -245,12 +286,19 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Notification Bell in Rounded Square Button matching Hrivio */}
             <div className="relative">
               <button
+                type="button"
                 id="btn-header-notifications"
                 data-testid="header-notifications-btn"
-                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className="w-9 h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center relative transition shadow-2xs"
+                aria-expanded={isNotificationsOpen}
+                aria-haspopup="menu"
+                onClick={() => {
+                  setIsNotificationsOpen(!isNotificationsOpen);
+                  setIsEntityMenuOpen(false);
+                  setIsProfileMenuOpen(false);
+                }}
+                className="w-9 h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center relative transition shadow-2xs cursor-pointer"
                 title="Notifications"
-                aria-label="View notifications"
+                aria-label={`View notifications (${unreadCount} unread)`}
               >
                 <Bell className="w-4 h-4 text-slate-600" />
                 {unreadCount > 0 && (
@@ -260,19 +308,21 @@ export const Header: React.FC<HeaderProps> = ({
 
               {isNotificationsOpen && (
                 <div
-                  className="absolute right-0 top-full mt-2 w-80 rounded-2xl bg-white shadow-xl border border-slate-200 overflow-hidden z-50 animate-fade-in"
+                  role="menu"
+                  className="absolute right-0 top-full mt-2 w-[calc(100vw-1.5rem)] max-w-xs sm:w-80 rounded-2xl bg-white shadow-xl border border-slate-200 overflow-hidden z-50 animate-fade-in"
                   onClick={() => setIsNotificationsOpen(false)}
                 >
-                  <div className="p-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                  <div className="p-3.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-900">Notifications</span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFF3E0] text-[#D97706] border border-[#F2E4B8]">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFF3E0] text-[#D97706] border border-[#F2E4B8] tabular-nums">
                       {unreadCount} Unread
                     </span>
                   </div>
-                  <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
+                  <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto custom-scrollbar">
                     {notifications.length > 0 ? (
                       notifications.slice(0, 6).map((n) => (
-                        <div
+                        <button
+                          type="button"
                           key={n.id}
                           onClick={async () => {
                             if (!n.isRead) {
@@ -285,27 +335,28 @@ export const Header: React.FC<HeaderProps> = ({
                                 : 'notifications'
                             );
                           }}
-                          className={`p-3 text-xs hover:bg-slate-50 cursor-pointer transition ${
+                          className={`w-full text-left p-3.5 text-xs hover:bg-slate-50 cursor-pointer transition block ${
                             !n.isRead ? 'bg-amber-50/40' : ''
                           }`}
                         >
                           <div className="flex items-center justify-between gap-2">
                             <span className="font-bold text-slate-900">{n.title}</span>
-                            <span className="text-[10px] text-slate-400 shrink-0">{n.timestamp}</span>
+                            <span className="text-[10px] text-slate-500 shrink-0 tabular-nums">{n.timestamp}</span>
                           </div>
-                          <p className="text-xs text-slate-500 font-medium mt-0.5">{n.message}</p>
-                        </div>
+                          <p className="text-xs text-slate-600 font-medium mt-0.5 line-clamp-2">{n.message}</p>
+                        </button>
                       ))
                     ) : (
-                      <div className="p-4 text-xs text-slate-500 text-center">
+                      <div className="p-5 text-xs text-slate-500 text-center">
                         No notifications right now.
                       </div>
                     )}
                   </div>
                   <div className="p-2.5 bg-slate-50 border-t border-slate-100 text-center">
                     <button
+                      type="button"
                       onClick={() => onNavigate('notifications')}
-                      className="text-xs text-[#0A1E3F] hover:text-[#1E3A8A] hover:underline font-bold"
+                      className="text-xs text-[#083E34] hover:text-[#052C25] hover:underline font-bold cursor-pointer"
                     >
                       View All Notifications →
                     </button>
@@ -316,20 +367,29 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Chat / Messages Button matching Hrivio */}
             <button
+              type="button"
               onClick={() => onNavigate('team-notes')}
-              className="w-9 h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hidden sm:flex items-center justify-center transition shadow-2xs"
+              className="w-9 h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hidden sm:flex items-center justify-center transition shadow-2xs cursor-pointer"
               title="Team Notes & Discussions"
               aria-label="Team Notes"
             >
               <MessageSquare className="w-4 h-4 text-slate-600" />
             </button>
 
-            {/* User Profile Pill ("Dr. Bukola Adeleke") with Account Menu */}
+            {/* User Profile Pill with Account Menu */}
             <div className="relative">
-              <div
+              <button
+                type="button"
                 data-testid="header-user-profile-pill"
-                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                className="flex items-center gap-2 sm:gap-2.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl border border-slate-200/90 hover:bg-slate-50 cursor-pointer transition select-none"
+                aria-expanded={isProfileMenuOpen}
+                aria-haspopup="menu"
+                aria-label="Account Options"
+                onClick={() => {
+                  setIsProfileMenuOpen(!isProfileMenuOpen);
+                  setIsEntityMenuOpen(false);
+                  setIsNotificationsOpen(false);
+                }}
+                className="flex items-center gap-2 sm:gap-2.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl border border-slate-200/90 hover:bg-slate-50 cursor-pointer transition select-none bg-white"
                 title="Account Options"
               >
                 <div className="relative shrink-0">
@@ -340,7 +400,7 @@ export const Header: React.FC<HeaderProps> = ({
                       className="w-8 h-8 rounded-full object-cover shadow-xs"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-[#0A1E3F] text-white font-bold flex items-center justify-center text-xs shadow-xs">
+                    <div className="w-8 h-8 rounded-full bg-[#083E34] text-white font-bold flex items-center justify-center text-xs shadow-xs">
                       {currentUser.name
                         .split(' ')
                         .map((n) => n[0])
@@ -359,23 +419,26 @@ export const Header: React.FC<HeaderProps> = ({
                     {currentUser.jobTitle || 'PCCM Super Admin'}
                   </div>
                 </div>
-              </div>
+              </button>
 
               {/* Account Dropdown Menu */}
               {isProfileMenuOpen && (
                 <div
-                  className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-50 animate-fade-in"
+                  role="menu"
+                  className="absolute right-0 top-full mt-2 w-[calc(100vw-1.5rem)] max-w-[16rem] sm:w-64 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-50 animate-fade-in"
                   onClick={() => setIsProfileMenuOpen(false)}
                 >
                   <div className="p-3 border-b border-slate-100 bg-slate-50/70 rounded-xl mb-1">
                     <p className="text-xs font-bold text-slate-900 leading-none">{currentUser.name}</p>
                     <p className="text-[11px] text-slate-500 mt-1 truncate font-mono">{currentUser.email}</p>
-                    <span className="inline-block mt-1.5 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FAF5EB] text-[#D97706] border border-[#F2E4B8]">
+                    <span className="inline-block mt-1.5 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FAF5EB] text-[#B45309] border border-[#F2E4B8]">
                       {currentPersona.badgeLabel}
                     </span>
                   </div>
 
                   <button
+                    type="button"
+                    role="menuitem"
                     onClick={() => setIsProfileOpen(true)}
                     className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 rounded-xl transition flex items-center gap-2 cursor-pointer"
                   >
@@ -385,6 +448,8 @@ export const Header: React.FC<HeaderProps> = ({
                   <div className="my-1 border-t border-slate-100" />
 
                   <button
+                    type="button"
+                    role="menuitem"
                     onClick={() => logout()}
                     className="w-full text-left px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
                   >

@@ -9,7 +9,7 @@ import { AuthContext } from '../context/AuthContext';
 import { DashboardView } from '../components/views/DashboardView';
 import { LeaveManagementView } from '../components/views/LeaveManagementView';
 import { CreateEmployeeModal } from '../components/employee/CreateEmployeeModal';
-import { LeaveRequest, User, RolePermissions } from '../types';
+import { Employee, LeaveRequest, User, RolePermissions } from '../types';
 import { leaveRepository, employeeRepository } from '../services';
 
 const FULL_PERMISSIONS: RolePermissions = {
@@ -521,5 +521,206 @@ describe('Phase 2: Two-Stage Leave Workflow & Role-Scoped Dashboards', () => {
       expect(optionTexts.some((t) => t.includes('Academic Affairs'))).toBe(true);
       expect(optionTexts.some((t) => t.includes('ICT & Infrastructure'))).toBe(false);
     });
+  });
+
+  it('sends explicit managerId: null when clearing Direct Supervisor during edit in CreateEmployeeModal', async () => {
+    const entities = [
+      {
+        id: '1',
+        name: 'Citadel Global Community Church',
+        shortCode: 'CGCC',
+        description: 'Ministry',
+        headOfEntity: 'Pastor Tunde Bakare',
+        isActive: true,
+      },
+    ];
+    const departments = [
+      {
+        id: '1',
+        entityId: '1',
+        entityName: 'CGCC',
+        name: 'ICT & Infrastructure',
+        code: 'ICT',
+        headOfDepartmentName: 'Engr. Femi Olatunji',
+        isActive: true,
+      },
+    ];
+    const existingEmployees: Employee[] = [
+      {
+        id: 'emp-2',
+        staffId: 'CGCC-002',
+        fullName: 'Engr. Femi Olatunji',
+        firstName: 'Femi',
+        lastName: 'Olatunji',
+        email: 'femi@citadel.ng',
+        phone: '+2348000000002',
+        dateOfBirth: '1988-02-10',
+        gender: 'Male',
+        address: 'Lagos',
+        emergencyContact: { name: 'EC', relationship: 'Spouse', phone: '+2348000000003' },
+        nextOfKin: { name: 'NOK', relationship: 'Spouse', phone: '+2348000000003', address: 'Lagos' },
+        entityId: '1',
+        entityName: 'CGCC',
+        departmentId: '1',
+        departmentName: 'ICT & Infrastructure',
+        jobTitle: 'Head of ICT',
+        gradeLevel: 'M2',
+        employmentType: 'Full-Time',
+        employmentDate: '2022-01-01',
+        contractStatus: 'Permanent',
+        yearsOfService: 4,
+        qualifications: [],
+        certifications: [],
+        bankPayroll: { bankName: 'Zenith Bank', accountNumber: '1234567890', accountName: 'Femi Olatunji', salaryGrade: 'M2', currency: 'NGN' },
+        pensionHmo: { pfaName: 'Stanbic', rsaPin: 'PEN123', hmoProvider: 'Hygeia', hmoPlan: 'Gold', hmoIdNumber: 'HMO-2' },
+        status: 'Confirmed',
+      },
+      {
+        id: 'emp-5',
+        staffId: 'CGCC-005',
+        fullName: 'Bayu Wirawan',
+        firstName: 'Bayu',
+        lastName: 'Wirawan',
+        email: 'bayu@citadel.ng',
+        phone: '+2348000000005',
+        dateOfBirth: '1995-05-05',
+        gender: 'Male',
+        address: 'Lagos',
+        emergencyContact: { name: 'EC', relationship: 'Sibling', phone: '+2348000000006' },
+        nextOfKin: { name: 'NOK', relationship: 'Sibling', phone: '+2348000000006', address: 'Lagos' },
+        entityId: '1',
+        entityName: 'CGCC',
+        departmentId: '1',
+        departmentName: 'ICT & Infrastructure',
+        jobTitle: 'Software Engineer',
+        gradeLevel: 'A1',
+        employmentType: 'Full-Time',
+        employmentDate: '2024-03-01',
+        managerId: 'emp-2',
+        managerName: 'Engr. Femi Olatunji',
+        contractStatus: 'Permanent',
+        yearsOfService: 2,
+        qualifications: [],
+        certifications: [],
+        bankPayroll: { bankName: 'Zenith Bank', accountNumber: '0987654321', accountName: 'Bayu Wirawan', salaryGrade: 'A1', currency: 'NGN' },
+        pensionHmo: { pfaName: 'Stanbic', rsaPin: 'PEN456', hmoProvider: 'Hygeia', hmoPlan: 'Silver', hmoIdNumber: 'HMO-5' },
+        status: 'Confirmed',
+      },
+    ];
+
+    const hrUser: User = {
+      id: 'u-hr',
+      employeeId: 'emp-1',
+      staffId: 'CGCC-001',
+      name: 'Dr. Bukola Adeleke',
+      email: 'dr.adeleke@citadel.ng',
+      role: 'HR_STAFF',
+      entityId: '1',
+      entityName: 'CGCC',
+      departmentId: '1',
+      departmentName: 'People & Culture',
+      jobTitle: 'CPO',
+      permissions: [],
+    };
+
+    const updateSpy = vi.spyOn(employeeRepository, 'update').mockResolvedValue({
+      ...existingEmployees[1],
+      managerId: null as any,
+      managerName: null as any,
+    });
+
+    render(
+      <AuthContext.Provider value={makeAuthValue(hrUser, false) as any}>
+        <CreateEmployeeModal
+          isOpen
+          onClose={vi.fn()}
+          onSuccess={vi.fn()}
+          editingEmployee={existingEmployees[1]}
+          entities={entities}
+          departments={departments}
+          employees={existingEmployees}
+        />
+      </AuthContext.Provider>
+    );
+
+    const supSelect = (await screen.findByTestId('employee-supervisor-select')) as HTMLSelectElement;
+    expect(supSelect.value).toBe('emp-2');
+
+    fireEvent.change(supSelect, { target: { value: '' } });
+    fireEvent.click(screen.getByTestId('employee-save-changes-btn'));
+
+    await waitFor(() => {
+      expect(updateSpy).toHaveBeenCalledWith(
+        'emp-5',
+        expect.objectContaining({
+          managerId: null,
+          managerName: null,
+        })
+      );
+    });
+
+    updateSpy.mockRestore();
+  });
+
+  it('hides Stage 1 approval controls for unrelated managers in LeaveManagementView', async () => {
+    const unrelatedManager: User = {
+      id: 'u-other-mgr',
+      employeeId: 'emp-99',
+      staffId: 'CGCC-099',
+      name: 'Pastor Christian Ike',
+      email: 'c.ike@citadel.ng',
+      role: 'MANAGER',
+      effectiveRole: 'MANAGER',
+      isSupervisor: true,
+      directReportsCount: 2,
+      entityId: '1',
+      entityName: 'CGCC',
+      departmentId: '2',
+      departmentName: 'Facilities',
+      jobTitle: 'Head of Facilities',
+      permissions: [],
+    };
+
+    const mockedRequests: LeaveRequest[] = [
+      {
+        id: '910',
+        employeeId: 'emp-5',
+        employeeStaffId: 'CIT/005',
+        employeeName: 'Bayu Wirawan',
+        entityName: 'CGCC',
+        departmentName: 'ICT',
+        leaveType: 'Annual Leave',
+        startDate: '2027-08-01',
+        endDate: '2027-08-03',
+        totalDays: 3,
+        reason: 'Annual leave',
+        status: 'Submitted',
+        appliedDate: '2026-11-24',
+        managerId: 'emp-2',
+        managerName: 'Engr. Femi Olatunji',
+        approvalStage: 'MANAGER',
+      },
+    ];
+
+    const getAllSpy = vi.spyOn(leaveRepository, 'getAll').mockResolvedValue(mockedRequests);
+    const balancesSpy = vi.spyOn(leaveRepository, 'getBalances').mockResolvedValue([]);
+    const catsSpy = vi.spyOn(leaveRepository, 'getCategories').mockResolvedValue([]);
+    const empSpy = vi.spyOn(employeeRepository, 'getAll').mockResolvedValue([]);
+
+    try {
+      render(
+        <AuthContext.Provider value={makeAuthValue(unrelatedManager, true) as any}>
+          <LeaveManagementView />
+        </AuthContext.Provider>
+      );
+
+      expect((await screen.findAllByText('Bayu Wirawan')).length).toBeGreaterThan(0);
+      expect(screen.queryByTestId('leave-approve-btn')).not.toBeInTheDocument();
+    } finally {
+      getAllSpy.mockRestore();
+      balancesSpy.mockRestore();
+      catsSpy.mockRestore();
+      empSpy.mockRestore();
+    }
   });
 });

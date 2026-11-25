@@ -12,7 +12,9 @@ return new class extends Migration
             if (! Schema::hasColumn('employees', 'manager_id')) {
                 $table->string('manager_id')->nullable()->after('confirmation_date');
             }
-            $table->index('manager_id', 'employees_manager_id_index');
+            if (! Schema::hasIndex('employees', 'employees_manager_id_index')) {
+                $table->index('manager_id', 'employees_manager_id_index');
+            }
         });
 
         Schema::table('leave_requests', function (Blueprint $table) {
@@ -73,7 +75,9 @@ return new class extends Migration
         });
 
         Schema::table('employees', function (Blueprint $table) {
-            $table->dropIndex('employees_manager_id_index');
+            if (Schema::hasIndex('employees', 'employees_manager_id_index')) {
+                $table->dropIndex('employees_manager_id_index');
+            }
         });
     }
 };

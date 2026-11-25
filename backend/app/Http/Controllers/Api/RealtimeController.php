@@ -74,14 +74,22 @@ class RealtimeController extends Controller
         }
         abort_unless($user !== null, 401, 'Unauthenticated.');
 
-        $since = max(0, (int) $request->input('since', (int) (RealtimeEvent::query()->max('id') ?? 0)));
-        $maxSeconds = $request->boolean('once') ? 0 : 15;
+        $lastEventHeader = $request->header('Last-Event-ID');
+        $defaultLatest = (int) (RealtimeEvent::query()->max('id') ?? 0);
+        $since = $lastEventHeader !== null && is_numeric($lastEventHeader)
+            ? max(0, (int) $lastEventHeader)
+            : max(0, (int) $request->input('since', $defaultLatest));
+
+        // Never block a single-worker PHP built-in server; stream continuously when multi-worker or FPM/Apache.
+        $cliWorkers = (int) (getenv('PHP_CLI_SERVER_WORKERS') ?: env('PHP_CLI_SERVER_WORKERS', 1));
+        $isSingleWorkerCliServer = PHP_SAPI === 'cli-server' && $cliWorkers < 2;
+        $maxSeconds = ($request->boolean('once') || $isSingleWorkerCliServer) ? 0 : 12;
 
         return response()->stream(function () use ($since, $maxSeconds) {
             $cursor = $since;
             $started = time();
 
-            echo "retry: 2000\n\n";
+            echo "retry: 1200\n\n";
             echo "event: connected\ndata: {\"latestId\":{$cursor}}\n\n";
             if (ob_get_level() > 0) {
                 ob_flush();
@@ -126,7 +134,7 @@ class RealtimeController extends Controller
                     break;
                 }
 
-                usleep(500000);
+                usleep(350000);
             }
         }, 200, [
             'Content-Type' => 'text/event-stream',

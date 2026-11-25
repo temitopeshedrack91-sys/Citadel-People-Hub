@@ -336,7 +336,7 @@ return new class extends Migration
                 $table->decimal('remaining_days', 6, 2)->default(0);
                 $table->timestamps();
 
-                $table->unique(['employee_id', 'leave_category_id', 'year']);
+                $table->unique(['employee_id', 'leave_category_id', 'year'], 'emp_leave_bal_emp_cat_yr_unique');
             });
         }
     }

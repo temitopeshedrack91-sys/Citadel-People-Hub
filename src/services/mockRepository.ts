@@ -941,7 +941,7 @@ export class MockTalentRepository implements ITalentRepository {
       id: `notif-rem-${Date.now()}`,
       title: `Onboarding Task Reminder — ${journey.employeeName}`,
       message: `Reminder for "${journey.tasks[tIndex].title}" (${journey.tasks[tIndex].department} • Due ${journey.tasks[tIndex].dueDate || journey.tasks[tIndex].timeline}).`,
-      type: 'warning',
+      type: 'SYSTEM_ALERT',
       category: 'Talent',
       isRead: false,
       timestamp: 'Just now',
@@ -977,7 +977,7 @@ export class MockTalentRepository implements ITalentRepository {
         id: `notif-bulk-rem-${Date.now()}`,
         title: `Onboarding Escalation Reminders — ${journey.employeeName}`,
         message: `Sent ${remindedCount} reminders for pending onboarding deliverables.`,
-        type: 'warning',
+        type: 'SYSTEM_ALERT',
         category: 'Talent',
         isRead: false,
         timestamp: 'Just now',
@@ -1932,7 +1932,7 @@ export class MockPerformanceRepository implements IPerformanceRepository {
       throw new Error('Finalized appraisals are locked and cannot be re-scored.');
     }
 
-    const assignedKpiIds = rev.ratings
+    const assignedKpiIds = (rev.ratings || [])
       .map((r) => r.kpiId)
       .filter((kid): kid is number => typeof kid === 'number' && kid > 0);
     if (assignedKpiIds.length > 0) {
@@ -2666,7 +2666,7 @@ export class MockOffboardingRepository implements IOffboardingRepository {
         const rem = Number(l.remaining_balance ?? l.principal_amount ?? 0);
         return rem > 0.01;
       })
-      .map((l) => `${l.title || 'Staff Loan'} (₦${Number(l.remaining_balance ?? l.principal_amount ?? 0).toLocaleString()} outstanding)`);
+      .map((l) => `${l.loan_type || 'Staff Loan'} (₦${Number(l.remaining_balance ?? l.principal_amount ?? 0).toLocaleString()} outstanding)`);
   }
 
   private enrich(req: ExitRequest): ExitRequest {

@@ -200,13 +200,11 @@ class RoleAuthorization
                 $hierarchy = app(EmployeeHierarchyService::class);
                 $teamIds = $hierarchy->getSubtreeEmployeeIds((int) $selfEmployee->id);
 
-                // If explicit MANAGER/head has direct reports, strictly return self + reporting subtree
                 if ($teamIds !== [] || strtoupper(trim($user->role ?? '')) === 'MANAGER') {
                     return array_values(array_unique(array_merge([(int) $selfEmployee->id], $teamIds)));
                 }
             }
 
-            // Legacy unlinked DEPARTMENT_HEAD / BUSINESS_HEAD fallback when no employee hierarchy link exists
             $rawRole = strtoupper(trim($user->role ?? ''));
             if ($rawRole === 'DEPARTMENT_HEAD' && $user->department_id !== null) {
                 $ids = Employee::query()->where('department_id', $user->department_id)->pluck('id')->map(fn ($id) => (int) $id)->all();

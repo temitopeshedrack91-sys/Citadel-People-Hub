@@ -329,57 +329,57 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
 
       {/* 2. Manager KPIs Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-black uppercase text-slate-700">Direct Reports</span>
-            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">Direct Reports</span>
+            <div className="w-8 h-8 rounded-xl bg-[#EBF5F2] text-[#083E34] flex items-center justify-center border border-[#A3D4C7]/50">
               <Users className="w-4 h-4" />
             </div>
           </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-[#083E34]">{directReports.length}</span>
-            <span className="text-xs text-slate-500 font-bold">reporting to you</span>
+          <div className="flex items-baseline gap-1.5 tabular-nums">
+            <span className="text-2xl font-extrabold text-[#083E34]">{directReports.length}</span>
+            <span className="text-xs text-slate-500 font-semibold">reporting to you</span>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-black uppercase text-slate-700">Pending Approvals</span>
-            <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-800 flex items-center justify-center">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">Pending Approvals</span>
+            <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center border border-rose-200">
               <CalendarDays className="w-4 h-4" />
             </div>
           </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-rose-600">{pendingQueue.length}</span>
-            <span className="text-xs text-slate-500 font-bold">awaiting Stage 1</span>
+          <div className="flex items-baseline gap-1.5 tabular-nums">
+            <span className="text-2xl font-extrabold text-rose-600">{pendingQueue.length}</span>
+            <span className="text-xs text-slate-500 font-semibold">awaiting Stage 1</span>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-black uppercase text-slate-700">Team Calendar</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">Team Calendar</span>
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200">
               <CalendarDays className="w-4 h-4" />
             </div>
           </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-[#083E34]">{calendarEvents.length}</span>
-            <span className="text-xs text-slate-500 font-bold">scheduled leaves</span>
+          <div className="flex items-baseline gap-1.5 tabular-nums">
+            <span className="text-2xl font-extrabold text-[#083E34]">{calendarEvents.length}</span>
+            <span className="text-xs text-slate-500 font-semibold">scheduled leaves</span>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-black uppercase text-slate-700">My Annual Quota</span>
-            <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">My Annual Quota</span>
+            <div className="w-8 h-8 rounded-xl bg-[#FAF5EB] text-[#B45309] flex items-center justify-center border border-[#F2E4B8]">
               <ShieldCheck className="w-4 h-4" />
             </div>
           </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-[#083E34]">
+          <div className="flex items-baseline gap-1.5 tabular-nums">
+            <span className="text-2xl font-extrabold text-[#083E34]">
               {ownAnnualBalance ? Number(ownAnnualBalance.remaining_days) : 0}
             </span>
-            <span className="text-xs text-slate-500 font-bold">
+            <span className="text-xs text-slate-500 font-semibold">
               / {ownAnnualBalance ? Number(ownAnnualBalance.total_days) : 0} days left
             </span>
           </div>

@@ -9,6 +9,7 @@
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 import { User, UserRole, RolePermissions } from '../types';
 import { getLaravelAccessToken, isLaravelApiConfigured, requestLaravel, requestLaravelData, setLaravelAccessToken } from '../services/laravelClient';
+import { realtimeSync } from '../services/realtimeSync';
 import { authService, type AuthUser } from '../services/supabaseService';
 import { getRolePermissions, isManagerUser } from '../utils/rbac';
 import { canUseLocalPersonaAuthentication, canUseSupabaseDirectAccess, shouldUseLaravelBackend } from '../utils/authMode';
@@ -699,6 +700,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCurrentPersona(createLaravelPersona(user));
     } catch {}
   };
+
+  useEffect(() => {
+    if (!backendEnabled || !isAuthenticated) return;
+    return realtimeSync.subscribe('employees', () => {
+      void refreshUser();
+    });
+  }, [backendEnabled, isAuthenticated]);
 
   const value = {
     currentUser: currentPersona.user,

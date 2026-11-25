@@ -1303,9 +1303,12 @@ export class LaravelOffboardingRepository implements IOffboardingRepository {
   }
 
   async endorseByManager(id: string, payload?: { comments?: string; version?: number }): Promise<ExitRequest> {
-    return requestLaravelData(`/offboarding/requests/${encodeURIComponent(id)}/endorse`, {
+    return requestLaravelData(`/offboarding/requests/${encodeURIComponent(id)}/manager-endorse`, {
       method: 'POST',
-      body: JSON.stringify(payload ?? {}),
+      body: JSON.stringify({
+        managerComments: payload?.comments,
+        ...(payload?.version !== undefined ? { version: payload.version } : {}),
+      }),
     });
   }
 
@@ -1320,7 +1323,7 @@ export class LaravelOffboardingRepository implements IOffboardingRepository {
   }
 
   async scheduleInterview(id: string, payload: ExitInterviewDetails & { version?: number }): Promise<ExitRequest> {
-    return requestLaravelData(`/offboarding/requests/${encodeURIComponent(id)}/interview`, {
+    return requestLaravelData(`/offboarding/requests/${encodeURIComponent(id)}/schedule-interview`, {
       method: 'POST',
       body: JSON.stringify(payload),
     });
@@ -1332,7 +1335,7 @@ export class LaravelOffboardingRepository implements IOffboardingRepository {
     cleared: boolean,
     payload?: { note?: string; version?: number }
   ): Promise<ExitRequest> {
-    return requestLaravelData(`/offboarding/requests/${encodeURIComponent(id)}/clearances`, {
+    return requestLaravelData(`/offboarding/requests/${encodeURIComponent(id)}/clearance`, {
       method: 'PATCH',
       body: JSON.stringify({
         department,

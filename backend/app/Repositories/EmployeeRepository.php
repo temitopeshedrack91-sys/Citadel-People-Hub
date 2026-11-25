@@ -2,57 +2,46 @@
 
 namespace App\Repositories;
 
+use App\Models\Department;
 use App\Models\Employee;
+use App\Models\Entity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
- * Data access layer for employee master records and reporting lines.
+ * Data access layer for employees and reporting hierarchy edges.
  */
 class EmployeeRepository
 {
-    public function findById(int|string $id, array $relations = []): ?Employee
+    public function findById(int|string $id, array $with = []): ?Employee
     {
         if (! is_numeric($id)) {
             return null;
         }
 
-        $query = Employee::query();
-        if ($relations !== []) {
-            $query->with($relations);
-        }
-
-        return $query->find((int) $id);
+        return Employee::query()->with($with)->whereKey((int) $id)->first();
     }
 
-    public function findByStaffId(string $staffId, array $relations = []): ?Employee
+    public function findByStaffId(string $staffId, array $with = []): ?Employee
     {
-        $query = Employee::query()->where('staff_id', $staffId);
-        if ($relations !== []) {
-            $query->with($relations);
-        }
-
-        return $query->first();
-    }
-
-    public function hasDirectReports(int $employeeId): bool
-    {
-        return Employee::query()
-            ->where('manager_id', (string) $employeeId)
-            ->exists();
+        return Employee::query()->with($with)->where('staff_id', $staffId)->first();
     }
 
     /** @return Collection<int, Employee> */
-    public function getDirectReports(int $employeeId): Collection
+    public function getDirectReports(int $managerEmployeeId): Collection
     {
         return Employee::query()
             ->with(['entity', 'department'])
-            ->where('manager_id', (string) $employeeId)
+            ->where('manager_id', (string) $managerEmployeeId)
             ->orderBy('full_name')
             ->get();
     }
 
-    /** @return array<int, array{id: int, manager_id: ?string}> */
+    /**
+     * Fetch all (id, manager_id) pairs for in-memory cycle/subtree graph resolution.
+     *
+     * @return array<int, array{id: int, manager_id: ?string}>
+     */
     public function allHierarchyEdges(): array
     {
         return Employee::query()
@@ -60,23 +49,22 @@ class EmployeeRepository
             ->get()
             ->map(fn (Employee $emp) => [
                 'id' => (int) $emp->id,
-                'manager_id' => $emp->manager_id !== null && $emp->manager_id !== '' ? (string) $emp->manager_id : null,
+                'manager_id' => $emp->manager_id !== null ? (string) $emp->manager_id : null,
             ])
             ->all();
     }
 
-    /** @return Builder<Employee> */
     public function applyDirectoryFilters(Builder $query, ?string $entityId, mixed $departmentId, ?string $search): Builder
     {
         if ($entityId !== null && $entityId !== '') {
-            $normEntity = \App\Models\Entity::normalizeEntityId($entityId);
+            $normEntity = Entity::normalizeEntityId($entityId);
             if ($normEntity) {
                 $query->where('entity_id', $normEntity);
             }
         }
 
         if ($departmentId !== null && $departmentId !== '') {
-            $normDept = \App\Models\Department::normalizeDepartmentId($departmentId);
+            $normDept = Department::normalizeDepartmentId($departmentId);
             if ($normDept) {
                 $query->where('department_id', $normDept);
             }

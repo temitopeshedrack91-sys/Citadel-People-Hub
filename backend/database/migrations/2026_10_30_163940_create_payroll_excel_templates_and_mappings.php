@@ -18,8 +18,8 @@ return new class extends Migration
             $table->string('description')->nullable();
             $table->string('original_filename')->nullable();
             $table->unsignedBigInteger('created_by')->nullable();
-            $table->json('columns')->default('[]'); // Original Excel column headers
-            $table->json('mappings')->default('[]'); // Column to payroll field mappings
+            $table->json('columns')->nullable(); // Original Excel column headers
+            $table->json('mappings')->nullable(); // Column to payroll field mappings
             $table->json('sample_data')->nullable(); // First few rows for preview
             $table->boolean('is_active')->default(true);
             $table->boolean('is_default')->default(false);

@@ -294,11 +294,11 @@ export const PerformanceView: React.FC = () => {
         reviewPeriodEnd,
         dueDate: reviewDueDate,
         kpis: selectedKpis.map((k) => ({
-          kpiId: k.id,
+          kpiId: Number(k.id),
           title: k.indicator,
           weight: Number(assignedWeights[k.id] ?? k.weight ?? 0),
         })),
-      } as Partial<PerformanceReview>);
+      });
 
       showSuccess(`Performance review initiated for ${emp.fullName} (Total KPI Weight: 100%).`);
       setIsInitiateReviewModalOpen(false);
@@ -324,7 +324,7 @@ export const PerformanceView: React.FC = () => {
         const rawWeight = r.weight !== undefined && r.weight !== null ? Number(r.weight) : Number(linked?.weight ?? 0);
         const defaultScore = r.rating && Number(r.rating) > 0 ? Number(r.rating) : Math.min(maxR, Math.max(minR, 4));
         initialScores[idx] = {
-          kpiId: r.kpiId,
+          kpiId: r.kpiId ?? undefined,
           score: defaultScore,
           comment: r.comment || '',
           weight: rawWeight > 0 ? rawWeight : Math.round((100 / rev.ratings!.length) * 100) / 100,
@@ -921,14 +921,27 @@ export const PerformanceView: React.FC = () => {
 
       {/* MODAL 1: CREATE / EDIT KPI */}
       {isKpiModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={editingKpiId ? 'Edit KPI Indicator' : 'Create New KPI'}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setIsKpiModalOpen(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in"
+        >
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden">
-            <div className="p-5 bg-[#0A1E3F] text-white flex items-center justify-between">
+            <div className="p-5 bg-[#083E34] text-white flex items-center justify-between border-b border-emerald-950/30">
               <div>
                 <h3 className="text-base font-bold text-white">{editingKpiId ? 'Edit KPI Indicator' : 'Create New KPI'}</h3>
-                <p className="text-xs text-blue-200">Define measurable indicators based on job descriptions.</p>
+                <p className="text-xs text-emerald-100/90">Define measurable indicators based on job descriptions.</p>
               </div>
-              <button onClick={() => setIsKpiModalOpen(false)} className="text-slate-300 hover:text-white p-1 rounded-lg">
+              <button
+                type="button"
+                aria-label="Close KPI modal"
+                onClick={() => setIsKpiModalOpen(false)}
+                className="text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1011,14 +1024,27 @@ export const PerformanceView: React.FC = () => {
 
       {/* MODAL 2: INITIATE APPRAISAL REVIEW */}
       {isInitiateReviewModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Initiate Employee Appraisal"
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setIsInitiateReviewModalOpen(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in"
+        >
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden">
-            <div className="p-5 bg-[#0A1E3F] text-white flex items-center justify-between">
+            <div className="p-5 bg-[#083E34] text-white flex items-center justify-between border-b border-emerald-950/30">
               <div>
                 <h3 className="text-base font-bold text-white">Initiate Employee Appraisal</h3>
-                <p className="text-xs text-blue-200">Assign review cycle and job-specific KPIs to an employee.</p>
+                <p className="text-xs text-emerald-100/90">Assign review cycle and job-specific KPIs to an employee.</p>
               </div>
-              <button onClick={() => setIsInitiateReviewModalOpen(false)} className="text-slate-300 hover:text-white p-1 rounded-lg">
+              <button
+                type="button"
+                aria-label="Close appraisal modal"
+                onClick={() => setIsInitiateReviewModalOpen(false)}
+                className="text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
