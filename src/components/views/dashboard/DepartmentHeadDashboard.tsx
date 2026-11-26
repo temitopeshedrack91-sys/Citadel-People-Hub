@@ -118,7 +118,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
       } else {
         const userNameLower = (currentUser.name || '').toLowerCase();
         reports = allEmps.filter((e) => {
-          if (e.id === actorEmployeeId) return false;
+          if (actorEmployeeId && String(e.id) === actorEmployeeId) return false;
           if (actorEmployeeId && String(e.managerId || '') === actorEmployeeId) return true;
           if (
             userNameLower &&

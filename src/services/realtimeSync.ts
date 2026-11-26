@@ -41,7 +41,7 @@ export type RealtimeCallback<T extends { [key: string]: any } = { [key: string]:
 
 interface ChannelSubscriptionState {
   channel: RealtimeChannel | null;
-  subscribers: Set<RealtimeCallback<any>>;
+  subscribers: Map<RealtimeCallback<any>, RealtimeEventType>;
   reconnectAttempts: number;
   reconnectTimer?: ReturnType<typeof setTimeout> | null;
   status: 'SUBSCRIBED' | 'TIMED_OUT' | 'CHANNEL_ERROR' | 'CLOSED' | 'CONNECTING';
@@ -70,7 +70,7 @@ class RealtimeSyncManager {
 
   private shouldUseLaravelRealtime(): boolean {
     if (import.meta.env.MODE === 'test') {
-      return false;
+      return isLaravelApiConfigured();
     }
     return shouldUseLaravelBackend(import.meta.env.PROD, isLaravelApiConfigured());
   }
@@ -91,7 +91,7 @@ class RealtimeSyncManager {
       this.channels.set(channelKey, state);
     }
 
-    state.subscribers.add(callback);
+    state.subscribers.set(callback, event);
 
     if (useLaravel) {
       this.ensureLaravelTransportStarted();
@@ -117,7 +117,7 @@ class RealtimeSyncManager {
         }
         this.channels.delete(channelKey);
 
-        if (useLaravel && this.channels.size === 0) {
+        if (this.channels.size === 0) {
           this.teardownLaravelTransport();
         }
       }
@@ -127,7 +127,7 @@ class RealtimeSyncManager {
   private initLaravelChannel(): ChannelSubscriptionState {
     return {
       channel: null,
-      subscribers: new Set(),
+      subscribers: new Map(),
       reconnectAttempts: 0,
       status: 'SUBSCRIBED',
     };
@@ -206,9 +206,20 @@ class RealtimeSyncManager {
         this.sseConnected = true;
         try {
           const ev = JSON.parse(event.data || '{}') as RealtimeEventItem;
-          if (typeof ev.id === 'number') {
-            this.lastEventId = Math.max(this.lastEventId ?? 0, ev.id);
+          const numericId =
+            typeof ev.id === 'number'
+              ? ev.id
+              : event.lastEventId && /^\d+$/.test(event.lastEventId)
+              ? Number(event.lastEventId)
+              : null;
+
+          if (numericId !== null) {
+            if (this.lastEventId !== null && numericId <= this.lastEventId) {
+              return;
+            }
+            this.lastEventId = numericId;
           }
+
           if (ev.table) {
             this.emitToTable(ev.table, {
               eventType: ev.eventType || 'UPDATE',
@@ -231,8 +242,15 @@ class RealtimeSyncManager {
 
       es.onerror = () => {
         this.sseConnected = false;
-        if (this.eventSource === es && es.readyState === EventSource.CLOSED) {
+        if (this.eventSource === es) {
+          try {
+            es.close();
+          } catch {}
           this.eventSource = null;
+
+          // Immediately fall back to incremental polling so events during the drop are not delayed
+          void this.pollLaravelEventsNow();
+
           if (!this.sseReconnectTimer && this.channels.size > 0 && getLaravelAccessToken()) {
             this.sseReconnectTimer = setTimeout(() => {
               this.sseReconnectTimer = null;
@@ -314,21 +332,30 @@ class RealtimeSyncManager {
     if (this.pollingInFlight || this.channels.size === 0 || !getLaravelAccessToken()) return;
     this.pollingInFlight = true;
     try {
-      const query = this.lastEventId !== null ? `?since=${this.lastEventId}` : '';
+      const previousLastId = this.lastEventId;
+      const query = previousLastId !== null ? `?since=${previousLastId}` : '';
       const res = await requestLaravelData<{ latestId: number; events: RealtimeEventItem[] }>(
         `/realtime/events${query}`
       );
-      if (typeof res?.latestId === 'number') {
-        this.lastEventId = Math.max(this.lastEventId ?? 0, res.latestId);
-      }
-      if (Array.isArray(res?.events)) {
-        for (const ev of res.events) {
+      const events = Array.isArray(res?.events) ? res.events : [];
+      for (const ev of events) {
+        if (typeof ev.id === 'number') {
+          if (previousLastId !== null && ev.id <= previousLastId) {
+            continue;
+          }
+          this.lastEventId = Math.max(this.lastEventId ?? 0, ev.id);
+        }
+        if (ev.table) {
           this.emitToTable(ev.table, {
             eventType: ev.eventType || 'UPDATE',
             new: { id: ev.recordId, ...(ev.payload || {}) },
             old: {},
           } as any);
         }
+      }
+      // Advance cursor to latestId when initializing or caught up (avoid skipping unread pages when limit=100 is hit)
+      if (typeof res?.latestId === 'number' && (events.length === 0 || events.length < 100)) {
+        this.lastEventId = Math.max(this.lastEventId ?? 0, res.latestId);
       }
     } catch {
       // Transient polling errors are ignored and retried on next tick
@@ -342,7 +369,12 @@ class RealtimeSyncManager {
     const state = this.channels.get(channelKey);
     if (!state) return;
 
-    state.subscribers.forEach((cb) => {
+    const incomingType = String((payload as any)?.eventType || '').toUpperCase();
+
+    state.subscribers.forEach((subscribedEvent, cb) => {
+      if (subscribedEvent !== '*' && incomingType && subscribedEvent.toUpperCase() !== incomingType) {
+        return;
+      }
       try {
         cb(payload);
       } catch (cbErr) {
@@ -366,7 +398,7 @@ class RealtimeSyncManager {
   ): ChannelSubscriptionState {
     const state: ChannelSubscriptionState = {
       channel: null,
-      subscribers: new Set(),
+      subscribers: new Map(),
       reconnectAttempts: 0,
       status: 'CONNECTING',
     };
@@ -378,7 +410,15 @@ class RealtimeSyncManager {
           'postgres_changes' as any,
           { event, schema: 'public', table },
           (payload: RealtimePostgresChangesPayload<any>) => {
-            state.subscribers.forEach((cb) => {
+            const incomingType = String((payload as any)?.eventType || '').toUpperCase();
+            state.subscribers.forEach((subscribedEvent, cb) => {
+              if (
+                subscribedEvent !== '*' &&
+                incomingType &&
+                subscribedEvent.toUpperCase() !== incomingType
+              ) {
+                return;
+              }
               try {
                 cb(payload);
               } catch (cbErr) {

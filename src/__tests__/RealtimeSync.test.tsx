@@ -66,11 +66,15 @@ describe('Citadel Realtime Synchronization & Layer Connection', () => {
   });
 
   afterEach(() => {
+    vi.unstubAllEnvs();
     vi.restoreAllMocks();
     setLaravelAccessToken(null);
   });
 
   describe('1. Realtime WebSocket Subscription & Cleanup', () => {
+    beforeEach(() => {
+      vi.stubEnv('VITE_API_BASE_URL', '');
+    });
     it('deduplicates channels when multiple subscribers listen to the same table', () => {
       const listenerA = vi.fn();
       const listenerB = vi.fn();
@@ -140,6 +144,10 @@ describe('Citadel Realtime Synchronization & Layer Connection', () => {
   });
 
   describe('2. Frontend -> Laravel -> Supabase Round-Trip Action', () => {
+    beforeEach(() => {
+      vi.stubEnv('VITE_API_BASE_URL', 'http://localhost:8000');
+    });
+
     it('persists employee creation with authorization token through Laravel client', async () => {
       const mockCreatedEmployee = {
         id: '15',
@@ -253,6 +261,10 @@ describe('Citadel Realtime Synchronization & Layer Connection', () => {
   });
 
   describe('3. Error Boundaries, Token Expiry, and Retries', () => {
+    beforeEach(() => {
+      vi.stubEnv('VITE_API_BASE_URL', 'http://localhost:8000');
+    });
+
     it('dispatches citadel:unauthorized and wipes token when Laravel returns 401', async () => {
       const unauthorizedHandler = vi.fn();
       window.addEventListener('citadel:unauthorized', unauthorizedHandler);
@@ -318,6 +330,209 @@ describe('Citadel Realtime Synchronization & Layer Connection', () => {
       const result = await requestLaravelData<{ ping: string }>('/health');
       expect(result.ping).toBe('pong');
       expect(callCount).toBe(2);
+    });
+  });
+
+  describe('4. Laravel SSE Resume, Poll Fallback, Deduplication & BroadcastChannel', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.stubEnv('VITE_API_BASE_URL', 'http://localhost:8000');
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    });
+
+    it('resumes SSE with updated ?since= cursor after dropped connection, triggers immediate poll fallback, and deduplicates events', async () => {
+      const createdSources: Array<{
+        url: string;
+        readyState: number;
+        closed: boolean;
+        listeners: Record<string, Array<(ev: any) => void>>;
+        onerror: ((ev: any) => void) | null;
+        emit: (type: string, data: any, lastEventId?: string) => void;
+        close: () => void;
+      }> = [];
+
+      class FakeEventSource {
+        static CONNECTING = 0;
+        static OPEN = 1;
+        static CLOSED = 2;
+        public readyState = FakeEventSource.OPEN;
+        public closed = false;
+        public onerror: ((ev: any) => void) | null = null;
+        public listeners: Record<string, Array<(ev: any) => void>> = {};
+
+        constructor(public url: string) {
+          createdSources.push(this as any);
+        }
+
+        addEventListener(type: string, cb: (ev: any) => void) {
+          this.listeners[type] = this.listeners[type] || [];
+          this.listeners[type].push(cb);
+        }
+
+        emit(type: string, data: any, lastEventId = '') {
+          const ev = { data: JSON.stringify(data), lastEventId };
+          (this.listeners[type] || []).forEach((fn) => fn(ev));
+        }
+
+        close() {
+          this.closed = true;
+          this.readyState = FakeEventSource.CLOSED;
+        }
+      }
+
+      vi.stubGlobal('EventSource', FakeEventSource);
+
+      let pollCount = 0;
+      const fetchMock = vi.fn().mockImplementation(async (url: string) => {
+        pollCount++;
+        if (pollCount === 1) {
+          // Initial cursor sync
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ data: { latestId: 10, events: [] } }),
+          };
+        }
+        // Poll fallback immediately after SSE drop returns event 12 (plus already-seen event 11 to test dedup)
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            data: {
+              latestId: 12,
+              events: [
+                { id: 11, table: 'leave_requests', eventType: 'INSERT', recordId: '101', payload: { status: 'Submitted' }, createdAt: null },
+                { id: 12, table: 'leave_requests', eventType: 'UPDATE', recordId: '101', payload: { status: 'Pending Review' }, createdAt: null },
+              ],
+            },
+          }),
+        };
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const allEvents = vi.fn();
+      const insertOnly = vi.fn();
+      const unsubAll = realtimeSync.subscribe('leave_requests', allEvents, '*');
+      const unsubInsert = realtimeSync.subscribe('leave_requests', insertOnly, 'INSERT');
+
+      // Wait for initial poll microtask
+      await vi.advanceTimersByTimeAsync(10);
+      expect(createdSources.length).toBe(1);
+
+      // SSE delivers connected + event 11 (INSERT)
+      createdSources[0].emit('connected', { latestId: 10 }, '10');
+      createdSources[0].emit(
+        'change',
+        { id: 11, table: 'leave_requests', eventType: 'INSERT', recordId: '101', payload: { status: 'Submitted' } },
+        '11'
+      );
+
+      // Duplicate event 11 via SSE must be ignored
+      createdSources[0].emit(
+        'change',
+        { id: 11, table: 'leave_requests', eventType: 'INSERT', recordId: '101', payload: { status: 'Submitted' } },
+        '11'
+      );
+
+      expect(allEvents).toHaveBeenCalledTimes(1);
+      expect(insertOnly).toHaveBeenCalledTimes(1);
+
+      // Simulate dropped SSE connection (even if readyState is CONNECTING)
+      createdSources[0].readyState = FakeEventSource.CONNECTING;
+      createdSources[0].onerror?.(new Event('error'));
+      expect(createdSources[0].closed).toBe(true);
+
+      // Immediate poll fallback must have fired with ?since=11 and delivered ONLY event 12 (UPDATE)
+      await vi.advanceTimersByTimeAsync(10);
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('/api/v1/realtime/events?since=11'),
+        expect.any(Object)
+      );
+      expect(allEvents).toHaveBeenCalledTimes(2);
+      expect(allEvents).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          eventType: 'UPDATE',
+          new: expect.objectContaining({ id: '101', status: 'Pending Review' }),
+        })
+      );
+      // Event-type filter: INSERT-only subscriber must NOT receive event 12 (UPDATE)
+      expect(insertOnly).toHaveBeenCalledTimes(1);
+
+      // After 3s reconnect timer, new EventSource must open with updated ?since=12
+      await vi.advanceTimersByTimeAsync(3100);
+      expect(createdSources.length).toBe(2);
+      expect(createdSources[1].url).toContain('since=12');
+
+      unsubAll();
+      unsubInsert();
+    });
+
+    it('falls back to /api/v1/realtime/events polling when EventSource is unavailable and syncs via BroadcastChannel', async () => {
+      vi.stubGlobal('EventSource', undefined);
+
+      const channels: Array<{ name: string; onmessage: ((ev: MessageEvent) => void) | null; close: () => void }> = [];
+      class FakeBroadcastChannel {
+        public onmessage: ((ev: MessageEvent) => void) | null = null;
+        constructor(public name: string) {
+          channels.push(this);
+        }
+        postMessage(data: any) {
+          channels.forEach((c) => {
+            if (c !== this && c.name === this.name && c.onmessage) {
+              c.onmessage({ data } as MessageEvent);
+            }
+          });
+        }
+        close() {}
+      }
+      vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel);
+
+      let pollCall = 0;
+      const fetchMock = vi.fn().mockImplementation(async () => {
+        pollCall++;
+        if (pollCall === 1) {
+          return { ok: true, status: 200, json: async () => ({ data: { latestId: 5, events: [] } }) };
+        }
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            data: {
+              latestId: 6,
+              events: [
+                { id: 6, table: 'employees', eventType: 'UPDATE', recordId: '42', payload: { managerId: '7' }, createdAt: null },
+              ],
+            },
+          }),
+        };
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const onEmployee = vi.fn();
+      const unsub = realtimeSync.subscribe('employees', onEmployee);
+
+      // Initial poll establishes cursor=5
+      await vi.advanceTimersByTimeAsync(10);
+      expect(onEmployee).not.toHaveBeenCalled();
+
+      // Next 2s poll tick fetches ?since=5 and emits event 6
+      await vi.advanceTimersByTimeAsync(2050);
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('/api/v1/realtime/events?since=5'),
+        expect.any(Object)
+      );
+      expect(onEmployee).toHaveBeenCalledTimes(1);
+
+      // Another browser tab broadcasts a mutation over BroadcastChannel
+      const otherTab = new FakeBroadcastChannel('citadel_realtime');
+      otherTab.postMessage({ table: 'employees', eventType: 'INSERT', payload: { id: '99' } });
+      expect(onEmployee).toHaveBeenCalledTimes(2);
+
+      unsub();
     });
   });
 });

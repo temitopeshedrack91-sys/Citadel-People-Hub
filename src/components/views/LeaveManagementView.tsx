@@ -106,11 +106,14 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
 
   useEffect(() => {
     if (startDate && endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const diffTime = end.getTime() - start.getTime();
-      const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1);
-      setDaysRequested(diffDays);
+      const [sy, sm, sd] = startDate.split('-').map(Number);
+      const [ey, em, ed] = endDate.split('-').map(Number);
+      if (sy && sm && sd && ey && em && ed) {
+        const startUtc = Date.UTC(sy, sm - 1, sd);
+        const endUtc = Date.UTC(ey, em - 1, ed);
+        const diffDays = Math.max(1, Math.round((endUtc - startUtc) / 86400000) + 1);
+        setDaysRequested(diffDays);
+      }
     }
   }, [startDate, endDate]);
 
@@ -135,8 +138,8 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
       setEmployees(empData);
 
       setSelectedRequestId((prev) => {
-        if (prev && reqData.some((r) => r.id === prev)) return prev;
-        return reqData.length > 0 ? reqData[0].id : null;
+        if (prev && reqData.some((r) => String(r.id) === String(prev))) return String(prev);
+        return reqData.length > 0 ? String(reqData[0].id) : null;
       });
     } catch (err: any) {
       setActionError(err?.message || 'Unable to load leave requests.');
@@ -165,8 +168,8 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
     () =>
       employees.find(
         (e) =>
-          (currentUser.employeeId && e.id === currentUser.employeeId) ||
-          (currentUser.id && e.id === currentUser.id) ||
+          (currentUser.employeeId && String(e.id) === String(currentUser.employeeId)) ||
+          (currentUser.id && String(e.id) === String(currentUser.id)) ||
           (currentUser.staffId && e.staffId === currentUser.staffId)
       ),
     [employees, currentUser]
@@ -418,7 +421,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
   };
 
   const isRequestPending = (status: WorkflowStatus | string) =>
-    status === 'Pending Review' || status === 'Submitted';
+    status === 'Pending' || status === 'Pending Review' || status === 'Submitted';
 
   const filteredRequests = useMemo(() => {
     return requests.filter((r) => {
@@ -475,7 +478,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
   ];
 
   const listItems: ListItem<LeaveRequest>[] = filteredRequests.map((req) => ({
-    id: req.id,
+    id: String(req.id),
     title: req.employeeName,
     subtitle: `${req.leaveType} • ${req.totalDays || req.daysRequested} Days (${req.startDate} to ${req.endDate})`,
     timestamp: req.appliedDate || 'Recent',
@@ -536,7 +539,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
       req.approvalStage === 'COMPLETE' ||
       req.status === 'Approved';
     const hrApproved = req.status === 'Approved' || req.approvalStage === 'COMPLETE';
-    const isProcessing = processingId === req.id;
+    const isProcessing = processingId !== null && String(processingId) === String(req.id);
 
     return (
       <div className="space-y-6 animate-fade-in" data-testid="leave-detail-panel">
@@ -966,7 +969,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
         selectedId={selectedRequestId}
         onSelectItem={(item) => {
           setActionError(null);
-          setSelectedRequestId(item.id);
+          setSelectedRequestId(String(item.id));
         }}
         renderDetail={renderDetail}
         searchPlaceholder="Search requests by employee name, type, or department..."

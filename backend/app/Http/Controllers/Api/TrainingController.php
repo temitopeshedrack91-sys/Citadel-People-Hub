@@ -101,6 +101,12 @@ class TrainingController extends Controller
 
     public function sessions(Request $request): JsonResponse
     {
+        $user = $request->user();
+        $isHrOrAdmin = RoleAuthorization::isGlobalHrOrAdmin($user);
+        $selfEmployeeId = (! $isHrOrAdmin && $user->staff_id)
+            ? Employee::query()->where('staff_id', $user->staff_id)->value('id')
+            : null;
+
         $query = TrainingSession::query()->with(['course', 'enrollments.employee:id,staff_id,full_name']);
         if ($request->filled('courseId')) {
             $query->where('course_id', $request->input('courseId'));
@@ -110,29 +116,35 @@ class TrainingController extends Controller
         }
 
         return response()->json([
-            'data' => $query->latest('start_date')->get()->map(fn (TrainingSession $s) => [
-                'id' => $s->id,
-                'courseId' => $s->course_id,
-                'courseTitle' => $s->course?->title,
-                'sessionName' => $s->session_name,
-                'startDate' => $s->start_date->format('Y-m-d'),
-                'endDate' => $s->end_date->format('Y-m-d'),
-                'deliveryMethod' => $s->delivery_method,
-                'locationOrUrl' => $s->location_or_url,
-                'maxCapacity' => $s->max_capacity,
-                'enrolledCount' => $s->enrollments->count(),
-                'status' => $s->status,
-                'enrollments' => $s->enrollments->map(fn (EmployeeTraining $e) => [
-                    'id' => $e->id,
-                    'employeeId' => $e->employee_id,
-                    'employeeName' => $e->employee?->full_name,
-                    'employeeStaffId' => $e->employee?->staff_id,
-                    'status' => $e->status,
-                    'completionDate' => $e->completion_date?->format('Y-m-d'),
-                    'score' => $e->score !== null ? (float) $e->score : null,
-                    'feedback' => $e->feedback,
-                ]),
-            ]),
+            'data' => $query->latest('start_date')->get()->map(function (TrainingSession $s) use ($isHrOrAdmin, $selfEmployeeId) {
+                $visibleEnrollments = $isHrOrAdmin
+                    ? $s->enrollments
+                    : $s->enrollments->filter(fn (EmployeeTraining $e) => $selfEmployeeId !== null && (int) $e->employee_id === (int) $selfEmployeeId)->values();
+
+                return [
+                    'id' => $s->id,
+                    'courseId' => $s->course_id,
+                    'courseTitle' => $s->course?->title,
+                    'sessionName' => $s->session_name,
+                    'startDate' => $s->start_date->format('Y-m-d'),
+                    'endDate' => $s->end_date->format('Y-m-d'),
+                    'deliveryMethod' => $s->delivery_method,
+                    'locationOrUrl' => $s->location_or_url,
+                    'maxCapacity' => $s->max_capacity,
+                    'enrolledCount' => $s->enrollments->count(),
+                    'status' => $s->status,
+                    'enrollments' => $visibleEnrollments->map(fn (EmployeeTraining $e) => [
+                        'id' => $e->id,
+                        'employeeId' => $e->employee_id,
+                        'employeeName' => $e->employee?->full_name,
+                        'employeeStaffId' => $e->employee?->staff_id,
+                        'status' => $e->status,
+                        'completionDate' => $e->completion_date?->format('Y-m-d'),
+                        'score' => $e->score !== null ? (float) $e->score : null,
+                        'feedback' => $e->feedback,
+                    ]),
+                ];
+            }),
         ]);
     }
 

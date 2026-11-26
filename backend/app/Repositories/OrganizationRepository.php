@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\Department;
 use App\Models\Entity;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Data access layer for company entities and departments.
@@ -50,5 +51,24 @@ class OrganizationRepository
         }
 
         return Department::query()->with('entity')->whereKey((int) $normalized)->first();
+    }
+
+    /**
+     * Enforce that a department belongs to the specified entity, failing with 422 otherwise.
+     *
+     * @throws ValidationException
+     */
+    public function assertDepartmentBelongsToEntity(int|string $departmentId, string $entityId): Department
+    {
+        $department = $this->findDepartment($departmentId);
+        $normalizedEntityId = Entity::normalizeEntityId($entityId) ?? $entityId;
+
+        if ($department === null || (string) $department->entity_id !== (string) $normalizedEntityId) {
+            throw ValidationException::withMessages([
+                'departmentId' => ['The selected department does not belong to the selected entity.'],
+            ]);
+        }
+
+        return $department;
     }
 }

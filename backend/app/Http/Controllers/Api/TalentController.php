@@ -864,8 +864,8 @@ class TalentController extends Controller
         ]);
 
         $entity = Entity::query()->findOrFail($data['entityId']);
-        $department = Department::query()->findOrFail($data['departmentId']);
-        abort_unless((string) $department->entity_id === (string) $entity->id, 422, 'The department must belong to the selected entity.');
+        $department = app(\App\Repositories\OrganizationRepository::class)
+            ->assertDepartmentBelongsToEntity($data['departmentId'], (string) $entity->id);
         $this->authorizeRequisitionScope($request, $entity->id, (int) $department->id);
 
         $requisition = DB::transaction(function () use ($request, $data, $entity, $department): RecruitmentRequisition {
@@ -887,6 +887,7 @@ class TalentController extends Controller
                 'requisition_data' => $requisitionData,
             ]);
             AuditLogger::record($request, 'Recruitment', 'Created recruitment requisition', $requisition->id, $requisition->job_title, null, 'Open');
+            \App\Services\RealtimeEventService::publish('recruitment_requisitions', 'INSERT', $requisition->id, ['status' => 'Open'], (int) $request->user()->id);
 
             return $requisition;
         });
@@ -909,6 +910,7 @@ class TalentController extends Controller
             $details['status'] = $validated['status'];
             $locked->update(['requisition_data' => $details]);
             AuditLogger::record($request, 'Recruitment', 'Updated requisition status', $locked->id, $locked->job_title, $previousStatus, $validated['status']);
+            \App\Services\RealtimeEventService::publish('recruitment_requisitions', 'UPDATE', $locked->id, ['status' => $validated['status']], (int) $request->user()->id);
 
             return $locked->fresh();
         });

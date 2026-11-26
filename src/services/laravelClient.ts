@@ -6,7 +6,6 @@
  * 401 unauthenticated session revocation, and response unwrapping.
  */
 
-const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
 const TOKEN_KEY = 'citadel_laravel_token';
 
 let accessToken: string | null = typeof window !== 'undefined'
@@ -35,8 +34,9 @@ export class LaravelApiError extends Error {
 /**
  * Checks whether the Laravel backend API base URL is configured in the environment.
  */
-export const isLaravelApiConfigured = (): boolean => Boolean(baseUrl);
-export const getLaravelApiBaseUrl = (): string => baseUrl;
+export const getLaravelApiBaseUrl = (): string =>
+  (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
+export const isLaravelApiConfigured = (): boolean => Boolean(getLaravelApiBaseUrl());
 
 function inferRealtimeTablesFromPath(path: string): string[] {
   if (path.startsWith('/employees')) return ['employees'];
@@ -117,6 +117,7 @@ export const requestLaravel = async <T>(
   options: RequestInit = {},
   maxRetries = 2
 ): Promise<T> => {
+  const baseUrl = getLaravelApiBaseUrl();
   if (!baseUrl) {
     throw new Error('VITE_API_BASE_URL is not configured.');
   }
@@ -205,6 +206,7 @@ export const requestLaravelData = async <T>(
  * @returns File blob.
  */
 export const requestLaravelBlob = async (path: string): Promise<Blob> => {
+  const baseUrl = getLaravelApiBaseUrl();
   if (!baseUrl) {
     throw new Error('VITE_API_BASE_URL is not configured.');
   }

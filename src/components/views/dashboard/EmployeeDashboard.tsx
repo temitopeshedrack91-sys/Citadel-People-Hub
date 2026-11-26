@@ -92,7 +92,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
       setDeptTeammates(
         empData.filter(
           (e) =>
-            e.id !== actorEmployeeId &&
+            (!actorEmployeeId || String(e.id) !== actorEmployeeId) &&
             (!currentUser.staffId || e.staffId !== currentUser.staffId)
         )
       );

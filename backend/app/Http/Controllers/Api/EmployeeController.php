@@ -9,6 +9,7 @@ use App\Models\EmployeeLeaveBalance;
 use App\Models\Entity;
 use App\Models\LeavePolicy;
 use App\Models\LeaveRequest;
+use App\Models\SystemNotification;
 use App\Models\User;
 use App\Repositories\EmployeeRepository;
 use App\Repositories\OrganizationRepository;
@@ -45,10 +46,17 @@ class EmployeeController extends Controller
             ->with(['entity', 'department', 'supervisor'])
             ->withCount('directReports');
 
+        $entityFilter = $request->filled('entityId')
+            ? $request->string('entityId')->toString()
+            : ($request->filled('entity_id') ? $request->string('entity_id')->toString() : null);
+        $departmentFilter = $request->filled('departmentId')
+            ? $request->input('departmentId')
+            : ($request->filled('department_id') ? $request->input('department_id') : null);
+
         $this->employees->applyDirectoryFilters(
             $query,
-            $request->filled('entityId') ? $request->string('entityId')->toString() : null,
-            $request->filled('departmentId') ? $request->input('departmentId') : null,
+            $entityFilter,
+            $departmentFilter,
             $request->filled('search') ? $request->string('search')->toString() : null
         );
 
@@ -163,14 +171,73 @@ class EmployeeController extends Controller
             if ((string) $lockedEmployee->manager_id !== (string) $previousManagerId) {
                 $newManagerId = $lockedEmployee->manager_id ? (string) $lockedEmployee->manager_id : null;
                 $newManagerName = $lockedEmployee->manager_name;
-                LeaveRequest::query()
+                $openStageOneRequests = LeaveRequest::query()
                     ->where('employee_id', $lockedEmployee->id)
                     ->whereIn('approval_stage', ['MANAGER', 'LINE_MANAGER', 'DEPARTMENT_HEAD'])
                     ->whereIn('status', ['Pending', 'Submitted'])
-                    ->update([
-                        'manager_id' => $newManagerId,
-                        'manager_name' => $newManagerName,
-                    ]);
+                    ->lockForUpdate()
+                    ->get();
+
+                if ($openStageOneRequests->isNotEmpty()) {
+                    $now = now()->toISOString();
+                    foreach ($openStageOneRequests as $openRequest) {
+                        $history = $openRequest->approval_history ?? [];
+                        if ($newManagerId === null) {
+                            $history[] = [
+                                'actor' => $request->user()->name,
+                                'actorId' => $request->user()->id,
+                                'role' => $request->user()->role,
+                                'stage' => 'MANAGER',
+                                'decision' => 'Escalated to HR',
+                                'status' => 'Pending Review',
+                                'comments' => 'Direct supervisor cleared; open Stage 1 leave request escalated directly to HR (Stage 2).',
+                                'timestamp' => $now,
+                            ];
+                            $openRequest->update([
+                                'manager_id' => null,
+                                'manager_name' => null,
+                                'approval_stage' => 'HR',
+                                'status' => 'Pending Review',
+                                'approval_history' => $history,
+                            ]);
+                        } else {
+                            $history[] = [
+                                'actor' => $request->user()->name,
+                                'actorId' => $request->user()->id,
+                                'role' => $request->user()->role,
+                                'stage' => 'MANAGER',
+                                'decision' => 'Reassigned',
+                                'status' => $openRequest->status,
+                                'comments' => "Direct supervisor updated to {$newManagerName}; Stage 1 approval re-targeted.",
+                                'timestamp' => $now,
+                            ];
+                            $openRequest->update([
+                                'manager_id' => $newManagerId,
+                                'manager_name' => $newManagerName,
+                                'approval_history' => $history,
+                            ]);
+                        }
+                    }
+
+                    if ($newManagerId === null) {
+                        $hrUsers = User::query()
+                            ->where('is_active', true)
+                            ->whereIn('role', ['HR_STAFF', 'HR', 'HR_MANAGER', 'PCCM_SUPER_ADMIN', 'ADMIN', 'SYSTEM_ADMIN', 'SYSADMIN', 'SUPER_ADMIN'])
+                            ->get();
+                        foreach ($hrUsers as $hrUser) {
+                            SystemNotification::create([
+                                'type' => 'Leave',
+                                'category' => 'Leave',
+                                'title' => 'Leave Request Escalated to HR',
+                                'message' => "{$lockedEmployee->full_name}'s supervisor was cleared; {$openStageOneRequests->count()} open leave request(s) now await HR approval.",
+                                'target_user_id' => $hrUser->id,
+                                'action_url' => '#leave',
+                            ]);
+                        }
+                        RealtimeEventService::publish('notifications', 'INSERT', null, [], (int) $request->user()->id);
+                    }
+                }
+
                 RealtimeEventService::publish('leave_requests', 'UPDATE', $lockedEmployee->id, ['managerUpdated' => true], (int) $request->user()->id);
             }
 
@@ -313,14 +380,11 @@ class EmployeeController extends Controller
             'notes' => ['nullable', 'string', 'max:5000'],
         ]);
 
-        // Enforce Entity <-> Department consistency
+        // Enforce Entity <-> Department consistency via OrganizationRepository
         $departmentId = $data['departmentId'] ?? $employee?->department_id;
         $entityId = $data['entityId'] ?? $employee?->entity_id;
-        $department = $departmentId ? $this->organizations->findDepartment($departmentId) : null;
-        if ($department && $entityId && $department->entity_id !== $entityId) {
-            throw ValidationException::withMessages([
-                'departmentId' => ['The selected department does not belong to the selected entity.'],
-            ]);
+        if ($departmentId !== null && $entityId !== null) {
+            $this->organizations->assertDepartmentBelongsToEntity($departmentId, (string) $entityId);
         }
 
         // Enforce acyclic supervisor hierarchy and sync supervisor name from Phase 1 record

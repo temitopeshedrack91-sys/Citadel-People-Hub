@@ -90,7 +90,7 @@ class RealtimeController extends Controller
             $started = time();
 
             echo "retry: 1200\n\n";
-            echo "event: connected\ndata: {\"latestId\":{$cursor}}\n\n";
+            echo "id: {$cursor}\nevent: connected\ndata: {\"latestId\":{$cursor}}\n\n";
             if (ob_get_level() > 0) {
                 ob_flush();
             }
@@ -126,7 +126,7 @@ class RealtimeController extends Controller
                 flush();
 
                 if ($maxSeconds === 0 || (time() - $started) >= $maxSeconds) {
-                    echo "event: ping\ndata: {\"latestId\":{$cursor}}\n\n";
+                    echo "id: {$cursor}\nevent: ping\ndata: {\"latestId\":{$cursor}}\n\n";
                     if (ob_get_level() > 0) {
                         ob_flush();
                     }

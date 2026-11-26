@@ -57,7 +57,9 @@ export function ListDetailLayout<T = any>({
 
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
 
-  const selectedItem = items.find((it) => it.id === selectedId) || (items.length > 0 ? items[0] : null);
+  const selectedItem =
+    (selectedId !== null ? items.find((it) => String(it.id) === String(selectedId)) : undefined) ||
+    (items.length > 0 ? items[0] : null);
 
   const handleSelect = (item: ListItem<T>) => {
     onSelectItem(item);
@@ -157,7 +159,7 @@ export function ListDetailLayout<T = any>({
             )
           ) : (
             items.map((item) => {
-              const isSelected = selectedItem?.id === item.id;
+              const isSelected = selectedItem !== null && String(selectedItem.id) === String(item.id);
               return (
                 <div
                   key={item.id}

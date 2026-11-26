@@ -208,7 +208,7 @@ class ClaimController extends Controller
         try {
             $expense = $this->claimService->addExpenseItem($claimRequest, $validated);
         } catch (\Throwable $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
+            return response()->json(['message' => $e->getMessage(), 'error' => 'Bad Request'], 400);
         }
 
         AuditLogger::record(
@@ -236,7 +236,7 @@ class ClaimController extends Controller
         try {
             $this->claimService->removeExpenseItem($claimExpense);
         } catch (\Throwable $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
+            return response()->json(['message' => $e->getMessage(), 'error' => 'Bad Request'], 400);
         }
 
         AuditLogger::record(
@@ -278,7 +278,7 @@ class ClaimController extends Controller
         try {
             $updated = $this->claimService->performAction($claimRequest, $action, $user, $validated['reason'] ?? null);
         } catch (\Throwable $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
+            return response()->json(['message' => $e->getMessage(), 'error' => 'Bad Request'], 400);
         }
 
         AuditLogger::record(

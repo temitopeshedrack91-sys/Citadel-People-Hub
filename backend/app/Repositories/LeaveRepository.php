@@ -17,7 +17,7 @@ class LeaveRepository
     {
         return LeaveRequest::query()
             ->where('employee_id', $employeeId)
-            ->whereNotIn('status', ['Cancelled', 'Rejected'])
+            ->whereNotIn('status', ['Cancelled', 'Rejected', 'Requires Correction'])
             ->when($excludeLeaveId !== null, fn ($q) => $q->whereKeyNot($excludeLeaveId))
             ->where(function ($query) use ($startDate, $endDate) {
                 $query->where('start_date', '<=', $endDate)
@@ -90,7 +90,7 @@ class LeaveRepository
     {
         $query = LeaveRequest::query()
             ->with(['employee'])
-            ->whereNotIn('status', ['Rejected', 'Cancelled']);
+            ->whereNotIn('status', ['Rejected', 'Cancelled', 'Requires Correction']);
 
         if ($allowedEmployeeIds !== null) {
             if ($allowedEmployeeIds === []) {

@@ -78,7 +78,7 @@ class OrganizationController extends Controller
     {
         $entityId = $request->filled('entityId')
             ? $request->string('entityId')->toString()
-            : null;
+            : ($request->filled('entity_id') ? $request->string('entity_id')->toString() : null);
 
         if ($request->user()->role === 'BUSINESS_HEAD' && $request->user()->entity_id !== null) {
             $entityId = $request->user()->entity_id;
