@@ -86,9 +86,9 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
   }, [entities, entityId]);
 
   useEffect(() => {
-    const entityDepts = departments.filter((d) => d.entityId === entityId);
+    const entityDepts = departments.filter((d) => String(d.entityId) === String(entityId));
     if (entityDepts.length > 0) {
-      if (!entityDepts.some((d) => d.id === departmentId)) {
+      if (!entityDepts.some((d) => String(d.id) === String(departmentId))) {
         setDepartmentId(entityDepts[0].id);
       }
     } else {
@@ -114,9 +114,9 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
 
   if (!isOpen) return null;
 
-  const selectedEntity = entities.find((e) => e.id === entityId);
-  const filteredDepartments = departments.filter((d) => d.entityId === entityId);
-  const selectedDept = departments.find((d) => d.id === departmentId);
+  const selectedEntity = entities.find((e) => String(e.id) === String(entityId));
+  const filteredDepartments = departments.filter((d) => String(d.entityId) === String(entityId));
+  const selectedDept = departments.find((d) => String(d.id) === String(departmentId));
 
   const validateStep = (step: number): boolean => {
     setValidationError(null);
@@ -408,11 +408,19 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                   </label>
                   <input
                     type="text"
+                    list="cgcc-hiring-managers-list"
                     placeholder="e.g. Dr. Bukola Adeleke, Mrs. Folashade Adeyemo"
                     value={hiringManager}
                     onChange={(e) => setHiringManager(e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition"
                   />
+                  <datalist id="cgcc-hiring-managers-list">
+                    {employees.map((emp) => (
+                      <option key={emp.id} value={emp.fullName || `${emp.firstName} ${emp.lastName}`}>
+                        {emp.jobTitle || emp.departmentName}
+                      </option>
+                    ))}
+                  </datalist>
                 </div>
               </div>
 

@@ -200,7 +200,7 @@ class PerformanceController extends Controller
 
     public function storeReview(Request $request): JsonResponse
     {
-        $this->authorizeAdminOrHr($request);
+        $user = $request->user();
 
         $data = $request->validate([
             'employeeId' => ['required', 'exists:employees,id'],
@@ -215,6 +215,24 @@ class PerformanceController extends Controller
         ]);
 
         $employee = Employee::query()->findOrFail($data['employeeId']);
+
+        if (! RoleAuthorization::isGlobalHrOrAdmin($user)) {
+            $actorEmployee = $user->staff_id
+                ? Employee::query()->where('staff_id', $user->staff_id)->first()
+                : null;
+            $canManageTarget = $actorEmployee !== null
+                && RoleAuthorization::isSupervisor($user)
+                && (
+                    (string) $employee->manager_id === (string) $actorEmployee->id
+                    || in_array(
+                        (int) $employee->id,
+                        app(EmployeeHierarchyService::class)->getSubtreeEmployeeIds((int) $actorEmployee->id),
+                        true
+                    )
+                );
+            abort_unless($canManageTarget, 403, 'Only HR/Admin or the employee\'s line manager can set KPI goals and initiate an appraisal.');
+        }
+
         $reviewerId = $data['reviewerId'] ?? ($employee->manager_id ? (int) $employee->manager_id : null);
         if (! $reviewerId && $request->user()->staff_id) {
             $reviewerId = Employee::query()->where('staff_id', $request->user()->staff_id)->value('id');
@@ -495,6 +513,13 @@ class PerformanceController extends Controller
             : null;
         if ($employee && $employee->id === $review->reviewer_id) {
             return;
+        }
+
+        if ($employee && RoleAuthorization::isSupervisor($user)) {
+            $subtree = app(EmployeeHierarchyService::class)->getSubtreeEmployeeIds((int) $employee->id);
+            if (in_array((int) $review->employee_id, $subtree, true)) {
+                return;
+            }
         }
 
         abort(403, 'You are not assigned as the reviewer for this appraisal.');

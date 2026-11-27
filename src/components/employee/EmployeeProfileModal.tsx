@@ -175,24 +175,55 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
     };
   }, [employee?.id]);
 
+  const [empLeaveBalances, setEmpLeaveBalances] = useState<LeaveBalanceRecord[]>([]);
+  const [empLeaveHistory, setEmpLeaveHistory] = useState<LeaveRequest[]>([]);
+  const [leaveLoading, setLeaveLoading] = useState(false);
+
   const loadEmployeePerformance = useCallback(async () => {
     if (!employee?.id) {
       setEmpReviews([]);
       return;
     }
-    const numericId = Number(employee.id);
-    if (!numericId) {
-      setEmpReviews([]);
-      return;
-    }
     setReviewsLoading(true);
     try {
-      const list = await performanceRepository.getReviews({ employeeId: numericId });
-      setEmpReviews(list.filter((r) => String(r.employeeId) === String(employee.id)));
+      const numericId = Number(employee.id);
+      const list = await performanceRepository.getReviews(
+        Number.isFinite(numericId) && numericId > 0 ? { employeeId: numericId } : undefined
+      );
+      setEmpReviews(
+        list.filter(
+          (r) =>
+            String(r.employeeId) === String(employee.id) ||
+            (employee.staffId && r.employeeStaffId === employee.staffId) ||
+            (r.employeeName && r.employeeName.toLowerCase() === employee.fullName.toLowerCase())
+        )
+      );
     } catch {
       setEmpReviews([]);
     } finally {
       setReviewsLoading(false);
+    }
+  }, [employee?.id, employee?.staffId, employee?.fullName]);
+
+  const loadEmployeeLeave = useCallback(async () => {
+    if (!employee?.id) {
+      setEmpLeaveBalances([]);
+      setEmpLeaveHistory([]);
+      return;
+    }
+    setLeaveLoading(true);
+    try {
+      const [balData, reqData] = await Promise.all([
+        leaveRepository.getBalances(String(employee.id)).catch(() => [] as LeaveBalanceRecord[]),
+        leaveRepository.getByEmployee(String(employee.id)).catch(() => [] as LeaveRequest[]),
+      ]);
+      setEmpLeaveBalances(balData);
+      setEmpLeaveHistory(reqData);
+    } catch {
+      setEmpLeaveBalances([]);
+      setEmpLeaveHistory([]);
+    } finally {
+      setLeaveLoading(false);
     }
   }, [employee?.id]);
 
@@ -200,7 +231,10 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
     if (activeTab === 'performance' && employee?.id) {
       void loadEmployeePerformance();
     }
-  }, [activeTab, employee?.id, loadEmployeePerformance]);
+    if (activeTab === 'leave' && employee?.id) {
+      void loadEmployeeLeave();
+    }
+  }, [activeTab, employee?.id, loadEmployeePerformance, loadEmployeeLeave]);
 
   useEffect(() => {
     if (activeTab !== 'leave' || !employee?.id) return;
@@ -249,6 +283,12 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   useRealtimeTable('performance_reviews', () => {
     if (employee?.id) {
       void loadEmployeePerformance();
+    }
+  });
+
+  useRealtimeTable('leave_requests', () => {
+    if (employee?.id) {
+      void loadEmployeeLeave();
     }
   });
 

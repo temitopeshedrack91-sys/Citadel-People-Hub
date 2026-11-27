@@ -99,9 +99,19 @@ class LeaveWorkflowService
                 }
             }
 
-            $supervisor = $employee->manager_id !== null && is_numeric($employee->manager_id)
-                ? $this->employees->findById((int) $employee->manager_id)
-                : null;
+            $requestedManagerId = $data['managerId'] ?? null;
+            if ($requestedManagerId !== null && $requestedManagerId !== '') {
+                if ((string) $requestedManagerId === (string) $employee->id) {
+                    throw ValidationException::withMessages([
+                        'managerId' => ['You cannot select yourself as your own reviewing manager.'],
+                    ]);
+                }
+                $supervisor = $this->employees->findById((int) $requestedManagerId);
+            } else {
+                $supervisor = $employee->manager_id !== null && is_numeric($employee->manager_id)
+                    ? $this->employees->findById((int) $employee->manager_id)
+                    : null;
+            }
 
             $initialStage = $supervisor !== null ? 'MANAGER' : 'HR';
             $initialStatus = $supervisor !== null ? 'Submitted' : 'Pending Review';
@@ -180,9 +190,12 @@ class LeaveWorkflowService
                 : null;
             $isRequester = $user->staff_id !== null && $employee->staff_id === $user->staff_id;
             $isHrOrAdmin = RoleAuthorization::isGlobalHrOrAdmin($user);
+            $effectiveManagerId = $record->manager_id !== null && $record->manager_id !== ''
+                ? (string) $record->manager_id
+                : ($employee->manager_id !== null ? (string) $employee->manager_id : null);
             $isDirectSupervisor = $actorEmployee !== null
-                && $employee->manager_id !== null
-                && (string) $employee->manager_id === (string) $actorEmployee->id;
+                && $effectiveManagerId !== null
+                && $effectiveManagerId === (string) $actorEmployee->id;
 
             // Support legacy requests created explicitly with DEPARTMENT_HEAD / LINE_MANAGER
             $currentStage = match ($record->approval_stage) {

@@ -81,6 +81,7 @@ class OffboardingController extends Controller
             'resignationDate' => ['required', 'date_format:Y-m-d'],
             'proposedLastDay' => ['required', 'date_format:Y-m-d', 'after_or_equal:resignationDate'],
             'reason' => ['required', 'string', 'max:3000'],
+            'managerId' => ['nullable', 'integer', 'exists:employees,id'],
             'managerName' => ['nullable', 'string', 'max:180'],
         ]);
 
@@ -104,8 +105,17 @@ class OffboardingController extends Controller
         $noticeDays = max(0, (int) $start->diffInDays($end));
         $noticeCompliant = $noticeDays >= 30;
 
-        $managerId = $targetEmployee->manager_id ? (string) $targetEmployee->manager_id : null;
-        $managerName = $targetEmployee->supervisor?->full_name
+        $selectedManager = null;
+        if (! empty($data['managerId'])) {
+            abort_if((int) $data['managerId'] === (int) $targetEmployee->id, 422, 'You cannot select yourself as your reviewing manager.');
+            $selectedManager = Employee::query()->find($data['managerId']);
+        }
+
+        $managerId = $selectedManager
+            ? (string) $selectedManager->id
+            : ($targetEmployee->manager_id ? (string) $targetEmployee->manager_id : null);
+        $managerName = $selectedManager?->full_name
+            ?? $targetEmployee->supervisor?->full_name
             ?? $targetEmployee->manager_name
             ?? ($data['managerName'] ?? 'PCCM Manager');
 

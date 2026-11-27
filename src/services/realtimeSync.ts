@@ -96,6 +96,8 @@ class RealtimeSyncManager {
 
     if (useLaravel) {
       this.ensureLaravelTransportStarted();
+    } else {
+      this.ensureLocalBroadcastBound();
     }
 
     return () => {
@@ -134,7 +136,7 @@ class RealtimeSyncManager {
     };
   }
 
-  private ensureLaravelTransportStarted(): void {
+  private ensureLocalBroadcastBound(): void {
     if (typeof window === 'undefined') return;
 
     if (!this.localMutationListenerBound) {
@@ -160,6 +162,12 @@ class RealtimeSyncManager {
         };
       } catch {}
     }
+  }
+
+  private ensureLaravelTransportStarted(): void {
+    if (typeof window === 'undefined') return;
+
+    this.ensureLocalBroadcastBound();
 
     this.connectSseStream();
 

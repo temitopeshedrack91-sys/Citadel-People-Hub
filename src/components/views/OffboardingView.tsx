@@ -114,7 +114,7 @@ export const OffboardingView: React.FC = () => {
   // Submit Resignation
   const handleSubmitResignation = async (e: React.FormEvent) => {
     e.preventDefault();
-    const emp = employees.find((item) => item.id === resignationEmpId);
+    const emp = employees.find((item) => String(item.id) === String(resignationEmpId));
     if (!emp) return;
 
     setSubmitting(true);
@@ -730,7 +730,7 @@ export const OffboardingView: React.FC = () => {
                   onChange={(e) => {
                     const nextId = e.target.value;
                     setResignationEmpId(nextId);
-                    const matched = employees.find((item) => item.id === nextId);
+                    const matched = employees.find((item) => String(item.id) === String(nextId));
                     setResignationManagerId(matched?.managerId ? String(matched.managerId) : '');
                   }}
                   className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-bold bg-white"
@@ -775,7 +775,7 @@ export const OffboardingView: React.FC = () => {
                 >
                   <option value="">Employee Direct Supervisor / PCCM HR</option>
                   {employees
-                    .filter((emp) => emp.id !== resignationEmpId)
+                    .filter((emp) => String(emp.id) !== String(resignationEmpId))
                     .map((emp) => (
                       <option key={emp.id} value={emp.id}>
                         {emp.fullName} ({emp.jobTitle || emp.departmentName})

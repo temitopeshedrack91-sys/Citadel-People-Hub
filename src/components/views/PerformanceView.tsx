@@ -25,8 +25,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import { isHrOrAdminUser } from '../../utils/rbac';
 import { Badge } from '../common/Badge';
-import { performanceRepository, employeeRepository } from '../../services';
-import { PerformanceReview, Kpi, Employee, ReviewRating } from '../../types';
+import { performanceRepository, employeeRepository, classificationRepository } from '../../services';
+import { PerformanceReview, Kpi, Employee, ReviewRating, JobTitle } from '../../types';
 
 interface ScoringItemState {
   kpiId?: number;
@@ -49,6 +49,8 @@ export const PerformanceView: React.FC = () => {
   const [reviews, setReviews] = useState<PerformanceReview[]>([]);
   const [kpis, setKpis] = useState<Kpi[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [jobTitles, setJobTitles] = useState<JobTitle[]>([]);
+  const [kpiRoleFilter, setKpiRoleFilter] = useState<string>('ALL');
   const [loading, setLoading] = useState(false);
 
   // Modals state
@@ -60,6 +62,7 @@ export const PerformanceView: React.FC = () => {
   const [editingKpiId, setEditingKpiId] = useState<number | null>(null);
   const [editingKpiVersion, setEditingKpiVersion] = useState<number | undefined>(undefined);
   const [kpiIndicator, setKpiIndicator] = useState('');
+  const [kpiJobTitleId, setKpiJobTitleId] = useState<string>('');
   const [kpiJobRole, setKpiJobRole] = useState('All Roles / General');
   const [kpiMinRating, setKpiMinRating] = useState(1);
   const [kpiMaxRating, setKpiMaxRating] = useState(5);
@@ -89,14 +92,16 @@ export const PerformanceView: React.FC = () => {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const [revList, kpiList, empList] = await Promise.all([
+      const [revList, kpiList, empList, titleList] = await Promise.all([
         performanceRepository.getReviews(),
         performanceRepository.getKpis(),
         employeeRepository.getAll(),
+        classificationRepository.getJobTitles().catch(() => [] as JobTitle[]),
       ]);
       setReviews(revList);
       setKpis(kpiList);
       setEmployees(empList);
+      setJobTitles(titleList);
       if (empList.length > 0 && !targetEmployeeId) {
         const firstNonSelf = empList.find((e) => String(e.id) !== String(currentUser.employeeId)) || empList[0];
         setTargetEmployeeId(String(firstNonSelf.id));
@@ -174,6 +179,7 @@ export const PerformanceView: React.FC = () => {
     setEditingKpiId(null);
     setEditingKpiVersion(undefined);
     setKpiIndicator('');
+    setKpiJobTitleId('');
     setKpiJobRole('All Roles / General');
     setKpiMinRating(1);
     setKpiMaxRating(5);
@@ -186,6 +192,8 @@ export const PerformanceView: React.FC = () => {
     setEditingKpiId(kpi.id);
     setEditingKpiVersion(kpi.version);
     setKpiIndicator(kpi.indicator);
+    setKpiJobTitleId(kpi.jobTitleId ? String(kpi.jobTitleId) : '');
+    setKpiJobRole(kpi.jobTitle?.name || kpi.jobTitleName || 'All Roles / General');
     setKpiMinRating(kpi.minRating ?? 1);
     setKpiMaxRating(kpi.maxRating ?? 5);
     setKpiWeight(Number(kpi.weight ?? 25));
@@ -201,10 +209,16 @@ export const PerformanceView: React.FC = () => {
       return;
     }
 
+    const matchedTitle = jobTitles.find((jt) => String(jt.id) === String(kpiJobTitleId));
+    const parsedJobTitleId = kpiJobTitleId && Number.isFinite(Number(kpiJobTitleId)) ? Number(kpiJobTitleId) : undefined;
+    const resolvedJobTitleName = matchedTitle?.title || (kpiJobRole.trim() || 'All Roles / General');
+
     try {
       if (editingKpiId) {
         await performanceRepository.updateKpi(editingKpiId, {
           indicator: kpiIndicator,
+          jobTitleId: parsedJobTitleId,
+          jobTitleName: resolvedJobTitleName,
           minRating: kpiMinRating,
           maxRating: kpiMaxRating,
           weight: kpiWeight,
@@ -214,6 +228,8 @@ export const PerformanceView: React.FC = () => {
       } else {
         await performanceRepository.createKpi({
           indicator: kpiIndicator,
+          jobTitleId: parsedJobTitleId,
+          jobTitleName: resolvedJobTitleName,
           minRating: kpiMinRating,
           maxRating: kpiMaxRating,
           weight: kpiWeight,
@@ -278,18 +294,25 @@ export const PerformanceView: React.FC = () => {
       return;
     }
 
-    const reviewerEmployeeId = Number(
-      targetReviewerId || emp.managerId || currentUser.employeeId
-    );
-    if (!reviewerEmployeeId) {
+    const rawReviewerId = targetReviewerId || emp.managerId || currentUser.employeeId || currentUser.id;
+    if (!rawReviewerId) {
       setModalError('Select a valid evaluating manager / supervisor employee.');
       return;
     }
 
+    const reviewerEmp = employees.find((item) => String(item.id) === String(rawReviewerId));
+    const employeeIdPayload = Number.isFinite(Number(emp.id)) ? Number(emp.id) : (emp.id as any);
+    const reviewerIdPayload = Number.isFinite(Number(rawReviewerId))
+      ? Number(rawReviewerId)
+      : (rawReviewerId as any);
+
     try {
       await performanceRepository.createReview({
-        employeeId: Number(emp.id),
-        reviewerId: reviewerEmployeeId,
+        employeeId: employeeIdPayload,
+        employeeName: emp.fullName,
+        employeeStaffId: emp.staffId,
+        reviewerId: reviewerIdPayload,
+        reviewerName: reviewerEmp?.fullName || currentUser.name,
         reviewPeriodStart,
         reviewPeriodEnd,
         dueDate: reviewDueDate,
@@ -704,19 +727,41 @@ export const PerformanceView: React.FC = () => {
                 {Math.abs(totalActiveLibraryWeight - 100) < 0.01 ? '(Balanced at 100%)' : '(Adjust weights during appraisal initiation to total 100%)'}
               </p>
             </div>
-            {isHrOrAdmin && (
-              <button
-                onClick={handleOpenCreateKpi}
-                className="px-3.5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+            <div className="flex items-center gap-2 flex-wrap">
+              <select
+                value={kpiRoleFilter}
+                onChange={(e) => setKpiRoleFilter(e.target.value)}
+                data-testid="kpi-role-filter"
+                className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#083E34]"
               >
-                <Plus className="w-4 h-4" />
-                <span>Create New KPI</span>
-              </button>
-            )}
+                <option value="ALL">All Job Descriptions / Roles</option>
+                {jobTitles.map((jt) => (
+                  <option key={jt.id} value={String(jt.id)}>
+                    {jt.title}
+                  </option>
+                ))}
+              </select>
+              {isHrOrAdmin && (
+                <button
+                  onClick={handleOpenCreateKpi}
+                  data-testid="create-kpi-btn"
+                  className="px-3.5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Create New KPI</span>
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {kpis.map((kpi) => (
+            {kpis
+              .filter((k) =>
+                kpiRoleFilter === 'ALL'
+                  ? true
+                  : !k.jobTitleId || String(k.jobTitleId) === String(kpiRoleFilter)
+              )
+              .map((kpi) => (
               <div key={kpi.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs hover:border-slate-300 transition flex flex-col justify-between space-y-4">
                 <div>
                   <div className="flex items-center justify-between gap-2">
@@ -731,8 +776,11 @@ export const PerformanceView: React.FC = () => {
                   <p className="text-xs text-slate-500 mt-1">
                     Rating Scale: <strong className="text-slate-800 font-mono">{kpi.minRating ?? 1}.0</strong> to <strong className="text-slate-800 font-mono">{kpi.maxRating ?? 5}.0 Stars</strong>
                   </p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    Job Role: {kpi.jobTitle?.name || 'All Functional Departments'}
+                  <p className="text-[11px] text-slate-500 mt-1 font-medium">
+                    Job Description / Role:{' '}
+                    <span className="text-[#083E34] font-semibold">
+                      {kpi.jobTitle?.name || kpi.jobTitleName || 'All Functional Roles'}
+                    </span>
                   </p>
                 </div>
 
@@ -963,6 +1011,32 @@ export const PerformanceView: React.FC = () => {
                   placeholder="e.g. Ensure 99.5% biometric attendance synchronisation across all devices"
                   className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#083E34]"
                 />
+              </div>
+
+              <div>
+                <label className="block text-slate-800 font-bold mb-1">
+                  Linked Job Description / Role
+                </label>
+                <select
+                  value={kpiJobTitleId}
+                  onChange={(e) => {
+                    setKpiJobTitleId(e.target.value);
+                    const found = jobTitles.find((jt) => String(jt.id) === e.target.value);
+                    setKpiJobRole(found ? found.title : 'All Roles / General');
+                  }}
+                  data-testid="kpi-job-title-select"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 font-medium focus:outline-none focus:border-[#083E34]"
+                >
+                  <option value="">All Roles / General Organizational KPI</option>
+                  {jobTitles.map((jt) => (
+                    <option key={jt.id} value={String(jt.id)}>
+                      {jt.title}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Aligns this KPI with a specific job description so managers evaluate employees against role expectations.
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

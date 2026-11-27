@@ -135,6 +135,24 @@ const MainAppLayout: React.FC = () => {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, [currentUser]);
 
+  // Reset to dashboard on logout or when a newly signed-in role cannot access the previous route
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      setCurrentModuleState('dashboard');
+      if (typeof window !== 'undefined' && window.location.hash && window.location.hash !== '#dashboard') {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+      return;
+    }
+    const accessCheck = checkRouteAccess(currentUser, currentModule);
+    if (!accessCheck.allowed) {
+      setCurrentModuleState('dashboard');
+      if (typeof window !== 'undefined') {
+        window.location.hash = 'dashboard';
+      }
+    }
+  }, [isAuthenticated, currentUser, currentModule]);
+
   // Desktop sidebar collapse state with localStorage persistence
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
     try {

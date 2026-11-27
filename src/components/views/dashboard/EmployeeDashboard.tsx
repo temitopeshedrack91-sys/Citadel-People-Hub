@@ -12,11 +12,23 @@ import {
   XCircle,
   GitBranch,
   AlertCircle,
+  Award,
+  LogOut,
+  Video,
+  MapPin,
+  X,
+  CheckCircle2,
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useRealtimeTable } from '../../../hooks/useRealtimeTable';
 import { NavModule } from '../../layout/Sidebar';
-import { leaveRepository, employeeRepository } from '../../../services';
+import {
+  leaveRepository,
+  employeeRepository,
+  offboardingRepository,
+  performanceRepository,
+  auditRepository,
+} from '../../../services';
 import { LoadingSkeleton } from '../../common/LoadingSkeleton';
 import { StatusPill } from '../../common/StatusPill';
 import {
@@ -24,6 +36,8 @@ import {
   LeaveBalanceRecord,
   Employee,
   EmployeeHierarchy,
+  ExitRequest,
+  PerformanceReview,
 } from '../../../types';
 
 interface EmployeeDashboardProps {
@@ -53,12 +67,15 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
   onNavigate,
   onOpenLeaveModal,
 }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, currentRole } = useAuth();
 
   const [myLeaves, setMyLeaves] = useState<LeaveRequest[]>([]);
   const [myBalances, setMyBalances] = useState<LeaveBalanceRecord[]>([]);
   const [hierarchy, setHierarchy] = useState<EmployeeHierarchy | null>(null);
   const [deptTeammates, setDeptTeammates] = useState<Employee[]>([]);
+  const [allEmployees, setAllEmployees] = useState<Employee[]>([]);
+  const [myExitRequest, setMyExitRequest] = useState<ExitRequest | null>(null);
+  const [myReviews, setMyReviews] = useState<PerformanceReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const reloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -72,18 +89,22 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
     }
     setLoadError(null);
     try {
-      const [allLeaves, balData, empData, hierData] = await Promise.all([
-        leaveRepository.getAll().catch(() => [] as LeaveRequest[]),
-        leaveRepository.getBalances().catch(() => [] as LeaveBalanceRecord[]),
-        employeeRepository
-          .getAll(
-            currentUser.departmentId ? { departmentId: currentUser.departmentId } : undefined
-          )
-          .catch(() => [] as Employee[]),
-        actorEmployeeId
-          ? employeeRepository.getHierarchy(actorEmployeeId).catch(() => null)
-          : Promise.resolve(null),
-      ]);
+      const [allLeaves, balData, empData, allEmpData, hierData, allExits, allReviews] =
+        await Promise.all([
+          leaveRepository.getAll().catch(() => [] as LeaveRequest[]),
+          leaveRepository.getBalances(actorEmployeeId || undefined).catch(() => [] as LeaveBalanceRecord[]),
+          employeeRepository
+            .getAll(
+              currentUser.departmentId ? { departmentId: currentUser.departmentId } : undefined
+            )
+            .catch(() => [] as Employee[]),
+          employeeRepository.getAll().catch(() => [] as Employee[]),
+          actorEmployeeId
+            ? employeeRepository.getHierarchy(actorEmployeeId).catch(() => null)
+            : Promise.resolve(null),
+          offboardingRepository.getAll().catch(() => [] as ExitRequest[]),
+          performanceRepository.getReviews().catch(() => [] as PerformanceReview[]),
+        ]);
 
       const ownLeaves = allLeaves.filter(
         (l) =>
@@ -92,9 +113,29 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
           (currentUser.name && l.employeeName === currentUser.name)
       );
 
+      const ownExit =
+        allExits.find(
+          (ex) =>
+            (actorEmployeeId && String(ex.employeeId) === actorEmployeeId) ||
+            (currentUser.staffId && ex.staffId === currentUser.staffId) ||
+            (currentUser.name && ex.employeeName.toLowerCase() === currentUser.name.toLowerCase())
+        ) || null;
+
+      const ownReviews = allReviews.filter(
+        (rev) =>
+          (actorEmployeeId && String(rev.employeeId) === actorEmployeeId) ||
+          (currentUser.staffId && rev.employeeStaffId === currentUser.staffId) ||
+          (currentUser.name &&
+            rev.employeeName &&
+            rev.employeeName.toLowerCase() === currentUser.name.toLowerCase())
+      );
+
       setMyLeaves(ownLeaves);
       setMyBalances(balData);
       setHierarchy(hierData);
+      setAllEmployees(allEmpData);
+      setMyExitRequest(ownExit);
+      setMyReviews(ownReviews);
       setDeptTeammates(
         empData.filter(
           (e) =>
@@ -130,6 +171,14 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
   useRealtimeTable('leave_requests', scheduleReload);
   useRealtimeTable('leave_balances', scheduleReload);
 
+  useRealtimeTable('offboarding_requests', () => {
+    void loadEmployeeData();
+  });
+
+  useRealtimeTable('performance_reviews', () => {
+    void loadEmployeeData();
+  });
+
   const annualBalance = useMemo(
     () => myBalances.find((b) => (b.category?.name || '').toLowerCase().includes('annual')) || myBalances[0],
     [myBalances]
@@ -140,6 +189,72 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
   const latestLeave = myLeaves[0] || null;
   const directSupervisor =
     hierarchy?.supervisorChain?.[0]?.fullName || currentUser.managerName || 'Top-Level (Routes to HR)';
+  const directSupervisorId =
+    hierarchy?.supervisorChain?.[0]?.id || currentUser.managerId || '';
+
+  const selectableManagers = useMemo(
+    () =>
+      allEmployees.filter(
+        (e) =>
+          String(e.id) !== actorEmployeeId &&
+          (!currentUser.staffId || e.staffId !== currentUser.staffId)
+      ),
+    [allEmployees, actorEmployeeId, currentUser.staffId]
+  );
+
+  const calculatedNoticeDays = useMemo(() => {
+    if (!resignDate || !resignLastDay) return 0;
+    const diff = new Date(resignLastDay).getTime() - new Date(resignDate).getTime();
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  }, [resignDate, resignLastDay]);
+
+  const handleSubmitResignation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResignError(null);
+    if (!resignReason.trim()) {
+      setResignError('Please provide your resignation statement or reason.');
+      return;
+    }
+    if (resignLastDay <= resignDate) {
+      setResignError('Proposed last working day must be after the resignation submission date.');
+      return;
+    }
+
+    setIsSubmittingResign(true);
+    try {
+      const targetMgrId = resignManagerId || directSupervisorId || undefined;
+      const created = await offboardingRepository.create({
+        employeeId: actorEmployeeId,
+        resignationDate: resignDate,
+        proposedLastDay: resignLastDay,
+        reason: resignReason.trim(),
+        managerId: targetMgrId ? String(targetMgrId) : undefined,
+      });
+
+      await auditRepository.logAction({
+        userId: currentUser.id,
+        userName: currentUser.name,
+        userRole: currentRole,
+        module: 'Offboarding',
+        action: 'Submitted Resignation',
+        recordAffectedId: created.id,
+        recordAffectedTitle: `Resignation by ${currentUser.name} (Last Day: ${resignLastDay})`,
+        previousValue: 'Active',
+        newValue: 'SUBMITTED',
+        severity: 'Warning',
+      });
+
+      setIsResignModalOpen(false);
+      setResignReason('');
+      setActionToast(`Resignation submitted and routed to ${created.managerName || 'your manager'} for endorsement.`);
+      setTimeout(() => setActionToast(null), 5000);
+      await loadEmployeeData();
+    } catch (err: any) {
+      setResignError(err?.message || 'Unable to submit resignation request.');
+    } finally {
+      setIsSubmittingResign(false);
+    }
+  };
 
   return (
     <div className="space-y-5 animate-fade-in" data-testid="employee-dashboard">
@@ -186,6 +301,20 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
               >
                 <CalendarDays className="w-4 h-4 text-slate-950" aria-hidden="true" />
                 <span>Apply for Leave</span>
+              </button>
+            )}
+            {currentUser.role !== 'VIEWER' && !myExitRequest && (
+              <button
+                onClick={() => {
+                  setResignError(null);
+                  setResignManagerId(directSupervisorId ? String(directSupervisorId) : '');
+                  setIsResignModalOpen(true);
+                }}
+                data-testid="employee-submit-resignation-btn"
+                className="px-3.5 py-2 rounded-lg font-semibold text-xs transition border flex items-center gap-1.5 cursor-pointer min-h-[38px] bg-white text-rose-700 border-rose-200 hover:bg-rose-50"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Submit Resignation</span>
               </button>
             )}
             <button
@@ -571,7 +700,41 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
               Jump directly to your leave schedule or HR policies.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-3 text-xs">
+
+          {myReviews.length > 0 ? (
+            <div className="space-y-2.5" data-testid="employee-performance-card">
+              {myReviews.slice(0, 3).map((rev) => (
+                <div
+                  key={rev.id}
+                  className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/70 space-y-1.5 text-xs"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-bold text-slate-900">
+                      {rev.reviewPeriodStart} → {rev.reviewPeriodEnd}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/70">
+                      {rev.finalRating ? `${Number(rev.finalRating).toFixed(2)} / 5.00` : rev.status.replace(/_/g, ' ')}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-600">
+                    Reviewer: <strong className="text-slate-800">{rev.reviewerName || 'Line Manager'}</strong>
+                    {rev.ratings && rev.ratings.length > 0 ? ` · ${rev.ratings.length} KPIs assessed` : ''}
+                  </p>
+                  {rev.reviewerComments && (
+                    <p className="text-[11px] text-slate-700 italic bg-white p-2 rounded-lg border border-slate-100">
+                      &ldquo;{rev.reviewerComments}&rdquo;
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-4 rounded-xl bg-slate-50 border border-dashed border-slate-200 text-xs text-slate-500 text-center">
+              No appraisal records yet. Once your manager sets KPI goals and evaluates your performance, your weighted score will appear here.
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3 text-xs pt-2 border-t border-slate-100">
             <button
               type="button"
               onClick={() => onNavigate('calendar')}
@@ -593,6 +756,128 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Resignation Submission Modal */}
+      {isResignModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full border border-slate-200/90 shadow-xl overflow-hidden animate-fade-in">
+            <div className="px-6 py-4 bg-white border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="font-display font-bold text-base text-slate-900">Submit Formal Resignation</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Routes to your line manager first, then forwards to HR for contract &amp; exit interview scheduling.
+                </p>
+              </div>
+              <button
+                onClick={() => setIsResignModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitResignation} className="p-6 space-y-4 text-xs">
+              {resignError && (
+                <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 font-medium flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                  <span>{resignError}</span>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-slate-800 font-semibold mb-1.5">
+                  Select Line Manager (Receives Resignation First)
+                </label>
+                <select
+                  value={resignManagerId}
+                  onChange={(e) => setResignManagerId(e.target.value)}
+                  data-testid="resignation-manager-select"
+                  className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 font-medium focus:outline-none focus:border-[#083E34]"
+                >
+                  <option value="">
+                    {directSupervisor !== 'Top-Level (Routes to HR)'
+                      ? `Default Manager (${directSupervisor})`
+                      : 'Select your line manager'}
+                  </option>
+                  {selectableManagers.map((mgr) => (
+                    <option key={mgr.id} value={String(mgr.id)}>
+                      {mgr.fullName} — {mgr.jobTitle} ({mgr.departmentName})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-800 font-semibold mb-1.5">Resignation Date *</label>
+                  <input
+                    type="date"
+                    required
+                    value={resignDate}
+                    onChange={(e) => setResignDate(e.target.value)}
+                    className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#083E34]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-800 font-semibold mb-1.5">Proposed Last Working Day *</label>
+                  <input
+                    type="date"
+                    required
+                    value={resignLastDay}
+                    onChange={(e) => setResignLastDay(e.target.value)}
+                    data-testid="resignation-last-day-input"
+                    className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#083E34]"
+                  />
+                </div>
+              </div>
+
+              <div
+                className={`p-3 rounded-lg border text-[11px] font-semibold ${
+                  calculatedNoticeDays >= 30
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                    : 'bg-amber-50 border-amber-200 text-amber-800'
+                }`}
+              >
+                Notice Period: {calculatedNoticeDays} day(s) —{' '}
+                {calculatedNoticeDays >= 30
+                  ? 'Meets standard 30-day CGCC contractual notice requirement.'
+                  : 'Short notice (< 30 days) — HR will review against employment contract.'}
+              </div>
+
+              <div>
+                <label className="block text-slate-800 font-semibold mb-1.5">Reason for Resignation *</label>
+                <textarea
+                  rows={3}
+                  required
+                  value={resignReason}
+                  onChange={(e) => setResignReason(e.target.value)}
+                  data-testid="resignation-reason-input"
+                  placeholder="State your reason for leaving and handover availability..."
+                  className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#083E34]"
+                />
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsResignModalOpen(false)}
+                  className="px-4 py-2 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 font-semibold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingResign}
+                  data-testid="resignation-submit-btn"
+                  className="px-5 py-2 bg-[#083E34] hover:bg-[#062E27] text-white font-semibold rounded-lg transition cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmittingResign ? 'Submitting...' : 'Submit Resignation to Manager'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
