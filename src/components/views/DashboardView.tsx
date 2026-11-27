@@ -544,20 +544,13 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
 
         {/* 1. Executive Header Row */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <img
-              src="/citadel-logo.png"
-              alt="Citadel Logo"
-              className="h-10 w-10 object-contain rounded-xl p-1 bg-white border border-slate-200/90 shadow-2xs shrink-0"
-            />
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-                {greeting}, {greetingName}
-              </h1>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Executive Operations Overview · {activeScopeName}
-              </p>
-            </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+              {greeting}, {greetingName}
+            </h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Executive Operations Overview · {activeScopeName}
+            </p>
           </div>
 
           <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
