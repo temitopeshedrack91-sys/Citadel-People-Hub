@@ -446,20 +446,14 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
           {/* LEFT MAJOR COLUMN (8 OF 12 COLS - ~67% WIDTH)            */}
           {/* ======================================================== */}
           <div className="lg:col-span-8 space-y-5">
-              <div className="flex items-center gap-3.5">
-              <img
-                src="/citadel-logo.png"
-                alt="Citadel Logo"
-                className="h-11 w-11 object-contain rounded-xl p-1 bg-white border border-slate-200/90 shadow-2xs shrink-0"
-              />
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                  {greeting}, {greetingName}
-                </h1>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">
-                  People, Culture &amp; Performance • Workforce Overview.
-                </p>
-              </div>
+            {/* Executive Greeting Header */}
+            <div>
+              <h1 className="font-display text-2xl sm:text-[28px] font-bold text-slate-900 tracking-tight leading-tight">
+                {greeting}, {greetingName}
+              </h1>
+              <p className="text-xs text-slate-500 mt-1">
+                People, Culture &amp; Performance &middot; Workforce Overview
+              </p>
             </div>
 
             {/* 3 Summary Stat Cards in a row */}
@@ -505,16 +499,17 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
               />
             </div>
 
-            {/* Active Projects Section matching reference cards */}
+            {/* Active Projects Section */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-bold text-slate-900 tracking-tight">Active Projects</h2>
+                <h2 className="font-display text-sm font-semibold text-slate-900 tracking-tight">Active Projects</h2>
                 <button
+                  type="button"
                   onClick={() => onNavigate('performance')}
                   data-testid="projects-view-all"
-                  className="text-xs font-semibold text-slate-500 hover:text-slate-900 transition"
+                  className="text-xs font-medium text-slate-500 hover:text-[#083E34] transition cursor-pointer"
                 >
-                  View All
+                  View all
                 </button>
               </div>
 
@@ -532,20 +527,20 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                         onNavigate('projects');
                       }
                     }}
-                    className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-[0_2px_10px_rgba(15,23,42,0.03)] flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(15,23,42,0.06)] hover:border-slate-300 cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#083E34] focus-visible:ring-offset-2 select-none"
+                    className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] flex flex-col justify-between transition-all duration-150 hover:shadow-[0_4px_12px_rgba(15,23,42,0.05)] hover:border-[#083E34]/35 cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#083E34]/30 select-none"
                   >
                     <div>
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-[#083E34] transition">
+                        <h3 className="text-[13px] font-semibold text-slate-900 group-hover:text-[#083E34] transition">
                           {proj.title}
                         </h3>
                         <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#083E34] transition shrink-0" aria-hidden="true" />
                       </div>
-                      <p className="text-xs text-slate-500 mt-1.5 font-medium leading-relaxed line-clamp-2">
+                      <p className="text-xs text-slate-500 mt-1.5 leading-relaxed line-clamp-2">
                         {proj.subtitle}
                       </p>
 
-                      <div className="mt-3.5 flex items-center justify-between text-xs font-semibold">
+                      <div className="mt-3.5 flex items-center justify-between text-xs font-medium">
                         <div className="flex items-center gap-1.5 text-slate-500">
                           <Calendar className="w-3.5 h-3.5 text-slate-400" />
                           <span>{proj.dueDate}</span>
@@ -572,7 +567,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                         ))}
                       </div>
 
-                      <div className="flex items-center gap-2.5 text-xs text-slate-500 font-semibold">
+                      <div className="flex items-center gap-2.5 text-xs text-slate-500 font-medium tabular-nums">
                         <span className="flex items-center gap-1">
                           <span>{proj.commentsCount}</span>
                           <MessageSquare className="w-3 h-3 text-slate-400" />
@@ -593,34 +588,35 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
               {/* Team Presence Tracker */}
               <div
                 data-testid="team-presence-card"
-                className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] space-y-4"
+                className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] space-y-4"
               >
                 <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-bold text-slate-900 tracking-tight">Team Presence Tracker</h2>
+                  <h2 className="font-display text-sm font-semibold text-slate-900 tracking-tight">Team Presence Tracker</h2>
                   <button
+                    type="button"
                     onClick={() => onNavigate('attendance')}
-                    className="text-xs font-semibold text-slate-500 hover:text-slate-900 transition"
+                    className="text-xs font-medium text-slate-500 hover:text-[#083E34] transition cursor-pointer"
                   >
-                    View All
+                    View all
                   </button>
                 </div>
 
-                <div className="space-y-3.5">
+                <div className="space-y-4">
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block mb-2">
                       On Leave
                     </span>
-                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                      <div className="flex items-center gap-2.5">
+                    <div className="flex items-center justify-between py-2 border-t border-slate-100">
+                      <div className="flex items-center gap-2.5 min-w-0">
                         <InitialsAvatar
                           initials="DC"
                           name="Daniel Carter"
                           bgClass="bg-slate-700"
-                          sizeClass="w-8 h-8 text-xs"
+                          sizeClass="w-7 h-7 text-[10px]"
                         />
-                        <div>
-                          <h4 className="text-xs font-bold text-slate-900">Daniel Carter</h4>
-                          <p className="text-[11px] text-slate-500 font-medium">Coverage assigned to Olivia M.</p>
+                        <div className="min-w-0">
+                          <h4 className="text-xs font-semibold text-slate-900 truncate">Daniel Carter</h4>
+                          <p className="text-[11px] text-slate-500 truncate">Coverage assigned to Olivia M.</p>
                         </div>
                       </div>
                       <StatusPill status="on-leave" label="On Leave" showDot size="sm" />
@@ -628,25 +624,25 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                   </div>
 
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block mb-2">
                       Away
                     </span>
-                    <div className="space-y-1 divide-y divide-slate-100">
+                    <div className="divide-y divide-slate-100 border-t border-slate-100">
                       {presenceMembers.slice(1).map((mem, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center justify-between py-2 px-1 hover:bg-slate-50 rounded-lg transition"
+                          className="flex items-center justify-between py-2.5 hover:bg-slate-50/80 px-1.5 -mx-1.5 rounded-lg transition"
                         >
-                          <div className="flex items-center gap-2.5">
+                          <div className="flex items-center gap-2.5 min-w-0">
                             <InitialsAvatar
                               initials={mem.initials}
                               name={mem.name}
                               bgClass={mem.bg}
                               sizeClass="w-7 h-7 text-[10px]"
                             />
-                            <div>
-                              <h4 className="text-xs font-bold text-slate-900 leading-none">{mem.name}</h4>
-                              <p className="text-[11px] text-slate-500 font-medium mt-1">{mem.role}</p>
+                            <div className="min-w-0">
+                              <h4 className="text-xs font-semibold text-slate-900 leading-none truncate">{mem.name}</h4>
+                              <p className="text-[11px] text-slate-500 mt-1 truncate">{mem.role}</p>
                             </div>
                           </div>
                           <StatusPill status="away" label={mem.status} showDot size="sm" />
@@ -660,29 +656,30 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
               {/* Team Notes */}
               <div
                 data-testid="team-notes-card"
-                className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] space-y-4 flex flex-col justify-between"
+                className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-center justify-between pb-1">
-                    <h2 className="text-sm font-bold text-slate-900 tracking-tight">Team Notes</h2>
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <h2 className="font-display text-sm font-semibold text-slate-900 tracking-tight">Team Notes</h2>
                     <button
+                      type="button"
                       onClick={() => setIsAddNoteModalOpen(true)}
                       data-testid="add-note-btn"
-                      className="text-xs font-bold text-[#083E34] hover:underline flex items-center gap-1 transition"
+                      className="text-xs font-semibold text-[#083E34] hover:underline flex items-center gap-1 transition cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add Note</span>
                     </button>
                   </div>
 
-                  <div className="space-y-3 mt-3">
+                  <div className="divide-y divide-slate-100">
                     {teamNotes.map((note) => (
                       <div
                         key={note.id}
-                        className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50 hover:bg-white transition-all space-y-2"
+                        className="py-3.5 first:pt-3 last:pb-0 space-y-2"
                       >
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-xs font-bold text-slate-900">{note.title}</h4>
+                        <div className="flex items-center justify-between gap-2">
+                          <h4 className="text-xs font-semibold text-slate-900">{note.title}</h4>
                           <StatusPill
                             status={
                               note.category === 'Incoming'
@@ -695,26 +692,24 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                             size="sm"
                           />
                         </div>
-                        <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                        <p className="text-xs text-slate-600 leading-relaxed">
                           {note.description}
                         </p>
-                        <div className="flex items-center justify-between pt-1 text-xs">
-                          <div className="flex items-center gap-1.5">
-                            <div className="flex -space-x-1.5 overflow-hidden">
-                              {note.avatars.map((av, i) => (
-                                <InitialsAvatar
-                                  key={i}
-                                  initials={av.initials}
-                                  name={av.name}
-                                  bgClass={av.bg}
-                                  sizeClass="w-5 h-5 text-[9px]"
-                                />
-                              ))}
-                            </div>
-                            <span className="font-semibold text-slate-600 text-[11px]">
-                              {note.collaborators}
-                            </span>
+                        <div className="flex items-center gap-2 pt-0.5 text-xs">
+                          <div className="flex -space-x-1.5 overflow-hidden">
+                            {note.avatars.map((av, i) => (
+                              <InitialsAvatar
+                                key={i}
+                                initials={av.initials}
+                                name={av.name}
+                                bgClass={av.bg}
+                                sizeClass="w-5 h-5 text-[9px]"
+                              />
+                            ))}
                           </div>
+                          <span className="font-medium text-slate-500 text-[11px]">
+                            {note.collaborators}
+                          </span>
                         </div>
                       </div>
                     ))}
@@ -724,28 +719,28 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
             </div>
 
             {/* Biometric Attendance Weekly Trends Bar Chart */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] space-y-4">
+            <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
                 <div>
                   <div className="flex items-center gap-2">
                     <Activity className="w-4 h-4 text-[#083E34]" />
-                    <h3 className="text-sm font-bold text-slate-900">
+                    <h3 className="font-display text-sm font-semibold text-slate-900">
                       Biometric Attendance Weekly Trends
                     </h3>
                   </div>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5">
                     Gatehouse terminal check-in telemetry across Citadel units.
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span>ZKTeco Gate 01 Online</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] font-medium text-emerald-700">
+                    ZKTeco Gate 01 connected
                   </span>
                   <button
+                    type="button"
                     onClick={() => onNavigate('attendance')}
-                    className="text-xs font-semibold text-slate-500 hover:text-slate-900 flex items-center gap-0.5"
+                    className="text-xs font-medium text-slate-500 hover:text-[#083E34] flex items-center gap-0.5 cursor-pointer"
                   >
                     <span>Details</span>
                     <ChevronRight className="w-3.5 h-3.5" />
@@ -754,7 +749,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
               </div>
 
               {/* 5-Day Columns */}
-              <div className="grid grid-cols-5 gap-3 pt-3 pb-1">
+              <div className="grid grid-cols-5 gap-3 pt-2 pb-1">
                 {weeklyAttendanceData.map((d) => {
                   const isActive = activeAttendanceDay === d.day;
                   return (
@@ -762,27 +757,29 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                       type="button"
                       key={d.day}
                       onClick={() => setActiveAttendanceDay(d.day as any)}
-                      className={`flex flex-col items-center group cursor-pointer transition p-2 rounded-xl ${
-                        isActive ? 'bg-slate-100' : 'hover:bg-slate-50'
+                      className={`flex flex-col items-center group cursor-pointer transition p-2 rounded-lg ${
+                        isActive ? 'bg-slate-50 ring-1 ring-slate-200/80' : 'hover:bg-slate-50/70'
                       }`}
                     >
-                      <span className="text-xs font-bold text-slate-900 mb-1.5 tabular-nums">
+                      <span className="text-xs font-semibold text-slate-900 mb-1.5 tabular-nums">
                         {d.rate}%
                       </span>
 
-                      <div className="w-10 sm:w-12 h-24 bg-slate-100 rounded-xl overflow-hidden flex flex-col justify-end p-1 border border-slate-200/70">
+                      <div className="w-10 sm:w-12 h-24 bg-slate-100/90 rounded-lg overflow-hidden flex flex-col justify-end p-1">
                         <div
                           style={{ height: `${d.rate}%` }}
-                          className={`w-full rounded-lg transition-all duration-500 ${
-                            d.isToday ? 'bg-[#083E34]' : 'bg-emerald-700/75'
+                          className={`w-full rounded-md transition-all duration-500 ${
+                            d.isToday ? 'bg-[#083E34]' : 'bg-emerald-700/65'
                           }`}
                         />
                       </div>
 
                       <div className="mt-2 text-center">
-                        <span className="text-xs font-bold text-slate-700 block">{d.day}</span>
+                        <span className={`text-xs block ${d.isToday ? 'font-bold text-[#083E34]' : 'font-medium text-slate-600'}`}>
+                          {d.day}
+                        </span>
                         {d.isToday && (
-                          <span className="inline-block mt-0.5 text-[10px] font-bold uppercase text-[#B45309] bg-[#FAF5EB] border border-[#F2E4B8] px-1.5 py-0.2 rounded">
+                          <span className="block mt-0.5 text-[10px] font-semibold text-[#083E34]">
                             Today
                           </span>
                         )}
@@ -794,19 +791,19 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
             </div>
 
             {/* Workforce Distribution by Entity */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] space-y-4">
+            <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <h3 className="font-display text-sm font-semibold text-slate-900 flex items-center gap-2">
                     <Building2 className="w-4 h-4 text-[#083E34]" />
                     <span>Citadel Workforce Distribution</span>
                   </h3>
-                  <p className="text-xs text-slate-500 font-medium">
+                  <p className="text-xs text-slate-500 mt-0.5">
                     Personnel distribution across entities.
                   </p>
                 </div>
-                <span className="text-xs font-mono font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
-                  Total: {totalEmployeesDisplay} Staff
+                <span className="text-xs font-mono font-semibold text-slate-600 tabular-nums">
+                  {totalEmployeesDisplay} staff
                 </span>
               </div>
 
@@ -883,35 +880,37 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
           {/* RIGHT MINOR COLUMN (4 OF 12 COLS - ~33% WIDTH)           */}
           {/* ======================================================== */}
           <div className="lg:col-span-4 space-y-5">
-            {/* Top Action Buttons matching reference positioning */}
+            {/* Top Action Buttons */}
             <div className="flex items-center justify-end gap-2.5">
               <button
+                type="button"
                 onClick={handleExportReport}
                 data-testid="export-report-btn"
-                className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition"
+                className="px-3.5 py-2 rounded-lg bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
               >
-                <Download className="w-3.5 h-3.5 text-slate-600" />
+                <Download className="w-3.5 h-3.5 text-slate-500" />
                 <span>Export Report</span>
               </button>
 
               <button
+                type="button"
                 onClick={() => setIsQuickActionsOpen(true)}
                 data-testid="quick-actions-btn"
-                className="px-4 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#C59B27] transition active:scale-[0.98]"
+                className="px-4 py-2 rounded-lg bg-[#083E34] hover:bg-[#062E27] text-white text-xs font-semibold flex items-center gap-1.5 transition active:scale-[0.98] cursor-pointer"
               >
-                <Zap className="w-3.5 h-3.5 text-slate-950 fill-slate-950" />
-                <span className="font-bold">Quick Actions</span>
+                <Zap className="w-3.5 h-3.5 text-[#E5C76B]" />
+                <span>Quick Actions</span>
               </button>
             </div>
 
-            {/* Leave Balance Card matching Hrivio reference design */}
+            {/* Leave Balance Card */}
             <div
               data-testid="leave-balance-card"
-              className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] space-y-4"
+              className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] space-y-4"
             >
-              <div className="flex items-center gap-2 pb-1">
-                <FileText className="w-4 h-4 text-slate-700" />
-                <h3 className="text-sm font-bold text-slate-900">Leave Balance</h3>
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-[#083E34]" />
+                <h3 className="font-display text-sm font-semibold text-slate-900">Leave Balance</h3>
               </div>
 
               {/* Semicircular Gauge Chart via ProgressRing component */}
@@ -939,19 +938,27 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                 })()}
               </div>
 
-              {/* Recent Leave Requests List matching reference design */}
-              <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs">
+              {/* Recent Leave Requests List */}
+              <div className="divide-y divide-slate-100 pt-2 border-t border-slate-100 text-xs">
                 {liveLeaves.length > 0 ? (
                   liveLeaves.slice(0, 3).map((lv) => {
                     const statusType = lv.status === 'Approved' ? 'confirmed' : lv.status === 'Rejected' ? 'rejected' : 'pending';
                     return (
                       <div
                         key={lv.id}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => onNavigate('leave')}
-                        className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            onNavigate('leave');
+                          }
+                        }}
+                        className="flex items-center justify-between cursor-pointer hover:bg-slate-50 py-2 px-1.5 -mx-1.5 rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#083E34]/30"
                       >
-                        <span className="text-xs font-semibold text-slate-700">
-                          {lv.startDate ? new Date(lv.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Oct 28'}, ({lv.leaveType})
+                        <span className="text-xs font-medium text-slate-700">
+                          {lv.startDate ? new Date(lv.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Oct 28'} &middot; {lv.leaveType}
                         </span>
                         <StatusPill status={statusType} label={lv.status} size="sm" />
                       </div>
@@ -960,24 +967,48 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                 ) : (
                   <>
                     <div
+                      role="button"
+                      tabIndex={0}
                       onClick={() => onNavigate('leave')}
-                      className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onNavigate('leave');
+                        }
+                      }}
+                      className="flex items-center justify-between cursor-pointer hover:bg-slate-50 py-2 px-1.5 -mx-1.5 rounded-lg transition"
                     >
-                      <span className="text-xs font-semibold text-slate-700">Oct 28, (Annual)</span>
+                      <span className="text-xs font-medium text-slate-700">Oct 28 &middot; Annual</span>
                       <StatusPill status="pending" label="Pending" size="sm" />
                     </div>
                     <div
+                      role="button"
+                      tabIndex={0}
                       onClick={() => onNavigate('leave')}
-                      className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onNavigate('leave');
+                        }
+                      }}
+                      className="flex items-center justify-between cursor-pointer hover:bg-slate-50 py-2 px-1.5 -mx-1.5 rounded-lg transition"
                     >
-                      <span className="text-xs font-semibold text-slate-700">Oct 25, (Casual)</span>
+                      <span className="text-xs font-medium text-slate-700">Oct 25 &middot; Casual</span>
                       <StatusPill status="confirmed" label="Confirmed" size="sm" />
                     </div>
                     <div
+                      role="button"
+                      tabIndex={0}
                       onClick={() => onNavigate('leave')}
-                      className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onNavigate('leave');
+                        }
+                      }}
+                      className="flex items-center justify-between cursor-pointer hover:bg-slate-50 py-2 px-1.5 -mx-1.5 rounded-lg transition"
                     >
-                      <span className="text-xs font-semibold text-slate-700">Oct 18, (Study)</span>
+                      <span className="text-xs font-medium text-slate-700">Oct 18 &middot; Study</span>
                       <StatusPill status="rejected" label="Rejected" size="sm" />
                     </div>
                   </>
@@ -992,44 +1023,45 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
             />
 
             {/* Upcoming Birthdays Card */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] space-y-3">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
-                  <Cake className="w-4 h-4 text-[#D4AF37]" />
-                  <h3 className="text-sm font-bold text-slate-900">Upcoming Birthdays</h3>
+                  <Cake className="w-4 h-4 text-[#B45309]" />
+                  <h3 className="font-display text-sm font-semibold text-slate-900">Upcoming Birthdays</h3>
                 </div>
-                <span className="text-[10px] font-bold text-[#D97706] bg-[#FAF5EB] px-2 py-0.5 rounded-full border border-[#F2E4B8]">
-                  Citadel
+                <span className="text-[11px] font-medium text-slate-400 tabular-nums">
+                  {upcomingBirthdays.length} upcoming
                 </span>
               </div>
 
-              <div className="space-y-2 mt-2">
+              <div className="divide-y divide-slate-100">
                 {upcomingBirthdays.map((b) => {
                   const isWished = wishedBirthday[b.id];
                   return (
                     <div
                       key={b.id}
-                      className="p-2.5 rounded-xl border border-[#F2E4B8]/60 bg-[#FAF5EB]/40 flex items-center justify-between gap-2 text-xs"
+                      className="py-2.5 first:pt-1 last:pb-0 flex items-center justify-between gap-2 text-xs"
                     >
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-[#FFF3E0] text-[#D97706] font-bold flex items-center justify-center text-[10px] shrink-0 border border-[#F2E4B8]">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-7 h-7 rounded-full bg-[#FAF5EB] text-[#B45309] font-semibold flex items-center justify-center text-[10px] shrink-0 border border-[#F2E4B8]">
                           {b.initials}
                         </div>
-                        <div>
-                          <p className="text-xs font-bold text-slate-900">{b.name}</p>
-                          <span className="text-[10px] text-[#D97706] block">
-                            {b.date} • {b.milestone}
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-slate-900 truncate">{b.name}</p>
+                          <span className="text-[11px] text-slate-500 block truncate">
+                            {b.date} &middot; {b.milestone}
                           </span>
                         </div>
                       </div>
 
                       <button
+                        type="button"
                         onClick={() => handleSendWish(b.id, b.name)}
                         disabled={isWished}
-                        className={`px-2 py-1 rounded text-[11px] font-bold flex items-center gap-1 transition shrink-0 ${
+                        className={`px-2.5 py-1 rounded-md text-[11px] font-semibold flex items-center gap-1 transition shrink-0 cursor-pointer ${
                           isWished
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-white hover:bg-[#FFF3E0] text-[#D97706] border border-[#F2E4B8] shadow-2xs'
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : 'bg-slate-50 hover:bg-[#EBF5F2] text-[#083E34] border border-slate-200/90'
                         }`}
                       >
                         {isWished ? 'Wished' : 'Send Wish'}
@@ -1041,7 +1073,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
             </div>
 
             {/* Pending Approvals Queue */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] space-y-3">
+            <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] space-y-3">
               {(() => {
                 const hrQueue = liveLeaves.filter(
                   (l) =>
@@ -1060,12 +1092,12 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                       <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                         <div className="flex items-center gap-2">
                           <ShieldCheck className="w-4 h-4 text-[#083E34]" />
-                          <h3 className="text-sm font-bold text-slate-900">
+                          <h3 className="font-display text-sm font-semibold text-slate-900">
                             Stage 2 HR Approvals
                           </h3>
                         </div>
-                        <span className="text-xs font-mono font-bold text-[#D97706] bg-[#FAF5EB] border border-[#F2E4B8] px-2 py-0.5 rounded-full">
-                          {hrQueue.length} Ready
+                        <span className="text-xs font-mono font-semibold text-[#B45309] tabular-nums">
+                          {hrQueue.length} ready
                         </span>
                       </div>
                       {hrQueue.length > 0 ? (
@@ -1075,12 +1107,12 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                               key={lv.id}
                               className="py-3 flex items-center justify-between gap-2 text-xs"
                             >
-                              <div>
-                                <span className="font-bold text-slate-900 block">
-                                  {lv.employeeName} — {lv.leaveType}
+                              <div className="min-w-0">
+                                <span className="font-semibold text-slate-900 block truncate">
+                                  {lv.employeeName} &mdash; {lv.leaveType}
                                 </span>
-                                <span className="text-[11px] text-slate-500">
-                                  {lv.startDate} → {lv.endDate} ({lv.totalDays}d) • Mgr:{' '}
+                                <span className="text-[11px] text-slate-500 block truncate">
+                                  {lv.startDate} &rarr; {lv.endDate} ({lv.totalDays}d) &middot; Mgr:{' '}
                                   {lv.managerActorName || lv.managerName || 'Cleared'}
                                 </span>
                               </div>
@@ -1101,7 +1133,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                                       showToast(err?.message || 'Unable to reject leave request.');
                                     }
                                   }}
-                                  className="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold cursor-pointer transition"
+                                  className="px-2 py-1 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 text-[11px] font-semibold cursor-pointer transition"
                                 >
                                   Reject
                                 </button>
@@ -1121,7 +1153,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                                       showToast(err?.message || 'Unable to approve leave request.');
                                     }
                                   }}
-                                  className="px-2.5 py-1 rounded-lg bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 border border-[#C59B27] text-[11px] font-bold cursor-pointer transition"
+                                  className="px-2.5 py-1 rounded-md bg-[#083E34] hover:bg-[#062E27] text-white text-[11px] font-semibold cursor-pointer transition"
                                 >
                                   Approve
                                 </button>
@@ -1146,12 +1178,12 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                     <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                       <div className="flex items-center gap-2">
                         <ShieldCheck className="w-4 h-4 text-[#083E34]" />
-                        <h3 className="text-sm font-bold text-slate-900">
+                        <h3 className="font-display text-sm font-semibold text-slate-900">
                           Pending Approvals Queue
                         </h3>
                       </div>
-                      <span className="text-xs font-mono font-bold text-[#D97706] bg-[#FAF5EB] border border-[#F2E4B8] px-2 py-0.5 rounded-full">
-                        {pendingActions.filter((a) => !resolvedActions[a.id]).length} Actions
+                      <span className="text-xs font-mono font-semibold text-[#B45309] tabular-nums">
+                        {pendingActions.filter((a) => !resolvedActions[a.id]).length} pending
                       </span>
                     </div>
 
@@ -1165,24 +1197,25 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                               isResolved ? 'opacity-40 line-through' : ''
                             }`}
                           >
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold text-slate-900">{act.title}</span>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-semibold text-slate-900">{act.title}</span>
                                 <StatusPill status="high" label={act.priority} size="sm" />
                               </div>
-                              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                              <p className="text-xs text-slate-500 mt-0.5">
                                 {act.subtitle}
                               </p>
                             </div>
 
                             <div className="flex items-center gap-2 shrink-0">
                               <button
+                                type="button"
                                 onClick={() => handleResolveAction(act.id, act.title)}
                                 disabled={isResolved}
-                                className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                                className={`px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer ${
                                   isResolved
-                                    ? 'bg-emerald-100 text-emerald-900'
-                                    : 'bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] border border-[#C59B27]'
+                                    ? 'bg-emerald-50 text-emerald-700'
+                                    : 'bg-[#083E34] text-white hover:bg-[#062E27]'
                                 }`}
                               >
                                 {isResolved ? 'Resolved' : 'Approve'}
@@ -1403,13 +1436,13 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setIsAddNoteModalOpen(false)}
-                    className="px-4 py-2 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 font-bold"
+                    className="px-4 py-2 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 font-semibold cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold rounded-xl transition shadow-xs"
+                    className="px-5 py-2 bg-[#083E34] hover:bg-[#062E27] text-white font-semibold rounded-lg transition cursor-pointer"
                   >
                     Save Note
                   </button>

@@ -58,47 +58,43 @@ export const StatCard: React.FC<StatCardProps> = ({
       }
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
-      className={`bg-white rounded-2xl border border-slate-200/90 p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] flex flex-col justify-between transition-all duration-200 ${
+      className={`bg-white rounded-xl border border-slate-200/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] flex flex-col justify-between transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#083E34]/30 ${
         onClick
-          ? 'cursor-pointer hover:border-[#083E34]/40 hover:shadow-[0_4px_16px_rgba(15,23,42,0.06)] active:scale-[0.99]'
+          ? 'cursor-pointer hover:border-[#083E34]/35 hover:shadow-[0_4px_12px_rgba(15,23,42,0.05)] active:scale-[0.99]'
           : ''
       } ${className}`}
     >
-      <div className="flex items-center gap-2.5">
-        <div
-          className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${iconBg}`}
-        >
-          <Icon className={`w-4 h-4 ${iconColor}`} />
-        </div>
-        <span className="text-xs font-semibold text-slate-600 tracking-tight">{title}</span>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-medium text-slate-500 tracking-tight">{title}</span>
+        <Icon className={`w-4 h-4 shrink-0 opacity-75 ${iconColor}`} />
       </div>
 
-      <div className="mt-4">
-        <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight tabular-nums block leading-none">
+      <div className="mt-3.5">
+        <span className="font-display text-[30px] sm:text-[34px] font-bold text-slate-900 tracking-tight tabular-nums block leading-none">
           {value}
         </span>
 
         {supportingText ? (
-          <div className="mt-2 flex items-center gap-1.5 text-xs flex-wrap font-medium">
+          <div className="mt-2.5 flex items-center gap-1.5 text-xs flex-wrap font-medium">
             {supportingText}
           </div>
         ) : trend ? (
-          <div className="mt-2 flex items-center gap-1.5 text-xs flex-wrap">
+          <div className="mt-2.5 flex items-center gap-1.5 text-xs flex-wrap">
             <span
-              className={`font-black whitespace-nowrap ${
+              className={`font-semibold tabular-nums whitespace-nowrap ${
                 trend.isPositive === false ? 'text-rose-500' : 'text-emerald-600'
               }`}
             >
               {trend.value}
             </span>
             {trend.label && (
-              <span className="text-slate-500 font-medium whitespace-nowrap">
-                • {trend.label}
+              <span className="text-slate-500 whitespace-nowrap">
+                &bull; {trend.label}
               </span>
             )}
           </div>
         ) : subtitle ? (
-          <p className="mt-2 text-xs text-slate-500 font-medium">{subtitle}</p>
+          <p className="mt-2.5 text-xs text-slate-500">{subtitle}</p>
         ) : null}
       </div>
     </div>

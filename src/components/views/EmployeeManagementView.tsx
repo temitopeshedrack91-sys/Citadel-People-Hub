@@ -240,24 +240,24 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
   return (
     <div className="space-y-5">
       {/* 1. Header & Controls Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
+          <div className="flex items-baseline gap-2.5 flex-wrap">
+            <h1 className="font-display text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
               Employees
             </h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold">
-              {totalItems} total
+            <span className="text-xs font-mono font-medium text-slate-500 tabular-nums">
+              &middot; {totalItems} total
             </span>
           </div>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             Centralized staff records across Church, School of Government, and Holdings.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {/* View Mode Toggle */}
-          <div className="flex items-center p-1 bg-slate-100 rounded-lg border border-slate-200" role="group" aria-label="Employee view mode">
+          <div className="flex items-center p-1 bg-slate-100 rounded-lg border border-slate-200/80" role="group" aria-label="Employee view mode">
             <button
               type="button"
               onClick={() => setViewMode('table')}
@@ -265,8 +265,8 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
               aria-label="Table View"
               className={`p-1.5 rounded-md transition cursor-pointer ${
                 viewMode === 'table'
-                  ? 'bg-white text-slate-900 shadow-xs font-bold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
               title="Table View"
             >
@@ -279,8 +279,8 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
               aria-label="Card Grid View"
               className={`p-1.5 rounded-md transition cursor-pointer ${
                 viewMode === 'card'
-                  ? 'bg-white text-slate-900 shadow-xs font-bold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
               title="Card Grid View"
             >
@@ -291,45 +291,48 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
           {/* Add Employee (Admin & HR Staff authorized) */}
           {canManageEmployees && (
             <button
+              type="button"
               id="btn-add-employee-trigger"
               onClick={() => setShowAddModal(true)}
-              className="px-4 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#C59B27] transition cursor-pointer"
+              className="px-4 py-2 rounded-lg bg-[#083E34] hover:bg-[#062E27] text-white text-xs font-semibold flex items-center gap-1.5 transition active:scale-[0.98] cursor-pointer whitespace-nowrap"
             >
-              <Plus className="w-4 h-4 text-slate-950 stroke-[2.5]" />
-              <span className="font-bold">Enroll Employee</span>
+              <Plus className="w-4 h-4 stroke-[2.25]" />
+              <span>Enroll Employee</span>
             </button>
           )}
         </div>
       </div>
 
       {/* 2. Comprehensive Filter & Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] space-y-3">
+      <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
           {/* Search Box */}
           <div className="relative lg:col-span-1">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input
               type="text"
+              aria-label="Search employees by name, staff ID, or title"
               placeholder="Search by name, ID, title..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-8 pr-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/25 outline-none transition"
+              className="w-full pl-8 pr-3 py-2 text-xs border border-slate-200/90 rounded-lg focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/12 outline-none transition"
             />
           </div>
 
           {/* Entity Filter */}
           <div>
             <select
+              aria-label="Filter by Citadel entity"
               value={entityFilter}
               onChange={(e) => {
                 setEntityFilter(e.target.value);
                 setDeptFilter('');
                 setCurrentPage(1);
               }}
-              className="w-full py-2 px-2.5 text-xs border border-slate-200 rounded-xl focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34]/20 outline-none bg-white text-slate-700 font-medium transition"
+              className="w-full py-2 px-2.5 text-xs border border-slate-200/90 rounded-lg focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/12 outline-none bg-white text-slate-700 font-medium transition"
             >
               <option value="">All Citadel Entities</option>
               {entities.map((ent) => (
@@ -343,12 +346,13 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
           {/* Department Filter */}
           <div>
             <select
+              aria-label="Filter by department"
               value={deptFilter}
               onChange={(e) => {
                 setDeptFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full py-2 px-2.5 text-xs border border-slate-200 rounded-xl focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34]/20 outline-none bg-white text-slate-700 font-medium transition"
+              className="w-full py-2 px-2.5 text-xs border border-slate-200/90 rounded-lg focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/12 outline-none bg-white text-slate-700 font-medium transition"
             >
               <option value="">All Departments</option>
               {availableDepartments.map((dept) => (
@@ -362,12 +366,13 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
           {/* Employment Status Filter */}
           <div>
             <select
+              aria-label="Filter by lifecycle status"
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full py-2 px-2.5 text-xs border border-slate-200 rounded-xl focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34]/20 outline-none bg-white text-slate-700 font-medium transition"
+              className="w-full py-2 px-2.5 text-xs border border-slate-200/90 rounded-lg focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/12 outline-none bg-white text-slate-700 font-medium transition"
             >
               <option value="">All Lifecycle Statuses</option>
               <option value="Active">Active</option>
@@ -385,12 +390,13 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
           {/* Employment Type Filter */}
           <div className="flex items-center gap-2">
             <select
+              aria-label="Filter by contract type"
               value={typeFilter}
               onChange={(e) => {
                 setTypeFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full py-2 px-2.5 text-xs border border-slate-200 rounded-xl focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34]/20 outline-none bg-white text-slate-700 font-medium transition"
+              className="w-full py-2 px-2.5 text-xs border border-slate-200/90 rounded-lg focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/12 outline-none bg-white text-slate-700 font-medium transition"
             >
               <option value="">All Contract Types</option>
               <option value="Full-Time">Full-Time</option>
@@ -402,8 +408,10 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
 
             {(searchQuery || entityFilter || deptFilter || statusFilter || typeFilter) && (
               <button
+                type="button"
                 onClick={handleResetFilters}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition shrink-0"
+                aria-label="Reset all filters"
+                className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition shrink-0 cursor-pointer"
                 title="Reset all filters"
               >
                 <RotateCcw className="w-4 h-4" />
@@ -430,15 +438,15 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
           </button>
         </div>
       ) : viewMode === 'table' ? (
-        /* TABLE VIEW */
-        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] overflow-hidden">
+        /* TABLE VIEW — compact 7-column layout prevents horizontal clipping at 1440px */
+        <div className="bg-white rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.03)] overflow-hidden">
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-50/90 border-b border-slate-200/80 text-[11px] font-black uppercase tracking-wider text-slate-500">
+                <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                   <th
                     onClick={() => handleSort('staffId')}
-                    className="py-3.5 px-4 cursor-pointer hover:text-slate-900 select-none whitespace-nowrap"
+                    className="py-3 px-3.5 cursor-pointer hover:text-slate-900 select-none whitespace-nowrap"
                   >
                     <div className="flex items-center gap-1">
                       <span>Staff ID</span>
@@ -447,27 +455,26 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                   </th>
                   <th
                     onClick={() => handleSort('name')}
-                    className="py-3.5 px-4 cursor-pointer hover:text-slate-900 select-none whitespace-nowrap"
+                    className="py-3 px-3.5 cursor-pointer hover:text-slate-900 select-none whitespace-nowrap"
                   >
                     <div className="flex items-center gap-1">
-                      <span>Full Name & Role</span>
+                      <span>Employee</span>
                       <ArrowUpDown className="w-3 h-3 text-slate-400" />
                     </div>
                   </th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Entity & Department</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Manager / Head</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Status</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Type</th>
+                  <th className="py-3 px-3.5 whitespace-nowrap">Entity &amp; Department</th>
+                  <th className="py-3 px-3.5 whitespace-nowrap">Manager</th>
+                  <th className="py-3 px-3.5 whitespace-nowrap">Status</th>
                   <th
                     onClick={() => handleSort('date')}
-                    className="py-3.5 px-4 cursor-pointer hover:text-slate-900 select-none whitespace-nowrap"
+                    className="py-3 px-3.5 cursor-pointer hover:text-slate-900 select-none whitespace-nowrap"
                   >
                     <div className="flex items-center gap-1">
                       <span>Joined</span>
                       <ArrowUpDown className="w-3 h-3 text-slate-400" />
                     </div>
                   </th>
-                  <th className="py-3.5 px-4 text-right whitespace-nowrap">Actions</th>
+                  <th className="py-3 px-3.5 text-right whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -478,47 +485,51 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                     className="hover:bg-slate-50/80 cursor-pointer transition group"
                   >
                     {/* Staff ID */}
-                    <td className="py-3 px-4 font-mono font-bold text-slate-800 group-hover:text-[#083E34] whitespace-nowrap">
+                    <td className="py-3 px-3.5 font-mono font-semibold text-slate-700 group-hover:text-[#083E34] whitespace-nowrap tabular-nums">
                       {emp.staffId}
                     </td>
 
                     {/* Full Name & Job Title */}
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-[#083E34] text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-xs">
+                    <td className="py-3 px-3.5 max-w-[230px]">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-[#083E34] text-white font-semibold flex items-center justify-center text-[11px] shrink-0">
                           {emp.firstName[0]}
                           {emp.lastName[0]}
                         </div>
                         <div className="min-w-0">
-                          <div className="font-bold text-slate-900 group-hover:text-[#083E34] truncate">
+                          <div className="font-semibold text-slate-900 group-hover:text-[#083E34] truncate">
                             {emp.fullName}
                           </div>
-                          <div className="text-[11px] text-slate-500 font-medium truncate">{emp.jobTitle}</div>
+                          <div className="text-[11px] text-slate-500 truncate" title={emp.jobTitle}>
+                            {emp.jobTitle}
+                          </div>
                         </div>
                       </div>
                     </td>
 
-                    {/* Entity & Department */}
-                    <td className="py-3 px-4">
-                      <div className="font-semibold text-slate-900 leading-tight">{emp.entityName}</div>
-                      <div className="text-[11px] text-slate-500 font-medium mt-0.5">{emp.departmentName}</div>
+                    {/* Entity, Department & Contract Type inline */}
+                    <td className="py-3 px-3.5 max-w-[240px]">
+                      <div className="font-medium text-slate-900 leading-tight truncate" title={emp.entityName}>
+                        {emp.entityName}
+                      </div>
+                      <div className="text-[11px] text-slate-500 mt-0.5 truncate" title={`${emp.departmentName} · ${emp.employmentType}`}>
+                        {emp.departmentName} &middot; {emp.employmentType}
+                      </div>
                     </td>
 
                     {/* Manager / Supervisor */}
-                    <td className="py-3 px-4 text-slate-700 font-medium text-xs">
+                    <td className="py-3 px-3.5 text-slate-600 text-xs max-w-[160px] truncate" title={emp.managerName || 'PCCM Head'}>
                       {emp.managerName || 'PCCM Head'}
                     </td>
 
                     {/* Status Badge */}
-                    <td className="py-3 px-4 whitespace-nowrap">
+                    <td className="py-3 px-3.5 whitespace-nowrap">
                       <Badge
                         variant={
                           emp.status === 'Active'
                             ? 'success'
                             : emp.status === 'On Leave'
                             ? 'warning'
-                            : emp.status === 'Probation'
-                            ? 'neutral'
                             : 'neutral'
                         }
                       >
@@ -526,24 +537,18 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                       </Badge>
                     </td>
 
-                    {/* Employment Type */}
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 border border-slate-200/80 whitespace-nowrap">
-                        {emp.employmentType}
-                      </span>
-                    </td>
-
                     {/* Employment Date */}
-                    <td className="py-3 px-4 font-mono text-xs text-slate-600 font-medium whitespace-nowrap">
+                    <td className="py-3 px-3.5 font-mono text-xs text-slate-500 whitespace-nowrap tabular-nums">
                       {emp.employmentDate}
                     </td>
 
                     {/* Action Buttons */}
-                    <td className="py-3 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                    <td className="py-3 px-3.5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1.5">
                         <button
+                          type="button"
                           onClick={() => setSelectedEmployee(emp)}
-                          className="px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-[#083E34] text-slate-700 hover:text-white border border-slate-200 text-xs font-semibold transition flex items-center gap-1 shadow-2xs"
+                          className="px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-[#083E34] text-slate-700 hover:text-white border border-slate-200/90 text-xs font-semibold transition flex items-center gap-1 cursor-pointer"
                           title="View complete employee dossier"
                         >
                           <Eye className="w-3.5 h-3.5" />
@@ -552,12 +557,14 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
 
                         {canManageEmployees && (
                           <button
+                            type="button"
                             onClick={() => {
                               setEditingEmployee(emp);
                               setShowAddModal(true);
                             }}
                             data-testid={`edit-employee-${emp.staffId}`}
-                            className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                            aria-label={`Edit ${emp.fullName}`}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
                             title="Edit employee record"
                           >
                             <Edit className="w-3.5 h-3.5" />
@@ -674,9 +681,9 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 key={pNum}
                 onClick={() => setCurrentPage(pNum)}
                 aria-current={currentPage === pNum ? 'page' : undefined}
-                className={`w-7 h-7 rounded-lg text-xs font-bold transition cursor-pointer ${
+                className={`w-7 h-7 rounded-lg text-xs font-semibold transition cursor-pointer ${
                   currentPage === pNum
-                    ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
+                    ? 'bg-[#083E34] text-white'
                     : 'border border-slate-200 hover:bg-slate-100 text-slate-700'
                 }`}
               >

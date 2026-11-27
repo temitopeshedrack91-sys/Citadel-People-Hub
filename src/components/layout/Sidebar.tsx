@@ -153,8 +153,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           label: 'Attendance',
           icon: Clock,
           visible: canAccessModule(currentUser || currentRole, 'attendance'),
-          badge: 'Live',
-          badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
         },
         {
           id: 'leave' as NavModule,
@@ -162,7 +160,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           icon: CalendarDays,
           visible: canAccessModule(currentUser || currentRole, 'leave'),
           badge: pendingLeaveCount > 0 ? String(pendingLeaveCount) : undefined,
-          badgeColor: 'bg-[#D4AF37]/20 text-[#D4AF37] border-[#D4AF37]/40',
         },
         {
           id: 'projects' as NavModule,
@@ -298,23 +295,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }`}
       >
         {/* Mobile Header */}
-        <div className="h-16 px-4 border-b border-zinc-800 flex items-center justify-between bg-black shrink-0 lg:hidden">
+        <div className="h-16 px-4 border-b border-white/10 flex items-center justify-between shrink-0 lg:hidden">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0 ring-1 ring-zinc-700">
+            <div className="w-8 h-8 rounded-lg bg-white/10 text-white flex items-center justify-center shrink-0 border border-white/10">
               <CitadelLogo variant="mark" colorMode="dark" className="h-5 w-5" />
             </div>
             <div className="flex flex-col">
-              <span className="text-xs font-bold text-white tracking-tight leading-none">
+              <span className="font-display text-xs font-bold text-white tracking-tight leading-none">
                 Citadel People Hub
               </span>
-              <span className="text-[10px] text-zinc-400 font-medium mt-0.5">
+              <span className="text-[10px] text-emerald-200/70 font-medium mt-0.5">
                 Workforce Management
               </span>
             </div>
           </div>
           <button
+            type="button"
             onClick={onCloseMobile}
-            className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition"
+            className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-white/10 transition"
             aria-label="Close sidebar"
           >
             <X className="w-5 h-5" />
@@ -323,19 +321,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Desktop Quick Collapse Bar */}
         <div
-          className={`hidden lg:flex items-center border-b border-zinc-800 bg-black shrink-0 ${
+          className={`hidden lg:flex items-center border-b border-white/10 shrink-0 ${
             isCollapsed ? 'py-3 px-2 justify-center' : 'py-2.5 px-4 justify-between'
           }`}
         >
           {!isCollapsed ? (
             <>
-              <span className="text-[10px] font-bold uppercase text-zinc-400 tracking-wider">
-                Workforce Management
+              <span className="text-[10px] font-semibold uppercase text-emerald-100/55 tracking-widest">
+                Workspace
               </span>
               <button
                 type="button"
                 onClick={onToggleCollapse}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 transition cursor-pointer"
+                className="p-1.5 rounded-lg text-emerald-100/60 hover:text-white hover:bg-white/10 transition cursor-pointer"
                 title="Collapse Sidebar (Ctrl+B)"
                 aria-label="Collapse Sidebar"
               >
@@ -346,29 +344,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               type="button"
               onClick={onToggleCollapse}
-              className="w-9 h-9 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 flex items-center justify-center text-zinc-300 hover:text-white transition group cursor-pointer"
+              className="w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-emerald-100/70 hover:text-white transition group cursor-pointer"
               title="Expand Sidebar (Ctrl+B)"
               aria-label="Expand Sidebar"
             >
-              <ChevronsRight className="w-4 h-4 text-zinc-400 group-hover:text-white transition" />
+              <ChevronsRight className="w-4 h-4 text-emerald-100/70 group-hover:text-white transition" />
             </button>
           )}
         </div>
 
-        {/* Navigation List with Sleek Custom Scrollbar */}
-        <nav className={`flex-1 overflow-y-auto custom-scrollbar min-h-0 space-y-4 py-3 bg-black ${isCollapsed ? 'px-2' : 'px-3.5'}`}>
+        {/* Navigation List */}
+        <nav className={`flex-1 overflow-y-auto custom-scrollbar min-h-0 space-y-5 py-3.5 ${isCollapsed ? 'px-2' : 'px-3'}`}>
           {navSections.map((section, idx) => {
             const visibleItems = section.items.filter((item) => item.visible);
             if (visibleItems.length === 0) return null;
 
             return (
-              <div key={idx} className="space-y-1">
+              <div key={idx} className="space-y-0.5">
                 {!isCollapsed ? (
-                  <div className="px-3 pb-1 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                  <div className="px-3 pb-1.5 text-[10px] font-semibold text-emerald-100/45 uppercase tracking-widest">
                     {section.label}
                   </div>
                 ) : (
-                  <div className="my-1 border-t border-zinc-800" />
+                  <div className="my-1.5 border-t border-white/10" />
                 )}
 
                 {visibleItems.map((item) => {
@@ -376,50 +374,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   const Icon = item.icon;
                   return (
                     <button
+                      type="button"
                       key={item.id}
                       id={`nav-item-${item.id}`}
                       data-testid={`nav-item-${item.id}`}
+                      aria-current={isActive ? 'page' : undefined}
                       title={isCollapsed ? `${item.label}${item.badge ? ` (${item.badge})` : ''}` : undefined}
                       onClick={() => {
                         onSelectModule(item.id);
                         onCloseMobile();
                       }}
-                      className={`relative w-full flex items-center rounded-xl text-xs transition-all duration-150 group cursor-pointer min-h-[40px] ${
-                        isCollapsed ? 'justify-center p-2.5' : 'justify-between px-3.5 py-2.5'
+                      className={`relative w-full flex items-center rounded-lg text-[13px] transition-all duration-150 group cursor-pointer min-h-[38px] ${
+                        isCollapsed ? 'justify-center p-2.5' : 'justify-between px-3 py-2'
                       } ${
                         isActive
-                          ? 'bg-zinc-900 text-white font-bold ring-1 ring-[#D4AF37]/40 shadow-2xs border-l-2 border-[#D4AF37]'
-                          : 'text-zinc-400 font-medium hover:bg-zinc-900 hover:text-white'
+                          ? 'bg-zinc-900 text-white font-semibold border border-[#D4AF37]'
+                          : 'text-emerald-100/70 font-medium border border-transparent hover:bg-white/[0.06] hover:text-white'
                       }`}
                     >
-                      <div className="flex items-center gap-3 truncate">
+                      <div className="flex items-center gap-2.5 truncate">
                         <Icon
                           className={`w-4 h-4 shrink-0 transition-colors ${
-                            isActive ? 'text-[#D4AF37]' : 'text-zinc-500 group-hover:text-white'
+                            isActive ? 'text-[#E5C76B]' : 'text-emerald-100/50 group-hover:text-emerald-100'
                           }`}
                         />
                         {!isCollapsed && <span className="truncate">{item.label}</span>}
                       </div>
 
-                      {/* Expanded View Badges */}
-                      {!isCollapsed && (
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          {item.badge && !isActive && (
-                            <span
-                              className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${item.badgeColor}`}
-                            >
-                              {item.badge}
-                            </span>
-                          )}
-                          {isActive && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] shadow-[0_0_6px_#D4AF37]" />
-                          )}
-                        </div>
+                      {/* Quiet Tabular Pending Count */}
+                      {!isCollapsed && item.badge && (
+                        <span className="text-[11px] font-mono font-semibold text-[#E5C76B] tabular-nums shrink-0 pl-2">
+                          {item.badge}
+                        </span>
                       )}
 
-                      {/* Collapsed View Dot for Badges */}
+                      {/* Collapsed View Indicator for Pending Count */}
                       {isCollapsed && item.badge && !isActive && (
-                        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#D4AF37] ring-2 ring-black" />
+                        <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#E5C76B]" />
                       )}
                     </button>
                   );
@@ -430,52 +421,49 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
 
         {/* Bottom Actions Area */}
-        <div className={`border-t border-zinc-800 bg-black space-y-2 shrink-0 ${isCollapsed ? 'p-2' : 'p-3.5'}`}>
-          {/* Prominent + Add New Employee Button (Restricted to Admin & HR Staff) */}
+        <div className={`border-t border-white/10 space-y-2 shrink-0 ${isCollapsed ? 'p-2' : 'p-3'}`}>
+          {/* Add Employee Action (Restricted to Admin & HR Staff) */}
           {canManageEmployees && (
             <button
+              type="button"
               onClick={() => {
                 onOpenAddEmployee?.();
                 onCloseMobile();
               }}
               data-testid="sidebar-add-employee-btn"
               title="Add New Employee"
-              className={`w-full bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 rounded-xl font-bold flex items-center justify-center gap-2 shadow-xs transition active:scale-[0.98] min-h-[42px] ${
+              className={`w-full bg-[#0E4F43] hover:bg-[#136153] text-white border border-emerald-400/20 rounded-lg font-semibold flex items-center justify-center gap-2 transition active:scale-[0.98] cursor-pointer min-h-[40px] ${
                 isCollapsed ? 'w-10 h-10 mx-auto p-0' : 'py-2 px-3 text-xs'
               }`}
             >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <Plus className="w-4 h-4 stroke-[2.25]" />
               {!isCollapsed && <span>Add Employee</span>}
             </button>
           )}
 
           {/* Logout Button */}
           <button
+            type="button"
             onClick={async () => {
               onCloseMobile();
               await logout();
             }}
             data-testid="sidebar-logout-btn"
-            className={`w-full flex items-center text-xs font-semibold rounded-xl transition border min-h-[40px] group cursor-pointer ${
+            className={`w-full flex items-center text-xs font-medium rounded-lg transition border min-h-[38px] group cursor-pointer ${
               isCollapsed
-                ? 'w-10 h-10 mx-auto justify-center p-0 text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 border-zinc-800 hover:border-rose-500/30'
-                : 'justify-between px-3 py-2 text-zinc-300 hover:text-rose-300 hover:bg-rose-500/10 border-zinc-800 hover:border-rose-500/30'
+                ? 'w-10 h-10 mx-auto justify-center p-0 text-emerald-100/60 hover:text-rose-300 hover:bg-rose-500/10 border-white/10 hover:border-rose-500/30'
+                : 'justify-between px-3 py-2 text-emerald-100/75 hover:text-rose-200 hover:bg-rose-500/10 border-white/10 hover:border-rose-500/30'
             }`}
             title="Log out of Citadel People Hub"
           >
             <div className="flex items-center gap-2.5 truncate">
-              <LogOut className="w-4 h-4 text-zinc-500 group-hover:text-rose-400 shrink-0 transition-colors" />
+              <LogOut className="w-4 h-4 text-emerald-100/50 group-hover:text-rose-300 shrink-0 transition-colors" />
               {!isCollapsed && (
-                <span className="truncate text-xs font-bold text-zinc-200 group-hover:text-rose-200 transition-colors">
-                  Logout
+                <span className="truncate text-xs font-semibold text-emerald-50/90 group-hover:text-rose-200 transition-colors">
+                  Sign out
                 </span>
               )}
             </div>
-            {!isCollapsed && (
-              <span className="text-[10px] text-zinc-500 group-hover:text-rose-300 font-medium transition-colors">
-                Sign out
-              </span>
-            )}
           </button>
         </div>
       </aside>

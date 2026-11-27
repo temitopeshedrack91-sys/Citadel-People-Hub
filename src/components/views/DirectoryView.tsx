@@ -157,27 +157,44 @@ export const DirectoryView: React.FC = () => {
     return [...base, ...entityTabs];
   }, [employees, entities]);
 
+  const resolveEntityCode = useCallback(
+    (emp: Employee): string => {
+      const match = entities.find(
+        (ent) =>
+          String(ent.id).toLowerCase() === String(emp.entityId || '').toLowerCase()
+      );
+      if (match?.shortCode) return match.shortCode;
+      if (match?.name) return match.name;
+      const raw = String(emp.entityId || '').toLowerCase();
+      if (raw.includes('cgcc')) return 'CGCC';
+      if (raw.includes('csog')) return 'CSOG';
+      if (raw.includes('holding')) return 'Holdings';
+      return emp.entityName || 'Citadel';
+    },
+    [entities]
+  );
+
   const listItems: ListItem<Employee>[] = filteredEmployees.map((emp) => ({
     id: String(emp.id),
     title: emp.fullName,
-    subtitle: `${emp.jobTitle} • ${emp.departmentName || 'Unassigned'}`,
+    subtitle: `${emp.jobTitle} · ${emp.departmentName || 'Unassigned'}`,
     timestamp: emp.staffId,
     avatar: (
-      <div className="w-10 h-10 rounded-full bg-[#083E34] text-white font-extrabold flex items-center justify-center text-xs shadow-xs shrink-0">
+      <div className="w-9 h-9 rounded-full bg-[#083E34] text-white font-semibold flex items-center justify-center text-xs shrink-0">
         {(emp.firstName?.[0] || emp.fullName?.[0] || 'C')}
         {(emp.lastName?.[0] || '')}
       </div>
     ),
     badge: (
-      <div className="flex items-center gap-1.5 flex-wrap">
+      <div className="flex items-center gap-2 flex-wrap">
         <StatusPill
           status={emp.status === 'Active' ? 'online' : 'neutral'}
           label={emp.status}
           showDot
           size="sm"
         />
-        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
-          {emp.entityId || 'Citadel'}
+        <span className="text-[11px] font-medium text-slate-500">
+          &middot; {resolveEntityCode(emp)}
         </span>
       </div>
     ),
@@ -206,14 +223,14 @@ export const DirectoryView: React.FC = () => {
       <div className="space-y-6 animate-fade-in" data-testid="employee-detail-panel">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-[#083E34] text-white font-black text-xl flex items-center justify-center shadow-md shrink-0">
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="w-14 h-14 rounded-xl bg-[#083E34] text-white font-display font-bold text-lg flex items-center justify-center shrink-0">
               {(emp.firstName?.[0] || emp.fullName?.[0] || 'C')}
               {(emp.lastName?.[0] || '')}
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-lg font-black text-slate-900 tracking-tight">{emp.fullName}</h3>
+                <h3 className="font-display text-lg font-bold text-slate-900 tracking-tight">{emp.fullName}</h3>
                 <StatusPill
                   status={emp.status === 'Active' ? 'confirmed' : 'neutral'}
                   label={emp.status}
@@ -221,70 +238,72 @@ export const DirectoryView: React.FC = () => {
                   size="sm"
                 />
               </div>
-              <p className="text-xs font-bold text-[#083E34] mt-0.5">{emp.jobTitle}</p>
-              <div className="flex items-center gap-2 text-xs text-slate-500 mt-1 font-mono">
-                <span>{emp.staffId}</span>
-                <span>•</span>
+              <p className="text-xs font-semibold text-[#083E34] mt-0.5">{emp.jobTitle}</p>
+              <div className="flex items-center gap-2 text-xs text-slate-500 mt-1 flex-wrap">
+                <span className="font-mono">{emp.staffId}</span>
+                <span>&middot;</span>
                 <span>{emp.departmentName}</span>
+                <span>&middot;</span>
+                <span>{resolveEntityCode(emp)}</span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap shrink-0">
             {emp.email && (
               <a
                 href={`mailto:${emp.email}`}
                 onClick={() => showToast(`Opening email client to ${emp.email}...`)}
-                className="px-3.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition"
+                className="px-3.5 py-2 rounded-lg bg-[#083E34] hover:bg-[#062E27] text-white text-xs font-semibold flex items-center gap-1.5 transition"
               >
                 <Mail className="w-3.5 h-3.5" />
-                <span>Email</span>
+                <span>Send Email</span>
               </a>
             )}
           </div>
         </div>
 
         {/* Reporting Hierarchy: Upward Supervisor Chain & Downward Direct Reports */}
-        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-4" data-testid="directory-hierarchy-card">
+        <div className="space-y-4" data-testid="directory-hierarchy-card">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+            <h4 className="font-display text-xs font-semibold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
               <GitBranch className="w-4 h-4 text-[#083E34]" />
               <span>Reporting Hierarchy</span>
             </h4>
             {hierarchyLoading && (
-              <span className="text-[11px] text-slate-400 font-medium">Loading chain...</span>
+              <span className="text-[11px] text-slate-400">Loading chain...</span>
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-1">
             {/* Upward: Supervisor Chain */}
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5" data-testid="supervisor-chain-section">
-              <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-slate-700">
+            <div className="space-y-2.5" data-testid="supervisor-chain-section">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 pb-2 border-b border-slate-100">
                 <ArrowUp className="w-3.5 h-3.5 text-[#083E34]" />
-                <span>Supervisor Chain Upward ({supervisorChain.length})</span>
+                <span>Supervisor Chain ({supervisorChain.length})</span>
               </div>
               {supervisorChain.length === 0 ? (
-                <p className="text-xs text-slate-500 italic">
-                  Top-level role (no direct supervisor assigned).
+                <p className="text-xs text-slate-500 py-1">
+                  Top-level role &mdash; no direct supervisor assigned.
                 </p>
               ) : (
-                <div className="space-y-2">
+                <div className="divide-y divide-slate-100">
                   {supervisorChain.map((sup, idx) => (
                     <button
                       key={sup.id}
                       type="button"
                       onClick={() => jumpToEmployee(sup.id)}
-                      className="w-full text-left p-2.5 rounded-lg bg-white border border-slate-200 hover:border-[#D4AF37] transition flex items-center justify-between gap-2 cursor-pointer"
+                      className="w-full text-left py-2.5 px-2 -mx-2 rounded-lg hover:bg-slate-50 transition flex items-center justify-between gap-2 cursor-pointer"
                     >
                       <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] font-mono font-semibold text-[#B45309]">
                             {idx === 0 ? 'Direct Supervisor' : `Level +${idx + 1}`}
                           </span>
-                          <span className="text-xs font-bold text-slate-900 truncate">{sup.fullName}</span>
+                          <span className="text-xs font-semibold text-slate-900 truncate">{sup.fullName}</span>
                         </div>
                         <p className="text-[11px] text-slate-500 mt-0.5 truncate">
-                          {sup.jobTitle} • {sup.departmentName || sup.entityName}
+                          {sup.jobTitle} &middot; {sup.departmentName || sup.entityName}
                         </p>
                       </div>
                       <span className="text-[10px] font-mono text-slate-400 shrink-0">{sup.staffId}</span>
@@ -295,26 +314,26 @@ export const DirectoryView: React.FC = () => {
             </div>
 
             {/* Downward: Direct Reports */}
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5" data-testid="direct-reports-section">
-              <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-slate-700">
+            <div className="space-y-2.5" data-testid="direct-reports-section">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 pb-2 border-b border-slate-100">
                 <ArrowDown className="w-3.5 h-3.5 text-emerald-700" />
-                <span>Direct Reports Downward ({directReports.length})</span>
+                <span>Direct Reports ({directReports.length})</span>
               </div>
               {directReports.length === 0 ? (
-                <p className="text-xs text-slate-500 italic">No direct reports assigned.</p>
+                <p className="text-xs text-slate-500 py-1">No direct reports assigned.</p>
               ) : (
-                <div className="space-y-2">
+                <div className="divide-y divide-slate-100">
                   {directReports.map((rep) => (
                     <button
                       key={rep.id}
                       type="button"
                       onClick={() => jumpToEmployee(rep.id)}
-                      className="w-full text-left p-2.5 rounded-lg bg-white border border-slate-200 hover:border-[#083E34] transition flex items-center justify-between gap-2 cursor-pointer"
+                      className="w-full text-left py-2.5 px-2 -mx-2 rounded-lg hover:bg-slate-50 transition flex items-center justify-between gap-2 cursor-pointer"
                     >
                       <div className="min-w-0">
-                        <span className="text-xs font-bold text-slate-900 block truncate">{rep.fullName}</span>
-                        <p className="text-[11px] text-slate-500 truncate">
-                          {rep.jobTitle} • {rep.departmentName || rep.entityName}
+                        <span className="text-xs font-semibold text-slate-900 block truncate">{rep.fullName}</span>
+                        <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                          {rep.jobTitle} &middot; {rep.departmentName || rep.entityName}
                         </p>
                       </div>
                       <span className="text-[10px] font-mono text-slate-400 shrink-0">{rep.staffId}</span>
@@ -326,56 +345,58 @@ export const DirectoryView: React.FC = () => {
           </div>
         </div>
 
-        {/* Contact & Placement */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-3">
-            <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-              <Mail className="w-3.5 h-3.5 text-slate-500" />
+        {/* Contact & Placement — clean stacked <dl> avoids label wrapping and premature email truncation */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-5 border-t border-slate-100">
+          <div className="space-y-3">
+            <h4 className="font-display text-xs font-semibold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+              <Mail className="w-3.5 h-3.5 text-[#083E34]" />
               <span>Contact &amp; Connectivity</span>
             </h4>
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-slate-500 font-medium">Official Email:</span>
-                <span className="font-bold text-slate-900 truncate">{emp.email || 'Not set'}</span>
+            <dl className="space-y-3 text-xs">
+              <div>
+                <dt className="text-[11px] text-slate-500">Official Email</dt>
+                <dd className="font-medium text-slate-900 mt-0.5 break-all">{emp.email || 'Not set'}</dd>
               </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-slate-500 font-medium">Direct Telephone:</span>
-                <span className="font-mono font-bold text-slate-900">{emp.phone || 'Not set'}</span>
+              <div>
+                <dt className="text-[11px] text-slate-500">Direct Telephone</dt>
+                <dd className="font-mono font-medium text-slate-900 mt-0.5">{emp.phone || 'Not set'}</dd>
               </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-slate-500 font-medium">Direct Supervisor:</span>
-                <span className="font-bold text-slate-800">
+              <div>
+                <dt className="text-[11px] text-slate-500">Direct Supervisor</dt>
+                <dd className="font-medium text-slate-900 mt-0.5">
                   {supervisorChain[0]?.fullName || emp.managerName || 'None (Top Level)'}
-                </span>
+                </dd>
               </div>
-            </div>
+            </dl>
           </div>
 
-          <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-3">
-            <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-              <Briefcase className="w-3.5 h-3.5 text-slate-500" />
+          <div className="space-y-3">
+            <h4 className="font-display text-xs font-semibold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+              <Briefcase className="w-3.5 h-3.5 text-[#083E34]" />
               <span>Employment Placement</span>
             </h4>
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-slate-500 font-medium">Entity:</span>
-                <span className="font-bold text-slate-900 text-right">{emp.entityName}</span>
+            <dl className="space-y-3 text-xs">
+              <div>
+                <dt className="text-[11px] text-slate-500">Entity</dt>
+                <dd className="font-medium text-slate-900 mt-0.5">{emp.entityName}</dd>
               </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-slate-500 font-medium">Department:</span>
-                <span className="font-bold text-slate-900 text-right">
+              <div>
+                <dt className="text-[11px] text-slate-500">Department</dt>
+                <dd className="font-medium text-slate-900 mt-0.5">
                   {emp.departmentName}{deptMeta?.code ? ` (${deptMeta.code})` : ''}
-                </span>
+                </dd>
               </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-slate-500 font-medium">Employment Type:</span>
-                <span className="font-bold text-slate-900">{emp.employmentType || 'Full-Time'}</span>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <dt className="text-[11px] text-slate-500">Employment Type</dt>
+                  <dd className="font-medium text-slate-900 mt-0.5">{emp.employmentType || 'Full-Time'}</dd>
+                </div>
+                <div>
+                  <dt className="text-[11px] text-slate-500">Date Onboarded</dt>
+                  <dd className="font-mono font-medium text-slate-900 mt-0.5 tabular-nums">{emp.employmentDate || 'Not recorded'}</dd>
+                </div>
               </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-slate-500 font-medium">Date Onboarded:</span>
-                <span className="font-bold text-slate-900 font-mono">{emp.employmentDate || 'Not recorded'}</span>
-              </div>
-            </div>
+            </dl>
           </div>
         </div>
       </div>
@@ -385,25 +406,24 @@ export const DirectoryView: React.FC = () => {
   return (
     <div className="space-y-5 animate-fade-in font-sans">
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#083E34] text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-bold animate-slide-up">
+        <div className="fixed bottom-6 right-6 z-50 bg-[#083E34] text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-semibold animate-slide-up">
           <CheckCircle2 className="w-4 h-4 text-emerald-300" />
           <span>{toastMessage}</span>
         </div>
       )}
 
       {errorMessage && (
-        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
+        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{errorMessage}</span>
         </div>
       )}
 
       <div>
-        <h1 className="text-lg sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-          <FolderTree className="w-5 h-5 sm:w-6 sm:h-6 text-[#083E34] shrink-0" />
-          <span>Staff Directory &amp; Reporting Hierarchy</span>
+        <h1 className="font-display text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+          Staff Directory &amp; Reporting Hierarchy
         </h1>
-        <p className="text-xs text-slate-500 font-medium mt-0.5">
+        <p className="text-xs text-slate-500 mt-0.5">
           Explore employee profiles, upward supervisor chains, and downward direct reports across entities.
         </p>
       </div>

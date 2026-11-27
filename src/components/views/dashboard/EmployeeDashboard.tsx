@@ -136,28 +136,24 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
       )}
 
       {/* 1. Employee Welcome & Profile Banner */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] p-5 sm:p-6">
+      <div className="bg-white rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.03)] p-5 sm:p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-bold">
-                {currentUser.role === 'VIEWER' ? 'Read-Only Profile' : 'Employee Self-Service'}
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[11px] font-mono border border-slate-200">
-                Staff ID: {currentUser.staffId}
-              </span>
-            </div>
-            <h1 className="text-xl font-bold tracking-tight text-slate-900">
+          <div className="space-y-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              {currentUser.role === 'VIEWER' ? 'Read-Only Profile' : 'Employee Self-Service'} · Staff ID{' '}
+              <span className="font-mono">{currentUser.staffId}</span>
+            </p>
+            <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
               Welcome back, {currentUser.name}
             </h1>
-            <p className="text-xs text-slate-600 font-medium">
-              {currentUser.jobTitle} • {currentUser.departmentName} • {currentUser.entityName}
+            <p className="text-xs text-slate-600">
+              {currentUser.jobTitle} · {currentUser.departmentName} · {currentUser.entityName}
             </p>
-            <p className="text-xs text-slate-500 flex items-center gap-1.5">
-              <GitBranch className="w-3.5 h-3.5 text-[#083E34]" />
+            <p className="text-xs text-slate-500 flex items-center gap-1.5 pt-0.5">
+              <GitBranch className="w-3.5 h-3.5 text-[#083E34] shrink-0" />
               <span>
                 Direct Supervisor:{' '}
-                <strong className="text-slate-800">{directSupervisor}</strong>
+                <strong className="font-semibold text-slate-800">{directSupervisor}</strong>
               </span>
             </p>
           </div>
@@ -167,18 +163,18 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
               <button
                 onClick={onOpenLeaveModal}
                 id="employee-apply-leave-btn"
-                className="px-3.5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold text-xs shadow-xs transition flex items-center gap-2 active:scale-95 cursor-pointer min-h-[38px] border border-[#C59B27]"
+                className="px-4 py-2 rounded-lg bg-[#083E34] hover:bg-[#062E27] text-white font-semibold text-xs shadow-2xs transition flex items-center gap-2 active:scale-[0.98] cursor-pointer min-h-[38px]"
               >
-                <CalendarDays className="w-4 h-4 text-slate-950" />
+                <CalendarDays className="w-4 h-4 text-white" />
                 <span>Apply for Leave</span>
               </button>
             )}
             <button
               onClick={() => onNavigate('leave')}
-              className="px-3.5 py-2 rounded-xl font-semibold text-xs transition border flex items-center gap-2 cursor-pointer min-h-[38px] bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200/70"
+              className="px-3.5 py-2 rounded-lg font-semibold text-xs transition border flex items-center gap-1.5 cursor-pointer min-h-[38px] bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
             >
               <span>All My Requests</span>
-              <ArrowUpRight className="w-4 h-4 text-slate-500" />
+              <ArrowUpRight className="w-3.5 h-3.5 text-slate-500" />
             </button>
           </div>
         </div>
@@ -199,34 +195,32 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
               return (
                 <div
                   key={String(bal.id)}
-                  className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs"
+                  className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.03)]"
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                  <div className="flex items-center justify-between mb-2.5">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                       {bal.category?.name || 'Leave Quota'}
                     </span>
-                    <div className="w-8 h-8 rounded-xl bg-[#FAF5EB] text-[#B45309] border border-[#F2E4B8] flex items-center justify-center font-bold text-xs">
-                      <CalendarDays className="w-4 h-4" />
-                    </div>
+                    <CalendarDays className="w-4 h-4 text-slate-400" />
                   </div>
                   <div className="flex items-baseline gap-1.5 tabular-nums">
-                    <span className="text-2xl font-extrabold text-[#083E34]">{remaining}</span>
-                    <span className="text-xs text-slate-500 font-semibold">/ {total} days left</span>
+                    <span className="font-display text-2xl font-bold text-slate-900">{remaining}</span>
+                    <span className="text-xs text-slate-500">/ {total} days left</span>
                   </div>
-                  <div className="mt-3 w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                  <div className="mt-3 w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                     <div
                       className="bg-[#083E34] h-full rounded-full transition-all duration-500"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <p className="text-[11px] text-slate-600 mt-2 font-medium tabular-nums">
-                    Used: {used}d {pending > 0 ? `• Pending: ${pending}d` : ''}
+                  <p className="text-[11px] text-slate-500 mt-2 tabular-nums">
+                    Used: {used}d {pending > 0 ? `· Pending: ${pending}d` : ''}
                   </p>
                 </div>
               );
             })
           ) : (
-            <div className="sm:col-span-2 lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200 text-xs text-slate-500">
+            <div className="sm:col-span-2 lg:col-span-4 bg-white p-5 rounded-xl border border-slate-200/80 text-xs text-slate-500">
               Leave balance records will populate once annual allocations are initialized.
             </div>
           )}
@@ -234,21 +228,21 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
       )}
 
       {/* 3. Latest Request Two-Stage Progress + Full Request History */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+      <div className="bg-white rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.03)] overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-3">
           <div>
-            <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+            <h3 className="font-display text-sm font-bold text-slate-900 flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-[#083E34]" />
               <span>My Leave Requests &amp; Two-Stage Status</span>
             </h3>
-            <p className="text-xs text-slate-600 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Requests pass through Stage 1 (Direct Supervisor) and Stage 2 (HR Final Approval).
             </p>
           </div>
           {currentUser.role !== 'VIEWER' && (
             <button
               onClick={onOpenLeaveModal}
-              className="px-3.5 py-1.5 rounded-xl bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs border border-[#C59B27]"
+              className="px-3.5 py-2 rounded-lg bg-[#083E34] text-white hover:bg-[#062E27] font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-2xs shrink-0"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>New Request</span>
@@ -277,19 +271,19 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
 
               return (
                 <div className="space-y-4">
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="pb-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-black text-[#083E34]">
+                        <span className="font-display text-sm font-bold text-slate-900">
                           {latestLeave.leaveType}
                         </span>
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                          className={`px-2 py-0.5 rounded-md text-[11px] font-semibold border ${
                             latestLeave.status === 'Approved'
-                              ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200/70'
                               : latestLeave.status === 'Rejected'
-                              ? 'bg-rose-100 text-rose-900 border-rose-300'
-                              : 'bg-amber-100 text-amber-900 border-amber-300'
+                              ? 'bg-rose-50 text-rose-700 border-rose-200/70'
+                              : 'bg-amber-50 text-amber-800 border-amber-200/70'
                           }`}
                         >
                           {latestLeave.status}
@@ -298,16 +292,16 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                             : ''}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-700">
-                        <strong>Dates:</strong> {latestLeave.startDate} to {latestLeave.endDate} (
+                      <p className="text-xs text-slate-700 tabular-nums">
+                        <strong className="font-semibold text-slate-900">Dates:</strong> {latestLeave.startDate} to {latestLeave.endDate} (
                         {latestLeave.totalDays} days)
                       </p>
                       <p className="text-xs text-slate-600">
-                        <strong>Reason:</strong> {latestLeave.reason}
+                        <strong className="font-semibold text-slate-900">Reason:</strong> {latestLeave.reason}
                       </p>
                     </div>
-                    <span className="text-[11px] font-mono text-slate-500">
-                      Ref #{latestLeave.id} • {latestLeave.appliedDate}
+                    <span className="text-[11px] font-mono text-slate-500 tabular-nums">
+                      Ref #{latestLeave.id} · {latestLeave.appliedDate}
                     </span>
                   </div>
 
@@ -455,12 +449,12 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                           </td>
                           <td className="py-2.5 pr-3">
                             <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              className={`px-2 py-0.5 rounded-md text-[11px] font-semibold ${
                                 lv.status === 'Approved'
-                                  ? 'bg-emerald-100 text-emerald-800'
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/70'
                                   : lv.status === 'Rejected'
-                                  ? 'bg-rose-100 text-rose-800'
-                                  : 'bg-amber-100 text-amber-800'
+                                  ? 'bg-rose-50 text-rose-700 border border-rose-200/70'
+                                  : 'bg-amber-50 text-amber-800 border border-amber-200/70'
                               }`}
                             >
                               {lv.status}
@@ -471,7 +465,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                           </td>
                           <td className="py-2.5 text-[11px] text-slate-600">
                             {lv.managerActorName ? `Mgr: ${lv.managerActorName}` : 'Pending Mgr'}
-                            {lv.hrActorName ? ` • HR: ${lv.hrActorName}` : ''}
+                            {lv.hrActorName ? ` · HR: ${lv.hrActorName}` : ''}
                           </td>
                         </tr>
                       ))}
@@ -483,15 +477,15 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
           </div>
         ) : (
           <div className="p-8 text-center space-y-3">
-            <CalendarDays className="w-10 h-10 text-amber-600 mx-auto" />
-            <h4 className="text-sm font-bold text-slate-900">No Leave Applications Yet</h4>
+            <CalendarDays className="w-9 h-9 text-slate-400 mx-auto" />
+            <h4 className="text-sm font-semibold text-slate-900">No Leave Applications Yet</h4>
             <p className="text-xs text-slate-500 max-w-md mx-auto">
               You have {annualRemaining} of {annualTotal} annual leave days remaining.
             </p>
             {currentUser.role !== 'VIEWER' && (
               <button
                 onClick={onOpenLeaveModal}
-                className="px-4 py-2 rounded-xl bg-[#D4AF37] text-slate-950 font-bold text-xs hover:bg-[#C59B27] transition shadow-xs cursor-pointer border border-[#C59B27]"
+                className="px-4 py-2 rounded-lg bg-[#083E34] text-white font-semibold text-xs hover:bg-[#062E27] transition shadow-2xs cursor-pointer"
               >
                 + Apply for Leave Now
               </button>
@@ -502,74 +496,74 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
 
       {/* 4. Department Teammates & Calendar Shortcut */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-white rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.03)] overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
             <div>
-              <h3 className="text-xs font-black uppercase text-slate-700 flex items-center gap-1.5">
+              <h3 className="font-display text-sm font-bold text-slate-900 flex items-center gap-2">
                 <Users className="w-4 h-4 text-[#083E34]" />
                 <span>Department Teammates ({currentUser.departmentName})</span>
               </h3>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-xs text-slate-500 mt-0.5">
                 Colleagues in your department directory.
               </p>
             </div>
             <button
               onClick={() => onNavigate('directory')}
-              className="text-xs font-bold text-[#083E34] hover:text-amber-700 flex items-center gap-1 cursor-pointer"
+              className="text-xs font-semibold text-[#083E34] hover:text-[#062E27] flex items-center gap-1 cursor-pointer"
             >
               <span>Directory</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="divide-y divide-slate-100">
             {deptTeammates.length > 0 ? (
               deptTeammates.slice(0, 5).map((mate) => (
                 <div
                   key={mate.id}
-                  className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3 text-xs"
+                  className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/70 transition text-xs"
                 >
-                  <div>
-                    <span className="font-bold text-slate-900 block">{mate.fullName}</span>
-                    <span className="text-[11px] text-slate-500">{mate.jobTitle}</span>
+                  <div className="min-w-0">
+                    <span className="font-semibold text-slate-900 block truncate">{mate.fullName}</span>
+                    <span className="text-[11px] text-slate-500 block truncate">{mate.jobTitle}</span>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                  <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70 shrink-0">
                     {mate.status}
                   </span>
                 </div>
               ))
             ) : (
-              <p className="text-xs text-slate-500 py-3">No other teammates in this department.</p>
+              <p className="text-xs text-slate-500 p-6 text-center">No other teammates in this department.</p>
             )}
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between gap-4">
+        <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.03)] flex flex-col justify-between gap-4">
           <div>
-            <h3 className="text-xs font-black uppercase text-slate-700 flex items-center gap-1.5">
+            <h3 className="font-display text-sm font-bold text-slate-900 flex items-center gap-2">
               <Calendar className="w-4 h-4 text-[#083E34]" />
               <span>Quick Shortcuts</span>
             </h3>
-            <p className="text-[11px] text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Jump directly to your leave schedule or employee directory.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-3 text-xs">
             <button
               onClick={() => onNavigate('calendar')}
-              className="p-3.5 rounded-xl border border-slate-200 hover:border-[#083E34] hover:bg-slate-50 text-left space-y-1 transition cursor-pointer"
+              className="p-4 rounded-xl border border-slate-200/90 hover:border-[#083E34] hover:bg-slate-50/70 text-left space-y-1 transition cursor-pointer"
             >
               <Calendar className="w-4 h-4 text-[#083E34]" />
-              <span className="font-bold text-slate-900 block">My Calendar</span>
-              <span className="text-[10px] text-slate-500 block">Holidays &amp; leave dates</span>
+              <span className="font-semibold text-slate-900 block pt-1">My Calendar</span>
+              <span className="text-[11px] text-slate-500 block">Holidays &amp; leave dates</span>
             </button>
             <button
               onClick={() => onNavigate('documents')}
-              className="p-3.5 rounded-xl border border-slate-200 hover:border-[#083E34] hover:bg-slate-50 text-left space-y-1 transition cursor-pointer"
+              className="p-4 rounded-xl border border-slate-200/90 hover:border-[#083E34] hover:bg-slate-50/70 text-left space-y-1 transition cursor-pointer"
             >
               <FileText className="w-4 h-4 text-[#083E34]" />
-              <span className="font-bold text-slate-900 block">Documents</span>
-              <span className="text-[10px] text-slate-500 block">HR policies &amp; files</span>
+              <span className="font-semibold text-slate-900 block pt-1">Documents</span>
+              <span className="text-[11px] text-slate-500 block">HR policies &amp; files</span>
             </button>
           </div>
         </div>

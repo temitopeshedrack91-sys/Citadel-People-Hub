@@ -149,12 +149,12 @@ export const StatusPill: React.FC<StatusPillProps> = ({
   const sizeClasses =
     size === 'sm'
       ? 'px-2 py-0.5 text-[10px] gap-1'
-      : 'px-2.5 py-0.5 text-xs gap-1.5';
+      : 'px-2 py-0.5 text-[11px] gap-1.5';
 
   return (
     <span
       data-testid={dataTestId || `status-pill-${normalizedKey}`}
-      className={`inline-flex items-center font-bold rounded-full border transition-colors select-none ${config.bg} ${config.text} ${config.border} ${sizeClasses} ${className}`}
+      className={`inline-flex items-center font-semibold rounded-md border whitespace-nowrap transition-colors select-none ${config.bg} ${config.text} ${config.border} ${sizeClasses} ${className}`}
     >
       {showDot && (
         <span

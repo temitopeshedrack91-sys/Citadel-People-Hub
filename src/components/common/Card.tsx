@@ -38,26 +38,26 @@ export const Card: React.FC<CardProps> = ({
     <div
       id={id}
       data-testid={dataTestId || (title ? `card-${title.toLowerCase().replace(/\s+/g, '-')}` : 'card')}
-      className={`bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] ${className}`}
+      className={`bg-white rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.03)] ${className}`}
     >
       {(title || headerAction) && (
-        <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-2 min-w-0">
             {Icon && <Icon className={`w-4 h-4 shrink-0 ${iconColor}`} />}
-            <div>
+            <div className="min-w-0">
               {title && (
-                <h3 className="text-sm font-bold text-slate-900 tracking-tight">
+                <h3 className="font-display text-sm font-semibold text-slate-900 tracking-tight truncate">
                   {title}
                 </h3>
               )}
               {subtitle && (
-                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5 truncate">
                   {subtitle}
                 </p>
               )}
             </div>
           </div>
-          {headerAction && <div>{headerAction}</div>}
+          {headerAction && <div className="shrink-0">{headerAction}</div>}
         </div>
       )}
 
