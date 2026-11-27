@@ -229,7 +229,7 @@ export const AuthPage: React.FC = () => {
   return (
     <div className="min-h-screen w-full bg-[#F5F7FA] grid grid-cols-1 lg:grid-cols-12 font-sans antialiased text-slate-900">
       {/* Left Architectural Brand Column (Desktop) */}
-      <aside className="hidden lg:flex lg:col-span-5 bg-[#072620] text-white flex-col justify-between p-12 xl:p-16 relative overflow-hidden border-r border-white/10">
+      <aside className="hidden lg:flex lg:col-span-5 bg-black text-white flex-col justify-between p-12 xl:p-16 relative overflow-hidden border-r border-white/10">
         {/* Subtle architectural hairline grid */}
         <div
           aria-hidden="true"
@@ -254,7 +254,7 @@ export const AuthPage: React.FC = () => {
             <p className="font-display text-sm font-bold tracking-tight text-white leading-tight">
               Citadel People Hub
             </p>
-            <p className="text-xs text-blue-100 font-medium mt-0.5">
+            <p className="text-xs text-slate-300 font-medium mt-0.5">
               The Citadel Global Community Church
             </p>
           </div>
@@ -263,13 +263,13 @@ export const AuthPage: React.FC = () => {
         {/* Center Editorial Copy */}
         <div className="relative z-10 space-y-8 max-w-md">
           <div className="space-y-4">
-            <p className="text-xs font-semibold tracking-wide text-[#E5C76B]">
+            <p className="text-xs font-semibold tracking-wide text-[#D4AF37]">
               People, Culture &amp; Change Management
             </p>
             <h2 className="font-display text-3xl xl:text-4xl font-bold tracking-tight text-white leading-[1.15]">
               Workforce stewardship, built for every Citadel entity.
             </h2>
-            <p className="text-sm text-blue-100 leading-relaxed">
+            <p className="text-sm text-slate-300 leading-relaxed">
               Manage staff directories, reporting hierarchies, two-stage leave workflows, attendance, and payroll from one unified workspace.
             </p>
           </div>
@@ -277,21 +277,21 @@ export const AuthPage: React.FC = () => {
           <div className="pt-6 border-t border-white/12 grid grid-cols-3 gap-6">
             <div>
               <p className="font-display text-sm font-semibold text-white">CGCC</p>
-              <p className="text-xs text-blue-100 mt-0.5">Church &amp; Ministry</p>
+              <p className="text-xs text-slate-400 mt-0.5">Church &amp; Ministry</p>
             </div>
             <div>
               <p className="font-display text-sm font-semibold text-white">CSOG</p>
-              <p className="text-xs text-blue-100 mt-0.5">School of Government</p>
+              <p className="text-xs text-slate-400 mt-0.5">School of Government</p>
             </div>
             <div>
               <p className="font-display text-sm font-semibold text-white">Holdings</p>
-              <p className="text-xs text-blue-100 mt-0.5">Commercial Units</p>
+              <p className="text-xs text-slate-400 mt-0.5">Commercial Units</p>
             </div>
           </div>
         </div>
 
         {/* Quiet Institutional Footer */}
-        <div className="relative z-10 flex items-center justify-between text-xs text-blue-100 pt-6 border-t border-white/10">
+        <div className="relative z-10 flex items-center justify-between text-xs text-slate-400 pt-6 border-t border-white/10">
           <span>Citadel PCCM Directorate</span>
           <span>Role-Based Access Control</span>
         </div>

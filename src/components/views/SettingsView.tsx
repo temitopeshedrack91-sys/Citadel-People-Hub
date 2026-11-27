@@ -679,7 +679,7 @@ export const SettingsView: React.FC = () => {
 
       {activeTab === 'requirements_form' && (
         <div className="space-y-5">
-          <div className="p-5 bg-[#174EA6] border border-[#06241E] rounded-2xl flex items-start gap-3 text-white shadow-xs">
+          <div className="p-5 bg-[#174EA6] border border-[#0B1F3A] rounded-2xl flex items-start gap-3 text-white shadow-xs">
             <Info className="w-5 h-5 text-[#D4AF37] shrink-0 mt-0.5" />
             <div>
               <h3 className="text-xs font-black uppercase tracking-wider text-[#D4AF37]">

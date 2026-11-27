@@ -540,7 +540,7 @@ export const RecruitmentView: React.FC = () => {
             </div>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-[#174EA6] text-white hover:bg-[#062d26] text-xs font-bold inline-flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+              className="px-4 py-2 rounded-xl bg-[#174EA6] text-white hover:bg-[#0B1F3A] text-xs font-bold inline-flex items-center gap-1.5 transition cursor-pointer shadow-xs"
             >
               <Plus className="w-4 h-4" />
               <span>Create First Requisition</span>
@@ -771,7 +771,7 @@ export const RecruitmentView: React.FC = () => {
                                         setSelectedCandidate(candidate);
                                         setIsRecordResultOpen(true);
                                       }}
-                                      className="px-2 py-1 rounded bg-[#174EA6] text-white text-[10px] font-bold hover:bg-[#062d26] transition cursor-pointer"
+                                      className="px-2 py-1 rounded bg-[#174EA6] text-white text-[10px] font-bold hover:bg-[#0B1F3A] transition cursor-pointer"
                                     >
                                       Record Assessment Result
                                     </button>
@@ -854,7 +854,7 @@ export const RecruitmentView: React.FC = () => {
               </div>
               <button
                 onClick={() => setIsAddCandidateOpen(true)}
-                className="px-4 py-2 rounded-xl bg-[#174EA6] text-white hover:bg-[#062d26] text-xs font-bold inline-flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                className="px-4 py-2 rounded-xl bg-[#174EA6] text-white hover:bg-[#0B1F3A] text-xs font-bold inline-flex items-center gap-1.5 transition cursor-pointer shadow-xs"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Candidate to Pipeline</span>
@@ -1111,7 +1111,7 @@ export const RecruitmentView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#174EA6] text-white rounded-xl text-xs font-bold hover:bg-[#062d26] transition cursor-pointer shadow-xs"
+                  className="px-4 py-2 bg-[#174EA6] text-white rounded-xl text-xs font-bold hover:bg-[#0B1F3A] transition cursor-pointer shadow-xs"
                 >
                   Save Candidate to ATS
                 </button>
@@ -1221,7 +1221,7 @@ export const RecruitmentView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#174EA6] text-white rounded-xl text-xs font-bold hover:bg-[#062d26] transition cursor-pointer shadow-xs"
+                  className="px-4 py-2 bg-[#174EA6] text-white rounded-xl text-xs font-bold hover:bg-[#0B1F3A] transition cursor-pointer shadow-xs"
                 >
                   Confirm &amp; Notify Panel
                 </button>
@@ -1325,7 +1325,7 @@ export const RecruitmentView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#174EA6] text-white rounded-xl text-xs font-bold hover:bg-[#062d26] transition cursor-pointer shadow-xs"
+                  className="px-4 py-2 bg-[#174EA6] text-white rounded-xl text-xs font-bold hover:bg-[#0B1F3A] transition cursor-pointer shadow-xs"
                 >
                   Record Evaluation
                 </button>

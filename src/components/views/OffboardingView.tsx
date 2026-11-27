@@ -282,7 +282,7 @@ export const OffboardingView: React.FC = () => {
 
           <button
             onClick={() => setIsSubmitModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-[#174EA6] hover:bg-[#062c25] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer shrink-0"
+            className="px-3.5 py-2 rounded-xl bg-[#174EA6] hover:bg-[#0B1F3A] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>Submit Resignation</span>
@@ -506,7 +506,7 @@ export const OffboardingView: React.FC = () => {
                           setSelectedExitForReview(req);
                           setManagerRemarks('Handover verified and recommended to HR.');
                         }}
-                        className="px-3.5 py-1.5 rounded-lg bg-[#174EA6] hover:bg-[#062c25] text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+                        className="px-3.5 py-1.5 rounded-lg bg-[#174EA6] hover:bg-[#0B1F3A] text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
                       >
                         <Check className="w-3.5 h-3.5 text-[#D4AF37]" />
                         <span>Manager Forward to HR</span>
@@ -806,7 +806,7 @@ export const OffboardingView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#174EA6] hover:bg-[#062c25] text-white font-bold rounded-xl transition shadow-xs flex items-center gap-1.5"
+                  className="px-5 py-2 bg-[#174EA6] hover:bg-[#0B1F3A] text-white font-bold rounded-xl transition shadow-xs flex items-center gap-1.5"
                 >
                   <Check className="w-4 h-4 text-[#D4AF37]" />
                   <span>Submit &amp; Route to Manager</span>

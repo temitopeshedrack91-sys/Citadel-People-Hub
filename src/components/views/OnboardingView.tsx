@@ -1080,7 +1080,7 @@ export const OnboardingView: React.FC = () => {
                               <span>Completed</span>
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold bg-[#0D9488] text-white shadow-2xs">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold bg-[#174EA6] text-white shadow-2xs">
                               <RotateCw className="w-3 h-3 animate-spin-slow" />
                               <span>In Progress</span>
                             </span>
@@ -1185,7 +1185,7 @@ export const OnboardingView: React.FC = () => {
               </button>
               <label
                 data-testid="upload-checklist-header-label"
-                className="px-3.5 py-2.5 rounded-xl bg-[#174EA6] hover:bg-[#062C25] text-white border border-[#D4AF37]/40 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-2.5 rounded-xl bg-[#174EA6] hover:bg-[#0B1F3A] text-white border border-[#D4AF37]/40 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer"
               >
                 <Upload className="w-3.5 h-3.5 text-[#D4AF37]" />
                 <span>Upload Checklist File</span>
@@ -2927,7 +2927,7 @@ export const OnboardingView: React.FC = () => {
                   </button>
                   <label
                     data-testid="upload-checklist-modal-label"
-                    className="px-3 py-1.5 rounded-lg bg-[#174EA6] hover:bg-[#062C25] text-white font-bold text-[11px] transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    className="px-3 py-1.5 rounded-lg bg-[#174EA6] hover:bg-[#0B1F3A] text-white font-bold text-[11px] transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
                   >
                     <Upload className="w-3.5 h-3.5 text-[#D4AF37]" />
                     <span>Upload File</span>

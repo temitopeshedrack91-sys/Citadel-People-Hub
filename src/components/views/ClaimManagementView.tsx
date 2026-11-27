@@ -1148,7 +1148,7 @@ export const ClaimManagementView: React.FC = () => {
                 {selectedClaim.status === 'APPROVED' && (
                   <button
                     onClick={() => handleWorkflowAction('PAY')}
-                    className="px-5 py-2.5 bg-[#174EA6] hover:bg-[#062c25] text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shadow-md border border-[#D4AF37]/50"
+                    className="px-5 py-2.5 bg-[#174EA6] hover:bg-[#0B1F3A] text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shadow-md border border-[#D4AF37]/50"
                   >
                     <DollarSign className="w-4 h-4 text-[#D4AF37]" />
                     <span>Mark as Paid / Settled</span>

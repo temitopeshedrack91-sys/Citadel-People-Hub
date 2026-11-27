@@ -1749,7 +1749,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                 <button
                   type="button"
                   onClick={onNavigateLeave}
-                  className="w-full py-2.5 rounded-xl bg-[#174EA6] text-[#D4AF37] font-semibold text-xs hover:bg-[#062f28] transition text-center cursor-pointer shadow-2xs"
+                  className="w-full py-2.5 rounded-xl bg-[#174EA6] text-[#D4AF37] font-semibold text-xs hover:bg-[#0B1F3A] transition text-center cursor-pointer shadow-2xs"
                 >
                   Manage Leave Requests in Leave Module →
                 </button>

@@ -34,7 +34,7 @@ export const CitadelLogo: React.FC<CitadelLogoProps> = ({
   useImage = false,
 }) => {
   const isDark = colorMode === 'dark';
-  const textColor = isDark ? '#FFFFFF' : '#0F172A';
+  const textColor = isDark ? '#FFFFFF' : '#111827';
   const towerColor = isDark ? '#FFFFFF' : '#000000';
   const goldColor = '#D4AF37'; // Official Citadel Classic Gold
 
