@@ -84,15 +84,31 @@ import { LaravelApiError, requestLaravel, requestLaravelBlob, requestLaravelData
 export class LaravelEmployeeRepository implements IEmployeeRepository {
   async getAll(filter?: { entityId?: string; departmentId?: string; search?: string }): Promise<Employee[]> {
     const params = new URLSearchParams();
-    if (filter?.entityId) params.set('entityId', filter.entityId);
-    if (filter?.departmentId) params.set('departmentId', filter.departmentId);
-    if (filter?.search) params.set('search', filter.search);
-    return requestLaravelData(`/employees${params.size ? `?${params}` : ''}`);
+    if (filter?.entityId && filter.entityId.toLowerCase() !== 'all') params.set('entityId', filter.entityId);
+    if (filter?.departmentId && filter.departmentId.toLowerCase() !== 'all') params.set('departmentId', filter.departmentId);
+    if (filter?.search?.trim()) params.set('search', filter.search.trim());
+    const rows = await requestLaravelData<Employee[]>(`/employees${params.size ? `?${params}` : ''}`);
+    return Array.isArray(rows)
+      ? rows.map((emp) => ({
+          ...emp,
+          id: String(emp.id),
+          departmentId: emp.departmentId ? String(emp.departmentId) : '',
+          managerId: emp.managerId ? String(emp.managerId) : undefined,
+        }))
+      : [];
   }
 
   async getById(id: string): Promise<Employee | null> {
     try {
-      return await requestLaravelData(`/employees/${encodeURIComponent(id)}`);
+      const emp = await requestLaravelData<Employee>(`/employees/${encodeURIComponent(id)}`);
+      return emp
+        ? {
+            ...emp,
+            id: String(emp.id),
+            departmentId: emp.departmentId ? String(emp.departmentId) : '',
+            managerId: emp.managerId ? String(emp.managerId) : undefined,
+          }
+        : null;
     } catch (error) {
       if (error instanceof LaravelApiError && error.status === 404) return null;
       throw error;
@@ -126,13 +142,24 @@ export class LaravelEmployeeRepository implements IEmployeeRepository {
 }
 
 export class LaravelOrganizationRepository implements IOrganizationRepository {
-  getEntities(): Promise<CitadelEntity[]> {
-    return requestLaravelData('/entities');
+  async getEntities(): Promise<CitadelEntity[]> {
+    const rows = await requestLaravelData<CitadelEntity[]>('/entities');
+    return Array.isArray(rows) ? rows.map((e) => ({ ...e, id: String(e.id) })) : [];
   }
 
-  getDepartments(entityId?: string): Promise<CitadelDepartment[]> {
-    const query = entityId ? `?entityId=${encodeURIComponent(entityId)}` : '';
-    return requestLaravelData(`/departments${query}`);
+  async getDepartments(entityId?: string): Promise<CitadelDepartment[]> {
+    const cleanEntity = entityId && entityId.toLowerCase() !== 'all' ? entityId : '';
+    const query = cleanEntity ? `?entityId=${encodeURIComponent(cleanEntity)}` : '';
+    const rows = await requestLaravelData<CitadelDepartment[]>(`/departments${query}`);
+    return Array.isArray(rows)
+      ? rows.map((d) => ({
+          ...d,
+          id: String(d.id),
+          entityId: String(d.entityId),
+          headOfDepartment: d.headOfDepartment || d.headOfDepartmentName,
+          headOfDepartmentName: d.headOfDepartmentName || d.headOfDepartment,
+        }))
+      : [];
   }
 
   createDepartment(department: Omit<CitadelDepartment, 'id'>): Promise<CitadelDepartment> {

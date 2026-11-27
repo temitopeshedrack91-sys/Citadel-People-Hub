@@ -15,25 +15,34 @@ class OrganizationRepository
     /** @return Collection<int, Entity> */
     public function listEntities(?string $restrictedEntityId = null): Collection
     {
+        $normalized = Entity::normalizeEntityId($restrictedEntityId);
+
         return Entity::query()
-            ->when($restrictedEntityId !== null, fn ($query) => $query->whereKey($restrictedEntityId))
+            ->withCount('departments')
+            ->when($normalized !== null, fn ($query) => $query->whereKey($normalized))
             ->orderBy('name')
             ->get();
     }
 
     public function findEntity(string $entityId): ?Entity
     {
-        return Entity::query()->whereKey($entityId)->first();
+        $normalized = Entity::normalizeEntityId($entityId) ?? $entityId;
+
+        return Entity::query()->whereKey($normalized)->first();
     }
 
     /** @return Collection<int, Department> */
-    public function listDepartments(?string $entityId = null, bool $activeOnly = false): Collection
+    public function listDepartments(?string $entityId = null, bool $activeOnly = false, ?int $restrictedDepartmentId = null): Collection
     {
         $query = Department::query()->with('entity');
 
-        if ($entityId !== null && $entityId !== '') {
+        if ($entityId !== null && trim($entityId) !== '' && strtolower(trim($entityId)) !== 'all') {
             $normalized = Entity::normalizeEntityId($entityId) ?? $entityId;
             $query->where('entity_id', $normalized);
+        }
+
+        if ($restrictedDepartmentId !== null) {
+            $query->whereKey($restrictedDepartmentId);
         }
 
         if ($activeOnly) {

@@ -720,4 +720,177 @@ class HierarchyAndTwoStageLeaveTest extends TestCase
         ]);
         $this->assertNotEquals(429, $payrollRes->getStatusCode());
     }
+
+    public function test_exam_and_compassionate_leave_route_directly_to_hr_per_workbook_sheet_7(): void
+    {
+        $examCat = LeaveCategory::create(['name' => 'Exam Leave', 'code' => 'EL', 'is_paid' => true, 'is_active' => true]);
+        EmployeeLeaveBalance::create([
+            'employee_id' => $this->icEmp->id,
+            'leave_category_id' => $examCat->id,
+            'year' => 2026,
+            'total_days' => 21,
+            'used_days' => 0,
+            'pending_days' => 0,
+            'remaining_days' => 21,
+        ]);
+
+        // Even though Jonathan has a direct supervisor (Nadia), Exam Leave must bypass Stage 1 and route straight to HR
+        $examRes = $this->actingAs($this->icUser)->postJson('/api/v1/leave-requests', [
+            'employeeId' => $this->icEmp->id,
+            'employeeStaffId' => $this->icEmp->staff_id,
+            'leaveType' => 'Exam Leave',
+            'startDate' => '2026-12-14',
+            'endDate' => '2026-12-16',
+            'totalDays' => 3,
+            'reason' => 'ICAN Professional Examination',
+        ])->assertCreated()
+            ->assertJsonPath('data.approvalStage', 'HR')
+            ->assertJsonPath('data.status', 'Pending Review');
+
+        // Direct supervisor cannot approve a Direct-HR Exam Leave request
+        $this->actingAs($this->leadUser)
+            ->patchJson('/api/v1/leave-requests/'.$examRes->json('data.id').'/status', ['status' => 'Approved'])
+            ->assertForbidden();
+
+        // HR approves directly to COMPLETE
+        $this->actingAs($this->hrUser)
+            ->patchJson('/api/v1/leave-requests/'.$examRes->json('data.id').'/status', ['status' => 'Approved'])
+            ->assertOk()
+            ->assertJsonPath('data.approvalStage', 'COMPLETE')
+            ->assertJsonPath('data.status', 'Approved');
+    }
+
+    public function test_profile_change_requests_enforce_sheet_5_hr_approval_and_field_restrictions(): void
+    {
+        // Employee cannot request a change to an HR-only field (salary/jobTitle)
+        $this->actingAs($this->icUser)->postJson('/api/v1/governance/profile-change-requests', [
+            'employeeId' => $this->icEmp->id,
+            'changes' => [
+                ['fieldKey' => 'jobTitle', 'fieldLabel' => 'Job Title', 'oldValue' => 'Engineer', 'newValue' => 'CTO'],
+            ],
+            'reason' => 'Unauthorized self-promotion attempt',
+        ])->assertForbidden();
+
+        // Employee submits an allowed phone update -> staged as PENDING_HR_APPROVAL
+        $created = $this->actingAs($this->icUser)->postJson('/api/v1/governance/profile-change-requests', [
+            'employeeId' => $this->icEmp->id,
+            'changes' => [
+                ['fieldKey' => 'phone', 'fieldLabel' => 'Phone Number', 'oldValue' => '', 'newValue' => '+234 803 555 0199'],
+            ],
+            'reason' => 'Updated mobile number',
+        ])->assertCreated()
+            ->assertJsonPath('data.status', 'PENDING_HR_APPROVAL');
+
+        $reqId = $created->json('data.id');
+
+        // Non-HR manager cannot approve profile change requests
+        $this->actingAs($this->managerUser)
+            ->patchJson("/api/v1/governance/profile-change-requests/{$reqId}/review", ['decision' => 'APPROVED'])
+            ->assertForbidden();
+
+        // HR approves -> applies phone change to employee record
+        $this->actingAs($this->hrUser)
+            ->patchJson("/api/v1/governance/profile-change-requests/{$reqId}/review", [
+                'decision' => 'APPROVED',
+                'comments' => 'Verified with employee.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'APPROVED');
+
+        $this->icEmp->refresh();
+        $this->assertSame('+234 803 555 0199', $this->icEmp->phone);
+    }
+
+    public function test_employee_self_view_returns_sensitive_master_data_while_manager_sees_masked_fields(): void
+    {
+        $this->icEmp->update([
+            'date_of_birth' => '1994-06-15',
+            'address' => '12 Allen Avenue, Ikeja, Lagos',
+            'emergency_contact' => ['name' => 'Grace Tan', 'relationship' => 'Spouse', 'phone' => '+234 802 111 2222'],
+            'next_of_kin' => ['name' => 'Samuel Tan', 'relationship' => 'Brother', 'phone' => '+234 802 333 4444'],
+            'bank_payroll' => ['bankName' => 'GTBank', 'accountNumber' => '0123456789', 'accountName' => 'Jonathan Tan', 'salaryGrade' => 'Grade 4', 'currency' => 'NGN'],
+            'pension_hmo' => ['pfaName' => 'Stanbic IBTC', 'rsaPin' => 'PEN100012345678', 'hmoProvider' => 'Hygeia', 'hmoPlan' => 'Gold'],
+        ]);
+
+        // Employee viewing own record receives sensitive master data
+        $this->actingAs($this->icUser)
+            ->getJson("/api/v1/employees/{$this->icEmp->id}")
+            ->assertOk()
+            ->assertJsonPath('data.dateOfBirth', '1994-06-15')
+            ->assertJsonPath('data.address', '12 Allen Avenue, Ikeja, Lagos')
+            ->assertJsonPath('data.bankPayroll.bankName', 'GTBank')
+            ->assertJsonPath('data.pensionHmo.pfaName', 'Stanbic IBTC');
+
+        // Line manager viewing subordinate receives masked payroll/personal data
+        $this->actingAs($this->managerUser)
+            ->getJson("/api/v1/employees/{$this->icEmp->id}")
+            ->assertOk()
+            ->assertJsonPath('data.bankPayroll.bankName', '')
+            ->assertJsonMissingPath('data.dateOfBirth');
+    }
+
+    public function test_organization_endpoints_expose_counts_governance_metadata_and_hr_management(): void
+    {
+        $this->actingAs($this->hrUser)
+            ->postJson('/api/v1/departments', [
+                'entityId' => 'entity-cgcc',
+                'name' => 'Media & Broadcast',
+                'code' => 'CGCC-MED',
+                'headOfDepartmentName' => 'Media Lead',
+                'businessHeadName' => 'Pastor Segun Bakare',
+                'headEmail' => 'media@thecitadelglobal.org',
+                'reportsTo' => 'Pastor Segun Bakare',
+                'isGecSharedService' => true,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.entityId', 'CGCC')
+            ->assertJsonPath('data.businessHeadName', 'Pastor Segun Bakare')
+            ->assertJsonPath('data.isGecSharedService', true);
+
+        $this->actingAs($this->hrUser)
+            ->getJson('/api/v1/departments?entityId=entity-cgcc')
+            ->assertOk()
+            ->assertJsonFragment(['code' => 'CGCC-MED', 'reportsTo' => 'Pastor Segun Bakare']);
+    }
+
+    public function test_governance_profile_change_and_confirmation_lifecycle_persist_to_employee_schema(): void
+    {
+        $created = $this->actingAs($this->icUser)->postJson('/api/v1/governance/profile-change-requests', [
+            'employeeId' => $this->icEmp->id,
+            'changes' => [
+                ['fieldKey' => 'emergencyContactName', 'fieldLabel' => 'Emergency Contact', 'oldValue' => '', 'newValue' => 'Grace Tan'],
+                ['fieldKey' => 'nextOfKinName', 'fieldLabel' => 'Next of Kin', 'oldValue' => '', 'newValue' => 'Samuel Tan'],
+                ['fieldKey' => 'bankName', 'fieldLabel' => 'Bank Name', 'oldValue' => '', 'newValue' => 'Access Bank'],
+            ],
+            'reason' => 'Annual personal bio-data update',
+        ])->assertCreated();
+
+        $this->actingAs($this->hrUser)
+            ->patchJson('/api/v1/governance/profile-change-requests/'.$created->json('data.id').'/review', [
+                'decision' => 'APPROVED',
+                'comments' => 'Documents verified by PCCM',
+            ])
+            ->assertOk();
+
+        $this->icEmp->refresh();
+        $this->assertSame('Grace Tan', $this->icEmp->emergency_contact['name'] ?? null);
+        $this->assertSame('Samuel Tan', $this->icEmp->next_of_kin['name'] ?? null);
+        $this->assertSame('Access Bank', $this->icEmp->bank_payroll['bankName'] ?? null);
+
+        $event = $this->actingAs($this->hrUser)->postJson('/api/v1/governance/lifecycle-events', [
+            'employeeId' => $this->icEmp->id,
+            'eventType' => 'CONFIRMATION',
+            'triggerReason' => 'Completed 6-month probation satisfactorily',
+            'details' => ['confirmationDate' => '2026-10-01'],
+        ])->assertCreated();
+
+        $this->actingAs($this->hrUser)
+            ->patchJson('/api/v1/governance/lifecycle-events/'.$event->json('data.id').'/approve')
+            ->assertOk();
+
+        $this->icEmp->refresh();
+        $this->assertSame('Confirmed', $this->icEmp->status);
+        $this->assertSame('Permanent', $this->icEmp->contract_status);
+        $this->assertSame('2026-10-01', $this->icEmp->confirmation_date);
+    }
 }

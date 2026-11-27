@@ -4,14 +4,29 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Department extends Model
 {
-    protected $fillable = ['entity_id', 'name', 'code', 'head_of_department_name', 'description', 'is_active'];
+    protected $fillable = [
+        'entity_id',
+        'name',
+        'code',
+        'head_of_department_name',
+        'business_head_name',
+        'head_email',
+        'reports_to',
+        'is_gec_shared_service',
+        'description',
+        'is_active',
+    ];
 
     protected function casts(): array
     {
-        return ['is_active' => 'boolean'];
+        return [
+            'is_active' => 'boolean',
+            'is_gec_shared_service' => 'boolean',
+        ];
     }
 
     public function entity(): BelongsTo
@@ -19,8 +34,13 @@ class Department extends Model
         return $this->belongsTo(Entity::class);
     }
 
+    public function employees(): HasMany
+    {
+        return $this->hasMany(Employee::class, 'department_id');
+    }
+
     /**
-     * Normalize department ID between string slug (e.g. 'dept-cgcc-fin') and numeric ID.
+     * Normalize department ID between string slug/code (e.g. 'dept-cgcc-fin', 'CGCC-FIN') and numeric DB ID.
      */
     public static function normalizeDepartmentId(mixed $departmentId): mixed
     {
@@ -31,28 +51,33 @@ class Department extends Model
             return (int) $departmentId;
         }
         $slug = strtolower(trim((string) $departmentId));
-        $map = [
-            'dept-cgcc-fin' => 1,
-            'dept-cgcc-pccm' => 2,
-            'dept-cgcc-fac' => 3,
-            'dept-cgcc-sec' => 4,
-            'dept-cgcc-so' => 5,
-            'dept-cgcc-pro' => 6,
-            'dept-cgcc-ict' => 7,
-            'dept-cgcc-log' => 8,
-            'dept-csog-acad' => 9,
-            'dept-csog-ops' => 10,
-            'dept-ch-book' => 11,
-            'dept-ch-cafe' => 12,
-            'dept-ch-work' => 13,
-            'dept-ch-asabi' => 14,
-            'dept-ch-sbd' => 15,
+        $slugToCode = [
+            'dept-cgcc-fin' => 'CGCC-FIN',
+            'dept-cgcc-pccm' => 'CGCC-PCCM',
+            'dept-cgcc-fac' => 'CGCC-FAC',
+            'dept-cgcc-sec' => 'CGCC-SEC',
+            'dept-cgcc-so' => 'CGCC-SO',
+            'dept-cgcc-pro' => 'CGCC-PRO',
+            'dept-cgcc-proto' => 'CGCC-PRO',
+            'dept-cgcc-ict' => 'CGCC-ICT',
+            'dept-cgcc-log' => 'CGCC-LOG',
+            'dept-cgcc-trans' => 'CGCC-LOG',
+            'dept-csog-acad' => 'CSOG-ACAD',
+            'dept-csog-ops' => 'CSOG-OPS',
+            'dept-ch-book' => 'CH-BOOK',
+            'dept-ch-cafe' => 'CH-CAFE',
+            'dept-ch-work' => 'CH-WORK',
+            'dept-ch-asabi' => 'CH-ASABI',
+            'dept-ch-sbd' => 'CH-SBD',
+            'dept-ch-sales' => 'CH-SBD',
         ];
-        if (isset($map[$slug])) {
-            return $map[$slug];
-        }
-        $code = strtoupper(str_replace('dept-', '', $slug));
-        $found = self::where('code', $code)->orWhere('code', 'like', "%{$code}%")->first();
-        return $found ? $found->id : $departmentId;
+
+        $code = $slugToCode[$slug] ?? strtoupper(str_replace('dept-', '', $slug));
+        $found = self::query()
+            ->where('code', $code)
+            ->orWhereRaw('LOWER(name) = ?', [$slug])
+            ->first();
+
+        return $found ? (int) $found->id : $departmentId;
     }
 }

@@ -99,6 +99,9 @@ class LeaveWorkflowService
                 }
             }
 
+            $directHrLeaveTypes = ['Exam Leave', 'Compassionate Leave'];
+            $requiresDirectHrApproval = in_array($data['leaveType'], $directHrLeaveTypes, true);
+
             $requestedManagerId = $data['managerId'] ?? null;
             if ($requestedManagerId !== null && $requestedManagerId !== '') {
                 if ((string) $requestedManagerId === (string) $employee->id) {
@@ -113,8 +116,14 @@ class LeaveWorkflowService
                     : null;
             }
 
-            $initialStage = $supervisor !== null ? 'MANAGER' : 'HR';
-            $initialStatus = $supervisor !== null ? 'Submitted' : 'Pending Review';
+            $routeToManagerFirst = ! $requiresDirectHrApproval && $supervisor !== null;
+            $initialStage = $routeToManagerFirst ? 'MANAGER' : 'HR';
+            $initialStatus = $routeToManagerFirst ? 'Submitted' : 'Pending Review';
+            $submissionComment = $requiresDirectHrApproval
+                ? "{$data['leaveType']} routes directly to HR for approval per CGCC Leave Policy (Sheet 7)."
+                : ($supervisor !== null
+                    ? "Routed to direct supervisor {$supervisor->full_name} (Stage 1: Manager)."
+                    : 'No direct supervisor assigned; routed directly to HR (Stage 2: HR).');
 
             $payload = [
                 'employee_id' => $employee->id,
@@ -142,9 +151,7 @@ class LeaveWorkflowService
                         'stage' => 'SUBMITTED',
                         'decision' => 'Submitted',
                         'status' => $initialStatus,
-                        'comments' => $supervisor !== null
-                            ? "Routed to direct supervisor {$supervisor->full_name} (Stage 1: Manager)."
-                            : 'No direct supervisor assigned; routed directly to HR (Stage 2: HR).',
+                        'comments' => $submissionComment,
                         'timestamp' => now()->toISOString(),
                     ],
                 ],
@@ -160,7 +167,7 @@ class LeaveWorkflowService
             $record = LeaveRequest::create($payload);
             AuditLogger::record($request, 'Leave Management', 'Submitted leave request', $record->id, "{$record->leave_type} for {$record->employee_name}", null, $initialStatus);
 
-            $this->notifySubmission($record, $supervisor);
+            $this->notifySubmission($record, $routeToManagerFirst ? $supervisor : null);
             RealtimeEventService::publish('leave_requests', 'INSERT', $record->id, ['status' => $record->status, 'approvalStage' => $record->approval_stage], (int) $user->id);
             RealtimeEventService::publish('leave_balances', 'UPDATE', $employee->id, ['employeeId' => $employee->id], (int) $user->id);
 

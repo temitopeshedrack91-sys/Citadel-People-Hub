@@ -78,7 +78,21 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
   const [myReviews, setMyReviews] = useState<PerformanceReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionToast, setActionToast] = useState<string | null>(null);
   const reloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Resignation Modal state
+  const [isResignModalOpen, setIsResignModalOpen] = useState(false);
+  const [resignManagerId, setResignManagerId] = useState('');
+  const [resignDate, setResignDate] = useState(new Date().toISOString().split('T')[0]);
+  const [resignLastDay, setResignLastDay] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return d.toISOString().split('T')[0];
+  });
+  const [resignReason, setResignReason] = useState('');
+  const [resignError, setResignError] = useState<string | null>(null);
+  const [isSubmittingResign, setIsSubmittingResign] = useState(false);
 
   const actorEmployeeId = String(currentUser.employeeId || currentUser.id || '');
 

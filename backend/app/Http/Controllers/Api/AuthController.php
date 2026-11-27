@@ -54,10 +54,11 @@ class AuthController extends Controller
             'is_active' => true,
         ]);
 
+        $allowLocalAlias = app()->environment(['local', 'testing']);
         $isValid = $user && (
             $provider->validateCredentials($user, ['password' => $credentials['password']]) ||
-            ($credentials['password'] === 'Password123!' && Hash::check('password', $user->password)) ||
-            ($credentials['password'] === 'password' && Hash::check('Password123!', $user->password))
+            ($allowLocalAlias && $credentials['password'] === 'Password123!' && Hash::check('password', $user->password)) ||
+            ($allowLocalAlias && $credentials['password'] === 'password' && Hash::check('Password123!', $user->password))
         );
 
         if (! $isValid) {

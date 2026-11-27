@@ -36,8 +36,22 @@ import { useAuth } from '../../context/AuthContext';
 import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import { SensitiveField } from '../common/SensitiveField';
 import { Badge } from '../common/Badge';
-import { documentRepository, auditRepository, employeeRepository, performanceRepository, leaveRepository, attendanceRepository } from '../../services';
+import {
+  documentRepository,
+  auditRepository,
+  employeeRepository,
+  performanceRepository,
+  leaveRepository,
+  attendanceRepository,
+  governanceRepository,
+} from '../../services';
 import { EmployeeDocumentInput } from '../../types/documents';
+import { isSafeImageUrl } from '../../utils/orgHelpers';
+import {
+  applyApprovedChangeRequest,
+  createProfileChangeRequest,
+  mapAppRoleToWorkbookRole,
+} from '../../domain/workbook';
 
 interface EmployeeProfileModalProps {
   employee: Employee | null;
@@ -84,6 +98,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   const [replaceDocId, setReplaceDocId] = useState<string | null>(null);
   const [replacing, setReplacing] = useState(false);
   const [downloadingDocId, setDownloadingDocId] = useState<string | null>(null);
+  const [confirmDeleteDocId, setConfirmDeleteDocId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [hierarchy, setHierarchy] = useState<EmployeeHierarchy | null>(null);
   const [hierarchyLoading, setHierarchyLoading] = useState(false);
@@ -96,6 +111,25 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const replaceFileRef = useRef<HTMLInputElement>(null);
 
+  // Employee self-service profile change request state (Sheet 5)
+  const [selfEditOpen, setSelfEditOpen] = useState(false);
+  const [selfPhone, setSelfPhone] = useState('');
+  const [selfEmail, setSelfEmail] = useState('');
+  const [selfAddress, setSelfAddress] = useState('');
+  const [selfDob, setSelfDob] = useState('');
+  const [selfGender, setSelfGender] = useState<'Male' | 'Female'>('Male');
+  const [selfPhoto, setSelfPhoto] = useState('');
+  const [selfEcName, setSelfEcName] = useState('');
+  const [selfEcRel, setSelfEcRel] = useState('');
+  const [selfEcPhone, setSelfEcPhone] = useState('');
+  const [selfNokName, setSelfNokName] = useState('');
+  const [selfNokRel, setSelfNokRel] = useState('');
+  const [selfNokPhone, setSelfNokPhone] = useState('');
+  const [selfNokAddr, setSelfNokAddr] = useState('');
+  const [selfReason, setSelfReason] = useState('');
+  const [selfSubmitting, setSelfSubmitting] = useState(false);
+  const [selfFeedback, setSelfFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   const EMPLOYEE_DOCUMENT_CATEGORIES: DocumentCategory[] = [
     'Educational Certificate',
     'Professional Certification',
@@ -107,8 +141,13 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
     'Other Supporting Document',
   ];
 
-  const canManageEmployeeDocs =
-    permissions.canManageDocuments || Boolean(employee?.staffId && currentUser.staffId === employee.staffId);
+  const isSelfActor = Boolean(
+    employee &&
+      ((employee.staffId && currentUser.staffId === employee.staffId) ||
+        String(currentUser.employeeId || currentUser.id) === String(employee.id))
+  );
+
+  const canManageEmployeeDocs = permissions.canManageDocuments || isSelfActor;
 
   const formatDate = (dateString?: string | null): string => {
     if (!dateString) return 'Not set';
@@ -175,9 +214,26 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
     };
   }, [employee?.id]);
 
-  const [empLeaveBalances, setEmpLeaveBalances] = useState<LeaveBalanceRecord[]>([]);
-  const [empLeaveHistory, setEmpLeaveHistory] = useState<LeaveRequest[]>([]);
-  const [leaveLoading, setLeaveLoading] = useState(false);
+  useEffect(() => {
+    if (!employee) return;
+    setSelfPhone(employee.phone || '');
+    setSelfEmail(employee.email || '');
+    setSelfAddress(employee.address || '');
+    setSelfDob(employee.dateOfBirth || '');
+    setSelfGender(employee.gender === 'Female' ? 'Female' : 'Male');
+    setSelfPhoto(employee.profilePhoto || '');
+    setSelfEcName(employee.emergencyContact?.name || '');
+    setSelfEcRel(employee.emergencyContact?.relationship || '');
+    setSelfEcPhone(employee.emergencyContact?.phone || '');
+    setSelfNokName(employee.nextOfKin?.name || '');
+    setSelfNokRel(employee.nextOfKin?.relationship || '');
+    setSelfNokPhone(employee.nextOfKin?.phone || '');
+    setSelfNokAddr(employee.nextOfKin?.address || '');
+    setSelfReason('');
+    setSelfFeedback(null);
+    setSelfEditOpen(false);
+    setConfirmDeleteDocId(null);
+  }, [employee]);
 
   const loadEmployeePerformance = useCallback(async () => {
     if (!employee?.id) {
@@ -207,8 +263,8 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
 
   const loadEmployeeLeave = useCallback(async () => {
     if (!employee?.id) {
-      setEmpLeaveBalances([]);
-      setEmpLeaveHistory([]);
+      setEmpBalances([]);
+      setEmpLeaves([]);
       return;
     }
     setLeaveLoading(true);
@@ -217,11 +273,11 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
         leaveRepository.getBalances(String(employee.id)).catch(() => [] as LeaveBalanceRecord[]),
         leaveRepository.getByEmployee(String(employee.id)).catch(() => [] as LeaveRequest[]),
       ]);
-      setEmpLeaveBalances(balData);
-      setEmpLeaveHistory(reqData);
+      setEmpBalances(balData);
+      setEmpLeaves(reqData);
     } catch {
-      setEmpLeaveBalances([]);
-      setEmpLeaveHistory([]);
+      setEmpBalances([]);
+      setEmpLeaves([]);
     } finally {
       setLeaveLoading(false);
     }
@@ -386,15 +442,120 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   };
 
   const handleDelete = async (doc: HubDocument) => {
-    if (!window.confirm(`Delete "${doc.title}" for ${employee!.fullName}? This cannot be undone.`)) return;
     try {
       await documentRepository.deleteEmployeeDocument(employee!.id, doc.id);
       await handleAuditLog('Deleted Employee Document', doc);
       setEmployeeDocs((prev) => prev.filter((d) => d.id !== doc.id));
+      setConfirmDeleteDocId(null);
       setStatusMessage(`"${doc.title}" deleted.`);
       clearStatus();
     } catch (error: any) {
       setDocsError(error?.message || 'Delete failed.');
+    }
+  };
+
+  const handleSelfUpdateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!employee) return;
+    setSelfFeedback(null);
+
+    const proposedChanges: Record<string, string> = {};
+    if (selfPhone.trim() && selfPhone.trim() !== (employee.phone || '')) {
+      proposedChanges.phone = selfPhone.trim();
+    }
+    if (selfEmail.trim() && selfEmail.trim() !== (employee.email || '')) {
+      proposedChanges.email = selfEmail.trim();
+    }
+    if (selfAddress.trim() && selfAddress.trim() !== (employee.address || '')) {
+      proposedChanges.address = selfAddress.trim();
+    }
+    if (selfDob.trim() && selfDob.trim() !== (employee.dateOfBirth || '')) {
+      proposedChanges.dateOfBirth = selfDob.trim();
+    }
+    if (selfGender !== employee.gender) {
+      proposedChanges.gender = selfGender;
+    }
+    if (selfPhoto.trim() !== (employee.profilePhoto || '')) {
+      if (selfPhoto.trim() && !isSafeImageUrl(selfPhoto.trim())) {
+        setSelfFeedback({
+          type: 'error',
+          text: 'Profile photo must be a valid https:// URL or uploaded image.',
+        });
+        return;
+      }
+      proposedChanges.profilePhoto = selfPhoto.trim();
+    }
+
+    const nextEc = `${selfEcName.trim()} | ${selfEcRel.trim()} | ${selfEcPhone.trim()}`;
+    const prevEc = `${employee.emergencyContact?.name || ''} | ${employee.emergencyContact?.relationship || ''} | ${employee.emergencyContact?.phone || ''}`;
+    if (selfEcPhone.trim() && nextEc !== prevEc) {
+      proposedChanges.emergencyContact = nextEc;
+    }
+
+    const nextNok = `${selfNokName.trim()} | ${selfNokRel.trim()} | ${selfNokPhone.trim()} | ${selfNokAddr.trim()}`;
+    const prevNok = `${employee.nextOfKin?.name || ''} | ${employee.nextOfKin?.relationship || ''} | ${employee.nextOfKin?.phone || ''} | ${employee.nextOfKin?.address || ''}`;
+    if (selfNokName.trim() && nextNok !== prevNok) {
+      proposedChanges.nextOfKin = nextNok;
+    }
+
+    if (Object.keys(proposedChanges).length === 0) {
+      setSelfFeedback({
+        type: 'error',
+        text: 'Modify at least one personal field before submitting an update request.',
+      });
+      return;
+    }
+
+    setSelfSubmitting(true);
+    try {
+      const workbookRole = mapAppRoleToWorkbookRole(currentRole);
+      const request = createProfileChangeRequest({
+        employee,
+        actorRole: workbookRole,
+        actorName: currentUser.name,
+        proposedChanges,
+        reason: selfReason.trim() || 'Employee self-service bio-data update',
+      });
+      const persisted = await governanceRepository.createProfileChangeRequest(request);
+
+      if (persisted.status === 'APPROVED') {
+        const patched = applyApprovedChangeRequest(employee, persisted);
+        await employeeRepository.update(employee.id, patched);
+      }
+
+      await auditRepository.logAction({
+        userId: currentUser.id,
+        userName: currentUser.name,
+        userRole: currentRole,
+        module: 'Employee Master',
+        action:
+          persisted.status === 'PENDING_HR_APPROVAL'
+            ? 'Submitted Self-Service Profile Update Request'
+            : 'Updated Personal Profile Record',
+        recordAffectedId: employee.id,
+        recordAffectedTitle: `${employee.fullName} (${employee.staffId})`,
+        previousValue: Object.keys(proposedChanges).join(', '),
+        newValue: persisted.status,
+        severity: 'Info',
+      });
+
+      window.dispatchEvent(new CustomEvent('citadel:profile-change-updated'));
+      setSelfReason('');
+      setSelfEditOpen(false);
+      setSelfFeedback({
+        type: 'success',
+        text:
+          persisted.status === 'PENDING_HR_APPROVAL'
+            ? 'Your personal information update has been submitted for HR approval (Sheet 5). Your authoritative record will update once HR approves.'
+            : 'Personal information updated directly on the authoritative HR record.',
+      });
+    } catch (err: any) {
+      setSelfFeedback({
+        type: 'error',
+        text: err?.message || 'Unable to submit personal information update.',
+      });
+    } finally {
+      setSelfSubmitting(false);
     }
   };
 
@@ -422,7 +583,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   if (!employee) return null;
 
   const isPCCM = currentRole === 'PCCM_SUPER_ADMIN';
-  const isSelf = currentUser.staffId === employee.staffId;
+  const isSelf = isSelfActor;
   const isAuthorizedHR = isPCCM || currentRole === 'SYSTEM_ADMIN';
 
   const handleCopyContact = () => {
@@ -469,10 +630,18 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               {/* Profile Avatar / Photo */}
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-amber-600 text-white font-black text-2xl flex items-center justify-center shadow-lg border-2 border-white/20 shrink-0">
-                {employee.firstName[0]}
-                {employee.lastName[0]}
-              </div>
+              {isSafeImageUrl(employee.profilePhoto) ? (
+                <img
+                  src={employee.profilePhoto}
+                  alt={employee.fullName}
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover shadow-lg border-2 border-white/25 shrink-0"
+                />
+              ) : (
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-amber-600 text-white font-black text-2xl flex items-center justify-center shadow-lg border-2 border-white/20 shrink-0">
+                  {employee.firstName[0]}
+                  {employee.lastName[0]}
+                </div>
+              )}
 
               <div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -514,13 +683,30 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
 
             {/* Quick Contact & Action Buttons */}
             <div className="flex sm:flex-col items-end gap-2 shrink-0">
-              <button
-                onClick={handleCopyContact}
-                className="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-slate-100 text-xs font-semibold border border-white/20 transition flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
-              >
-                <Share2 className="w-3.5 h-3.5 text-amber-300" />
-                <span>{isCopied ? 'Copied Contact!' : 'Share Contact'}</span>
-              </button>
+              <div className="flex items-center gap-2 flex-wrap justify-end">
+                {isSelf && (
+                  <button
+                    type="button"
+                    data-testid="request-self-service-update-btn"
+                    onClick={() => {
+                      setActiveTab('personal');
+                      setSelfEditOpen(true);
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold border border-[#C59B27] transition flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                  >
+                    <Shield className="w-3.5 h-3.5" />
+                    <span>Request Info Update</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleCopyContact}
+                  className="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-slate-100 text-xs font-semibold border border-white/20 transition flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                >
+                  <Share2 className="w-3.5 h-3.5 text-amber-300" />
+                  <span>{isCopied ? 'Copied Contact!' : 'Share Contact'}</span>
+                </button>
+              </div>
 
               <div className="text-[11px] text-slate-300 font-mono">
                 Tenure: {employee.yearsOfService} Years in Citadel
@@ -720,13 +906,221 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
           {/* TAB 2: PERSONAL INFORMATION */}
           {activeTab === 'personal' && (
             <div className="space-y-6 animate-fade-in">
-              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2.5">
-                <Shield className="w-4 h-4 text-[#C59B27] shrink-0 mt-0.5" />
-                <div>
-                  <span className="font-bold block">Privacy & Data Governance Notice:</span>
-                  Personal identifying fields including residential address and date of birth are protected by the PCCM Privacy Charter. Unmasking actions are recorded in the Citadel audit trail.
+              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-2.5">
+                  <Shield className="w-4 h-4 text-[#C59B27] shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold block">Privacy & Data Governance Notice:</span>
+                    Personal identifying fields including residential address and date of birth are protected by the PCCM Privacy Charter. Unmasking actions are recorded in the Citadel audit trail.
+                  </div>
                 </div>
+                {isSelf && (
+                  <button
+                    type="button"
+                    data-testid="dossier-request-profile-update-btn"
+                    onClick={() => setSelfEditOpen((prev) => !prev)}
+                    className="px-3 py-1.5 rounded-lg bg-[#083E34] text-white hover:bg-[#062E27] text-xs font-semibold shrink-0 transition cursor-pointer"
+                  >
+                    {selfEditOpen ? 'Close Update Form' : 'Request Profile Update'}
+                  </button>
+                )}
               </div>
+
+              {selfFeedback && (
+                <div
+                  role={selfFeedback.type === 'error' ? 'alert' : 'status'}
+                  data-testid="dossier-self-update-feedback"
+                  className={`p-3 rounded-xl border text-xs font-semibold flex items-center gap-2 ${
+                    selfFeedback.type === 'success'
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                      : 'bg-rose-50 border-rose-200 text-rose-800'
+                  }`}
+                >
+                  {selfFeedback.type === 'success' ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  )}
+                  <span>{selfFeedback.text}</span>
+                </div>
+              )}
+
+              {isSelf && selfEditOpen && (
+                <form
+                  onSubmit={handleSelfUpdateSubmit}
+                  data-testid="dossier-self-update-form"
+                  className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-4"
+                >
+                  <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-200">
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900">
+                        Submit Personal Information Update (HR Approval Required)
+                      </h4>
+                      <p className="text-[11px] text-slate-500">
+                        Only employee-permitted Sheet 5 personal fields are editable here. Protected changes wait for HR sign-off before replacing authoritative records.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">Phone Number</label>
+                      <input
+                        type="tel"
+                        value={selfPhone}
+                        onChange={(e) => setSelfPhone(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">Email Address</label>
+                      <input
+                        type="email"
+                        value={selfEmail}
+                        onChange={(e) => setSelfEmail(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">Date of Birth</label>
+                      <input
+                        type="date"
+                        value={selfDob}
+                        onChange={(e) => setSelfDob(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">Gender</label>
+                      <select
+                        value={selfGender}
+                        onChange={(e) => setSelfGender(e.target.value as 'Male' | 'Female')}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                      >
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                      </select>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">Residential Address</label>
+                      <input
+                        type="text"
+                        value={selfAddress}
+                        onChange={(e) => setSelfAddress(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">Profile Photo URL (https://)</label>
+                      <input
+                        type="url"
+                        value={selfPhoto}
+                        onChange={(e) => setSelfPhoto(e.target.value)}
+                        placeholder="https://example.org/photo.jpg"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-200">
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">Emergency Contact Name</label>
+                      <input
+                        type="text"
+                        value={selfEcName}
+                        onChange={(e) => setSelfEcName(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">Relationship</label>
+                      <input
+                        type="text"
+                        value={selfEcRel}
+                        onChange={(e) => setSelfEcRel(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">Emergency Phone</label>
+                      <input
+                        type="tel"
+                        value={selfEcPhone}
+                        onChange={(e) => setSelfEcPhone(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200">
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">Next of Kin Name</label>
+                      <input
+                        type="text"
+                        value={selfNokName}
+                        onChange={(e) => setSelfNokName(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">Next of Kin Relationship</label>
+                      <input
+                        type="text"
+                        value={selfNokRel}
+                        onChange={(e) => setSelfNokRel(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">Next of Kin Phone</label>
+                      <input
+                        type="tel"
+                        value={selfNokPhone}
+                        onChange={(e) => setSelfNokPhone(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">Next of Kin Address</label>
+                      <input
+                        type="text"
+                        value={selfNokAddr}
+                        onChange={(e) => setSelfNokAddr(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-700 block mb-1">Reason for Change *</label>
+                    <input
+                      type="text"
+                      required
+                      value={selfReason}
+                      onChange={(e) => setSelfReason(e.target.value)}
+                      placeholder="e.g. Relocated residential address / updated phone number"
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelfEditOpen(false)}
+                      className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-100 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={selfSubmitting}
+                      className="px-4 py-1.5 rounded-lg bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] text-xs font-bold cursor-pointer disabled:opacity-50"
+                    >
+                      {selfSubmitting ? 'Submitting...' : 'Submit for HR Approval'}
+                    </button>
+                  </div>
+                </form>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
@@ -746,6 +1140,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                     value={employee.dateOfBirth}
                     category="dateOfBirth"
                     ownerId={employee!.id}
+                    ownerStaffId={employee.staffId}
                   />
                 </div>
 
@@ -756,6 +1151,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                     value={employee.address}
                     category="address"
                     ownerId={employee!.id}
+                    ownerStaffId={employee.staffId}
                   />
                 </div>
               </div>
@@ -807,6 +1203,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                       value={employee.nextOfKin.name}
                       category="nextOfKin"
                       ownerId={employee!.id}
+                      ownerStaffId={employee.staffId}
                     />
                   </div>
                   <div>
@@ -822,6 +1219,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                       value={employee.nextOfKin.phone}
                       category="nextOfKin"
                       ownerId={employee!.id}
+                      ownerStaffId={employee.staffId}
                     />
                   </div>
                   <div>
@@ -831,6 +1229,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                       value={employee.nextOfKin.address}
                       category="address"
                       ownerId={employee!.id}
+                      ownerStaffId={employee.staffId}
                     />
                   </div>
                 </div>
@@ -933,6 +1332,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                       }
                       category="salary"
                       ownerId={employee!.id}
+                      ownerStaffId={employee.staffId}
                     />
                   </div>
                 </div>
@@ -954,6 +1354,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                       value={`${employee.bankPayroll.bankName} - ${employee.bankPayroll.accountNumber}`}
                       category="bank"
                       ownerId={employee!.id}
+                      ownerStaffId={employee.staffId}
                     />
                   </div>
                 </div>
@@ -967,6 +1368,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                       value={employee.bankPayroll.bvn}
                       category="bank"
                       ownerId={employee!.id}
+                      ownerStaffId={employee.staffId}
                     />
                   </div>
                 </div>
@@ -988,6 +1390,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                       value={employee.pensionHmo.rsaPin}
                       category="pension"
                       ownerId={employee!.id}
+                      ownerStaffId={employee.staffId}
                     />
                   </div>
                 </div>
@@ -1120,13 +1523,33 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                             </button>
                           )}
                           {canManageEmployeeDocs && (
-                            <button
-                              onClick={() => handleDelete(doc)}
-                              className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50/50 rounded transition"
-                              title="Delete document"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            confirmDeleteDocId === doc.id ? (
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(doc)}
+                                  className="px-2 py-1 rounded bg-rose-600 text-white text-[10px] font-bold hover:bg-rose-700 cursor-pointer"
+                                >
+                                  Confirm
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmDeleteDocId(null)}
+                                  className="px-2 py-1 rounded border border-slate-200 bg-white text-slate-600 text-[10px] font-semibold hover:bg-slate-100 cursor-pointer"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDeleteDocId(doc.id)}
+                                className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50/50 rounded transition cursor-pointer"
+                                title="Delete document"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )
                           )}
                         </div>
                       </div>
@@ -1484,6 +1907,18 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {isSelf && !isAuthorizedHR && (
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('personal');
+                  setSelfEditOpen(true);
+                }}
+                className="px-4 py-2 border border-emerald-300 bg-emerald-50 text-[#083E34] rounded-xl text-xs font-semibold hover:bg-emerald-100 transition cursor-pointer"
+              >
+                Update Personal Info
+              </button>
+            )}
             {(permissions.canManageEmployees || isAuthorizedHR) && onEdit && (
               <button
                 onClick={() => onEdit(employee)}

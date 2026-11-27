@@ -59,6 +59,9 @@ const NotificationsView = lazy(() =>
 const IntegrationsView = lazy(() =>
   import('./components/views/IntegrationsView').then((m) => ({ default: m.IntegrationsView }))
 );
+const WorkbookHubView = lazy(() =>
+  import('./components/views/WorkbookHubView').then((m) => ({ default: m.WorkbookHubView }))
+);
 const SettingsView = lazy(() =>
   import('./components/views/SettingsView').then((m) => ({ default: m.SettingsView }))
 );
@@ -88,7 +91,7 @@ const VALID_MODULES: NavModule[] = [
   'dashboard', 'employees', 'directory', 'leave', 'attendance', 'projects', 'payroll', 'claims',
   'calendar', 'team-notes', 'recruitment', 'onboarding', 'offboarding',
   'performance', 'documents', 'reports', 'notifications', 'integrations',
-  'ai-assistant', 'settings', 'audit-logs'
+  'ai-assistant', 'governance', 'settings', 'audit-logs'
 ];
 
 const getInitialModule = (): NavModule => {
@@ -232,6 +235,8 @@ const MainAppLayout: React.FC = () => {
         return 'Claims & Expenses';
       case 'team-notes':
         return 'Team Notes';
+      case 'governance':
+        return 'Governance Hub';
       case 'audit-logs':
         return 'Audit Trail';
       default:
@@ -321,6 +326,8 @@ const MainAppLayout: React.FC = () => {
         return <ClaimManagementView />;
       case 'team-notes':
         return <TeamNotesView />;
+      case 'governance':
+        return <WorkbookHubView />;
       case 'audit-logs':
         return <AuditLogsView />;
       default:
@@ -402,7 +409,7 @@ const MainAppLayout: React.FC = () => {
                     fallback={
                       <div className="space-y-5">
                         <LoadingSkeleton type="stats" />
-                        <LoadingSkeleton type="table" rows={5} />
+                        <LoadingSkeleton type="table" count={5} />
                       </div>
                     }
                   >

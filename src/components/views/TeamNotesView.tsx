@@ -1,88 +1,60 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StickyNote,
   Plus,
-  Search,
-  MessageSquare,
-  Users,
-  Calendar,
   X,
   CheckCircle2,
 } from 'lucide-react';
-import { Card } from '../common/Card';
 import { StatusPill } from '../common/StatusPill';
 import { ListDetailLayout, ListItem } from '../common/ListDetailLayout';
-
-interface TeamNoteItem {
-  id: string;
-  title: string;
-  category: 'Incoming' | 'Ongoing' | 'In Progress';
-  description: string;
-  collaborators: string;
-  date: string;
-  avatars: { initials: string; bg: string; name: string }[];
-}
-
-const initialNotes: TeamNoteItem[] = [
-  {
-    id: 'note-1',
-    title: 'Employee Onboarding',
-    category: 'Incoming',
-    description:
-      'Prepare onboarding access, security keycards, and HR documents for new employees joining CSOG and Church protocol divisions.',
-    collaborators: 'Collaborate with Sussan, Femi',
-    date: 'Recent',
-    avatars: [
-      { initials: 'SA', bg: 'bg-emerald-700', name: 'Sussan Afuwape' },
-      { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
-    ],
-  },
-  {
-    id: 'note-2',
-    title: 'Quarterly Appraisal Alignment',
-    category: 'Ongoing',
-    description:
-      'Review employee progress, attendance scores, and quarterly KPI sign-offs for department heads across entities.',
-    collaborators: 'Collaborate with Dr. Bukola, Grace',
-    date: 'Recent',
-    avatars: [
-      { initials: 'BA', bg: 'bg-[#083E34]', name: 'Dr. Bukola Adeleke' },
-      { initials: 'GO', bg: 'bg-amber-600', name: 'Grace Okafor' },
-    ],
-  },
-  {
-    id: 'note-3',
-    title: 'Design System Harmonization',
-    category: 'In Progress',
-    description:
-      'Standardize Forest Green and Citadel Gold design tokens, responsive layouts, and keyboard accessibility across all views.',
-    collaborators: 'Collaborate with Nadia, Femi',
-    date: 'Recent',
-    avatars: [
-      { initials: 'NS', bg: 'bg-teal-700', name: 'Nadia Safitri' },
-      { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
-    ],
-  },
-];
+import { useAuth } from '../../context/AuthContext';
+import {
+  buildNoteAvatars,
+  loadTeamNotes,
+  saveTeamNotes,
+  type TeamNoteItem,
+} from '../../services/teamNotesStore';
 
 export const TeamNotesView: React.FC = () => {
-  const [notes, setNotes] = useState<TeamNoteItem[]>(initialNotes);
-  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(initialNotes[0].id);
+  const { currentUser } = useAuth();
+  const [notes, setNotes] = useState<TeamNoteItem[]>(() => loadTeamNotes());
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(() => loadTeamNotes()[0]?.id ?? null);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const sync = () => {
+      const latest = loadTeamNotes();
+      setNotes(latest);
+    };
+    window.addEventListener('citadel:team-notes-updated', sync);
+    return () => window.removeEventListener('citadel:team-notes-updated', sync);
+  }, []);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 2500);
   };
 
+  const handleCopyNote = async (note: TeamNoteItem) => {
+    const text = `${note.title} [${note.category}]\n${note.description}\n${note.collaborators}`;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      }
+      showToast('Note copied to clipboard!');
+    } catch {
+      showToast('Note ready to share.');
+    }
+  };
+
   // New Note
   const [newTitle, setNewTitle] = useState('');
   const [newCat, setNewCat] = useState<'Incoming' | 'Ongoing' | 'In Progress'>('Incoming');
   const [newDesc, setNewDesc] = useState('');
-  const [newCollab, setNewCollab] = useState('Sussan, Femi');
+  const [newCollab, setNewCollab] = useState('Sussan Afuwape, Blessing Okafor');
 
   const filterTabs = [
     { id: 'all', label: 'All Notes', count: notes.length },
@@ -120,22 +92,22 @@ export const TeamNotesView: React.FC = () => {
 
     const note: TeamNoteItem = {
       id: `note-${Date.now()}`,
-      title: newTitle,
+      title: newTitle.trim(),
       category: newCat,
-      description: newDesc,
-      collaborators: `Collaborate with ${newCollab}`,
+      description: newDesc.trim(),
+      collaborators: newCollab.trim() ? `Collaborate with ${newCollab.trim()}` : `Posted by ${currentUser.name}`,
       date: 'Just now',
-      avatars: [
-        { initials: 'BA', bg: 'bg-[#083E34]', name: 'Dr. Bukola Adeleke' },
-        { initials: 'PC', bg: 'bg-emerald-600', name: 'PCCM Team' },
-      ],
+      avatars: buildNoteAvatars(currentUser.name, newCollab),
     };
 
-    setNotes([note, ...notes]);
+    const nextNotes = [note, ...notes];
+    setNotes(nextNotes);
+    saveTeamNotes(nextNotes);
     setSelectedNoteId(note.id);
     setIsModalOpen(false);
     setNewTitle('');
     setNewDesc('');
+    showToast('Team note saved and synced.');
   };
 
   const listItems: ListItem<TeamNoteItem>[] = filteredNotes.map((n) => ({
@@ -196,7 +168,8 @@ export const TeamNotesView: React.FC = () => {
             <p className="text-xs text-slate-400 mt-1 font-medium">{note.date}</p>
           </div>
           <button
-            onClick={() => showToast('Note copied to clipboard!')}
+            type="button"
+            onClick={() => void handleCopyNote(note)}
             className="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs self-start sm:self-auto cursor-pointer"
           >
             <span>Copy Note</span>
@@ -238,10 +211,10 @@ export const TeamNotesView: React.FC = () => {
         <div className="p-4 rounded-2xl bg-slate-50/50 border border-slate-200/70 text-xs text-slate-500 space-y-1.5">
           <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
             <span>Governance &amp; Handover Status</span>
-            <span className="text-emerald-700 font-bold">Synchronized</span>
+            <span className="text-emerald-700 font-bold">Saved locally</span>
           </div>
           <p className="text-[11px] text-slate-500">
-            Updates to this note are logged in the compliance audit trail and visible to assigned division leads.
+            Notes created here persist across sessions and stay synchronized with the Executive Dashboard team notes widget.
           </p>
         </div>
       </div>
@@ -262,6 +235,7 @@ export const TeamNotesView: React.FC = () => {
         </div>
 
         <button
+          type="button"
           onClick={() => setIsModalOpen(true)}
           className="px-3.5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#C59B27] transition active:scale-95 cursor-pointer min-h-[38px] shrink-0"
         >
@@ -289,8 +263,9 @@ export const TeamNotesView: React.FC = () => {
           <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
             <div className="bg-[#083E34] text-white p-5 relative border-b border-emerald-800 shrink-0">
               <button
+                type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="absolute top-4 right-4 text-emerald-200 hover:text-white p-1 rounded-lg hover:bg-white/10 transition"
+                className="absolute top-4 right-4 text-emerald-200 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -308,7 +283,7 @@ export const TeamNotesView: React.FC = () => {
                   required
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="e.g. Employee Onboarding"
+                  placeholder="e.g. Monthly Payroll Handover"
                   className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34]"
                 />
               </div>
@@ -317,7 +292,7 @@ export const TeamNotesView: React.FC = () => {
                 <label className="block text-slate-800 font-bold mb-1">Status Category</label>
                 <select
                   value={newCat}
-                  onChange={(e) => setNewCat(e.target.value as any)}
+                  onChange={(e) => setNewCat(e.target.value as TeamNoteItem['category'])}
                   className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-bold bg-white focus:outline-none focus:border-[#083E34]"
                 >
                   <option value="Incoming">Incoming</option>
@@ -344,7 +319,7 @@ export const TeamNotesView: React.FC = () => {
                   type="text"
                   value={newCollab}
                   onChange={(e) => setNewCollab(e.target.value)}
-                  placeholder="e.g. Mia, Harper"
+                  placeholder="e.g. Sussan Afuwape, Femi Olatunji"
                   className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34]"
                 />
               </div>
@@ -353,13 +328,13 @@ export const TeamNotesView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 font-bold"
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 font-bold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold rounded-xl transition shadow-xs"
+                  className="px-5 py-2 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold rounded-xl transition shadow-xs cursor-pointer"
                 >
                   Save Note
                 </button>
@@ -369,7 +344,7 @@ export const TeamNotesView: React.FC = () => {
         </div>
       )}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 animate-fade-in">
+        <div role="status" className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <span>{toastMessage}</span>
         </div>

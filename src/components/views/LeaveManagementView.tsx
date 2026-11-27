@@ -29,6 +29,7 @@ import { isHrOrAdminUser, isManagerUser } from '../../utils/rbac';
 import { ListDetailLayout, ListItem } from '../common/ListDetailLayout';
 import { StatusPill } from '../common/StatusPill';
 import { ProgressRing } from '../common/ProgressRing';
+import { getWorkbookLeavePolicy, validateLeaveApplication } from '../../domain/workbook';
 
 interface LeaveManagementViewProps {
   isApplyModalOpen?: boolean;
@@ -75,7 +76,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
   isApplyModalOpen = false,
   onCloseApplyModal,
 }) => {
-  const { currentUser, currentRole, isManager } = useAuth();
+  const { currentUser, currentRole, isManager, isAuthenticated } = useAuth();
 
   const isHrOrAdmin = isHrOrAdminUser(currentUser);
   const hasManagerCapability = isManager || isManagerUser(currentUser);
@@ -85,6 +86,8 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
   const [balances, setBalances] = useState<LeaveBalanceRecord[]>([]);
   const [categories, setCategories] = useState<LeaveCategoryRecord[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [isLoadingOptions, setIsLoadingOptions] = useState(true);
+  const [directoryLoadError, setDirectoryLoadError] = useState<string | null>(null);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('all');
   const [search, setSearch] = useState('');
@@ -101,8 +104,10 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
   const [daysRequested, setDaysRequested] = useState(5);
   const [reason, setReason] = useState('');
   const [handoverColleague, setHandoverColleague] = useState('');
+  const [attachmentName, setAttachmentName] = useState('');
   const [selectedManagerId, setSelectedManagerId] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [policyWarnings, setPolicyWarnings] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -132,17 +137,32 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
       clearTimeout(reloadTimerRef.current);
       reloadTimerRef.current = null;
     }
+    setIsLoadingOptions(true);
+    setDirectoryLoadError(null);
     try {
-      const [reqData, balData, catData, empData] = await Promise.all([
+      const [reqRes, balRes, catRes, empRes] = await Promise.allSettled([
         leaveRepository.getAll(),
-        leaveRepository.getBalances(currentActorId || undefined).catch(() => [] as LeaveBalanceRecord[]),
-        leaveRepository.getCategories().catch(() => [] as LeaveCategoryRecord[]),
-        employeeRepository.getAll().catch(() => [] as Employee[]),
+        leaveRepository.getBalances(currentActorId || undefined),
+        leaveRepository.getCategories(),
+        employeeRepository.getAll(),
       ]);
+
+      const reqData = reqRes.status === 'fulfilled' ? reqRes.value : [];
+      const balData = balRes.status === 'fulfilled' ? balRes.value : [];
+      const catData = catRes.status === 'fulfilled' ? catRes.value : [];
+      const empData = empRes.status === 'fulfilled' ? empRes.value : [];
+
       setRequests(reqData);
       setBalances(balData);
       setCategories(catData);
       setEmployees(empData);
+
+      if (empRes.status === 'rejected') {
+        setDirectoryLoadError('Unable to load manager directory options. Retry to refresh.');
+      }
+      if (reqRes.status === 'rejected') {
+        setActionError('Unable to load leave requests.');
+      }
 
       setSelectedRequestId((prev) => {
         if (prev && reqData.some((r) => String(r.id) === String(prev))) return String(prev);
@@ -150,8 +170,10 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
       });
     } catch (err: any) {
       setActionError(err?.message || 'Unable to load leave requests.');
+    } finally {
+      setIsLoadingOptions(false);
     }
-  }, []);
+  }, [currentActorId, isAuthenticated]);
 
   const scheduleReload = useCallback(() => {
     if (reloadTimerRef.current) {
@@ -171,6 +193,12 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
         reloadTimerRef.current = null;
       }
     };
+  }, [loadData]);
+
+  useEffect(() => {
+    const onAuthChanged = () => void loadData();
+    window.addEventListener('citadel:auth-changed', onAuthChanged);
+    return () => window.removeEventListener('citadel:auth-changed', onAuthChanged);
   }, [loadData]);
 
   useRealtimeTable('leave_requests', () => {
@@ -259,16 +287,49 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
     return names.length > 0 ? names : DEFAULT_LEAVE_TYPES;
   }, [categories]);
 
+  const activeLeavePolicy = useMemo(() => getWorkbookLeavePolicy(leaveType), [leaveType]);
+  const isDirectHrLeave = activeLeavePolicy?.approvalRoute === 'DIRECT_HR';
+
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
+    setPolicyWarnings([]);
 
     if (!reason.trim()) {
       setSubmitError('Please provide a reason for your leave request.');
       return;
     }
-    if (startDate > endDate) {
-      setSubmitError('End date must be on or after the start date.');
+
+    const matchingBal = personalBalances.find(
+      (b) => (b.category?.name || '').toLowerCase() === leaveType.toLowerCase()
+    );
+    const ownLeaves = requests.filter(
+      (r) => String(r.employeeId) === String(currentUser.employeeId || currentUser.id)
+    );
+
+    const validation = validateLeaveApplication({
+      employee: selfEmployee || {
+        id: currentUser.employeeId || currentUser.id,
+        fullName: currentUser.name,
+        status: 'Confirmed',
+        contractStatus: 'Permanent',
+        yearsOfService: 2,
+      },
+      leaveType,
+      startDate,
+      endDate,
+      attachmentName: attachmentName.trim() || null,
+      availableBalanceDays: matchingBal ? Number(matchingBal.remaining_days) : undefined,
+      existingLeaves: ownLeaves,
+      managerId: isDirectHrLeave ? null : effectiveManagerId || null,
+    });
+
+    if (validation.warnings.length > 0) {
+      setPolicyWarnings(validation.warnings);
+    }
+
+    if (!validation.valid) {
+      setSubmitError(validation.errors[0]);
       return;
     }
 
@@ -285,9 +346,12 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
         endDate,
         totalDays: daysRequested,
         daysRequested,
-        managerId: effectiveManagerId || undefined,
-        managerName: effectiveManagerName || undefined,
-        reason: reason.trim(),
+        managerId: isDirectHrLeave ? undefined : effectiveManagerId || undefined,
+        managerName: isDirectHrLeave ? undefined : effectiveManagerName || undefined,
+        approvalStage: validation.initialApprovalStage,
+        reason: attachmentName.trim()
+          ? `${reason.trim()} [Attachment: ${attachmentName.trim()}]`
+          : reason.trim(),
         handoverColleague: handoverColleague.trim() || undefined,
       });
 
@@ -308,9 +372,13 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
       onCloseApplyModal?.();
       setReason('');
       setHandoverColleague('');
+      setAttachmentName('');
+      setPolicyWarnings([]);
       await loadData();
       setSelectedRequestId(created.id);
-      const routedTarget = created.managerName || effectiveManagerName || 'HR Final Review';
+      const routedTarget = isDirectHrLeave
+        ? 'HR Direct Approval (Sheet 7)'
+        : created.managerName || effectiveManagerName || 'HR Final Review';
       showToast(`Leave request submitted and routed to ${routedTarget}.`);
     } catch (err: any) {
       const msg = err?.message || 'Unable to submit leave request.';
@@ -1121,40 +1189,116 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                 </div>
               </div>
 
-              <div>
-                <label className="block text-slate-800 font-semibold mb-1.5">
-                  Select Reviewing Manager (Stage 1 Approver)
-                </label>
-                <select
-                  value={selectedManagerId}
-                  onChange={(e) => setSelectedManagerId(e.target.value)}
-                  data-testid="leave-manager-select"
-                  className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 font-medium focus:outline-none focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/15"
+              {activeLeavePolicy && (
+                <div
+                  data-testid="leave-policy-summary"
+                  className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1 text-[11px]"
                 >
-                  <option value="">
-                    {directSupervisorName
-                      ? `Default Line Manager (${directSupervisorName})`
-                      : 'Route directly to HR Final Review'}
-                  </option>
-                  {availableManagers.map((mgr) => (
-                    <option key={mgr.id} value={String(mgr.id)}>
-                      {mgr.fullName} — {mgr.jobTitle} ({mgr.departmentName})
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-bold text-slate-900">
+                      {activeLeavePolicy.leaveType} · {activeLeavePolicy.entitlementLabel}
+                    </span>
+                    <span
+                      className={`px-2 py-0.5 rounded font-semibold ${
+                        isDirectHrLeave
+                          ? 'bg-amber-100 text-amber-900'
+                          : 'bg-emerald-100 text-emerald-900'
+                      }`}
+                    >
+                      {isDirectHrLeave ? 'Direct HR Approval' : 'Manager → HR'}
+                    </span>
+                  </div>
+                  <p className="text-slate-600">{activeLeavePolicy.notes}</p>
+                </div>
+              )}
+
+              {!isDirectHrLeave ? (
+                <div>
+                  <label className="block text-slate-800 font-semibold mb-1.5">
+                    Select Reviewing Manager (Stage 1 Approver)
+                  </label>
+                  <select
+                    value={selectedManagerId}
+                    onChange={(e) => setSelectedManagerId(e.target.value)}
+                    disabled={isLoadingOptions && availableManagers.length === 0}
+                    data-testid="leave-manager-select"
+                    className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 font-medium focus:outline-none focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/15 disabled:opacity-60"
+                  >
+                    <option value="">
+                      {isLoadingOptions && availableManagers.length === 0
+                        ? 'Loading managers...'
+                        : directSupervisorName
+                        ? `Default Line Manager (${directSupervisorName})`
+                        : 'Route directly to HR Final Review'}
                     </option>
-                  ))}
-                </select>
-              </div>
+                    {availableManagers.map((mgr) => (
+                      <option key={mgr.id} value={String(mgr.id)}>
+                        {mgr.fullName} — {mgr.jobTitle} ({mgr.departmentName})
+                      </option>
+                    ))}
+                  </select>
+                  {directoryLoadError && (
+                    <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] text-rose-700 font-medium">
+                      <span>{directoryLoadError}</span>
+                      <button
+                        type="button"
+                        onClick={() => void loadData()}
+                        className="underline font-bold cursor-pointer"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : null}
 
               <div className="p-3 rounded-lg bg-emerald-50/60 border border-emerald-200/80 space-y-1">
                 <span className="font-semibold text-[#083E34] flex items-center gap-1.5">
                   <GitBranch className="w-3.5 h-3.5" />
-                  Approval Route (Two-Stage Workflow)
+                  {isDirectHrLeave ? 'Direct HR Approval Route (Sheet 7)' : 'Approval Route (Two-Stage Workflow)'}
                 </span>
-                <p className="text-[11px] text-slate-700">
-                  {effectiveManagerName
-                    ? `Stage 1: ${effectiveManagerName} (Manager Review) → Stage 2: HR Final Approval`
-                    : 'No line manager selected — routes directly to HR Final Approval.'}
+                <p className="text-[11px] text-slate-700" data-testid="leave-route-preview">
+                  {isDirectHrLeave
+                    ? `${leaveType} bypasses Line Manager review and routes directly to HR for approval.`
+                    : effectiveManagerName
+                      ? `Stage 1: ${effectiveManagerName} (Manager Review) → Stage 2: HR Final Approval`
+                      : 'No line manager selected — routes directly to HR Final Approval.'}
                 </p>
               </div>
+
+              <div>
+                <label className="block text-slate-800 font-semibold mb-1.5">
+                  Supporting Attachment ({activeLeavePolicy?.attachmentLabel || 'Supporting Document'})
+                  {activeLeavePolicy?.attachmentRequirement === 'REQUIRED' ? ' *' : ' (Optional)'}
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={attachmentName}
+                    onChange={(e) => setAttachmentName(e.target.value)}
+                    data-testid="leave-attachment-input"
+                    placeholder={`e.g. ${activeLeavePolicy?.attachmentLabel || 'Document'}.pdf`}
+                    className="flex-1 p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/15"
+                  />
+                  <label className="px-3 py-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold cursor-pointer shrink-0">
+                    Choose File
+                    <input
+                      type="file"
+                      className="sr-only"
+                      onChange={(ev) => {
+                        const file = ev.target.files?.[0];
+                        if (file) setAttachmentName(file.name);
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {policyWarnings.length > 0 && (
+                <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-[11px]">
+                  {policyWarnings.join(' ')}
+                </div>
+              )}
 
               <div>
                 <label className="block text-slate-800 font-semibold mb-1.5">

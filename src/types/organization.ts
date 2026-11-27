@@ -24,6 +24,10 @@ export interface CitadelDepartment {
   headOfDepartment?: string;
   headOfDepartmentName?: string;
   headStaffId?: string;
+  businessHeadName?: string;
+  headEmail?: string | null;
+  reportsTo?: string;
+  isGecSharedService?: boolean;
   description?: string;
   isActive: boolean;
   employeeCount?: number;

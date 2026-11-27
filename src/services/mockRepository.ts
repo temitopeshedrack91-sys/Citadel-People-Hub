@@ -27,6 +27,8 @@ import {
   IReportRepository,
   IClaimRepository,
 } from './interfaces';
+import { findEntityById, matchesEntityId } from '../utils/orgHelpers';
+import { calculateYearsOfService } from '../domain/workbook';
 import {
   Employee,
   EmployeeHierarchy,
@@ -221,10 +223,10 @@ export class MockEmployeeRepository implements IEmployeeRepository {
     await sleep();
     employees = loadStorage('employees', employees);
     let result = [...employees];
-    if (filter?.entityId) {
-      result = result.filter((e) => String(e.entityId) === String(filter.entityId));
+    if (filter?.entityId && filter.entityId.toLowerCase() !== 'all') {
+      result = result.filter((e) => matchesEntityId(e.entityId, filter.entityId));
     }
-    if (filter?.departmentId) {
+    if (filter?.departmentId && filter.departmentId.toLowerCase() !== 'all') {
       result = result.filter((e) => String(e.departmentId) === String(filter.departmentId));
     }
     if (filter?.search) {
@@ -248,7 +250,8 @@ export class MockEmployeeRepository implements IEmployeeRepository {
 
   async getHierarchy(id: string): Promise<EmployeeHierarchy | null> {
     await sleep();
-    const target = employees.find((e) => e.id === id);
+    employees = loadStorage('employees', employees);
+    const target = employees.find((e) => String(e.id) === String(id));
     if (!target) return null;
 
     const toNode = (e: Employee) => ({
@@ -293,13 +296,25 @@ export class MockEmployeeRepository implements IEmployeeRepository {
 
   async create(newEmp: Omit<Employee, 'id'>): Promise<Employee> {
     await sleep();
+    entities = loadStorage('entities', entities);
+    departments = loadStorage('departments', departments);
+    employees = loadStorage('employees', employees);
+
+    const matchedEntity = findEntityById(entities, newEmp.entityId);
     const dept = departments.find((d) => String(d.id) === String(newEmp.departmentId));
-    if (dept && dept.entityId !== newEmp.entityId) {
+    if (dept && !matchesEntityId(dept.entityId, newEmp.entityId)) {
       throw new Error('The selected department does not belong to the selected entity.');
     }
     const created: Employee = {
       ...newEmp,
       id: `emp-${Date.now()}`,
+      entityId: matchedEntity?.id || newEmp.entityId,
+      entityName: matchedEntity?.name || newEmp.entityName,
+      departmentId: dept?.id || newEmp.departmentId,
+      departmentName: dept?.name || newEmp.departmentName,
+      yearsOfService: newEmp.employmentDate
+        ? calculateYearsOfService(newEmp.employmentDate)
+        : newEmp.yearsOfService ?? 0,
     };
     employees.unshift(created);
     saveStorage('employees', employees);
@@ -308,12 +323,16 @@ export class MockEmployeeRepository implements IEmployeeRepository {
 
   async update(id: string, updates: Partial<Employee>): Promise<Employee> {
     await sleep();
-    const index = employees.findIndex((e) => e.id === id);
+    entities = loadStorage('entities', entities);
+    departments = loadStorage('departments', departments);
+    employees = loadStorage('employees', employees);
+
+    const index = employees.findIndex((e) => String(e.id) === String(id));
     if (index === -1) throw new Error('Employee not found');
-    const candidate = { ...employees[index], ...updates };
+    const candidate: Employee = { ...employees[index], ...updates };
     if (candidate.managerId) {
       if (String(candidate.managerId) === String(id)) {
-        throw new Error('An employee cannot be assigned as their own supervisor.');
+        throw new Error('An employee cannot be assigned as their own supervisor (self-supervision cycle blocked).');
       }
       let curr: string | undefined = candidate.managerId;
       const seen = new Set<string>([String(id)]);
@@ -327,8 +346,20 @@ export class MockEmployeeRepository implements IEmployeeRepository {
       }
     }
     const dept = departments.find((d) => String(d.id) === String(candidate.departmentId));
-    if (dept && dept.entityId !== candidate.entityId) {
+    if (dept && !matchesEntityId(dept.entityId, candidate.entityId)) {
       throw new Error('The selected department does not belong to the selected entity.');
+    }
+    const matchedEntity = findEntityById(entities, candidate.entityId);
+    if (matchedEntity) {
+      candidate.entityId = matchedEntity.id;
+      candidate.entityName = matchedEntity.name;
+    }
+    if (dept) {
+      candidate.departmentId = dept.id;
+      candidate.departmentName = dept.name;
+    }
+    if (updates.employmentDate) {
+      candidate.yearsOfService = calculateYearsOfService(updates.employmentDate);
     }
     employees[index] = candidate;
     saveStorage('employees', employees);
@@ -337,8 +368,9 @@ export class MockEmployeeRepository implements IEmployeeRepository {
 
   async delete(id: string): Promise<boolean> {
     await sleep();
+    employees = loadStorage('employees', employees);
     const initialLen = employees.length;
-    employees = employees.filter((e) => e.id !== id);
+    employees = employees.filter((e) => String(e.id) !== String(id));
     saveStorage('employees', employees);
     return employees.length < initialLen;
   }
@@ -348,23 +380,53 @@ export class MockOrganizationRepository implements IOrganizationRepository {
   async getEntities(): Promise<CitadelEntity[]> {
     await sleep();
     entities = loadStorage('entities', entities);
-    return [...entities];
+    departments = loadStorage('departments', departments);
+    employees = loadStorage('employees', employees);
+    return entities.map((ent) => ({
+      ...ent,
+      departmentCount: departments.filter((d) => matchesEntityId(d.entityId, ent.id)).length,
+      employeeCount: employees.filter((e) => matchesEntityId(e.entityId, ent.id)).length,
+    }));
   }
 
   async getDepartments(entityId?: string): Promise<CitadelDepartment[]> {
     await sleep();
     departments = loadStorage('departments', departments);
-    if (entityId) {
-      return departments.filter((d) => String(d.entityId) === String(entityId));
+    employees = loadStorage('employees', employees);
+    const seedById = new Map(INITIAL_DEPARTMENTS.map((d) => [d.id, d]));
+    const normalized = departments.map((d) => {
+      const seed = seedById.get(d.id);
+      return {
+        ...d,
+        headOfDepartment: d.headOfDepartment || d.headOfDepartmentName || seed?.headOfDepartment,
+        headOfDepartmentName: d.headOfDepartmentName || d.headOfDepartment || seed?.headOfDepartmentName,
+        businessHeadName: d.businessHeadName ?? seed?.businessHeadName,
+        headEmail: d.headEmail !== undefined ? d.headEmail : seed?.headEmail ?? null,
+        reportsTo: d.reportsTo ?? seed?.reportsTo,
+        isGecSharedService: d.isGecSharedService ?? seed?.isGecSharedService ?? false,
+        description: d.description ?? seed?.description,
+        employeeCount: employees.filter((e) => String(e.departmentId) === String(d.id)).length,
+      };
+    });
+    if (entityId && entityId.toLowerCase() !== 'all') {
+      return normalized.filter((d) => matchesEntityId(d.entityId, entityId));
     }
-    return [...departments];
+    return normalized;
   }
 
   async createDepartment(dept: Omit<CitadelDepartment, 'id'>): Promise<CitadelDepartment> {
     await sleep();
+    entities = loadStorage('entities', entities);
+    departments = loadStorage('departments', departments);
+    const matchedEntity = findEntityById(entities, dept.entityId);
+    const headLabel = dept.headOfDepartmentName || dept.headOfDepartment;
     const created: CitadelDepartment = {
       ...dept,
       id: `dept-${Date.now()}`,
+      entityId: matchedEntity?.id || dept.entityId,
+      entityName: matchedEntity?.name || dept.entityName,
+      headOfDepartment: headLabel,
+      headOfDepartmentName: headLabel,
     };
     departments.push(created);
     saveStorage('departments', departments);
@@ -373,9 +435,14 @@ export class MockOrganizationRepository implements IOrganizationRepository {
 
   async updateDepartment(id: string, updates: Partial<CitadelDepartment>): Promise<CitadelDepartment> {
     await sleep();
-    const index = departments.findIndex((d) => d.id === id);
+    departments = loadStorage('departments', departments);
+    const index = departments.findIndex((d) => String(d.id) === String(id));
     if (index === -1) throw new Error('Department not found');
-    departments[index] = { ...departments[index], ...updates };
+    const merged = { ...departments[index], ...updates };
+    const headLabel = merged.headOfDepartmentName || merged.headOfDepartment;
+    merged.headOfDepartment = headLabel;
+    merged.headOfDepartmentName = headLabel;
+    departments[index] = merged;
     saveStorage('departments', departments);
     return departments[index];
   }
@@ -386,6 +453,7 @@ export class MockOrganizationRepository implements IOrganizationRepository {
 
   async createEntity(entity: Omit<CitadelEntity, 'id'>): Promise<CitadelEntity> {
     await sleep();
+    entities = loadStorage('entities', entities);
     const created: CitadelEntity = {
       ...entity,
       id: `entity-${Date.now()}`,
@@ -415,11 +483,12 @@ export class MockLeaveRepository implements ILeaveRepository {
   async getCategories(): Promise<LeaveCategoryRecord[]> {
     await sleep();
     return [
-      { id: 1, name: 'Annual Leave', code: 'AL', is_paid: true, is_active: true, policies: [{ id: 1, name: 'Annual', days_allowed: 24, effective_year: 2026 }] },
-      { id: 2, name: 'Casual Leave', code: 'CL', is_paid: true, is_active: true, policies: [{ id: 2, name: 'Casual', days_allowed: 7, effective_year: 2026 }] },
-      { id: 3, name: 'Sick Leave', code: 'SL', is_paid: true, is_active: true, policies: [{ id: 3, name: 'Sick', days_allowed: 12, effective_year: 2026 }] },
-      { id: 4, name: 'Maternity Leave', code: 'ML', is_paid: true, is_active: true, policies: [{ id: 4, name: 'Maternity', days_allowed: 84, effective_year: 2026 }] },
-      { id: 5, name: 'Compassionate Leave', code: 'CMPL', is_paid: true, is_active: true, policies: [{ id: 5, name: 'Compassionate', days_allowed: 5, effective_year: 2026 }] },
+      { id: 1, name: 'Annual Leave', code: 'AL', is_paid: true, is_active: true, policies: [{ id: 1, name: 'Annual', days_allowed: 21, effective_year: 2026 }] },
+      { id: 2, name: 'Sick Leave', code: 'SL', is_paid: true, is_active: true, policies: [{ id: 2, name: 'Sick', days_allowed: 10, effective_year: 2026 }] },
+      { id: 3, name: 'Maternity Leave', code: 'ML', is_paid: true, is_active: true, policies: [{ id: 3, name: 'Maternity', days_allowed: 90, effective_year: 2026 }] },
+      { id: 4, name: 'Paternity Leave', code: 'PL', is_paid: true, is_active: true, policies: [{ id: 4, name: 'Paternity', days_allowed: 14, effective_year: 2026 }] },
+      { id: 5, name: 'Exam Leave', code: 'EXL', is_paid: true, is_active: true, policies: [{ id: 5, name: 'Exam', days_allowed: 21, effective_year: 2026 }] },
+      { id: 6, name: 'Compassionate Leave', code: 'CMPL', is_paid: true, is_active: true, policies: [{ id: 6, name: 'Compassionate', days_allowed: 5, effective_year: 2026 }] },
     ];
   }
 
@@ -444,14 +513,16 @@ export class MockLeaveRepository implements ILeaveRepository {
       };
     };
 
-    const annual = calc('annual', 24, 0);
-    const casual = calc('casual', 7, 0);
-    const sick = calc('sick', 12, 0);
+    const annual = calc('annual', 21, 0);
+    const sick = calc('sick', 10, 0);
+    const exam = calc('exam', 21, 0);
+    const compassionate = calc('compassionate', 5, 0);
 
     return [
-      { id: 1, employee_id: targetId, leave_category_id: 1, year: 2026, total_days: 24, ...annual, category: { id: 1, name: 'Annual Leave', code: 'AL', is_paid: true } },
-      { id: 2, employee_id: targetId, leave_category_id: 2, year: 2026, total_days: 7, ...casual, category: { id: 2, name: 'Casual Leave', code: 'CL', is_paid: true } },
-      { id: 3, employee_id: targetId, leave_category_id: 3, year: 2026, total_days: 12, ...sick, category: { id: 3, name: 'Sick Leave', code: 'SL', is_paid: true } },
+      { id: 1, employee_id: targetId, leave_category_id: 1, year: 2026, total_days: 21, ...annual, category: { id: 1, name: 'Annual Leave', code: 'AL', is_paid: true } },
+      { id: 2, employee_id: targetId, leave_category_id: 2, year: 2026, total_days: 10, ...sick, category: { id: 2, name: 'Sick Leave', code: 'SL', is_paid: true } },
+      { id: 5, employee_id: targetId, leave_category_id: 5, year: 2026, total_days: 21, ...exam, category: { id: 5, name: 'Exam Leave', code: 'EXL', is_paid: true } },
+      { id: 6, employee_id: targetId, leave_category_id: 6, year: 2026, total_days: 5, ...compassionate, category: { id: 6, name: 'Compassionate Leave', code: 'CMPL', is_paid: true } },
     ];
   }
 
@@ -494,21 +565,28 @@ export class MockLeaveRepository implements ILeaveRepository {
       throw new Error('Leave dates overlap with an existing leave request.');
     }
 
-    const stage = request.managerId ? 'MANAGER' : 'HR';
+    const isDirectHrType =
+      (request.leaveType || '').toLowerCase().includes('exam') ||
+      (request.leaveType || '').toLowerCase().includes('compassionate');
+    const stage = isDirectHrType ? 'HR' : request.managerId ? 'MANAGER' : 'HR';
     const newRequest: LeaveRequest = {
       ...request,
       totalDays: request.totalDays || request.daysRequested || 1,
       id: `leave-${Date.now()}`,
       appliedDate: new Date().toISOString(),
       status: stage === 'MANAGER' ? 'Submitted' : 'Pending Review',
-      approvalStage: request.approvalStage || stage,
+      approvalStage: isDirectHrType ? 'HR' : request.approvalStage || stage,
       approvalHistory: [
         {
           actor: request.employeeName,
           stage: 'SUBMITTED',
           decision: 'Submitted',
           status: stage === 'MANAGER' ? 'Submitted' : 'Pending Review',
-          comments: request.managerName ? `Routed to direct supervisor ${request.managerName}.` : 'Routed to HR.',
+          comments: isDirectHrType
+            ? `Direct HR route per Sheet 7 policy (${request.leaveType}).`
+            : request.managerName
+              ? `Routed to direct supervisor ${request.managerName}.`
+              : 'Routed to HR.',
           timestamp: new Date().toISOString(),
         },
       ],
@@ -1742,9 +1820,11 @@ export class MockClassificationRepository implements IClassificationRepository {
   ];
 
   private payGrades: PayGrade[] = [
-    { id: 1, name: 'Grade 1 - Executive', currency: 'NGN', minSalary: 3500000, maxSalary: 6000000, isActive: true },
-    { id: 2, name: 'Grade 2 - Senior Management', currency: 'NGN', minSalary: 2000000, maxSalary: 3400000, isActive: true },
-    { id: 3, name: 'Grade 3 - Professional & Tech', currency: 'NGN', minSalary: 1200000, maxSalary: 2200000, isActive: true },
+    { id: 1, code: 'G1', name: 'Grade 1 - Executive / Director', currency: 'NGN', minSalary: 1200000, maxSalary: 2000000, isActive: true },
+    { id: 2, code: 'G2', name: 'Grade 2 - Senior Manager / Department Head', currency: 'NGN', minSalary: 750000, maxSalary: 1100000, isActive: true },
+    { id: 3, code: 'G3', name: 'Grade 3 - Specialist / Lead Officer', currency: 'NGN', minSalary: 450000, maxSalary: 700000, isActive: true },
+    { id: 4, code: 'G4', name: 'Grade 4 - Associate / Operations Staff', currency: 'NGN', minSalary: 250000, maxSalary: 400000, isActive: true },
+    { id: 5, code: 'G5', name: 'Grade 5 - Entry Level / Ministry Intern', currency: 'NGN', minSalary: 120000, maxSalary: 220000, isActive: true },
   ];
 
   async getJobTitles(activeOnly: boolean = true): Promise<JobTitle[]> {

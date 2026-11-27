@@ -24,6 +24,8 @@ import {
   RotateCcw,
   CheckCircle2,
   Clock,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 import {
   Employee,
@@ -32,7 +34,8 @@ import {
   EmployeeStatus,
   EmploymentType,
 } from '../../types';
-import { employeeRepository, organizationRepository } from '../../services';
+import { employeeRepository, organizationRepository, auditRepository } from '../../services';
+import { governanceRepository } from '../../services/governanceRepository';
 import { useAuth } from '../../context/AuthContext';
 import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import { Badge } from '../common/Badge';
@@ -45,6 +48,18 @@ import {
   maskSensitiveEmployeeData,
   canPerformAction,
 } from '../../utils/rbac';
+import {
+  buildEmployeesCsv,
+  filterDepartmentsByEntity,
+  isSafeImageUrl,
+  matchesEntityId,
+} from '../../utils/orgHelpers';
+import {
+  buildEmployeePatchFromProfileChanges,
+  resolveEntityOptionValue,
+} from '../../utils/orgMatcher';
+import { isLaravelApiConfigured } from '../../services/laravelClient';
+import type { ProfileChangeRequest } from '../../domain/workbook';
 
 interface EmployeeManagementViewProps {
   isAddModalOpen?: boolean;
@@ -57,7 +72,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
   onCloseAddModal,
   onNavigate,
 }) => {
-  const { currentUser, currentRole, selectedEntityFilter } = useAuth();
+  const { currentUser, currentRole, selectedEntityFilter, isAuthenticated, canViewSensitiveData } = useAuth();
   const isPCCM = currentRole === 'PCCM_SUPER_ADMIN';
   const canManageEmployees = canPerformAction(currentUser, 'manage_employees').allowed;
 
@@ -66,6 +81,18 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
   const [entities, setEntities] = useState<CitadelEntity[]>([]);
   const [departments, setDepartments] = useState<CitadelDepartment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [profileChangeRequests, setProfileChangeRequests] = useState<ProfileChangeRequest[]>([]);
+  const [showChangeApprovalsPanel, setShowChangeApprovalsPanel] = useState(false);
+  const [reviewCommentById, setReviewCommentById] = useState<Record<string, string>>({});
+  const [reviewingReqId, setReviewingReqId] = useState<string | null>(null);
+  const [exportFeedback, setExportFeedback] = useState<string | null>(null);
+
+  const pendingProfileRequests = useMemo(
+    () => profileChangeRequests.filter((r) => r.status === 'PENDING_HR_APPROVAL'),
+    [profileChangeRequests]
+  );
+  const pendingProfileRequestsCount = pendingProfileRequests.length;
 
   // View Mode: 'table' or 'card'
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
@@ -100,33 +127,144 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
 
   useEffect(() => {
     if (selectedEntityFilter !== 'all') {
-      setEntityFilter(selectedEntityFilter);
+      setEntityFilter(resolveEntityOptionValue(entities, selectedEntityFilter));
     } else {
       setEntityFilter('');
     }
-  }, [selectedEntityFilter]);
+  }, [selectedEntityFilter, entities]);
 
   const loadData = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
-      const [rawEmpList, entList, deptList] = await Promise.all([
+      const [empResult, entResult, deptResult, changeReqResult] = await Promise.allSettled([
         employeeRepository.getAll(),
         organizationRepository.getEntities(),
         organizationRepository.getDepartments(),
+        governanceRepository.listProfileChangeRequests(),
       ]);
-      const scopedEmpList = filterEmployeesForUser(currentUser, rawEmpList);
-      const maskedEmpList = scopedEmpList.map((emp) => maskSensitiveEmployeeData(currentUser, emp));
-      setEmployees(maskedEmpList);
-      setEntities(entList);
-      setDepartments(deptList);
+
+      const failures: string[] = [];
+
+      if (empResult.status === 'fulfilled') {
+        const scopedEmpList = filterEmployeesForUser(currentUser, empResult.value);
+        const maskedEmpList = scopedEmpList.map((emp) => maskSensitiveEmployeeData(currentUser, emp));
+        setEmployees(maskedEmpList);
+      } else {
+        failures.push(empResult.reason instanceof Error ? empResult.reason.message : 'Unable to load employees.');
+      }
+
+      if (entResult.status === 'fulfilled') {
+        setEntities(entResult.value);
+      } else {
+        failures.push(entResult.reason instanceof Error ? entResult.reason.message : 'Unable to load entities.');
+      }
+
+      if (deptResult.status === 'fulfilled') {
+        setDepartments(deptResult.value);
+      } else {
+        failures.push(deptResult.reason instanceof Error ? deptResult.reason.message : 'Unable to load departments.');
+      }
+
+      if (changeReqResult.status === 'fulfilled') {
+        setProfileChangeRequests(changeReqResult.value);
+      }
+
+      if (failures.length > 0) {
+        setLoadError(failures.join(' '));
+      }
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'Failed to load organizational and employee records.');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleReviewProfileChange = async (
+    req: ProfileChangeRequest,
+    decision: 'APPROVED' | 'REJECTED'
+  ) => {
+    const comment = (reviewCommentById[req.id] || '').trim();
+    if (decision === 'REJECTED' && !comment) {
+      setLoadError('Please provide a brief HR review note before rejecting a profile change request.');
+      return;
+    }
+
+    setReviewingReqId(req.id);
+    setLoadError(null);
+    try {
+      const updatedReq: ProfileChangeRequest = {
+        ...req,
+        status: decision,
+        reviewedBy: currentUser.name,
+        reviewedAt: new Date().toISOString(),
+        reviewComments: comment || (decision === 'APPROVED' ? 'Verified and approved by HR / PCCM.' : ''),
+      };
+
+      await governanceRepository.reviewProfileChangeRequest(req.id, decision, updatedReq.reviewComments, updatedReq);
+
+      // In local demo mode, commit approved changes to authoritative employee record
+      if (decision === 'APPROVED' && !isLaravelApiConfigured()) {
+        const allEmps = await employeeRepository.getAll();
+        const target = allEmps.find(
+          (e) =>
+            (req.employeeStaffId && e.staffId.toLowerCase() === req.employeeStaffId.toLowerCase()) ||
+            (String(e.id) === String(req.employeeId) &&
+              (!req.employeeStaffId || !e.staffId || e.staffId.toLowerCase() === req.employeeStaffId.toLowerCase()))
+        );
+        if (target) {
+          const patch = buildEmployeePatchFromProfileChanges(target, req.proposedChanges);
+          if (Object.keys(patch).length > 0) {
+            await employeeRepository.update(String(target.id), patch);
+          }
+        }
+      }
+
+      await auditRepository.logAction({
+        userId: currentUser.id,
+        userName: currentUser.name,
+        userRole: currentRole,
+        module: 'Employee Management',
+        action: decision === 'APPROVED' ? 'Approved Employee Profile Change' : 'Rejected Employee Profile Change',
+        recordAffectedId: req.id,
+        recordAffectedTitle: `${req.employeeName} (${Object.keys(req.proposedChanges).join(', ')})`,
+        previousValue: JSON.stringify(req.previousValues),
+        newValue: decision === 'APPROVED' ? JSON.stringify(req.proposedChanges) : `Rejected: ${updatedReq.reviewComments}`,
+        severity: 'Info',
+      });
+
+      setExportFeedback(
+        decision === 'APPROVED'
+          ? `Approved profile update for ${req.employeeName}. Authoritative record updated.`
+          : `Rejected profile update request for ${req.employeeName}.`
+      );
+      setTimeout(() => setExportFeedback(null), 4000);
+      await loadData();
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'Unable to review profile change request.');
+    } finally {
+      setReviewingReqId(null);
+    }
+  };
+
   useEffect(() => {
-    loadData();
-  }, [currentUser?.id, currentUser?.role, currentUser?.departmentName]);
+    void loadData();
+  }, [currentUser?.id, currentUser?.role, currentUser?.departmentName, isAuthenticated]);
+
+  useEffect(() => {
+    const onAuthChanged = () => {
+      void loadData();
+    };
+    const onProfileChangeUpdated = () => {
+      void loadData();
+    };
+    window.addEventListener('citadel:auth-changed', onAuthChanged);
+    window.addEventListener('citadel:profile-change-updated', onProfileChangeUpdated);
+    return () => {
+      window.removeEventListener('citadel:auth-changed', onAuthChanged);
+      window.removeEventListener('citadel:profile-change-updated', onProfileChangeUpdated);
+    };
+  }, []);
 
   useRealtimeTable('employees', () => {
     void loadData();
@@ -136,21 +274,19 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
     void loadData();
   });
 
+  useRealtimeTable('entities', () => {
+    void loadData();
+  });
+
   // Filter and Sort Pipeline
   const filteredAndSortedEmployees = useMemo(() => {
     let result = [...employees];
 
     // 1. Entity Filter
     if (entityFilter) {
-      result = result.filter((e) => {
-        if (String(e.entityId) === String(entityFilter)) return true;
-        const ef = String(entityFilter).toLowerCase();
-        const ee = String(e.entityId || '').toLowerCase();
-        if (ef.includes('cgcc') && ee.includes('cgcc')) return true;
-        if (ef.includes('csog') && ee.includes('csog')) return true;
-        if (ef.includes('holding') && ee.includes('holding')) return true;
-        return false;
-      });
+      result = result.filter(
+        (e) => matchesEntityId(e.entityId, entityFilter) || matchesEntityId(e.entityName, entityFilter)
+      );
     }
 
     // 2. Department Filter
@@ -224,18 +360,40 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
     }
   };
 
-  const availableDepartments = useMemo(() => {
-    if (!entityFilter) return departments;
-    return departments.filter((d) => {
-      if (String(d.entityId) === String(entityFilter)) return true;
-      const ef = String(entityFilter).toLowerCase();
-      const de = String(d.entityId || '').toLowerCase();
-      if (ef.includes('cgcc') && de.includes('cgcc')) return true;
-      if (ef.includes('csog') && de.includes('csog')) return true;
-      if (ef.includes('holding') && de.includes('holding')) return true;
-      return false;
+  const availableDepartments = useMemo(
+    () => filterDepartmentsByEntity(departments, entityFilter, { includeInactive: true }),
+    [departments, entityFilter]
+  );
+
+  const handleExportCsv = async () => {
+    const csv = buildEmployeesCsv(filteredAndSortedEmployees, canViewSensitiveData);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const dateStamp = new Date().toISOString().split('T')[0];
+    link.download = `citadel-employees-${dateStamp}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setExportFeedback(`Exported ${filteredAndSortedEmployees.length} employee record${filteredAndSortedEmployees.length === 1 ? '' : 's'} to CSV.`);
+    setTimeout(() => setExportFeedback(null), 3500);
+
+    void auditRepository.logAction({
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userRole: currentRole,
+      module: 'Employee Management',
+      action: 'Exported Employee Directory CSV',
+      recordAffectedId: 'employee-export',
+      recordAffectedTitle: `${filteredAndSortedEmployees.length} filtered staff records`,
+      previousValue: 'N/A',
+      newValue: canViewSensitiveData ? 'Full Sheet 5 Master Data CSV' : 'Directory CSV (Sensitive Masked)',
+      severity: 'Info',
     });
-  }, [departments, entityFilter]);
+  };
 
   return (
     <div className="space-y-5">
@@ -251,11 +409,36 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Centralized staff records across Church, School of Government, and Holdings.
+            Centralized staff records across Citadel Global Community Church (CGCC), Citadel School of Government (CSOG), and Citadel Holdings.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 flex-wrap shrink-0">
+          {canManageEmployees && pendingProfileRequestsCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowChangeApprovalsPanel((prev) => !prev)}
+              data-testid="pending-profile-approvals-btn"
+              className="px-3 py-2 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <Clock className="w-3.5 h-3.5 text-amber-700" />
+              <span>{pendingProfileRequestsCount} Profile Change{pendingProfileRequestsCount === 1 ? '' : 's'} Pending HR</span>
+            </button>
+          )}
+
+          {/* Export Filtered Records CSV */}
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            disabled={loading || filteredAndSortedEmployees.length === 0}
+            data-testid="export-employees-csv-btn"
+            className="px-3 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 text-xs font-semibold flex items-center gap-1.5 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
+            title="Export filtered employee records to CSV"
+          >
+            <Download className="w-3.5 h-3.5 text-slate-500" />
+            <span>Export CSV</span>
+          </button>
+
           {/* View Mode Toggle */}
           <div className="flex items-center p-1 bg-slate-100 rounded-lg border border-slate-200/80" role="group" aria-label="Employee view mode">
             <button
@@ -293,7 +476,10 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
             <button
               type="button"
               id="btn-add-employee-trigger"
-              onClick={() => setShowAddModal(true)}
+              onClick={() => {
+                setEditingEmployee(null);
+                setShowAddModal(true);
+              }}
               className="px-4 py-2 rounded-lg bg-[#083E34] hover:bg-[#062E27] text-white text-xs font-semibold flex items-center gap-1.5 transition active:scale-[0.98] cursor-pointer whitespace-nowrap"
             >
               <Plus className="w-4 h-4 stroke-[2.25]" />
@@ -302,6 +488,137 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
           )}
         </div>
       </div>
+
+      {loadError && (
+        <div
+          role="alert"
+          data-testid="employees-load-error"
+          className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+        >
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+            <span>{loadError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => void loadData()}
+            className="px-3 py-1.5 rounded-lg bg-white hover:bg-rose-100 text-rose-800 border border-rose-200 font-semibold flex items-center gap-1.5 shrink-0 cursor-pointer"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Retry</span>
+          </button>
+        </div>
+      )}
+
+      {exportFeedback && (
+        <div
+          role="status"
+          data-testid="employees-export-toast"
+          className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-medium flex items-center gap-2"
+        >
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{exportFeedback}</span>
+        </div>
+      )}
+
+      {/* Inline HR Profile Change Approval Queue (Sheet 5) */}
+      {canManageEmployees && showChangeApprovalsPanel && (
+        <div
+          data-testid="hr-profile-approvals-panel"
+          className="bg-amber-50/70 border border-amber-200 rounded-xl p-4 space-y-3 animate-fade-in"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h2 className="text-xs font-black text-amber-950 uppercase tracking-wider flex items-center gap-1.5">
+                <Shield className="w-4 h-4 text-[#083E34]" />
+                <span>Employee Personal Info Change Requests ({pendingProfileRequests.length} Pending)</span>
+              </h2>
+              <p className="text-[11px] text-amber-900 mt-0.5">
+                Review and approve employee-submitted updates before committing them to authoritative records.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowChangeApprovalsPanel(false)}
+              className="text-xs font-semibold text-amber-900 hover:underline cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+
+          {pendingProfileRequests.length === 0 ? (
+            <p className="text-xs text-slate-600 bg-white p-3 rounded-lg border border-amber-200/80">
+              All employee profile update requests have been reviewed.
+            </p>
+          ) : (
+            <div className="space-y-2.5">
+              {pendingProfileRequests.map((req) => (
+                <div
+                  key={req.id}
+                  data-testid={`profile-change-card-${req.id}`}
+                  className="bg-white rounded-xl border border-amber-200/90 p-3.5 flex flex-col lg:flex-row lg:items-center justify-between gap-3"
+                >
+                  <div className="space-y-1.5 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-bold text-slate-900">{req.employeeName}</span>
+                      <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                        {req.employeeStaffId}
+                      </span>
+                      <span className="text-[11px] text-slate-500">
+                        Requested by {req.requestedByName} · Reason: {req.reason}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(req.proposedChanges).map(([fieldKey, newVal]) => (
+                        <div
+                          key={fieldKey}
+                          className="text-[11px] px-2 py-1 rounded-lg bg-slate-50 border border-slate-200"
+                        >
+                          <span className="font-bold text-slate-700">{fieldKey}:</span>{' '}
+                          <span className="line-through text-slate-400">
+                            {req.previousValues[fieldKey] || 'empty'}
+                          </span>{' '}
+                          <span className="text-[#083E34] font-bold">&rarr; {newVal}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
+                    <input
+                      type="text"
+                      placeholder="HR review note (required to reject)"
+                      value={reviewCommentById[req.id] || ''}
+                      onChange={(e) =>
+                        setReviewCommentById((prev) => ({ ...prev, [req.id]: e.target.value }))
+                      }
+                      className="px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg outline-none focus:border-[#083E34] min-w-[200px]"
+                    />
+                    <button
+                      type="button"
+                      disabled={reviewingReqId === req.id}
+                      data-testid={`approve-profile-change-${req.id}`}
+                      onClick={() => void handleReviewProfileChange(req, 'APPROVED')}
+                      className="px-3 py-1.5 rounded-lg bg-[#083E34] hover:bg-[#062E27] text-white text-xs font-bold cursor-pointer disabled:opacity-50"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      type="button"
+                      disabled={reviewingReqId === req.id}
+                      data-testid={`reject-profile-change-${req.id}`}
+                      onClick={() => void handleReviewProfileChange(req, 'REJECTED')}
+                      className="px-3 py-1.5 rounded-lg bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold cursor-pointer disabled:opacity-50"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 2. Comprehensive Filter & Search Bar */}
       <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
@@ -326,15 +643,23 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
           <div>
             <select
               aria-label="Filter by Citadel entity"
+              data-testid="filter-entity-select"
               value={entityFilter}
+              disabled={loading && entities.length === 0}
               onChange={(e) => {
                 setEntityFilter(e.target.value);
                 setDeptFilter('');
                 setCurrentPage(1);
               }}
-              className="w-full py-2 px-2.5 text-xs border border-slate-200/90 rounded-lg focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/12 outline-none bg-white text-slate-700 font-medium transition"
+              className="w-full py-2 px-2.5 text-xs border border-slate-200/90 rounded-lg focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/12 outline-none bg-white text-slate-700 font-medium transition disabled:bg-slate-50"
             >
-              <option value="">All Citadel Entities</option>
+              <option value="">
+                {loading && entities.length === 0
+                  ? 'Loading entities...'
+                  : entities.length === 0
+                  ? 'No entities available'
+                  : 'All Citadel Entities'}
+              </option>
               {entities.map((ent) => (
                 <option key={ent.id} value={ent.id}>
                   {ent.name}
@@ -347,14 +672,22 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
           <div>
             <select
               aria-label="Filter by department"
+              data-testid="filter-department-select"
               value={deptFilter}
+              disabled={loading && departments.length === 0}
               onChange={(e) => {
                 setDeptFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full py-2 px-2.5 text-xs border border-slate-200/90 rounded-lg focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/12 outline-none bg-white text-slate-700 font-medium transition"
+              className="w-full py-2 px-2.5 text-xs border border-slate-200/90 rounded-lg focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/12 outline-none bg-white text-slate-700 font-medium transition disabled:bg-slate-50"
             >
-              <option value="">All Departments</option>
+              <option value="">
+                {loading && departments.length === 0
+                  ? 'Loading departments...'
+                  : availableDepartments.length === 0
+                  ? 'No departments in selected entity'
+                  : `All Departments (${availableDepartments.length})`}
+              </option>
               {availableDepartments.map((dept) => (
                 <option key={dept.id} value={dept.id}>
                   {dept.name}
@@ -492,10 +825,18 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                     {/* Full Name & Job Title */}
                     <td className="py-3 px-3.5 max-w-[230px]">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-full bg-[#083E34] text-white font-semibold flex items-center justify-center text-[11px] shrink-0">
-                          {emp.firstName[0]}
-                          {emp.lastName[0]}
-                        </div>
+                        {isSafeImageUrl(emp.profilePhoto) ? (
+                          <img
+                            src={emp.profilePhoto}
+                            alt={emp.fullName}
+                            className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-[#083E34] text-white font-semibold flex items-center justify-center text-[11px] shrink-0">
+                            {emp.firstName?.[0] || emp.fullName?.[0] || 'C'}
+                            {emp.lastName?.[0] || ''}
+                          </div>
+                        )}
                         <div className="min-w-0">
                           <div className="font-semibold text-slate-900 group-hover:text-[#083E34] truncate">
                             {emp.fullName}

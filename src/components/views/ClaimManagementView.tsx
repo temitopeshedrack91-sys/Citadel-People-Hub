@@ -62,6 +62,7 @@ export const ClaimManagementView: React.FC = () => {
   const [rejectionReasonInput, setRejectionReasonInput] = useState('');
   const [isRejecting, setIsRejecting] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [errorBanner, setErrorBanner] = useState<string | null>(null);
 
   // Form State for New Claim
   const [claimForm, setClaimForm] = useState({
@@ -87,8 +88,13 @@ export const ClaimManagementView: React.FC = () => {
 
   // Notifications
   const showToast = (msg: string) => {
+    setErrorBanner(null);
     setSuccessToast(msg);
     setTimeout(() => setSuccessToast(null), 4000);
+  };
+
+  const showError = (msg: string) => {
+    setErrorBanner(msg);
   };
 
   // Money Formatter
@@ -214,12 +220,13 @@ export const ClaimManagementView: React.FC = () => {
 
   // Submit Claim Request Handler
   const handleSaveClaim = async (status: 'INITIATED' | 'SUBMITTED') => {
+    setErrorBanner(null);
     if (!claimForm.claim_event_id && events.length > 0) {
-      alert('Please select a claim event/purpose.');
+      showError('Please select a claim event/purpose before submitting.');
       return;
     }
     if (claimForm.expenses.length === 0) {
-      alert('Please include at least one expense line item.');
+      showError('Please include at least one expense line item.');
       return;
     }
 
@@ -259,15 +266,16 @@ export const ClaimManagementView: React.FC = () => {
       showToast(`Claim ${created.claim_number} successfully ${status === 'SUBMITTED' ? 'submitted' : 'drafted'}!`);
       loadData();
     } catch (err: any) {
-      alert(`Error submitting claim: ${err.message}`);
+      showError(`Error submitting claim: ${err.message}`);
     }
   };
 
   // Perform Workflow Action (Approve, Reject, Cancel, Pay)
   const handleWorkflowAction = async (action: 'SUBMIT' | 'APPROVE' | 'REJECT' | 'CANCEL' | 'PAY') => {
     if (!selectedClaim) return;
+    setErrorBanner(null);
     if (action === 'REJECT' && !rejectionReasonInput.trim()) {
-      alert('Please provide a reason for rejecting this claim.');
+      showError('Please provide a reason for rejecting this claim.');
       return;
     }
 
@@ -295,7 +303,7 @@ export const ClaimManagementView: React.FC = () => {
       showToast(`Claim ${updated.claim_number} marked as ${updated.status}.`);
       loadData();
     } catch (err: any) {
-      alert(`Failed to perform ${action}: ${err.message}`);
+      showError(`Failed to perform ${action}: ${err.message}`);
     }
   };
 
@@ -303,6 +311,7 @@ export const ClaimManagementView: React.FC = () => {
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!eventForm.name.trim()) return;
+    setErrorBanner(null);
     try {
       const created = await claimRepository.createClaimEvent({
         name: eventForm.name.trim(),
@@ -315,7 +324,7 @@ export const ClaimManagementView: React.FC = () => {
       showToast(`Claim event "${created.name}" created.`);
       loadData();
     } catch (err: any) {
-      alert(`Failed to create event: ${err.message}`);
+      showError(`Failed to create event: ${err.message}`);
     }
   };
 
@@ -323,6 +332,7 @@ export const ClaimManagementView: React.FC = () => {
   const handleCreateType = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!typeForm.name.trim()) return;
+    setErrorBanner(null);
     try {
       const created = await claimRepository.createExpenseType({
         name: typeForm.name.trim(),
@@ -335,7 +345,7 @@ export const ClaimManagementView: React.FC = () => {
       showToast(`Expense type "${created.name}" created.`);
       loadData();
     } catch (err: any) {
-      alert(`Failed to create expense type: ${err.message}`);
+      showError(`Failed to create expense type: ${err.message}`);
     }
   };
 
@@ -343,10 +353,30 @@ export const ClaimManagementView: React.FC = () => {
     <div className="space-y-6 animate-fade-in text-slate-800">
       {/* Toast Notification */}
       {successToast && (
-        <div className="fixed top-5 right-5 z-50 flex items-center gap-3 bg-[#083E34] text-white px-5 py-3 rounded-xl shadow-xl border border-[#D4AF37]/40 animate-slide-in">
+        <div role="status" className="fixed top-5 right-5 z-[60] flex items-center gap-3 bg-[#083E34] text-white px-5 py-3 rounded-xl shadow-xl border border-[#D4AF37]/40 animate-slide-in">
           <CheckCircle2 className="w-5 h-5 text-[#D4AF37] shrink-0" />
           <span className="text-sm font-semibold">{successToast}</span>
-          <button onClick={() => setSuccessToast(null)} className="text-white/60 hover:text-white ml-2">
+          <button type="button" onClick={() => setSuccessToast(null)} className="text-white/60 hover:text-white ml-2">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Error / Validation Alert Banner (replaces window.alert) */}
+      {errorBanner && (
+        <div
+          role="alert"
+          data-testid="claim-error-banner"
+          className="fixed top-5 right-5 z-[70] flex items-center gap-3 bg-rose-900 text-white px-5 py-3 rounded-xl shadow-xl border border-rose-400/40 max-w-md animate-slide-in"
+        >
+          <AlertCircle className="w-5 h-5 text-rose-300 shrink-0" />
+          <span className="text-xs font-semibold leading-snug">{errorBanner}</span>
+          <button
+            type="button"
+            onClick={() => setErrorBanner(null)}
+            aria-label="Dismiss error"
+            className="text-white/70 hover:text-white ml-2 cursor-pointer"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>

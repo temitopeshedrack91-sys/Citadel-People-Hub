@@ -12,11 +12,11 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useRealtimeTable } from '../../hooks/useRealtimeTable';
+import { useOrganizationCatalog } from '../../hooks/useOrganizationCatalog';
 import { notificationRepository } from '../../services';
 import { SystemNotification } from '../../types';
+import { entitiesMatch, findMatchingEntity } from '../../utils/orgMatcher';
 import { PWAInstallButton } from '../pwa/PWAInstallButton';
-import { CITADEL_BRAND } from '../../theme/branding';
-import { CitadelLogo } from '../brand/CitadelLogo';
 import { ProfileEditModal } from '../profile/ProfileEditModal';
 import { NavModule } from './Sidebar';
 
@@ -123,15 +123,31 @@ export const Header: React.FC<HeaderProps> = ({
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
-  const entities = [
+  const {
+    entities: liveEntities,
+    loading: entitiesLoading,
+    error: entitiesError,
+    reload: reloadEntities,
+  } = useOrganizationCatalog();
+
+  const entityOptions = [
     { id: 'all', name: 'All Citadel Entities', shortCode: 'All Entities' },
-    ...CITADEL_BRAND.entities,
+    ...liveEntities.map((ent) => ({
+      id: String(ent.id),
+      name: ent.name,
+      shortCode: ent.shortCode || String(ent.id),
+    })),
   ];
+
+  const matchedSelectedEntity =
+    selectedEntityFilter === 'all'
+      ? null
+      : findMatchingEntity(liveEntities, selectedEntityFilter);
 
   const currentEntityName =
     selectedEntityFilter === 'all'
       ? 'All Citadel Entities'
-      : entities.find((e) => e.id === selectedEntityFilter)?.name || 'Citadel';
+      : matchedSelectedEntity?.name || (entitiesLoading ? 'Loading entities...' : 'All Citadel Entities');
 
   // Shortcut: Cmd+K or Ctrl+K focuses the search input matching Pillio reference
   useEffect(() => {
@@ -248,34 +264,61 @@ export const Header: React.FC<HeaderProps> = ({
                 <div
                   role="menu"
                   className="absolute right-0 top-full mt-2 w-72 rounded-2xl bg-white shadow-xl border border-slate-200 py-1.5 z-50 animate-fade-in"
-                  onClick={() => setIsEntityMenuOpen(false)}
                 >
-                  <div className="px-3.5 py-2 border-b border-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    Select Citadel Entity Scope
+                  <div className="px-3.5 py-2 border-b border-slate-100 flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    <span>Select Citadel Entity Scope</span>
+                    {entitiesLoading && <span className="text-[#083E34] normal-case">Loading...</span>}
                   </div>
-                  {entities.map((ent) => (
-                    <button
-                      type="button"
-                      role="menuitem"
-                      key={ent.id}
-                      onClick={() => setSelectedEntityFilter(ent.id)}
-                      className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition cursor-pointer ${
-                        selectedEntityFilter === ent.id
-                          ? 'bg-[#EBF5F2] font-bold text-[#083E34]'
-                          : 'text-slate-700 font-medium'
-                      }`}
-                    >
-                      <div className="flex flex-col">
-                        <span className="font-bold">{ent.name}</span>
-                        {'shortCode' in ent && (
+                  {entitiesError && (
+                    <div className="px-3.5 py-2.5 bg-rose-50 border-b border-rose-100 text-[11px] text-rose-700 flex items-center justify-between gap-2">
+                      <span className="truncate">{entitiesError}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void reloadEntities();
+                        }}
+                        className="font-bold underline shrink-0 cursor-pointer"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  )}
+                  {entityOptions.map((ent) => {
+                    const isSelected =
+                      ent.id === 'all'
+                        ? selectedEntityFilter === 'all'
+                        : entitiesMatch(selectedEntityFilter, ent.id);
+                    return (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        key={ent.id}
+                        onClick={() => {
+                          setSelectedEntityFilter(ent.id);
+                          setIsEntityMenuOpen(false);
+                        }}
+                        className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition cursor-pointer ${
+                          isSelected
+                            ? 'bg-[#EBF5F2] font-bold text-[#083E34]'
+                            : 'text-slate-700 font-medium'
+                        }`}
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-bold">{ent.name}</span>
                           <span className="text-[10px] text-slate-500">{ent.shortCode}</span>
+                        </div>
+                        {isSelected && (
+                          <span className="w-2 h-2 rounded-full bg-[#083E34]" />
                         )}
-                      </div>
-                      {selectedEntityFilter === ent.id && (
-                        <span className="w-2 h-2 rounded-full bg-[#083E34]" />
-                      )}
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
+                  {!entitiesLoading && !entitiesError && liveEntities.length === 0 && (
+                    <div className="px-3.5 py-2 text-[11px] text-slate-500">
+                      No organizational entities registered yet.
+                    </div>
+                  )}
                 </div>
               )}
             </div>

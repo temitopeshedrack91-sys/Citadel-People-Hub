@@ -16,7 +16,7 @@ import {
 import { useAuth } from '../../../context/AuthContext';
 import { useRealtimeTable } from '../../../hooks/useRealtimeTable';
 import { NavModule } from '../../layout/Sidebar';
-import { leaveRepository, employeeRepository, auditRepository } from '../../../services';
+import { leaveRepository, employeeRepository, auditRepository, offboardingRepository, performanceRepository } from '../../../services';
 import { StatusPill } from '../../common/StatusPill';
 import {
   LeaveRequest,
@@ -706,8 +706,8 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
                       {member.jobTitle} · {member.departmentName}
                     </span>
                   </div>
-                );
-              })
+                </div>
+              ))
             ) : (
               <p className="text-xs text-slate-500 p-6 text-center">
                 No direct reports assigned yet.

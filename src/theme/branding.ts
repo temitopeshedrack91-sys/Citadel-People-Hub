@@ -91,7 +91,7 @@ export const CITADEL_BRAND = {
     {
       id: 'entity-holdings',
       name: 'Citadel Holdings',
-      shortCode: 'Holdings',
+      shortCode: 'HOLDINGS',
       description: 'Commercial enterprise umbrella driving community commerce, hospitality, co-working, and sustainable enterprise.',
       departments: [
         'Bookshop',

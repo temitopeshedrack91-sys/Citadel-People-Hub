@@ -16,6 +16,7 @@ export interface JobTitle {
 
 export interface PayGrade {
   id: number;
+  code?: string;
   name: string;
   currency: string;
   minSalary: number;

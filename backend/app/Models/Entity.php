@@ -24,6 +24,11 @@ class Entity extends Model
         return $this->hasMany(Department::class);
     }
 
+    public function employees(): HasMany
+    {
+        return $this->hasMany(Employee::class, 'entity_id', 'id');
+    }
+
     /**
      * Normalize entity ID between string slug (e.g. 'entity-cgcc') and database ID ('CGCC').
      */

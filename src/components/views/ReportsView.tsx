@@ -22,6 +22,11 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import { isHrOrAdminUser } from '../../utils/rbac';
+import {
+  buildEmployeeMasterCsv,
+  entitiesMatch,
+  filterEmployeesByEntity,
+} from '../../utils/orgMatcher';
 import { Employee, CitadelEntity, CitadelDepartment, LeaveRequest } from '../../types';
 
 export const ReportsView: React.FC = () => {
@@ -82,69 +87,24 @@ export const ReportsView: React.FC = () => {
   });
 
   const matchEntity = (emp: { entityId?: string; entityName?: string }, ent: CitadelEntity) =>
-    String(emp.entityId || '') === String(ent.id) ||
-    (emp.entityName || '').toLowerCase().includes(ent.shortCode.toLowerCase()) ||
-    (emp.entityName || '').toLowerCase() === ent.name.toLowerCase();
+    entitiesMatch(emp.entityId, ent.id) ||
+    entitiesMatch(emp.entityName, ent.shortCode) ||
+    entitiesMatch(emp.entityName, ent.name);
 
   // Compute live breakdown statistics
   const totalStaff = employees.length;
-  const cgccStaff = employees.filter(
-    (e) =>
-      String(e.entityId) === 'entity-cgcc' ||
-      (e.entityName || '').toUpperCase().includes('CGCC') ||
-      (e.entityName || '').includes('Community Church')
-  );
-  const csogStaff = employees.filter(
-    (e) =>
-      String(e.entityId) === 'entity-csog' ||
-      (e.entityName || '').toUpperCase().includes('CSOG') ||
-      (e.entityName || '').includes('Government')
-  );
-  const holdingsStaff = employees.filter(
-    (e) =>
-      String(e.entityId) === 'entity-holdings' ||
-      (e.entityName || '').toUpperCase().includes('HOLDINGS') ||
-      (e.entityName || '').includes('Holdings')
-  );
+  const cgccStaff = filterEmployeesByEntity(employees, 'CGCC');
+  const csogStaff = filterEmployeesByEntity(employees, 'CSOG');
+  const holdingsStaff = filterEmployeesByEntity(employees, 'HOLDINGS');
 
   const activeLeaves = leaves.filter((l) => l.status === 'Approved');
   const pendingLeaves = leaves.filter(
     (l) => l.status === 'Submitted' || l.status === 'Pending Review'
   );
 
-  // Real CSV Generator
+  // Formula-safe RFC 4180 CSV Generator
   const handleExportCSV = async () => {
-    const headers = [
-      'Staff ID',
-      'Full Name',
-      'Email',
-      'Phone',
-      'Entity',
-      'Department',
-      'Job Title',
-      'Grade Level',
-      'Employment Type',
-      'Status',
-      'Employment Date',
-      'Years of Service',
-    ];
-
-    const rows = employees.map((e) => [
-      `"${e.staffId}"`,
-      `"${e.fullName}"`,
-      `"${e.email}"`,
-      `"${e.phone || ''}"`,
-      `"${e.entityName}"`,
-      `"${e.departmentName}"`,
-      `"${e.jobTitle}"`,
-      `"${e.gradeLevel}"`,
-      `"${e.employmentType}"`,
-      `"${e.status}"`,
-      `"${e.employmentDate}"`,
-      `"${e.yearsOfService}"`,
-    ]);
-
-    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
+    const csvContent = buildEmployeeMasterCsv(employees, { includeSensitive: isHrOrAdmin });
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');

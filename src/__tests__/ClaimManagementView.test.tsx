@@ -216,4 +216,30 @@ describe('ClaimManagementView Component (OrangeHRM Parity)', () => {
       expect(claimRepository.performAction).toHaveBeenCalledWith(1, 'APPROVE', undefined);
     });
   });
+
+  it('shows inline error banner instead of window.alert when submitting without a claim event', async () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    render(<ClaimManagementView />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Claims & Expense Reimbursements')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Submit Claim/i }));
+
+    // Clear the event selector
+    const selects = screen.getAllByRole('combobox');
+    const eventSelect = selects.find((el) =>
+      Array.from((el as HTMLSelectElement).options).some((o) => o.textContent?.includes('Choose Event'))
+    ) as HTMLSelectElement;
+    fireEvent.change(eventSelect, { target: { value: '' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /Submit for Approval/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('claim-error-banner')).toHaveTextContent(/Please select a claim event/i);
+    });
+    expect(alertSpy).not.toHaveBeenCalled();
+    alertSpy.mockRestore();
+  });
 });

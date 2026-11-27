@@ -353,7 +353,23 @@ class EmployeeController extends Controller
             'fullName' => [$required, 'string', 'max:180'],
             'firstName' => [$required, 'string', 'max:100'],
             'lastName' => [$required, 'string', 'max:100'],
-            'profilePhoto' => ['nullable', 'url', 'max:2048'],
+            'profilePhoto' => [
+                'nullable',
+                'string',
+                'max:2097152',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if ($value === null || $value === '') {
+                        return;
+                    }
+                    $str = (string) $value;
+                    $isHttpUrl = filter_var($str, FILTER_VALIDATE_URL) !== false && preg_match('/^https?:\/\//i', $str) === 1;
+                    $isRelativeStorage = str_starts_with($str, '/storage/') || str_starts_with($str, '/uploads/');
+                    $isSafeDataImage = preg_match('/^data:image\/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+\/=]+$/i', $str) === 1;
+                    if (! $isHttpUrl && ! $isRelativeStorage && ! $isSafeDataImage) {
+                        $fail('Profile photo must be an HTTPS URL, storage path, or valid PNG/JPEG/WEBP image upload.');
+                    }
+                },
+            ],
             'dateOfBirth' => ['nullable', 'date_format:Y-m-d'],
             'gender' => ['nullable', Rule::in(['Male', 'Female'])],
             'phone' => ['nullable', 'string', 'max:40'],
@@ -468,7 +484,7 @@ class EmployeeController extends Controller
             'nextOfKin' => ['name' => '', 'relationship' => '', 'phone' => '', 'address' => ''],
             'entityId' => $employee->entity_id,
             'entityName' => $employee->entity?->name,
-            'departmentId' => $employee->department_id,
+            'departmentId' => $employee->department_id ? (string) $employee->department_id : null,
             'departmentName' => $employee->department?->name,
             'jobTitle' => $employee->job_title,
             'gradeLevel' => $employee->grade_level,
@@ -488,7 +504,10 @@ class EmployeeController extends Controller
             'notes' => $employee->notes,
         ];
 
-        if (RoleAuthorization::canViewSensitiveEmployeeData($request->user())) {
+        $isSelf = $request->user()?->staff_id !== null
+            && strcasecmp((string) $request->user()->staff_id, (string) $employee->staff_id) === 0;
+
+        if (RoleAuthorization::canViewSensitiveEmployeeData($request->user()) || $isSelf) {
             $data = array_merge($data, [
                 'dateOfBirth' => $employee->date_of_birth,
                 'biometricDeviceId' => $employee->biometric_device_id,
