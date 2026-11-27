@@ -74,10 +74,39 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (HttpExceptionInterface $e, Request $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
+                $status = $e->getStatusCode();
+                $errorLabel = match ($status) {
+                    400 => 'Bad Request',
+                    401 => 'Unauthorized',
+                    403 => 'Forbidden',
+                    404 => 'Not Found',
+                    405 => 'Method Not Allowed',
+                    409 => 'Conflict',
+                    422 => 'Validation Error',
+                    429 => 'Too Many Requests',
+                    default => $status >= 500 ? 'Server Error' : 'Http Error',
+                };
+                $defaultMessage = match ($status) {
+                    401 => 'Unauthenticated.',
+                    403 => 'This action is unauthorized.',
+                    404 => 'The requested record was not found.',
+                    422 => 'The given data was invalid.',
+                    default => $status >= 500 ? 'An unexpected server error occurred.' : 'Request error.',
+                };
+
                 return response()->json([
-                    'message' => $e->getMessage() ?: 'Request error.',
-                    'error' => 'Http Error',
-                ], $e->getStatusCode());
+                    'message' => $e->getMessage() ?: $defaultMessage,
+                    'error' => $errorLabel,
+                ], $status);
+            }
+        });
+
+        $exceptions->render(function (\Throwable $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    'message' => 'An unexpected server error occurred.',
+                    'error' => 'Server Error',
+                ], 500);
             }
         });
     })->create();

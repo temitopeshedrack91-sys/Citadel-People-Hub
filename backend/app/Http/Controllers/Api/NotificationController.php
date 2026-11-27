@@ -38,10 +38,14 @@ class NotificationController extends Controller
 
     public function markAllRead(Request $request): JsonResponse
     {
-        SystemNotification::query()
+        $updated = SystemNotification::query()
             ->where(fn ($query) => $query->whereNull('target_user_id')->orWhere('target_user_id', $request->user()->id))
             ->where(fn ($query) => $query->whereNull('target_user_role')->orWhere('target_user_role', $request->user()->role))
             ->whereNull('read_at')->update(['read_at' => now()]);
+
+        if ($updated > 0) {
+            RealtimeEventService::publish('notifications', 'UPDATE', null, ['markAllRead' => true], (int) $request->user()->id);
+        }
 
         return response()->json(['message' => 'Notifications marked as read.']);
     }

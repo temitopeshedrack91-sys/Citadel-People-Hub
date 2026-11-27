@@ -78,7 +78,7 @@ class LeaveController extends Controller
     {
         $empId = $request->input('employeeId');
         $resolvedEmp = null;
-        if (! is_numeric($empId) || ! ($resolvedEmp = Employee::query()->find($empId))) {
+        if ($empId === null || $empId === '') {
             $staffId = $request->input('employeeStaffId') ?? $request->user()->staff_id;
             $resolvedEmp = $staffId
                 ? Employee::query()->where('staff_id', $staffId)->first()
@@ -86,6 +86,13 @@ class LeaveController extends Controller
             if ($resolvedEmp) {
                 $request->merge(['employeeId' => $resolvedEmp->id]);
             }
+        } elseif (! is_numeric($empId)) {
+            $resolvedEmp = Employee::query()->where('staff_id', (string) $empId)->first();
+            if ($resolvedEmp) {
+                $request->merge(['employeeId' => $resolvedEmp->id]);
+            }
+        } else {
+            $resolvedEmp = Employee::query()->find($empId);
         }
 
         if ($resolvedEmp && ! $request->filled('employeeStaffId')) {

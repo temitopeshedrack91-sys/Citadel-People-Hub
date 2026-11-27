@@ -34,7 +34,7 @@ export const AccessDeniedView: React.FC<AccessDeniedViewProps> = ({
         <div className="h-1.5 bg-[#083E34]" />
 
         <div className="p-6 sm:p-10 space-y-6">
-          {/* Header Icon & Status Pill */}
+          {/* Header Icon & Status */}
           <div className="flex items-start justify-between gap-4">
             <div className="w-12 h-12 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 flex items-center justify-center shrink-0">
               {status === 401 ? <Lock className="w-6 h-6" /> : <ShieldAlert className="w-6 h-6" />}
@@ -60,38 +60,38 @@ export const AccessDeniedView: React.FC<AccessDeniedViewProps> = ({
 
           {/* User Context Details */}
           {currentUser && (
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Your Current Session Profile
+            <div className="pt-5 border-t border-slate-100 space-y-3">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                Current Session Profile
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <dl className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                 <div>
-                  <span className="text-slate-400 block text-[10px]">Signed in as</span>
-                  <span className="font-bold text-slate-900">{currentUser.name}</span>
+                  <dt className="text-slate-500 text-[11px]">Signed in as</dt>
+                  <dd className="font-semibold text-slate-900 mt-0.5">{currentUser.name}</dd>
                 </div>
                 <div>
-                  <span className="text-slate-400 block text-[10px]">Assigned Role</span>
-                  <span className="font-bold text-[#D97706]">
+                  <dt className="text-slate-500 text-[11px]">Assigned Role</dt>
+                  <dd className="font-semibold text-[#083E34] mt-0.5">
                     {canonical || currentRole}
-                  </span>
+                  </dd>
                 </div>
                 <div>
-                  <span className="text-slate-400 block text-[10px]">Department</span>
-                  <span className="font-bold text-slate-700 truncate block">
+                  <dt className="text-slate-500 text-[11px]">Department</dt>
+                  <dd className="font-semibold text-slate-700 truncate mt-0.5">
                     {currentUser.departmentName || 'Citadel Community'}
-                  </span>
+                  </dd>
                 </div>
-              </div>
+              </dl>
             </div>
           )}
 
-          {/* Policy Notice Box */}
-          <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/70 text-xs text-amber-900 space-y-1">
-            <div className="font-bold flex items-center gap-1.5 text-amber-950">
-              <Building className="w-3.5 h-3.5" />
+          {/* Policy Notice */}
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-700 space-y-1">
+            <div className="font-semibold flex items-center gap-1.5 text-slate-900">
+              <Building className="w-3.5 h-3.5 text-[#083E34]" />
               <span>Role-Based Access Policy</span>
             </div>
-            <p className="text-[11px] text-amber-800 leading-normal">
+            <p className="text-xs text-slate-600 leading-relaxed">
               Citadel People Hub enforces strict security boundaries. HR records and system settings
               are restricted to authorized administrative personnel. Employee accounts are scoped
               exclusively to personal self-service and department views.
@@ -101,18 +101,20 @@ export const AccessDeniedView: React.FC<AccessDeniedViewProps> = ({
           {/* Action CTAs */}
           <div className="pt-2 flex flex-wrap items-center gap-3">
             <button
+              type="button"
               onClick={onNavigateHome}
               data-testid="access-denied-home-btn"
-              className="px-5 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold flex items-center gap-2 shadow-xs transition active:scale-95 cursor-pointer"
+              className="px-4 py-2.5 rounded-lg bg-[#083E34] hover:bg-[#062E27] text-white text-xs font-semibold flex items-center gap-2 transition active:scale-[0.98] cursor-pointer"
             >
-              <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
+              <ArrowLeft className="w-4 h-4" />
               <span>Return to Dashboard</span>
             </button>
 
             {status === 401 && onOpenLogin && (
               <button
+                type="button"
                 onClick={onOpenLogin}
-                className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-2 shadow-xs transition cursor-pointer"
+                className="px-4 py-2.5 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-semibold flex items-center gap-2 transition cursor-pointer"
               >
                 <LogIn className="w-4 h-4" />
                 <span>Sign In with Credentials</span>

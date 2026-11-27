@@ -33,11 +33,11 @@ export const themeTokens = {
 
     // Canvas & Surfaces
     background: {
-      canvas: '#F4F6F9',     // Clean soft grey-white canvas
+      canvas: '#F6F7F9',     // Clean alabaster-slate canvas
       subtle: '#F8FAFC',
-      card: '#FFFFFF',       // Pure white cards matching reference
+      card: '#FFFFFF',       // Pure white single-elevation surface
       elevated: '#FFFFFF',
-      sidebar: '#FFFFFF',    // Crisp white sidebar matching Hrivio/Pillio
+      sidebar: '#071916',    // Obsidian-forest navigation rail
       hover: '#F8FAFC',
     },
 
@@ -53,8 +53,8 @@ export const themeTokens = {
 
     // Borders & Dividers
     border: {
-      DEFAULT: '#E2E8F0',     // Slate 200
-      subtle: '#EDF2F7',      // Very soft card borders
+      DEFAULT: '#E5E9F0',     // Crisp hairline border
+      subtle: '#EEF2F6',      // Subtle row divider
       strong: '#CBD5E1',      // Slate 300
       active: '#083E34',      // Primary selection border
       activeSubtle: '#B2DDD4',
@@ -103,38 +103,38 @@ export const themeTokens = {
   // Typography Tokens
   typography: {
     fonts: {
-      heading: '"DM Sans", system-ui, -apple-system, sans-serif',
+      heading: '"Plus Jakarta Sans", "DM Sans", system-ui, -apple-system, sans-serif',
       body: '"DM Sans", system-ui, -apple-system, sans-serif',
-      mono: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+      mono: '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
     },
     sizes: {
-      metric: 'clamp(1.75rem, 2.5vw, 2.25rem)', // Large bold key numbers (headcount, attendance %, leave balance)
-      metricSub: '0.75rem',                      // Smaller supporting text beneath key numbers
+      metric: 'clamp(1.75rem, 2.2vw, 2.125rem)',
+      metricSub: '0.75rem',
     },
     weights: {
       bold: 700,
       extrabold: 800,
-      black: 900,
+      black: 800,
     },
   },
 
   // Shape & Radii Tokens
   radii: {
-    button: '0.75rem',    // 12px rounded
-    card: '1.25rem',      // 20px rounded cards
-    cardInner: '0.875rem',// 14px nested items
-    input: '0.875rem',    // 14px rounded input fields
-    modal: '1.25rem',     // 20px modal dialogs
-    pill: '9999px',       // Full pill shape (status pills, search bar, chips)
+    button: '0.75rem',
+    card: '1.25rem',
+    cardInner: '0.75rem',
+    input: '0.75rem',
+    modal: '1.25rem',
+    pill: '9999px',
   },
 
   // Elevation & Shadows
   shadows: {
-    card: '0 2px 10px rgba(15, 23, 42, 0.03)',
-    cardHover: '0 6px 18px rgba(15, 23, 42, 0.06)',
+    card: '0 1px 2px rgba(15, 23, 42, 0.04)',
+    cardHover: '0 4px 12px rgba(15, 23, 42, 0.06)',
     dropdown: '0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04)',
     modal: '0 25px 50px -12px rgba(15, 23, 42, 0.18)',
-    buttonPrimary: '0 2px 6px rgba(8, 62, 52, 0.22)',
+    buttonPrimary: '0 1px 3px rgba(8, 62, 52, 0.2)',
   },
 } as const;
 

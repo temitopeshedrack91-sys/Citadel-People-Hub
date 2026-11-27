@@ -197,6 +197,14 @@ describe('Payroll Domain & Sidebar Integration', () => {
   });
 
   describe('LaravelPayrollRepository API Integration', () => {
+    beforeEach(() => {
+      vi.stubEnv('VITE_API_BASE_URL', 'http://localhost:8000');
+    });
+
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
     it('calls /payroll/templates when fetching salary templates', async () => {
       const { LaravelPayrollRepository } = await import('../services/laravelAdapter');
       const repo = new LaravelPayrollRepository();

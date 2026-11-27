@@ -98,7 +98,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
       setDeptTeammates(
         empData.filter(
           (e) =>
-            e.id !== actorEmployeeId &&
+            (!actorEmployeeId || String(e.id) !== actorEmployeeId) &&
             (!currentUser.staffId || e.staffId !== currentUser.staffId)
         )
       );
@@ -293,7 +293,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
 
               return (
                 <div className="space-y-4">
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="pb-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-semibold text-[#083E34]">
@@ -556,7 +556,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                 </div>
               ))
             ) : (
-              <p className="text-xs text-slate-500 py-3">No other teammates in this department.</p>
+              <p className="text-xs text-slate-500 p-6 text-center">No other teammates in this department.</p>
             )}
           </div>
         </div>

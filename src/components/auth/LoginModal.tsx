@@ -424,50 +424,51 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               <form onSubmit={handleLogin} className="space-y-3.5">
                 <div>
                   <label className="mb-1 block text-xs font-bold text-slate-700">Work Email</label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="e.g. dr.adeleke@citadel.ng"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-bold text-slate-700">Password</label>
-                    {localDemoAuthenticationEnabled && <span className="text-[11px] text-slate-400">Default: Password123!</span>}
-                  </div>
-                  <div className="relative">
                     <input
-                      type={showPassword ? 'text' : 'password'}
+                      type="email"
                       required
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 px-3 py-2 pr-10 text-xs sm:text-sm text-slate-900 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 focus:outline-none"
+                      placeholder="e.g. dr.adeleke@citadel.ng"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/15 focus:outline-none"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
-                      title="Toggle password"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
                   </div>
-                </div>
 
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-950 border border-[#C59B27] disabled:opacity-60 cursor-pointer transition shadow-xs flex items-center justify-center gap-2"
-                >
-                  <LogIn className="w-4 h-4" />
-                  <span>{isSubmitting ? 'Authenticating...' : `Sign In with ${backendEnabled ? 'Citadel' : 'Supabase'}`}</span>
-                </button>
-              </form>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-semibold text-slate-700">Password</label>
+                      {localDemoAuthenticationEnabled && <span className="text-[11px] text-slate-400">Default: Password123!</span>}
+                    </div>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10 text-xs sm:text-sm text-slate-900 focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/15 focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                        title={showPassword ? 'Hide password' : 'Show password'}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full rounded-lg bg-[#083E34] hover:bg-[#062E27] px-4 py-2.5 text-xs sm:text-sm font-semibold text-white disabled:opacity-60 cursor-pointer transition shadow-xs flex items-center justify-center gap-2"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    <span>{isSubmitting ? 'Authenticating...' : 'Sign In'}</span>
+                  </button>
+                </form>
 
               {/* Development-only demo credential fill selector */}
               {localDemoAuthenticationEnabled && (
@@ -565,7 +566,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-950 border border-[#C59B27] disabled:opacity-60 cursor-pointer transition shadow-xs flex items-center justify-center gap-2"
+                className="w-full rounded-lg bg-[#083E34] hover:bg-[#062E27] px-4 py-2.5 text-xs sm:text-sm font-semibold text-white disabled:opacity-60 cursor-pointer transition shadow-xs flex items-center justify-center gap-2"
               >
                 <UserPlus className="w-4 h-4" />
                 <span>{isSubmitting ? 'Creating Account...' : 'Create Employee Account'}</span>
@@ -746,8 +747,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           </div>
           {!required && (
             <button
+              type="button"
               onClick={onClose}
-              className="px-4 py-1.5 bg-[#D4AF37] text-slate-950 text-xs font-bold rounded-xl hover:bg-[#C59B27] transition cursor-pointer shadow-xs"
+              className="px-4 py-1.5 bg-[#083E34] text-white text-xs font-semibold rounded-lg hover:bg-[#062E27] transition cursor-pointer"
             >
               Done
             </button>

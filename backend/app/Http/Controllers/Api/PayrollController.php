@@ -13,6 +13,7 @@ use App\Models\PayrollRun;
 use App\Models\SalaryTemplate;
 use App\Services\PayrollService;
 use App\Support\AuditLogger;
+use App\Support\RoleAuthorization;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -199,7 +200,11 @@ class PayrollController extends Controller
 
             return response()->json(['data' => $assignment->load(['employee', 'salaryTemplate'])], 201);
         } catch (InvalidArgumentException $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+            return response()->json([
+                'message' => $e->getMessage(),
+                'error' => 'Validation Error',
+                'errors' => ['payroll' => [$e->getMessage()]],
+            ], 422);
         }
     }
 
@@ -273,7 +278,11 @@ class PayrollController extends Controller
 
             return response()->json(['data' => $run], 201);
         } catch (RuntimeException $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+            return response()->json([
+                'message' => $e->getMessage(),
+                'error' => 'Validation Error',
+                'errors' => ['payroll' => [$e->getMessage()]],
+            ], 422);
         }
     }
 
@@ -312,7 +321,11 @@ class PayrollController extends Controller
 
             return response()->json(['data' => $finalized, 'message' => 'Payroll run finalized successfully.']);
         } catch (RuntimeException $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+            return response()->json([
+                'message' => $e->getMessage(),
+                'error' => 'Validation Error',
+                'errors' => ['payroll' => [$e->getMessage()]],
+            ], 422);
         }
     }
 
@@ -325,7 +338,7 @@ class PayrollController extends Controller
     public function showPayslip(Request $request, PayrollItem $item): JsonResponse
     {
         $user = $request->user();
-        $isHR = in_array($user->role, self::HR_ROLES, true);
+        $isHR = RoleAuthorization::isGlobalHrOrAdmin($user);
 
         if (! $isHR) {
             $employee = Employee::query()->where('staff_id', $user->staff_id)->first();
@@ -363,7 +376,11 @@ class PayrollController extends Controller
 
             return response()->json(['data' => $paidItem, 'message' => 'Payment reference recorded and payslip marked as paid.']);
         } catch (RuntimeException $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+            return response()->json([
+                'message' => $e->getMessage(),
+                'error' => 'Validation Error',
+                'errors' => ['payroll' => [$e->getMessage()]],
+            ], 422);
         }
     }
 
@@ -376,7 +393,7 @@ class PayrollController extends Controller
     public function loans(Request $request): JsonResponse
     {
         $user = $request->user();
-        $isHR = in_array($user->role, self::HR_ROLES, true);
+        $isHR = RoleAuthorization::isGlobalHrOrAdmin($user);
 
         $query = EmployeeLoan::query()->with(['employee:id,staff_id,full_name', 'installments']);
         if (! $isHR) {
@@ -450,7 +467,11 @@ class PayrollController extends Controller
 
             return response()->json(['data' => $approved]);
         } catch (InvalidArgumentException $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+            return response()->json([
+                'message' => $e->getMessage(),
+                'error' => 'Validation Error',
+                'errors' => ['payroll' => [$e->getMessage()]],
+            ], 422);
         }
     }
 
@@ -545,6 +566,10 @@ class PayrollController extends Controller
      */
     private function authorizeRole(Request $request, array $roles): void
     {
-        abort_unless(in_array($request->user()->role, $roles, true), 403, 'Unauthorized access.');
+        abort_unless(
+            RoleAuthorization::isGlobalHrOrAdmin($request->user()) || in_array($request->user()->role, $roles, true),
+            403,
+            'Unauthorized access.'
+        );
     }
 }

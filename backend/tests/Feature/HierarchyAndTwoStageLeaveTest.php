@@ -508,6 +508,179 @@ class HierarchyAndTwoStageLeaveTest extends TestCase
             ->get("/api/v1/realtime/stream?since={$initialLatest}&once=1");
         $sse->assertOk();
         $this->assertStringContainsString('text/event-stream', (string) $sse->headers->get('Content-Type'));
+        $content = $sse->streamedContent();
+        $this->assertStringContainsString("id: {$initialLatest}\nevent: connected", $content);
+        $this->assertStringContainsString('event: ping', $content);
+
+        $latestId = (int) $eventsRes->json('data.latestId');
+        $resumed = $this->actingAs($this->managerUser)
+            ->withHeader('Last-Event-ID', (string) $latestId)
+            ->get('/api/v1/realtime/stream?once=1');
+        $resumed->assertOk();
+        $resumedContent = $resumed->streamedContent();
+        $this->assertStringContainsString("id: {$latestId}\nevent: connected", $resumedContent);
+        $this->assertStringNotContainsString('event: change', $resumedContent);
+    }
+
+    public function test_clearing_supervisor_escalates_open_stage_one_leave_to_hr(): void
+    {
+        $leaveId = $this->actingAs($this->icUser)->postJson('/api/v1/leave-requests', [
+            'employeeId' => $this->icEmp->id,
+            'employeeStaffId' => $this->icEmp->staff_id,
+            'leaveType' => 'Annual Leave',
+            'startDate' => '2026-12-26',
+            'endDate' => '2026-12-27',
+            'totalDays' => 2,
+            'reason' => 'Escalation on manager clear',
+        ])->assertCreated()
+            ->assertJsonPath('data.approvalStage', 'MANAGER')
+            ->assertJsonPath('data.status', 'Submitted')
+            ->json('data.id');
+
+        // HR clears Jonathan's direct supervisor while Stage 1 request is open
+        $this->actingAs($this->hrUser)->patchJson("/api/v1/employees/{$this->icEmp->id}", [
+            'managerId' => null,
+        ])->assertOk()->assertJsonPath('data.managerId', null);
+
+        // Open Stage 1 request must now be escalated to HR and approvable by HR
+        $approved = $this->actingAs($this->hrUser)
+            ->patchJson("/api/v1/leave-requests/{$leaveId}/status", [
+                'status' => 'Approved',
+                'comments' => 'Approved directly by HR after supervisor clearance.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.approvalStage', 'COMPLETE')
+            ->assertJsonPath('data.status', 'Approved');
+
+        $this->assertSame('Sussan Afuwape', $approved->json('data.hrActorName'));
+
+        $balance = EmployeeLeaveBalance::where('employee_id', $this->icEmp->id)->firstOrFail();
+        $this->assertEquals(2.0, (float) $balance->used_days);
+        $this->assertEquals(0.0, (float) $balance->pending_days);
+        $this->assertEquals(18.0, (float) $balance->remaining_days);
+    }
+
+    public function test_organization_repository_rejects_mismatched_entity_department_and_supports_snake_case_filters(): void
+    {
+        $repo = app(\App\Repositories\OrganizationRepository::class);
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        try {
+            $repo->assertDepartmentBelongsToEntity($this->deptOpsB->id, $this->entityA->id);
+        } finally {
+            $depts = $this->actingAs($this->hrUser)
+                ->getJson("/api/v1/departments?entity_id={$this->entityB->id}")
+                ->assertOk();
+            $this->assertSame(['CSOG Operations'], collect($depts->json('data'))->pluck('name')->all());
+
+            $emps = $this->actingAs($this->hrUser)
+                ->getJson("/api/v1/employees?entity_id={$this->entityB->id}&department_id={$this->deptOpsB->id}")
+                ->assertOk();
+            $this->assertSame(['Adaobi Nwosu'], collect($emps->json('data'))->pluck('fullName')->all());
+        }
+    }
+
+    public function test_requires_correction_releases_pending_balance_and_dates_and_explicit_missing_employee_returns_422(): void
+    {
+        // Explicit nonexistent numeric employeeId must return 422 rather than silently falling back
+        $this->actingAs($this->icUser)->postJson('/api/v1/leave-requests', [
+            'employeeId' => 999999,
+            'leaveType' => 'Annual Leave',
+            'startDate' => '2026-12-01',
+            'endDate' => '2026-12-02',
+            'totalDays' => 2,
+            'reason' => 'Invalid employee id',
+        ])->assertStatus(422)
+            ->assertJsonPath('error', 'Validation Error')
+            ->assertJsonValidationErrors(['employeeId']);
+
+        $leaveId = $this->actingAs($this->icUser)->postJson('/api/v1/leave-requests', [
+            'employeeId' => $this->icEmp->id,
+            'employeeStaffId' => $this->icEmp->staff_id,
+            'leaveType' => 'Annual Leave',
+            'startDate' => '2026-12-01',
+            'endDate' => '2026-12-03',
+            'totalDays' => 3,
+            'reason' => 'Needs handover details',
+        ])->assertCreated()->json('data.id');
+
+        $this->actingAs($this->leadUser)
+            ->patchJson("/api/v1/leave-requests/{$leaveId}/status", [
+                'status' => 'Requires Correction',
+                'comments' => 'Add relieving staff name.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'Requires Correction')
+            ->assertJsonPath('data.stoppedAtStage', 'MANAGER');
+
+        $balance = EmployeeLeaveBalance::where('employee_id', $this->icEmp->id)->firstOrFail();
+        $this->assertEquals(0.0, (float) $balance->pending_days);
+        $this->assertEquals(20.0, (float) $balance->remaining_days);
+
+        // Employee can immediately resubmit on the exact same dates without overlap conflict
+        $this->actingAs($this->icUser)->postJson('/api/v1/leave-requests', [
+            'employeeId' => $this->icEmp->id,
+            'employeeStaffId' => $this->icEmp->staff_id,
+            'leaveType' => 'Annual Leave',
+            'startDate' => '2026-12-01',
+            'endDate' => '2026-12-03',
+            'totalDays' => 3,
+            'reason' => 'Resubmitted with relieving staff',
+        ])->assertCreated();
+    }
+
+    public function test_dashboard_pending_approvals_excludes_skip_level_and_errors_follow_consistent_json(): void
+    {
+        $this->actingAs($this->icUser)->postJson('/api/v1/leave-requests', [
+            'employeeId' => $this->icEmp->id,
+            'employeeStaffId' => $this->icEmp->staff_id,
+            'leaveType' => 'Annual Leave',
+            'startDate' => '2026-12-08',
+            'endDate' => '2026-12-09',
+            'totalDays' => 2,
+            'reason' => 'Direct report pending check',
+        ])->assertCreated();
+
+        // Direct supervisor Nadia sees Jonathan's request in pendingApprovals
+        $this->actingAs($this->leadUser)->getJson('/api/v1/dashboard/summary')
+            ->assertOk()
+            ->assertJsonCount(1, 'data.team.pendingApprovals');
+
+        // Skip-level manager Femi does NOT see Jonathan's request in pendingApprovals
+        $this->actingAs($this->managerUser)->getJson('/api/v1/dashboard/summary')
+            ->assertOk()
+            ->assertJsonCount(0, 'data.team.pendingApprovals');
+
+        // 401 consistent JSON
+        $this->getJson('/api/v1/employees')
+            ->assertUnauthorized()
+            ->assertJsonPath('error', 'Unauthorized');
+
+        // 403 consistent JSON (not 'Http Error') on HR-only endpoints including recruitment candidates
+        $this->actingAs($this->managerUser)->getJson('/api/v1/recruitment/candidates')
+            ->assertForbidden()
+            ->assertJsonPath('error', 'Forbidden');
+
+        $this->actingAs($this->icUser)->getJson('/api/v1/recruitment/candidates')
+            ->assertForbidden()
+            ->assertJsonPath('error', 'Forbidden');
+
+        $this->actingAs($this->managerUser)->getJson('/api/v1/payroll/templates')
+            ->assertForbidden()
+            ->assertJsonPath('error', 'Forbidden');
+
+        // Department head cannot bypass DocumentController RBAC to upload institutional documents or view cross-dept docs
+        $deptHeadUser = User::factory()->create([
+            'name' => 'Dept Head ICT',
+            'role' => 'DEPARTMENT_HEAD',
+            'entity_id' => $this->entityA->id,
+            'department_id' => $this->deptEng->id,
+        ]);
+        $this->actingAs($deptHeadUser)->postJson('/api/v1/documents', [])
+            ->assertForbidden()
+            ->assertJsonPath('error', 'Forbidden');
+        $this->actingAs($deptHeadUser)->getJson("/api/v1/employees/{$this->otherTeamEmp->id}/documents")
+            ->assertForbidden()
+            ->assertJsonPath('error', 'Forbidden');
     }
 
     public function test_navigation_read_bursts_do_not_throttle_reads_leave_approvals_or_payroll(): void

@@ -84,9 +84,13 @@ class DashboardController extends Controller
                     return true;
                 }
 
-                return $r->approval_stage === 'MANAGER'
+                $directManagerId = $r->manager_id ?? $r->employee?->manager_id;
+
+                return in_array($r->approval_stage, ['MANAGER', 'LINE_MANAGER', 'DEPARTMENT_HEAD'], true)
                     && $selfEmployee !== null
-                    && (int) $r->employee_id !== (int) $selfEmployee->id;
+                    && (int) $r->employee_id !== (int) $selfEmployee->id
+                    && $directManagerId !== null
+                    && (string) $directManagerId === (string) $selfEmployee->id;
             })->values();
 
             $directReports = $selfEmployee ? $this->hierarchy->getDirectReports($selfEmployee) : collect();

@@ -79,7 +79,7 @@ export const StatCard: React.FC<StatCardProps> = ({
         </span>
 
         {supportingText ? (
-          <div className="mt-2 flex items-center gap-1.5 text-xs flex-wrap font-medium">
+          <div className="mt-2.5 flex items-center gap-1.5 text-xs flex-wrap font-medium">
             {supportingText}
           </div>
         ) : trend ? (
@@ -98,7 +98,7 @@ export const StatCard: React.FC<StatCardProps> = ({
             )}
           </div>
         ) : subtitle ? (
-          <p className="mt-2 text-xs text-slate-500 font-medium">{subtitle}</p>
+          <p className="mt-2.5 text-xs text-slate-500">{subtitle}</p>
         ) : null}
       </div>
     </div>

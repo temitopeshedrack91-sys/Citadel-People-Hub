@@ -123,7 +123,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
       } else {
         const userNameLower = (currentUser.name || '').toLowerCase();
         reports = allEmps.filter((e) => {
-          if (e.id === actorEmployeeId) return false;
+          if (actorEmployeeId && String(e.id) === actorEmployeeId) return false;
           if (actorEmployeeId && String(e.managerId || '') === actorEmployeeId) return true;
           if (userNameLower && (e.managerName || '').toLowerCase().includes(userNameLower)) {
             return true;
@@ -435,7 +435,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
                       setReviewComments((prev) => ({ ...prev, [req.id]: e.target.value }))
                     }
                     placeholder="Optional comment for employee & HR..."
-                    className="mt-1 w-full max-w-md px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:border-[#083E34]"
+                    className="mt-1 w-full max-w-md px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/15"
                   />
                 </div>
 
@@ -496,7 +496,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
             </button>
           </div>
 
-          <div className="p-4 space-y-2.5">
+          <div className="divide-y divide-slate-100">
             {calendarEvents.length > 0 ? (
               calendarEvents.map((ev) => (
                 <div
@@ -517,7 +517,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
                 </div>
               ))
             ) : (
-              <p className="text-xs text-slate-500 py-4 text-center">
+              <p className="text-xs text-slate-500 p-6 text-center">
                 No scheduled leaves for your team in this window.
               </p>
             )}
@@ -558,7 +558,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
                       {member.jobTitle} · {member.departmentName}
                     </span>
                   </div>
-                  <span className="font-mono text-[11px] text-slate-500">{member.staffId}</span>
+                  <span className="font-mono text-[11px] text-slate-500 shrink-0">{member.staffId}</span>
                 </div>
               ))
             ) : (

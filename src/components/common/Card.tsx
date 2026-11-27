@@ -44,20 +44,20 @@ export const Card: React.FC<CardProps> = ({
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
           <div className="flex items-center gap-2">
             {Icon && <Icon className={`w-4 h-4 shrink-0 ${iconColor}`} />}
-            <div>
+            <div className="min-w-0">
               {title && (
                 <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
                   {title}
                 </h3>
               )}
               {subtitle && (
-                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5 truncate">
                   {subtitle}
                 </p>
               )}
             </div>
           </div>
-          {headerAction && <div>{headerAction}</div>}
+          {headerAction && <div className="shrink-0">{headerAction}</div>}
         </div>
       )}
 

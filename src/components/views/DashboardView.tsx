@@ -1048,6 +1048,8 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                       <button
                         type="button"
                         key={lv.id}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => onNavigate('leave')}
                         className="w-full flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1.5 rounded-lg transition text-left"
                       >

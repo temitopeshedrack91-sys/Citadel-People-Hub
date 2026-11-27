@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\HubDocument;
+use App\Services\RealtimeEventService;
 use App\Support\AuditLogger;
 use App\Support\RoleAuthorization;
 use Illuminate\Http\JsonResponse;
@@ -76,7 +77,7 @@ class DocumentController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        abort_unless(RoleAuthorization::canonical($request->user()->role) === 'HR_STAFF', 403, 'Only HR staff can upload managed documents.');
+        abort_unless(RoleAuthorization::isGlobalHrOrAdmin($request->user()), 403, 'Only HR staff can upload managed documents.');
         $data = $request->validate([
             'file' => ['required', 'file', 'max:20480', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,png,jpg,jpeg'],
             'title' => ['required', 'string', 'max:180'],
@@ -113,6 +114,7 @@ class DocumentController extends Controller
                     'is_sensitive' => $data['isSensitive'] ?? false,
                 ]);
                 AuditLogger::record($request, 'Documents & Policies', 'Uploaded document', $document->id, $document->title, null, $document->category);
+                RealtimeEventService::publish('documents', 'INSERT', $document->id, ['category' => $document->category], (int) $request->user()->id);
 
                 return $document;
             });
@@ -181,6 +183,7 @@ class DocumentController extends Controller
                     'is_sensitive' => true,
                 ]);
                 AuditLogger::record($request, 'Employee Documents', 'Uploaded employee document', $document->id, $document->title, null, $document->category);
+                RealtimeEventService::publish('documents', 'INSERT', $document->id, ['employeeId' => $employee->id], (int) $request->user()->id);
 
                 return $document;
             });
@@ -254,6 +257,7 @@ class DocumentController extends Controller
                     'is_sensitive' => true,
                 ]);
                 AuditLogger::record($request, 'Employee Documents', 'Replaced employee document', $newDocument->id, $newDocument->title, $document->file_name, $newDocument->category);
+                RealtimeEventService::publish('documents', 'UPDATE', $newDocument->id, ['employeeId' => $employee->id], (int) $request->user()->id);
 
                 return $newDocument;
             });
@@ -287,6 +291,7 @@ class DocumentController extends Controller
                 $document->delete();
                 Storage::disk($disk)->delete($path);
                 AuditLogger::record($request, 'Employee Documents', 'Deleted employee document', $document->id, $title, $fileName, $category);
+                RealtimeEventService::publish('documents', 'DELETE', $document->id, ['employeeId' => $document->employee_id], (int) $request->user()->id);
             });
         } catch (Throwable $exception) {
             throw $exception;
@@ -325,8 +330,7 @@ class DocumentController extends Controller
     private function canAccess(Request $request, HubDocument $document): bool
     {
         $user = $request->user();
-        $role = RoleAuthorization::canonical($user->role);
-        if ($role === 'HR_STAFF') {
+        if (RoleAuthorization::isGlobalHrOrAdmin($user)) {
             return true;
         }
         if ($document->is_sensitive || in_array($document->access_level, ['Restricted_PCCM_Only', 'PCCM_Only'], true)) {
@@ -349,26 +353,23 @@ class DocumentController extends Controller
     private function canViewEmployeeDocuments(Request $request, Employee $employee): bool
     {
         $user = $request->user();
-        $role = RoleAuthorization::canonical($user->role);
-
-        if ($role === 'HR_STAFF') {
+        if (RoleAuthorization::isGlobalHrOrAdmin($user)) {
             return true;
         }
 
-        if ($role === 'BUSINESS_HEAD' && $user->entity_id !== null) {
+        $rawRole = strtoupper(trim((string) $user->role));
+        $role = RoleAuthorization::canonical($user->role);
+
+        if ($rawRole === 'BUSINESS_HEAD' && $user->entity_id !== null) {
             return (string) $employee->entity_id === (string) $user->entity_id;
         }
 
-        if ($role === 'DEPARTMENT_HEAD' && $user->department_id !== null) {
+        if ($rawRole === 'DEPARTMENT_HEAD' && $user->department_id !== null) {
             return (string) $employee->department_id === (string) $user->department_id;
         }
 
         if (in_array($role, ['EMPLOYEE', 'MANAGER'], true)) {
             return (string) $employee->id === (string) $user->employee?->id;
-        }
-
-        if (in_array($role, ['HR_STAFF'], true)) {
-            return true;
         }
 
         return false;
@@ -377,17 +378,18 @@ class DocumentController extends Controller
     private function canManageEmployeeDocuments(Request $request, Employee $employee): bool
     {
         $user = $request->user();
-        $role = RoleAuthorization::canonical($user->role);
-
-        if ($role === 'HR_STAFF') {
+        if (RoleAuthorization::isGlobalHrOrAdmin($user)) {
             return true;
         }
 
-        if ($role === 'BUSINESS_HEAD' && $user->entity_id !== null) {
+        $rawRole = strtoupper(trim((string) $user->role));
+        $role = RoleAuthorization::canonical($user->role);
+
+        if ($rawRole === 'BUSINESS_HEAD' && $user->entity_id !== null) {
             return (string) $employee->entity_id === (string) $user->entity_id;
         }
 
-        if ($role === 'DEPARTMENT_HEAD' && $user->department_id !== null) {
+        if ($rawRole === 'DEPARTMENT_HEAD' && $user->department_id !== null) {
             return (string) $employee->department_id === (string) $user->department_id;
         }
 
@@ -401,17 +403,18 @@ class DocumentController extends Controller
     private function canReplaceDocument(Request $request, HubDocument $document): bool
     {
         $user = $request->user();
+        if (RoleAuthorization::isGlobalHrOrAdmin($user)) {
+            return true;
+        }
+
+        $rawRole = strtoupper(trim((string) $user->role));
         $role = RoleAuthorization::canonical($user->role);
 
-        if ($role === 'HR_STAFF') {
+        if ($rawRole === 'BUSINESS_HEAD' && $user->entity_id !== null) {
             return true;
         }
 
-        if ($role === 'BUSINESS_HEAD' && $user->entity_id !== null) {
-            return true;
-        }
-
-        if ($role === 'DEPARTMENT_HEAD' && $user->department_id !== null) {
+        if ($rawRole === 'DEPARTMENT_HEAD' && $user->department_id !== null) {
             return true;
         }
 
@@ -425,17 +428,18 @@ class DocumentController extends Controller
     private function canDeleteDocument(Request $request, HubDocument $document): bool
     {
         $user = $request->user();
+        if (RoleAuthorization::isGlobalHrOrAdmin($user)) {
+            return true;
+        }
+
+        $rawRole = strtoupper(trim((string) $user->role));
         $role = RoleAuthorization::canonical($user->role);
 
-        if ($role === 'HR_STAFF') {
+        if ($rawRole === 'BUSINESS_HEAD' && $user->entity_id !== null) {
             return true;
         }
 
-        if ($role === 'BUSINESS_HEAD' && $user->entity_id !== null) {
-            return true;
-        }
-
-        if ($role === 'DEPARTMENT_HEAD' && $user->department_id !== null) {
+        if ($rawRole === 'DEPARTMENT_HEAD' && $user->department_id !== null) {
             return true;
         }
 
@@ -449,17 +453,18 @@ class DocumentController extends Controller
     private function canAccessEmployeeDocument(Request $request, Employee $employee, HubDocument $document): bool
     {
         $user = $request->user();
-        $role = RoleAuthorization::canonical($user->role);
-
-        if ($role === 'HR_STAFF') {
+        if (RoleAuthorization::isGlobalHrOrAdmin($user)) {
             return true;
         }
 
-        if ($role === 'BUSINESS_HEAD' && $user->entity_id !== null) {
+        $rawRole = strtoupper(trim((string) $user->role));
+        $role = RoleAuthorization::canonical($user->role);
+
+        if ($rawRole === 'BUSINESS_HEAD' && $user->entity_id !== null) {
             return (string) $employee->entity_id === (string) $user->entity_id;
         }
 
-        if ($role === 'DEPARTMENT_HEAD' && $user->department_id !== null) {
+        if ($rawRole === 'DEPARTMENT_HEAD' && $user->department_id !== null) {
             return (string) $employee->department_id === (string) $user->department_id;
         }
 

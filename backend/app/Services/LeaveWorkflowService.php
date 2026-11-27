@@ -337,7 +337,7 @@ class LeaveWorkflowService
             $balance->used_days = (float) $balance->used_days + (float) $record->total_days;
             $balance->remaining_days = max(0, (float) $balance->total_days - (float) $balance->used_days - (float) $balance->pending_days);
             $balance->save();
-        } elseif (in_array($newStatus, ['Rejected', 'Cancelled'], true)) {
+        } elseif (in_array($newStatus, ['Rejected', 'Cancelled', 'Requires Correction'], true)) {
             if ($previousStatus === 'Approved') {
                 $balance->used_days = max(0, (float) $balance->used_days - (float) $record->total_days);
             } else {

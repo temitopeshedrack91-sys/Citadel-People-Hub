@@ -324,7 +324,7 @@ const MainAppLayout: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F6F9] flex flex-col font-sans text-slate-900">
+    <div className="min-h-screen bg-[#F6F7F9] flex flex-col font-sans text-slate-900">
       {/* 1. Full-Width Top Navigation Bar: Spans top of screen, never covered by sidebar */}
       <Header
         activeModuleTitle={getModuleTitle(currentModule)}

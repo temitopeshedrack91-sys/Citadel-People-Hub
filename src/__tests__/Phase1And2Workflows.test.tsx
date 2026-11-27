@@ -723,4 +723,67 @@ describe('Phase 2: Two-Stage Leave Workflow & Role-Scoped Dashboards', () => {
       empSpy.mockRestore();
     }
   });
+
+  it('handles numeric Laravel IDs and Pending status cleanly in LeaveManagementView', async () => {
+    const managerUser: User = {
+      id: '2',
+      employeeId: '2',
+      staffId: 'CIT/2026/002',
+      name: 'Engr. Femi Olatunji',
+      email: 'femi@citadel.ng',
+      role: 'MANAGER',
+      effectiveRole: 'MANAGER',
+      isSupervisor: true,
+      directReportsCount: 1,
+      entityId: '1',
+      entityName: 'CGCC',
+      departmentId: '1',
+      departmentName: 'ICT',
+      jobTitle: 'Engineering Manager',
+      permissions: [],
+    };
+
+    const numericRequests: LeaveRequest[] = [
+      {
+        id: 101 as any,
+        employeeId: 5 as any,
+        employeeStaffId: 'CIT/005',
+        employeeName: 'Bayu Wirawan',
+        entityName: 'CGCC',
+        departmentName: 'ICT',
+        leaveType: 'Annual Leave',
+        startDate: '2027-09-01',
+        endDate: '2027-09-03',
+        totalDays: 3,
+        reason: 'Pending status check',
+        status: 'Pending' as any,
+        appliedDate: '2026-11-25',
+        managerId: '2',
+        managerName: 'Engr. Femi Olatunji',
+        approvalStage: 'MANAGER',
+      },
+    ];
+
+    const getAllSpy = vi.spyOn(leaveRepository, 'getAll').mockResolvedValue(numericRequests);
+    const balancesSpy = vi.spyOn(leaveRepository, 'getBalances').mockResolvedValue([]);
+    const catsSpy = vi.spyOn(leaveRepository, 'getCategories').mockResolvedValue([]);
+    const empSpy = vi.spyOn(employeeRepository, 'getAll').mockResolvedValue([]);
+
+    try {
+      render(
+        <AuthContext.Provider value={makeAuthValue(managerUser, true) as any}>
+          <LeaveManagementView />
+        </AuthContext.Provider>
+      );
+
+      const approveBtn = await screen.findByTestId('leave-approve-btn');
+      expect(approveBtn).toHaveTextContent('Approve & Forward to HR');
+      expect(screen.getByTestId('filter-tab-pending')).toHaveTextContent('1');
+    } finally {
+      getAllSpy.mockRestore();
+      balancesSpy.mockRestore();
+      catsSpy.mockRestore();
+      empSpy.mockRestore();
+    }
+  });
 });

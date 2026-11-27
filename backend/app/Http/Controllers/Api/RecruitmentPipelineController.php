@@ -142,6 +142,8 @@ class RecruitmentPipelineController extends Controller
 
     public function candidates(Request $request): JsonResponse
     {
+        $this->authorizeAdminOrHr($request);
+
         $query = Candidate::query()->with(['vacancy.department', 'interviews.interviewer']);
 
         if ($request->filled('vacancyId')) {
@@ -156,8 +158,10 @@ class RecruitmentPipelineController extends Controller
         ]);
     }
 
-    public function showCandidate(Candidate $candidate): JsonResponse
+    public function showCandidate(Request $request, Candidate $candidate): JsonResponse
     {
+        $this->authorizeAdminOrHr($request);
+
         return response()->json([
             'data' => $this->presentCandidate($candidate->load(['vacancy.department', 'interviews.interviewer', 'histories.performer'])),
         ]);
