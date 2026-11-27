@@ -114,7 +114,10 @@ export const RecruitmentView: React.FC = () => {
   };
 
   useEffect(() => {
-    loadData();
+    void loadData();
+    const onAuthChanged = () => void loadData();
+    window.addEventListener('citadel:auth-changed', onAuthChanged);
+    return () => window.removeEventListener('citadel:auth-changed', onAuthChanged);
   }, []);
 
   const handleRequisitionCreated = (newReq: RecruitmentRequisition) => {
@@ -306,8 +309,15 @@ export const RecruitmentView: React.FC = () => {
       </div>
 
       {loadError && (
-        <div role="alert" className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">
-          Recruitment data could not be loaded: {loadError}
+        <div role="alert" className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center justify-between gap-3">
+          <span>Recruitment data could not be loaded: {loadError}</span>
+          <button
+            type="button"
+            onClick={() => void loadData()}
+            className="px-3 py-1 rounded-lg bg-white border border-rose-200 text-rose-800 hover:bg-rose-100 text-xs font-bold cursor-pointer shrink-0"
+          >
+            Retry
+          </button>
         </div>
       )}
       {actionError && (

@@ -10,6 +10,7 @@ interface SensitiveFieldProps {
   maskedPlaceholder?: string;
   className?: string;
   ownerId?: string; // If the employee owns this record, they may view their own address/DOB
+  ownerStaffId?: string;
 }
 
 export const SensitiveField: React.FC<SensitiveFieldProps> = ({
@@ -20,12 +21,21 @@ export const SensitiveField: React.FC<SensitiveFieldProps> = ({
   maskedPlaceholder = '••••••••••••',
   className = '',
   ownerId,
+  ownerStaffId,
 }) => {
   const { canViewSensitiveData, currentUser } = useAuth();
   const [isRevealed, setIsRevealed] = useState(false);
 
-  // An employee can view their own address/DOB, but salary/bank is restricted or permitted as per policy
-  const isOwner = Boolean(ownerId && currentUser.id === ownerId);
+  // An employee can view their own sensitive fields (DOB, address, next of kin, own payroll)
+  const staffIdConflict = Boolean(
+    ownerStaffId && currentUser.staffId && currentUser.staffId.toLowerCase() !== ownerStaffId.toLowerCase()
+  );
+  const isOwner =
+    !staffIdConflict &&
+    Boolean(
+      (ownerStaffId && currentUser.staffId && currentUser.staffId.toLowerCase() === ownerStaffId.toLowerCase()) ||
+      (ownerId && (String(currentUser.id) === String(ownerId) || String(currentUser.employeeId || '') === String(ownerId)))
+    );
   const isAuthorized = canViewSensitiveData || isOwner;
 
   if (!value) {

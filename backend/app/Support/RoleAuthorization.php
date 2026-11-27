@@ -138,7 +138,9 @@ class RoleAuthorization
         }
 
         if ($rawRole === 'BUSINESS_HEAD' && $user->entity_id !== null) {
-            return $query->where('entity_id', $user->entity_id);
+            $normalizedEntity = \App\Models\Entity::normalizeEntityId($user->entity_id) ?? $user->entity_id;
+
+            return $query->where('entity_id', $normalizedEntity);
         }
 
         if ($rawRole === 'DEPARTMENT_HEAD' && $user->department_id !== null) {

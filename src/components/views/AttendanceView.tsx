@@ -33,6 +33,7 @@ import {
   downloadSampleBiometricCsv,
   parseBiometricExport,
 } from '../../features/attendance-import';
+import { evaluateAttendancePunch } from '../../domain/workbook';
 
 const MONTH_LABELS = [
   'Jan',
@@ -86,7 +87,30 @@ export const AttendanceView: React.FC = () => {
   const [isImporting, setIsImporting] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [dateFilter, setDateFilter] = useState('all');
+  const [evalUnit, setEvalUnit] = useState('CGCC');
+  const [evalClockIn, setEvalClockIn] = useState('09:08');
+  const [evalClockOut, setEvalClockOut] = useState('16:05');
+  const [evalSource, setEvalSource] = useState('Biometric_ZKTeco');
+  const [evalEventDay, setEvalEventDay] = useState(false);
+  const [evalEventStart, setEvalEventStart] = useState('10:00');
+  const [evalEventEnd, setEvalEventEnd] = useState('18:00');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const shiftEvaluation = useMemo(
+    () =>
+      evaluateAttendancePunch({
+        entityName: evalUnit,
+        departmentName: evalUnit,
+        date: new Date().toISOString().split('T')[0],
+        clockInTime: evalClockIn || null,
+        clockOutTime: evalClockOut || null,
+        verificationSource: evalSource,
+        isEventDay: evalEventDay,
+        eventShiftStart: evalEventStart,
+        eventShiftEnd: evalEventEnd,
+      }),
+    [evalUnit, evalClockIn, evalClockOut, evalSource, evalEventDay, evalEventStart, evalEventEnd]
+  );
 
   const canonicalRole = normalizeRole(currentRole);
   const canImport = canonicalRole === 'ADMIN' || canonicalRole === 'HR_STAFF';
@@ -957,6 +981,147 @@ export const AttendanceView: React.FC = () => {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Interactive Sheet 8 Shift & Grace-Period Rule Evaluator */}
+            <div
+              data-testid="attendance-rule-evaluator"
+              className="mt-6 pt-5 border-t border-slate-200 space-y-4"
+            >
+              <div>
+                <h4 className="text-sm font-bold text-slate-900">
+                  Live Shift &amp; 10-Minute Grace-Period Calculator (Workbook Sheet 8)
+                </h4>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Evaluate clock-in/clock-out punches against each entity or unit schedule, biometric requirement, and CSOG event-day overrides.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Entity / Operational Unit</label>
+                  <select
+                    value={evalUnit}
+                    onChange={(e) => setEvalUnit(e.target.value)}
+                    data-testid="eval-unit-select"
+                    className="w-full p-2 rounded-lg border border-slate-200 bg-white font-medium text-slate-900"
+                  >
+                    <option value="CGCC">CGCC (9:00 AM – 4:00 PM)</option>
+                    <option value="Facilities">Facilities (7:00 AM – 4:00 PM)</option>
+                    <option value="Citadel Workstation">Citadel Workstation (9:00 AM – 4:00 PM)</option>
+                    <option value="Asabi Aladire">Asabi Aladire (9:00 AM – 4:00 PM)</option>
+                    <option value="Citadel School of Government">Citadel School of Government (Event-Day Eligible)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Clock-In Time</label>
+                  <input
+                    type="time"
+                    value={evalClockIn}
+                    onChange={(e) => setEvalClockIn(e.target.value)}
+                    data-testid="eval-clock-in"
+                    className="w-full p-2 rounded-lg border border-slate-200 bg-white font-mono text-slate-900"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Clock-Out Time</label>
+                  <input
+                    type="time"
+                    value={evalClockOut}
+                    onChange={(e) => setEvalClockOut(e.target.value)}
+                    data-testid="eval-clock-out"
+                    className="w-full p-2 rounded-lg border border-slate-200 bg-white font-mono text-slate-900"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Verification Source</label>
+                  <select
+                    value={evalSource}
+                    onChange={(e) => setEvalSource(e.target.value)}
+                    className="w-full p-2 rounded-lg border border-slate-200 bg-white font-medium text-slate-900"
+                  >
+                    <option value="Biometric_ZKTeco">Biometric Terminal (Compliant)</option>
+                    <option value="Web_SelfService">Web Self-Service (Flags Non-Biometric)</option>
+                  </select>
+                </div>
+              </div>
+
+              {evalUnit === 'Citadel School of Government' && (
+                <div className="flex flex-wrap items-center gap-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs">
+                  <label className="inline-flex items-center gap-2 font-semibold text-amber-950 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={evalEventDay}
+                      onChange={(e) => setEvalEventDay(e.target.checked)}
+                      data-testid="eval-csog-event-toggle"
+                    />
+                    <span>CSOG Special Event Day Schedule Override</span>
+                  </label>
+                  {evalEventDay && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="time"
+                        value={evalEventStart}
+                        onChange={(e) => setEvalEventStart(e.target.value)}
+                        className="px-2 py-1 rounded border border-amber-300 bg-white font-mono"
+                      />
+                      <span>to</span>
+                      <input
+                        type="time"
+                        value={evalEventEnd}
+                        onChange={(e) => setEvalEventEnd(e.target.value)}
+                        className="px-2 py-1 rounded border border-amber-300 bg-white font-mono"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div
+                data-testid="attendance-eval-result"
+                className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs"
+              >
+                <div className="flex flex-wrap items-center gap-4">
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold text-slate-500">Status</span>
+                    <span
+                      className={`font-bold text-sm ${
+                        shiftEvaluation.status === 'Present'
+                          ? 'text-emerald-700'
+                          : shiftEvaluation.status === 'Late'
+                            ? 'text-rose-700'
+                            : 'text-amber-700'
+                      }`}
+                    >
+                      {shiftEvaluation.status}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold text-slate-500">Active Shift</span>
+                    <span className="font-mono font-bold text-slate-900">
+                      {shiftEvaluation.effectiveShiftStart} – {shiftEvaluation.effectiveShiftEnd}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold text-slate-500">Grace Cutoff (+10m)</span>
+                    <span className="font-mono font-bold text-slate-900">{shiftEvaluation.graceCutoffTime}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold text-slate-500">Late / Early / OT</span>
+                    <span className="font-mono font-semibold text-slate-800">
+                      {shiftEvaluation.lateMinutes}m late · {shiftEvaluation.earlyDepartureMinutes}m early · {shiftEvaluation.overtimeMinutes}m OT
+                    </span>
+                  </div>
+                </div>
+                <span
+                  className={`px-2.5 py-1 rounded-lg font-semibold ${
+                    shiftEvaluation.biometricCompliant
+                      ? 'bg-emerald-100 text-emerald-900'
+                      : 'bg-rose-100 text-rose-800'
+                  }`}
+                >
+                  {shiftEvaluation.biometricCompliant ? 'Biometric Verified' : 'Biometric Policy Warning'}
+                </span>
+              </div>
             </div>
           </div>
         </div>

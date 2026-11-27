@@ -36,6 +36,7 @@ import { ProjectsView } from './components/views/ProjectsView';
 import { TeamNotesView } from './components/views/TeamNotesView';
 import { PayrollView } from './components/views/PayrollView';
 import { ClaimManagementView } from './components/views/ClaimManagementView';
+import { WorkbookHubView } from './components/views/WorkbookHubView';
 import { LoginModal } from './components/auth/LoginModal';
 import { AuthPage } from './components/auth/AuthPage';
 import { AccessDeniedView } from './components/common/AccessDeniedView';
@@ -45,7 +46,7 @@ const VALID_MODULES: NavModule[] = [
   'dashboard', 'employees', 'directory', 'leave', 'attendance', 'projects', 'payroll', 'claims',
   'calendar', 'team-notes', 'recruitment', 'onboarding', 'offboarding',
   'performance', 'documents', 'reports', 'notifications', 'integrations',
-  'ai-assistant', 'settings', 'audit-logs'
+  'ai-assistant', 'governance', 'settings', 'audit-logs'
 ];
 
 const getInitialModule = (): NavModule => {
@@ -189,6 +190,8 @@ const MainAppLayout: React.FC = () => {
         return 'Claims & Expenses';
       case 'team-notes':
         return 'Team Notes';
+      case 'governance':
+        return 'Governance Hub';
       case 'audit-logs':
         return 'Audit Trail';
       default:
@@ -278,6 +281,8 @@ const MainAppLayout: React.FC = () => {
         return <ClaimManagementView />;
       case 'team-notes':
         return <TeamNotesView />;
+      case 'governance':
+        return <WorkbookHubView />;
       case 'audit-logs':
         return <AuditLogsView />;
       default:

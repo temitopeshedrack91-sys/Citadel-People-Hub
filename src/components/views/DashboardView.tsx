@@ -52,20 +52,17 @@ import { Card } from '../common/Card';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { EmployeeDashboard } from './dashboard/EmployeeDashboard';
 import { DepartmentHeadDashboard } from './dashboard/DepartmentHeadDashboard';
+import {
+  buildNoteAvatars,
+  loadTeamNotes,
+  saveTeamNotes,
+  type TeamNoteItem as TeamNote,
+} from '../../services/teamNotesStore';
 
 interface DashboardViewProps {
   onNavigate: (module: NavModule) => void;
   onOpenLeaveModal: () => void;
   onOpenAddEmployee: () => void;
-}
-
-interface TeamNote {
-  id: string;
-  title: string;
-  category: 'Incoming' | 'Ongoing' | 'In Progress';
-  description: string;
-  collaborators: string;
-  avatars: { initials: string; bg: string; name: string }[];
 }
 
 // User Initials Avatar
@@ -138,44 +135,16 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
   const [newNoteTitle, setNewNoteTitle] = useState('');
   const [newNoteCategory, setNewNoteCategory] = useState<'Incoming' | 'Ongoing' | 'In Progress'>('Incoming');
   const [newNoteDesc, setNewNoteDesc] = useState('');
-  const [newNoteCollab, setNewNoteCollab] = useState('Mia, Harper');
+  const [newNoteCollab, setNewNoteCollab] = useState('Sussan Afuwape, Blessing Okafor');
 
-  // Team notes matching reference design
-  const [teamNotes, setTeamNotes] = useState<TeamNote[]>([
-    {
-      id: 'note-1',
-      title: 'Employee Onboarding',
-      category: 'Incoming',
-      description: 'Prepare onboarding access and HR documents for new employees.',
-      collaborators: 'Collaborate with Mia, Harper',
-      avatars: [
-        { initials: 'MA', bg: 'bg-emerald-700', name: 'Mia Anderson' },
-        { initials: 'HL', bg: 'bg-teal-700', name: 'Harper Lee' },
-      ],
-    },
-    {
-      id: 'note-2',
-      title: 'Performance Review',
-      category: 'Ongoing',
-      description: 'Review employee progress and attendance performance.',
-      collaborators: 'Collaborate with Chloe, Ethan',
-      avatars: [
-        { initials: 'CM', bg: 'bg-rose-700', name: 'Chloe Martin' },
-        { initials: 'EB', bg: 'bg-amber-600', name: 'Ethan Brooks' },
-      ],
-    },
-    {
-      id: 'note-3',
-      title: 'Design system V2',
-      category: 'In Progress',
-      description: 'Standardize brand components and responsive tokens across all modules.',
-      collaborators: 'Collaborate with Femi, Blessing',
-      avatars: [
-        { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
-        { initials: 'BO', bg: 'bg-emerald-600', name: 'Blessing Okafor' },
-      ],
-    },
-  ]);
+  // Shared persistent Team Notes synchronized with TeamNotesView
+  const [teamNotes, setTeamNotes] = useState<TeamNote[]>(() => loadTeamNotes());
+
+  useEffect(() => {
+    const syncNotes = () => setTeamNotes(loadTeamNotes());
+    window.addEventListener('citadel:team-notes-updated', syncNotes);
+    return () => window.removeEventListener('citadel:team-notes-updated', syncNotes);
+  }, []);
 
   // Load repositories & subscribe to realtime updates
   const loadDashboardData = React.useCallback(async () => {
@@ -234,13 +203,31 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
     return parts[0] || 'Team';
   }, [currentUser?.name]);
 
-  // Summary Metrics calculations
-  const totalEmployeesDisplay = liveEmployees.length > 0 ? liveEmployees.length : 482;
-  const activeStaffDisplay = liveEmployees.length > 0 ? liveEmployees.filter((e) => e.status === 'Active').length : 142;
-  const onlineStaffCount = 8;
-  const newHiresCount = 2;
+  // Summary Metrics calculations derived from live repositories
+  const totalEmployeesDisplay = liveEmployees.length > 0 ? liveEmployees.length : 0;
+  const activeStaffDisplay = liveEmployees.filter((e) => e.status === 'Active' || e.status === 'Confirmed' || e.status === 'Probation').length;
+  const attendanceRateDisplay = useMemo(() => {
+    if (attendanceLogs.length === 0) {
+      return activeStaffDisplay > 0 ? '100%' : '—';
+    }
+    const presentOrLate = attendanceLogs.filter((r) => r.status === 'Present' || r.status === 'Late').length;
+    const pct = Math.min(100, Math.round((presentOrLate / attendanceLogs.length) * 1000) / 10);
+    return `${pct}%`;
+  }, [attendanceLogs, activeStaffDisplay]);
+  const attendanceLateCount = useMemo(
+    () => attendanceLogs.filter((r) => r.status === 'Late').length,
+    [attendanceLogs]
+  );
+  const onlineStaffCount = useMemo(() => {
+    const activeClockIns = attendanceLogs.filter((r) => Boolean(r.clockInTime) && !r.clockOutTime).length;
+    return activeClockIns > 0 ? activeClockIns : Math.min(activeStaffDisplay, attendanceLogs.length);
+  }, [attendanceLogs, activeStaffDisplay]);
+  const newHiresCount = useMemo(
+    () => liveEmployees.filter((e) => e.status === 'Probation').length,
+    [liveEmployees]
+  );
 
-  // Active Projects matching reference design
+  // Active Projects with Citadel staff assignees
   const activeProjects = [
     {
       id: 'proj-1',
@@ -252,8 +239,8 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
       attachmentsCount: 2,
       assignees: [
         { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
-        { initials: 'MA', bg: 'bg-emerald-600', name: 'Mia Anderson' },
-        { initials: 'CM', bg: 'bg-rose-600', name: 'Chloe Martin' },
+        { initials: 'SA', bg: 'bg-emerald-600', name: 'Mrs. Sussan Afuwape' },
+        { initials: 'CO', bg: 'bg-amber-600', name: 'Dr. Chinedu Okeke' },
       ],
     },
     {
@@ -265,7 +252,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
       commentsCount: 6,
       attachmentsCount: 3,
       assignees: [
-        { initials: 'NB', bg: 'bg-amber-600', name: 'Noah Bennett' },
+        { initials: 'BO', bg: 'bg-teal-700', name: 'Blessing Okafor' },
         { initials: 'BA', bg: 'bg-[#083E34]', name: 'Dr. Bukola Adeleke' },
       ],
     },
@@ -278,51 +265,74 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
       commentsCount: 5,
       attachmentsCount: 4,
       assignees: [
-        { initials: 'MA', bg: 'bg-emerald-700', name: 'Mia Anderson' },
-        { initials: 'HL', bg: 'bg-teal-700', name: 'Harper Lee' },
-        { initials: 'EB', bg: 'bg-slate-700', name: 'Ethan Brooks' },
+        { initials: 'SA', bg: 'bg-emerald-700', name: 'Mrs. Sussan Afuwape' },
+        { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
+        { initials: 'BO', bg: 'bg-slate-700', name: 'Blessing Okafor' },
       ],
     },
   ];
 
-  // Presence Members matching reference design
-  const presenceMembers = [
-    {
-      name: 'Daniel Carter',
-      role: 'Coverage assigned to Olivia M.',
+  // Live Team Presence derived from real Citadel employees & approved/active leave requests
+  const { onLeavePresence, activeTeamPresence } = useMemo(() => {
+    const palette = ['bg-[#083E34]', 'bg-emerald-700', 'bg-amber-600', 'bg-teal-700', 'bg-slate-700'];
+    const getInitials = (name: string) => {
+      const parts = name
+        .replace(/^(Dr\.|Mrs\.|Mr\.|Ms\.|Engr\.|Pastor|Prof\.)\s+/i, '')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+      return parts.length >= 2
+        ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+        : name.slice(0, 2).toUpperCase();
+    };
+
+    const approvedLeaves = liveLeaves.filter((l) => l.status === 'Approved');
+    const onLeaveIds = new Set(approvedLeaves.map((l) => String(l.employeeId)));
+
+    const onLeaveList = approvedLeaves.slice(0, 2).map((lv, idx) => ({
+      name: lv.employeeName,
+      role: lv.relievingStaffName
+        ? `Coverage: ${lv.relievingStaffName}`
+        : `${lv.leaveType} (${lv.startDate} → ${lv.endDate})`,
       status: 'On Leave',
-      initials: 'DC',
-      bg: 'bg-slate-700',
-    },
-    {
-      name: 'Mia Anderson',
-      role: 'Design Team',
-      status: '22 min',
-      initials: 'MA',
-      bg: 'bg-emerald-700',
-    },
-    {
-      name: 'Noah Bennett',
-      role: 'Marketing Lead',
-      status: '15 min',
-      initials: 'NB',
-      bg: 'bg-amber-600',
-    },
-    {
-      name: 'Chloe Martin',
-      role: 'Product Strategy',
-      status: '9 min',
-      initials: 'CM',
-      bg: 'bg-rose-700',
-    },
-    {
-      name: 'Mila Jackson',
-      role: 'Product Strategy',
-      status: '1 min',
-      initials: 'MJ',
-      bg: 'bg-[#083E34]',
-    },
-  ];
+      initials: getInitials(lv.employeeName),
+      bg: palette[idx % palette.length],
+    }));
+
+    if (onLeaveList.length === 0) {
+      liveEmployees
+        .filter((e) => e.status === 'On Leave')
+        .slice(0, 2)
+        .forEach((emp, idx) => {
+          onLeaveIds.add(String(emp.id));
+          onLeaveList.push({
+            name: emp.fullName,
+            role: `${emp.departmentName || emp.jobTitle || 'CGCC'}`,
+            status: 'On Leave',
+            initials: getInitials(emp.fullName),
+            bg: palette[idx % palette.length],
+          });
+        });
+    }
+
+    const activeRoster = liveEmployees
+      .filter((e) => !onLeaveIds.has(String(e.id)))
+      .slice(0, 4)
+      .map((emp, idx) => {
+        const log = attendanceLogs.find(
+          (r) => String(r.employeeId) === String(emp.id) || r.employeeStaffId === emp.staffId
+        );
+        return {
+          name: emp.fullName,
+          role: emp.departmentName || emp.jobTitle || 'Citadel Staff',
+          status: log ? log.status : emp.status,
+          initials: getInitials(emp.fullName),
+          bg: palette[(idx + 1) % palette.length],
+        };
+      });
+
+    return { onLeavePresence: onLeaveList, activeTeamPresence: activeRoster };
+  }, [liveEmployees, liveLeaves, attendanceLogs]);
 
   // Pending Governance Actions
   const pendingActions = [
@@ -410,17 +420,17 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
 
     const newNote: TeamNote = {
       id: `note-${Date.now()}`,
-      title: newNoteTitle,
+      title: newNoteTitle.trim(),
       category: newNoteCategory,
-      description: newNoteDesc || 'Operational task update.',
-      collaborators: `Collaborate with ${newNoteCollab}`,
-      avatars: [
-        { initials: 'BA', bg: 'bg-[#083E34]', name: 'Dr. Bukola Adeleke' },
-        { initials: 'PC', bg: 'bg-emerald-600', name: 'PCCM Team' },
-      ],
+      description: newNoteDesc.trim() || 'Operational task update.',
+      collaborators: newNoteCollab.trim() ? `Collaborate with ${newNoteCollab.trim()}` : `Posted by ${currentUser.name}`,
+      date: 'Just now',
+      avatars: buildNoteAvatars(currentUser.name, newNoteCollab),
     };
 
-    setTeamNotes([newNote, ...teamNotes]);
+    const nextNotes = [newNote, ...teamNotes];
+    setTeamNotes(nextNotes);
+    saveTeamNotes(nextNotes);
     setIsAddNoteModalOpen(false);
     setNewNoteTitle('');
     setNewNoteDesc('');
@@ -471,9 +481,13 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
               {/* Card 2: Attendance */}
               <StatCard
                 title="Attendance"
-                value="94.2%"
+                value={attendanceRateDisplay}
                 icon={Clock}
-                trend={{ value: '-2%', isPositive: false, label: 'from yesterday' }}
+                trend={{
+                  value: attendanceLateCount > 0 ? `${attendanceLateCount} late` : 'On time',
+                  isPositive: attendanceLateCount === 0,
+                  label: `${attendanceLogs.length} log(s)`,
+                }}
                 onClick={() => onNavigate('attendance')}
                 dataTestId="stat-attendance"
               />
@@ -604,31 +618,41 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                 <div className="space-y-4">
                   <div>
                     <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block mb-2">
-                      On Leave
+                      On Leave ({onLeavePresence.length})
                     </span>
-                    <div className="flex items-center justify-between py-2 border-t border-slate-100">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <InitialsAvatar
-                          initials="DC"
-                          name="Daniel Carter"
-                          bgClass="bg-slate-700"
-                          sizeClass="w-7 h-7 text-[10px]"
-                        />
-                        <div className="min-w-0">
-                          <h4 className="text-xs font-semibold text-slate-900 truncate">Daniel Carter</h4>
-                          <p className="text-[11px] text-slate-500 truncate">Coverage assigned to Olivia M.</p>
-                        </div>
+                    {onLeavePresence.length > 0 ? (
+                      <div className="divide-y divide-slate-100 border-t border-slate-100">
+                        {onLeavePresence.map((mem, idx) => (
+                          <div key={idx} className="flex items-center justify-between py-2">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <InitialsAvatar
+                                initials={mem.initials}
+                                name={mem.name}
+                                bgClass={mem.bg}
+                                sizeClass="w-7 h-7 text-[10px]"
+                              />
+                              <div className="min-w-0">
+                                <h4 className="text-xs font-semibold text-slate-900 truncate">{mem.name}</h4>
+                                <p className="text-[11px] text-slate-500 truncate">{mem.role}</p>
+                              </div>
+                            </div>
+                            <StatusPill status="on-leave" label="On Leave" showDot size="sm" />
+                          </div>
+                        ))}
                       </div>
-                      <StatusPill status="on-leave" label="On Leave" showDot size="sm" />
-                    </div>
+                    ) : (
+                      <p className="text-xs text-slate-500 py-2 border-t border-slate-100">
+                        No staff currently on approved leave.
+                      </p>
+                    )}
                   </div>
 
                   <div>
                     <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block mb-2">
-                      Away
+                      Active Roster ({activeTeamPresence.length})
                     </span>
                     <div className="divide-y divide-slate-100 border-t border-slate-100">
-                      {presenceMembers.slice(1).map((mem, idx) => (
+                      {activeTeamPresence.map((mem, idx) => (
                         <div
                           key={idx}
                           className="flex items-center justify-between py-2.5 hover:bg-slate-50/80 px-1.5 -mx-1.5 rounded-lg transition"
@@ -645,7 +669,12 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                               <p className="text-[11px] text-slate-500 mt-1 truncate">{mem.role}</p>
                             </div>
                           </div>
-                          <StatusPill status="away" label={mem.status} showDot size="sm" />
+                          <StatusPill
+                            status={mem.status === 'Late' ? 'away' : 'confirmed'}
+                            label={mem.status}
+                            showDot
+                            size="sm"
+                          />
                         </div>
                       ))}
                     </div>
@@ -824,7 +853,9 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                       <div key={ent.id}>
                         <div className="flex justify-between text-xs mb-1 font-semibold">
                           <span className="text-slate-700">
-                            {ent.name} ({ent.shortCode})
+                            {ent.name.includes(`(${ent.shortCode})`)
+                              ? ent.name
+                              : `${ent.name} (${ent.shortCode})`}
                           </span>
                           <span className="font-mono font-bold text-slate-900 tabular-nums">
                             {count} Staff ({pct}%)
@@ -916,15 +947,19 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
               {/* Semicircular Gauge Chart via ProgressRing component */}
               <div className="my-2 flex flex-col items-center justify-center">
                 {(() => {
-                  const ownBal = liveBalances.find(
+                  const actorId = String(currentUser.employeeId || currentUser.id || '');
+                  const matchingBalances = liveBalances.filter(
                     (b) =>
-                      (currentUser.employeeId &&
-                        String(b.employee_id) === String(currentUser.employeeId)) ||
+                      (actorId && String(b.employee_id) === actorId) ||
                       (currentUser.staffId && b.employee?.staff_id === currentUser.staffId)
                   );
-                  const total = ownBal ? Number(ownBal.total_days) : 20;
-                  const rem = ownBal ? Math.max(0, Number(ownBal.remaining_days)) : 13;
-                  const pct = ownBal && total > 0 ? Math.round((rem / total) * 100) : 65;
+                  const ownBal =
+                    matchingBalances.find((b) =>
+                      (b.category?.name || '').toLowerCase().includes('annual')
+                    ) || matchingBalances[0];
+                  const total = ownBal ? Number(ownBal.total_days) : 21;
+                  const rem = ownBal ? Math.max(0, Number(ownBal.remaining_days)) : 21;
+                  const pct = total > 0 ? Math.round((rem / total) * 100) : 100;
                   return (
                     <ProgressRing
                       value={pct}

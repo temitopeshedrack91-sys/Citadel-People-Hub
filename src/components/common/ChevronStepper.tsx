@@ -79,22 +79,22 @@ export const ChevronStepper: React.FC<ChevronStepperProps> = ({
               disabled={!isClickable}
               onClick={() => onStepClick && onStepClick(stepNumber)}
               style={clipStyle}
-              className={`flex-1 transition-all duration-200 select-none text-left relative ${stepBg} ${
-                variant === 'detailed' ? 'py-3 px-5' : 'py-2.5 px-4'
+              className={`flex-1 min-w-0 transition-all duration-200 select-none text-left relative ${stepBg} ${
+                variant === 'detailed' ? 'py-3 px-4' : 'py-2 px-2.5'
               } ${isClickable ? 'cursor-pointer active:scale-[0.99]' : 'cursor-default'}`}
               title={`Step ${stepNumber}: ${step.title}`}
             >
               <div
-                className={`flex items-center gap-2.5 ${
-                  !isFirst ? 'pl-2' : ''
-                } ${!isLast ? 'pr-3' : ''}`}
+                className={`flex items-center gap-1.5 ${
+                  !isFirst ? 'pl-2.5' : ''
+                } ${!isLast ? 'pr-2.5' : ''}`}
               >
                 {/* Circled Number / Check Icon */}
                 <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 transition-colors ${circleBg}`}
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] shrink-0 transition-colors ${circleBg}`}
                 >
                   {isCompleted && !isActive ? (
-                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    <Check className="w-3 h-3 stroke-[3]" />
                   ) : (
                     <span>{stepNumber}</span>
                   )}
@@ -103,7 +103,7 @@ export const ChevronStepper: React.FC<ChevronStepperProps> = ({
                 {/* Step Title & Optional Subtitle */}
                 <div className="truncate min-w-0">
                   <div
-                    className={`text-xs font-black truncate leading-tight ${titleColor}`}
+                    className={`text-[11px] font-black truncate leading-tight ${titleColor}`}
                   >
                     {step.title}
                   </div>

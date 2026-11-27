@@ -256,6 +256,7 @@ class AttendanceController extends Controller
             'staffId' => ['required', 'string', 'max:50'],
             'entity' => ['required', 'string', 'max:180'],
             'department' => ['required', 'string', 'max:180'],
+            'shiftStart' => ['sometimes', 'nullable', 'regex:/^\d{2}:\d{2}$/'],
         ]);
         $record = DB::transaction(function () use ($request, $data) {
             $employee = Employee::query()->lockForUpdate()->findOrFail($data['employeeId']);
@@ -272,6 +273,17 @@ class AttendanceController extends Controller
                 'Clock out of the active attendance record before starting another session.'
             );
 
+            $clockInTime = now();
+            $shiftStart = $data['shiftStart'] ?? '08:00';
+            [$shiftHour, $shiftMinute] = array_map('intval', explode(':', $shiftStart));
+            $graceCutoff = $clockInTime->copy()->setTime($shiftHour, $shiftMinute, 0)->addMinutes(10);
+            $isLate = $clockInTime->gt($graceCutoff);
+            $minutesLate = $isLate ? (int) $graceCutoff->diffInMinutes($clockInTime) : 0;
+            $status = $isLate ? 'Late' : 'Present';
+            $notes = $isLate
+                ? "Clocked in {$minutesLate} min past {$shiftStart} + 10-min grace cutoff (Sheet 8)."
+                : "Within {$shiftStart} + 10-min grace window (Sheet 8).";
+
             $record = AttendanceRecord::create([
                 'employee_id' => $employee->id,
                 'employee_staff_id' => $employee->staff_id,
@@ -279,11 +291,12 @@ class AttendanceController extends Controller
                 'entity_name' => $employee->entity()->value('name') ?? '',
                 'department_name' => $employee->department()->value('name') ?? '',
                 'date' => today(),
-                'clock_in_time' => now(),
-                'status' => 'Present',
+                'clock_in_time' => $clockInTime,
+                'status' => $status,
                 'verification_source' => 'Web_SelfService',
+                'notes' => $notes,
             ]);
-            AuditLogger::record($request, 'Attendance & Biometrics', 'Clocked in', $record->id, $record->employee_name, null, 'Present');
+            AuditLogger::record($request, 'Attendance & Biometrics', 'Clocked in', $record->id, $record->employee_name, null, $status);
             RealtimeEventService::publish('attendance_records', 'INSERT', $record->id, ['employeeId' => $employee->id], (int) $request->user()->id);
 
             return $record;

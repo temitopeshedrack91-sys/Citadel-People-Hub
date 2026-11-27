@@ -29,54 +29,80 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $entities = [
-            ['id' => 'CGCC', 'name' => 'Citadel Global Community Church (CGCC)', 'short_code' => 'CGCC', 'description' => 'Flagship church organization, ministry operations, pastoral care, and administrative functions.', 'is_active' => true],
-            ['id' => 'CSOG', 'name' => 'Citadel School of Government', 'short_code' => 'CSOG', 'description' => 'Academic and leadership institution developing ethical governance leaders and policy practitioners.', 'is_active' => true],
-            ['id' => 'HOLDINGS', 'name' => 'Citadel Holdings', 'short_code' => 'Holdings', 'description' => 'Commercial and enterprise arm operating retail, hospitality, workspaces, and creative ventures.', 'is_active' => true],
+            [
+                'id' => 'CGCC',
+                'name' => 'Citadel Global Community Church (CGCC)',
+                'short_code' => 'CGCC',
+                'head_of_entity' => 'Pastor Christian Ike, Pastor Biola Adeyoola & Pastor Segun Bakare',
+                'description' => 'Flagship church organization, ministry operations, pastoral care, and GEC shared services.',
+                'is_active' => true,
+            ],
+            [
+                'id' => 'CSOG',
+                'name' => 'Citadel School of Government',
+                'short_code' => 'CSOG',
+                'head_of_entity' => 'Mr. Omoaholo Omoakhalen (Director)',
+                'description' => 'Academic and leadership institution developing ethical governance leaders and policy practitioners.',
+                'is_active' => true,
+            ],
+            [
+                'id' => 'HOLDINGS',
+                'name' => 'Citadel Holdings',
+                'short_code' => 'Holdings',
+                'head_of_entity' => 'Ms. Olufisayo Bakare (CEO)',
+                'description' => 'Commercial and enterprise arm operating retail, hospitality, workspaces, and creative ventures.',
+                'is_active' => true,
+            ],
         ];
         $entityIds = [];
         foreach ($entities as $attributes) {
-            $entity = Entity::firstOrCreate(['short_code' => $attributes['short_code']], $attributes);
+            $entity = Entity::updateOrCreate(['short_code' => $attributes['short_code']], $attributes);
             $entityIds[$attributes['short_code']] = $entity->id;
         }
 
         $departments = [
-            ['entity' => 'CGCC', 'name' => 'Finance', 'code' => 'CGCC-FIN'],
-            ['entity' => 'CGCC', 'name' => 'People, Culture & Change', 'code' => 'CGCC-PCCM'],
-            ['entity' => 'CGCC', 'name' => 'Facilities', 'code' => 'CGCC-FAC'],
-            ['entity' => 'CGCC', 'name' => 'Security', 'code' => 'CGCC-SEC'],
-            ['entity' => 'CGCC', 'name' => "S.O.'s Office / Admin", 'code' => 'CGCC-SO'],
-            ['entity' => 'CGCC', 'name' => 'Protocol', 'code' => 'CGCC-PRO'],
-            ['entity' => 'CGCC', 'name' => 'ICT', 'code' => 'CGCC-ICT'],
-            ['entity' => 'CGCC', 'name' => 'Transport & Logistics', 'code' => 'CGCC-LOG'],
-            ['entity' => 'CSOG', 'name' => 'Academy & Programmes', 'code' => 'CSOG-ACAD'],
-            ['entity' => 'CSOG', 'name' => 'Admin & Operations', 'code' => 'CSOG-OPS'],
-            ['entity' => 'Holdings', 'name' => 'Bookshop', 'code' => 'CH-BOOK'],
-            ['entity' => 'Holdings', 'name' => 'Cafe', 'code' => 'CH-CAFE'],
-            ['entity' => 'Holdings', 'name' => 'Workstation', 'code' => 'CH-WORK'],
-            ['entity' => 'Holdings', 'name' => 'Asabi Aladire', 'code' => 'CH-ASABI'],
-            ['entity' => 'Holdings', 'name' => 'Sales & Business Development', 'code' => 'CH-SBD'],
+            ['entity' => 'CGCC', 'name' => 'Finance', 'code' => 'CGCC-FIN', 'head' => 'Finance & Account Manager', 'business_head' => 'Group Executive Council (GEC)', 'email' => null, 'reports_to' => 'Group Executive Council (GEC)', 'gec' => true, 'desc' => 'Reports to Group Executive Council (GEC) · GEC Shared Service'],
+            ['entity' => 'CGCC', 'name' => 'People, Culture & Change', 'code' => 'CGCC-PCCM', 'head' => 'Mrs. Sussan Afuwape (People, Culture & Change Manager)', 'business_head' => 'Group Executive Council (GEC)', 'email' => 's.afuwape@thecitadelglobal.org', 'reports_to' => 'Group Executive Council (GEC)', 'gec' => true, 'desc' => 'Reports to Group Executive Council (GEC) · GEC Shared Service'],
+            ['entity' => 'CGCC', 'name' => 'Facilities', 'code' => 'CGCC-FAC', 'head' => 'Facilities & Resource Manager', 'business_head' => 'Pastor Christian Ike', 'email' => null, 'reports_to' => 'Pastor Christian Ike', 'gec' => true, 'desc' => 'Reports to Pastor Christian Ike · GEC Shared Service'],
+            ['entity' => 'CGCC', 'name' => 'Security', 'code' => 'CGCC-SEC', 'head' => 'Chief Security Officer', 'business_head' => 'Pastor Christian Ike', 'email' => 'olubunmi.ojo@thecitadelglobal.org', 'reports_to' => 'Pastor Christian Ike', 'gec' => true, 'desc' => 'Reports to Pastor Christian Ike · GEC Shared Service'],
+            ['entity' => 'CGCC', 'name' => "S.O.'s Office / Admin", 'code' => 'CGCC-SO', 'head' => 'Pastor Biola Adeyoola (Pastor, Planning & Operations)', 'business_head' => 'Pastor Biola Adeyoola', 'email' => 'b.adeyoola@thecitadelglobal.org', 'reports_to' => 'Pastor Biola Adeyoola', 'gec' => true, 'desc' => 'Reports to Pastor Biola Adeyoola · GEC Shared Service'],
+            ['entity' => 'CGCC', 'name' => 'Protocol', 'code' => 'CGCC-PRO', 'head' => 'Pastor Biola Adeyoola (Pastor, Planning & Operations)', 'business_head' => 'Pastor Biola Adeyoola', 'email' => 'b.adeyoola@thecitadelglobal.org', 'reports_to' => 'Pastor Biola Adeyoola', 'gec' => true, 'desc' => 'Reports to Pastor Biola Adeyoola · GEC Shared Service'],
+            ['entity' => 'CGCC', 'name' => 'ICT', 'code' => 'CGCC-ICT', 'head' => 'Engr. Femi Olatunji (ICT Manager)', 'business_head' => 'Pastor Segun Bakare', 'email' => null, 'reports_to' => 'Pastor Segun Bakare', 'gec' => true, 'desc' => 'Reports to Pastor Segun Bakare · GEC Shared Service'],
+            ['entity' => 'CGCC', 'name' => 'Transport & Logistics', 'code' => 'CGCC-LOG', 'head' => 'Transport Lead', 'business_head' => 'Pastor Christian Ike', 'email' => 'j.osumili@thecitadelglobal.org', 'reports_to' => 'Facilities & Resource Manager', 'gec' => false, 'desc' => 'Reports to Facilities & Resource Manager'],
+            ['entity' => 'CSOG', 'name' => 'Academy & Programmes', 'code' => 'CSOG-ACAD', 'head' => 'Academy Liaison Officer', 'business_head' => 'Mr. Omoaholo Omoakhalen', 'email' => 'clementina.busayo@citadelschoolofgovernment.org', 'reports_to' => 'Director School of Government (Mr. Omoaholo Omoakhalen)', 'gec' => false, 'desc' => 'Reports to Director School of Government (Mr. Omoaholo Omoakhalen)'],
+            ['entity' => 'CSOG', 'name' => 'Admin & Operations', 'code' => 'CSOG-OPS', 'head' => 'Admin & Operations Officer', 'business_head' => 'Mr. Omoaholo Omoakhalen', 'email' => 'fatima.pedro-lawrence@citadelschoolofgovernment.org', 'reports_to' => 'Director School of Government (Mr. Omoaholo Omoakhalen)', 'gec' => false, 'desc' => 'Reports to Director School of Government (Mr. Omoaholo Omoakhalen)'],
+            ['entity' => 'Holdings', 'name' => 'Bookshop', 'code' => 'CH-BOOK', 'head' => 'Bookshop Officer', 'business_head' => 'Ms. Olufisayo Bakare', 'email' => null, 'reports_to' => 'Business Manager (Citadel Holdings)', 'gec' => false, 'desc' => 'Reports to Business Manager (Citadel Holdings)'],
+            ['entity' => 'Holdings', 'name' => 'Cafe', 'code' => 'CH-CAFE', 'head' => 'Cafe Supervisor', 'business_head' => 'Ms. Olufisayo Bakare', 'email' => null, 'reports_to' => 'Business Manager (Citadel Holdings)', 'gec' => false, 'desc' => 'Reports to Business Manager (Citadel Holdings)'],
+            ['entity' => 'Holdings', 'name' => 'Workstation', 'code' => 'CH-WORK', 'head' => 'Workstation Supervisor', 'business_head' => 'Ms. Olufisayo Bakare', 'email' => null, 'reports_to' => 'Business Manager (Citadel Holdings)', 'gec' => false, 'desc' => 'Reports to Business Manager (Citadel Holdings)'],
+            ['entity' => 'Holdings', 'name' => 'Asabi Aladire', 'code' => 'CH-ASABI', 'head' => 'Shop Attendant', 'business_head' => 'Ms. Olufisayo Bakare', 'email' => null, 'reports_to' => 'Business Manager (Citadel Holdings)', 'gec' => false, 'desc' => 'Reports to Business Manager (Citadel Holdings)'],
+            ['entity' => 'Holdings', 'name' => 'Sales & Business Development', 'code' => 'CH-SBD', 'head' => 'Business Manager', 'business_head' => 'Ms. Olufisayo Bakare', 'email' => null, 'reports_to' => 'CEO / Business Head (Ms. Olufisayo Bakare)', 'gec' => false, 'desc' => 'Reports to CEO / Business Head (Ms. Olufisayo Bakare)'],
         ];
         $deptByCode = [];
         foreach ($departments as $attributes) {
-            $dept = Department::firstOrCreate(
+            $dept = Department::updateOrCreate(
                 ['entity_id' => $entityIds[$attributes['entity']], 'code' => $attributes['code']],
                 [
                     'name' => $attributes['name'],
+                    'head_of_department_name' => $attributes['head'],
+                    'business_head_name' => $attributes['business_head'],
+                    'head_email' => $attributes['email'],
+                    'reports_to' => $attributes['reports_to'],
+                    'is_gec_shared_service' => $attributes['gec'],
+                    'description' => $attributes['desc'],
                     'is_active' => true,
                 ],
             );
             $deptByCode[$attributes['code']] = $dept;
         }
 
-        // Seed Leave Categories & 2026 Policies
+        // Seed Leave Categories & Policies aligned with CGCC Workbook Sheet 7
         $year = (int) date('Y');
         $leaveSpecs = [
-            ['name' => 'Annual Leave', 'code' => 'AL', 'days' => 24, 'is_paid' => true],
-            ['name' => 'Casual Leave', 'code' => 'CL', 'days' => 7, 'is_paid' => true],
-            ['name' => 'Sick Leave', 'code' => 'SL', 'days' => 12, 'is_paid' => true],
-            ['name' => 'Maternity Leave', 'code' => 'ML', 'days' => 84, 'is_paid' => true],
+            ['name' => 'Annual Leave', 'code' => 'AL', 'days' => 21, 'is_paid' => true],
+            ['name' => 'Sick Leave', 'code' => 'SL', 'days' => 10, 'is_paid' => true],
+            ['name' => 'Maternity Leave', 'code' => 'ML', 'days' => 90, 'is_paid' => true],
             ['name' => 'Paternity Leave', 'code' => 'PL', 'days' => 14, 'is_paid' => true],
-            ['name' => 'Exam Leave', 'code' => 'EL', 'days' => 5, 'is_paid' => true],
+            ['name' => 'Exam Leave', 'code' => 'EL', 'days' => 21, 'is_paid' => true],
             ['name' => 'Compassionate Leave', 'code' => 'CMPL', 'days' => 5, 'is_paid' => true],
         ];
         $categories = [];
@@ -188,11 +214,11 @@ class DatabaseSeeder extends Seeder
                 'staff_id' => 'CSOG-001',
                 'first_name' => 'Omoaholo',
                 'last_name' => 'Omoakhalen',
-                'full_name' => 'Omoaholo Omoakhalen',
+                'full_name' => 'Mr. Omoaholo Omoakhalen',
                 'email' => 'omoaholo@citadel.ng',
                 'dept_code' => 'CSOG-ACAD',
-                'job_title' => 'Director CSOG',
-                'role' => 'MANAGER',
+                'job_title' => 'Director School of Government',
+                'role' => 'BUSINESS_HEAD',
                 'manager_staff_id' => 'CGCC-000',
             ],
             [
@@ -205,6 +231,28 @@ class DatabaseSeeder extends Seeder
                 'job_title' => 'Programme Coordinator',
                 'role' => 'EMPLOYEE',
                 'manager_staff_id' => 'CSOG-001',
+            ],
+            [
+                'staff_id' => 'CH-001',
+                'first_name' => 'Olufisayo',
+                'last_name' => 'Bakare',
+                'full_name' => 'Ms. Olufisayo Bakare',
+                'email' => 'o.bakare@citadelholdings.org',
+                'dept_code' => 'CH-SBD',
+                'job_title' => 'CEO / Business Head — Citadel Holdings',
+                'role' => 'BUSINESS_HEAD',
+                'manager_staff_id' => 'CGCC-000',
+            ],
+            [
+                'staff_id' => 'CH-005',
+                'first_name' => 'Ifeanyi',
+                'last_name' => 'Okonkwo',
+                'full_name' => 'Ifeanyi Okonkwo',
+                'email' => 'i.okonkwo@citadelholdings.org',
+                'dept_code' => 'CH-WORK',
+                'job_title' => 'Workstation Supervisor',
+                'role' => 'EMPLOYEE',
+                'manager_staff_id' => 'CH-001',
             ],
         ];
 

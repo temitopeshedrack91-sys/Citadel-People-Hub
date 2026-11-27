@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\ClaimController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\EmployeeController;
+use App\Http\Controllers\Api\GovernanceController;
 use App\Http\Controllers\Api\IdentityLinkController;
 use App\Http\Controllers\Api\JobTitleController;
 use App\Http\Controllers\Api\LeaveController;
@@ -219,5 +220,13 @@ Route::prefix('v1')->group(function () {
         Route::delete('/claims/requests/{claimRequest}/expenses/{claimExpense}', [ClaimController::class, 'deleteExpense'])->middleware('throttle:30,1');
         Route::post('/claims/requests/{claimRequest}/action', [ClaimController::class, 'action'])->middleware('throttle:30,1');
         Route::post('/claims/{claimRequest}/action', [ClaimController::class, 'action'])->middleware('throttle:30,1');
+
+        // Workbook Governance Workflows (Sheet 5 Profile Change Approvals & Sheet 14 Lifecycle Events)
+        Route::get('/governance/profile-change-requests', [GovernanceController::class, 'indexProfileChanges']);
+        Route::post('/governance/profile-change-requests', [GovernanceController::class, 'storeProfileChange'])->middleware('throttle:30,1');
+        Route::patch('/governance/profile-change-requests/{profileChangeRequest}/review', [GovernanceController::class, 'reviewProfileChange'])->middleware('throttle:30,1');
+        Route::get('/governance/lifecycle-events', [GovernanceController::class, 'indexLifecycleEvents']);
+        Route::post('/governance/lifecycle-events', [GovernanceController::class, 'storeLifecycleEvent'])->middleware('throttle:30,1');
+        Route::patch('/governance/lifecycle-events/{employeeLifecycleEvent}/approve', [GovernanceController::class, 'approveLifecycleEvent'])->middleware('throttle:30,1');
     });
 });

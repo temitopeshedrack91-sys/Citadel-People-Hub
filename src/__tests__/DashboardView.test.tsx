@@ -38,8 +38,8 @@ describe('DashboardView Component (Hrivio Reference Visuals)', () => {
     );
 
     expect(screen.getByTestId('leave-balance-card')).toBeInTheDocument();
-    expect(screen.getByText('65%')).toBeInTheDocument();
-    expect(screen.getByText('13 out of 20')).toBeInTheDocument();
+    expect(screen.getByText('100%')).toBeInTheDocument();
+    expect(screen.getByText('21 out of 21')).toBeInTheDocument();
     expect(screen.getByText('Pending')).toBeInTheDocument();
     expect(screen.getByText('Confirmed')).toBeInTheDocument();
     expect(screen.getByText('Rejected')).toBeInTheDocument();
@@ -77,5 +77,26 @@ describe('DashboardView Component (Hrivio Reference Visuals)', () => {
 
     expect(screen.getByTestId('quick-actions-modal')).toBeInTheDocument();
     expect(screen.getByText('Citadel People Hub — Quick Actions')).toBeInTheDocument();
+  });
+
+  it('renders live Team Presence without fictional placeholder names', async () => {
+    render(
+      <AuthProvider>
+        <DashboardView
+          onNavigate={vi.fn()}
+          onOpenLeaveModal={vi.fn()}
+          onOpenAddEmployee={vi.fn()}
+        />
+      </AuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('team-presence-card')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('Daniel Carter')).not.toBeInTheDocument();
+    expect(screen.queryByText('Mia Anderson')).not.toBeInTheDocument();
+    expect(screen.queryByText('Noah Bennett')).not.toBeInTheDocument();
+    expect(screen.queryByText('Chloe Martin')).not.toBeInTheDocument();
   });
 });

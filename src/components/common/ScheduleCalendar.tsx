@@ -156,9 +156,9 @@ const citadelEvents: ScheduleEvent[] = [
     description: 'Q4 marketing campaign performance sync, creative assets signoff, and outreach calendar.',
     meetUrl: 'https://meet.google.com/ctd-mrkt-sync',
     attendees: [
-      { initials: 'MA', bg: 'bg-emerald-600', name: 'Mia Anderson' },
-      { initials: 'NB', bg: 'bg-amber-600', name: 'Noah Bennett' },
-      { initials: 'CM', bg: 'bg-rose-600', name: 'Chloe Martin' },
+      { initials: 'SA', bg: 'bg-emerald-600', name: 'Mrs. Sussan Afuwape' },
+      { initials: 'CO', bg: 'bg-amber-600', name: 'Dr. Chinedu Okeke' },
+      { initials: 'BO', bg: 'bg-teal-600', name: 'Blessing Okafor' },
     ],
   },
   {
@@ -207,7 +207,7 @@ const citadelEvents: ScheduleEvent[] = [
     description: 'Weekly campus facilities review, maintenance inspection, and logistics dispatch.',
     attendees: [
       { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
-      { initials: 'MA', bg: 'bg-emerald-600', name: 'Mia Anderson' },
+      { initials: 'SA', bg: 'bg-emerald-600', name: 'Mrs. Sussan Afuwape' },
     ],
   },
   {
@@ -239,9 +239,9 @@ const citadelEvents: ScheduleEvent[] = [
     description: 'Q4 marketing campaign performance sync, creative assets signoff, and outreach calendar.',
     meetUrl: 'https://meet.google.com/ctd-mrkt-sync',
     attendees: [
-      { initials: 'MA', bg: 'bg-emerald-600', name: 'Mia Anderson' },
-      { initials: 'NB', bg: 'bg-amber-600', name: 'Noah Bennett' },
-      { initials: 'CM', bg: 'bg-rose-600', name: 'Chloe Martin' },
+      { initials: 'SA', bg: 'bg-emerald-600', name: 'Mrs. Sussan Afuwape' },
+      { initials: 'CO', bg: 'bg-amber-600', name: 'Dr. Chinedu Okeke' },
+      { initials: 'BO', bg: 'bg-teal-600', name: 'Blessing Okafor' },
     ],
   },
   {
@@ -271,8 +271,8 @@ const citadelEvents: ScheduleEvent[] = [
     category: 'Meeting',
     description: 'Cross-entity expenditure reconciliation and capital project budget approvals.',
     attendees: [
-      { initials: 'EB', bg: 'bg-amber-600', name: 'Ethan Brooks' },
-      { initials: 'CM', bg: 'bg-rose-600', name: 'Chloe Martin' },
+      { initials: 'CO', bg: 'bg-amber-600', name: 'Dr. Chinedu Okeke' },
+      { initials: 'BA', bg: 'bg-[#083E34]', name: 'Dr. Bukola Adeleke' },
     ],
   },
   {
@@ -289,7 +289,7 @@ const citadelEvents: ScheduleEvent[] = [
     attendees: [
       { initials: 'BO', bg: 'bg-teal-600', name: 'Blessing Okafor' },
       { initials: 'CI', bg: 'bg-slate-700', name: 'Pastor Christian Ike' },
-      { initials: 'MA', bg: 'bg-emerald-600', name: 'Mia Anderson' },
+      { initials: 'SA', bg: 'bg-emerald-600', name: 'Mrs. Sussan Afuwape' },
     ],
   },
   {
@@ -321,8 +321,8 @@ const citadelEvents: ScheduleEvent[] = [
     category: 'Events',
     description: 'Citadel culture orientation, governance standards, and systems walkthrough for new hires.',
     attendees: [
-      { initials: 'HL', bg: 'bg-[#083E34]', name: 'Harper Lee' },
-      { initials: 'MA', bg: 'bg-emerald-600', name: 'Mia Anderson' },
+      { initials: 'BA', bg: 'bg-[#083E34]', name: 'Dr. Bukola Adeleke' },
+      { initials: 'SA', bg: 'bg-emerald-600', name: 'Mrs. Sussan Afuwape' },
     ],
   },
   {
@@ -417,7 +417,17 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
     return 27;
   });
   const [activeCategory, setActiveCategory] = useState<'All' | 'Meeting' | 'Events' | 'Holidays'>('All');
-  const [eventsList, setEventsList] = useState<ScheduleEvent[]>(propEvents || citadelEvents);
+  const [eventsList, setEventsList] = useState<ScheduleEvent[]>(() => {
+    if (propEvents) return propEvents;
+    if (typeof window === 'undefined') return citadelEvents;
+    try {
+      const saved = window.localStorage.getItem('citadel_custom_schedule_events');
+      const custom = saved ? (JSON.parse(saved) as ScheduleEvent[]) : [];
+      return Array.isArray(custom) && custom.length > 0 ? [...custom, ...citadelEvents] : citadelEvents;
+    } catch {
+      return citadelEvents;
+    }
+  });
 
   // Modals state
   const [selectedEventModal, setSelectedEventModal] = useState<ScheduleEvent | null>(null);
@@ -518,6 +528,15 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
     };
 
     setEventsList((prev) => [created, ...prev]);
+    if (typeof window !== 'undefined' && !propEvents) {
+      try {
+        const saved = window.localStorage.getItem('citadel_custom_schedule_events');
+        const custom = saved ? (JSON.parse(saved) as ScheduleEvent[]) : [];
+        window.localStorage.setItem('citadel_custom_schedule_events', JSON.stringify([created, ...custom]));
+      } catch {
+        // ignore storage quota failures
+      }
+    }
     setIsAddModalOpen(false);
     setNewTitle('');
     setNewDesc('');

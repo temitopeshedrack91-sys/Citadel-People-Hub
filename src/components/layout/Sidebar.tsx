@@ -58,6 +58,7 @@ export type NavModule =
   | 'ai-assistant'
   | 'settings'
   | 'audit-logs'
+  | 'governance'
   | 'approvals'
   | 'birthdays';
 
@@ -243,6 +244,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       label: 'SUPPORT & GOVERNANCE',
       items: [
+        {
+          id: 'governance' as NavModule,
+          label: 'Governance Hub',
+          icon: ShieldCheck,
+          visible: canAccessModule(currentUser || currentRole, 'governance'),
+        },
         {
           id: 'settings' as NavModule,
           label: 'Settings',

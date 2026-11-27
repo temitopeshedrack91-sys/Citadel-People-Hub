@@ -246,10 +246,12 @@ export const PerformanceView: React.FC = () => {
     }
   };
 
+  const [confirmDeactivateKpiId, setConfirmDeactivateKpiId] = useState<number | null>(null);
+
   const handleDeleteKpi = async (id: number) => {
-    if (!confirm('Are you sure you want to deactivate this KPI?')) return;
     try {
       await performanceRepository.deleteKpi(id);
+      setConfirmDeactivateKpiId(null);
       showSuccess('KPI deactivated from library.');
       await loadData();
     } catch (err: any) {
@@ -786,20 +788,44 @@ export const PerformanceView: React.FC = () => {
 
                 {isHrOrAdmin && (
                   <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-                    <button
-                      onClick={() => handleEditKpi(kpi)}
-                      className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
-                      title="Edit KPI"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteKpi(kpi.id)}
-                      className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition cursor-pointer"
-                      title="Deactivate KPI"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    {confirmDeactivateKpiId === kpi.id ? (
+                      <>
+                        <span className="text-[11px] font-semibold text-rose-700 mr-auto">Deactivate KPI?</span>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeactivateKpiId(null)}
+                          className="px-2 py-1 rounded-lg border border-slate-200 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleDeleteKpi(kpi.id)}
+                          className="px-2.5 py-1 rounded-lg bg-rose-600 text-white text-[11px] font-semibold hover:bg-rose-700 cursor-pointer"
+                        >
+                          Confirm
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleEditKpi(kpi)}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
+                          title="Edit KPI"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeactivateKpiId(kpi.id)}
+                          className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition cursor-pointer"
+                          title="Deactivate KPI"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </div>

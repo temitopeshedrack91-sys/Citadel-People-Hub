@@ -21,6 +21,26 @@ export interface PersonaOption {
 }
 
 export const PRESET_PERSONAS: PersonaOption[] = import.meta.env.DEV ? [
+  // 0. System Admin (Full Platform & Organization Architecture Access)
+  {
+    user: {
+      id: 'emp-admin',
+      staffId: 'CGCC-000A',
+      name: 'Engr. Tunde Afolabi',
+      email: 'sysadmin@citadel.ng',
+      role: 'ADMIN',
+      entityId: 'entity-cgcc',
+      entityName: 'Citadel Global Community Church (CGCC)',
+      departmentId: 'dept-cgcc-ict',
+      departmentName: 'ICT',
+      jobTitle: 'Enterprise Systems Administrator',
+      avatarUrl: '',
+      permissions: ['*'],
+    },
+    badgeLabel: 'System Admin',
+    description: 'Full platform administrator with Organization Settings (Entities & Departments), Integrations, and Audit Log governance.',
+  },
+
   // 1. PCCM Super Admin (GEC Member / Primary HR Admin)
   {
     user: {
@@ -39,6 +59,26 @@ export const PRESET_PERSONAS: PersonaOption[] = import.meta.env.DEV ? [
     },
     badgeLabel: 'PCCM Super Admin',
     description: 'Primary HR Admin & GEC custodian with cross-entity governance across CGCC, CSOG, and Holdings.',
+  },
+
+  // 1b. HR Staff / People, Culture & Change Manager (Stage 2 HR Reviewer)
+  {
+    user: {
+      id: 'emp-hr-2',
+      staffId: 'CGCC-012',
+      name: 'Mrs. Sussan Afuwape',
+      email: 's.afuwape@thecitadelglobal.org',
+      role: 'HR_STAFF',
+      entityId: 'entity-cgcc',
+      entityName: 'Citadel Global Community Church (CGCC)',
+      departmentId: 'dept-cgcc-pccm',
+      departmentName: 'People, Culture & Change',
+      jobTitle: 'People, Culture & Change Manager',
+      avatarUrl: '',
+      permissions: ['manage_hr', 'approve_leave', 'manage_performance', 'manage_offboarding'],
+    },
+    badgeLabel: 'HR Staff',
+    description: 'People, Culture & Change Manager handling Stage 2 HR leave approvals, KPI setup, onboarding, and bio-data governance.',
   },
 
   // 2. Head of Technology & Systems (Line Manager / System Admin)

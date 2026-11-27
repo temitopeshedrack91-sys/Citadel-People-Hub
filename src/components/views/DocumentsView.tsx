@@ -10,16 +10,21 @@ import {
   FileCheck,
   Shield,
   Sparkles,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 import { HubDocument } from '../../types';
 import { documentRepository, auditRepository } from '../../services';
 import { useAuth } from '../../context/AuthContext';
+import { useOrganizationCatalog } from '../../hooks/useOrganizationCatalog';
 import { Badge } from '../common/Badge';
 import { downloadLaravelFile, isLaravelApiConfigured } from '../../services/laravelClient';
 
 export const DocumentsView: React.FC = () => {
-  const { currentUser, currentRole, permissions } = useAuth();
+  const { currentUser, currentRole, permissions, isAuthenticated } = useAuth();
+  const { entities, loading: entitiesLoading, reload: reloadCatalog } = useOrganizationCatalog();
   const [documents, setDocuments] = useState<HubDocument[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -37,12 +42,24 @@ export const DocumentsView: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
 
   const fetchDocuments = async () => {
-    const docs = await documentRepository.getAll();
-    setDocuments(docs);
+    setLoadError(null);
+    try {
+      const docs = await documentRepository.getAll();
+      setDocuments(docs);
+      void reloadCatalog();
+    } catch (err: any) {
+      setLoadError(err?.message || 'Unable to load documents vault.');
+    }
   };
 
   useEffect(() => {
-    fetchDocuments();
+    void fetchDocuments();
+  }, [isAuthenticated, currentUser.id]);
+
+  useEffect(() => {
+    const onAuthChanged = () => void fetchDocuments();
+    window.addEventListener('citadel:auth-changed', onAuthChanged);
+    return () => window.removeEventListener('citadel:auth-changed', onAuthChanged);
   }, []);
 
   const filteredDocs = documents.filter((doc) => {
@@ -175,6 +192,23 @@ Timestamp:     ${new Date().toLocaleString()}
 
   return (
     <div className="space-y-5">
+      {loadError && (
+        <div role="alert" className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 font-semibold">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>{loadError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => void fetchDocuments()}
+            className="px-2.5 py-1 rounded-lg bg-white border border-rose-200 text-rose-800 font-bold hover:bg-rose-100 flex items-center gap-1 cursor-pointer"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Retry</span>
+          </button>
+        </div>
+      )}
+
       {downloadSuccessMsg && (
         <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between shadow-xs animate-fade-in">
           <div className="flex items-center gap-2">
@@ -358,12 +392,23 @@ Timestamp:     ${new Date().toLocaleString()}
                 <select
                   value={docEntityScope}
                   onChange={(e) => setDocEntityScope(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#083E34]"
+                  disabled={entitiesLoading}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#083E34] disabled:opacity-60"
                 >
-                  <option value="All Citadel Entities">All Citadel Entities (CGCC, CSOG, Holdings)</option>
-                  <option value="Citadel Global Community Church (CGCC)">Citadel Global Community Church (CGCC)</option>
-                  <option value="Citadel School of Government (CSOG)">Citadel School of Government (CSOG)</option>
-                  <option value="Citadel Holdings">Citadel Holdings</option>
+                  <option value="All Citadel Entities">
+                    {entitiesLoading
+                      ? 'Loading Citadel entities...'
+                      : `All Citadel Entities${
+                          entities.length > 0
+                            ? ` (${entities.map((e) => e.shortCode).join(', ')})`
+                            : ''
+                        }`}
+                  </option>
+                  {entities.map((ent) => (
+                    <option key={ent.id} value={ent.name}>
+                      {ent.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 

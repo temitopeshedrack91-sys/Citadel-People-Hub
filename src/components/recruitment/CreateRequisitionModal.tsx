@@ -18,9 +18,10 @@ import {
   DollarSign,
   ShieldCheck,
 } from 'lucide-react';
-import { RecruitmentRequisition, CitadelEntity, CitadelDepartment, Employee } from '../../types';
+import { RecruitmentRequisition, CitadelEntity, CitadelDepartment, Employee, PayGrade } from '../../types';
 import { ChevronStepper, StepItem } from '../common/ChevronStepper';
-import { talentRepository } from '../../services';
+import { classificationRepository, employeeRepository, organizationRepository, talentRepository } from '../../services';
+import { filterDepartmentsByEntity, findMatchingEntity } from '../../utils/orgMatcher';
 
 interface CreateRequisitionModalProps {
   isOpen: boolean;
@@ -38,14 +39,6 @@ const REQUISITION_STEPS: StepItem[] = [
   { id: 4, title: 'Verify & Submit', subtitle: 'Review & PCCM sign-off' },
 ];
 
-const SALARY_BANDS = [
-  { id: 'grade-1', name: 'Grade 1 - Executive / Director (Band A: ₦1.2M - ₦2.0M)' },
-  { id: 'grade-2', name: 'Grade 2 - Senior Manager / Department Head (Band B: ₦750k - ₦1.1M)' },
-  { id: 'grade-3', name: 'Grade 3 - Specialist / Lead Officer (Band C: ₦450k - ₦700k)' },
-  { id: 'grade-4', name: 'Grade 4 - Associate / Operations Staff (Band D: ₦250k - ₦400k)' },
-  { id: 'grade-5', name: 'Grade 5 - Entry Level / Ministry Intern (Band E: ₦120k - ₦220k)' },
-];
-
 export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
   isOpen,
   onClose,
@@ -57,6 +50,14 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [localEntities, setLocalEntities] = useState<CitadelEntity[]>([]);
+  const [localDepartments, setLocalDepartments] = useState<CitadelDepartment[]>([]);
+  const [localEmployees, setLocalEmployees] = useState<Employee[]>([]);
+  const [optionsLoading, setOptionsLoading] = useState<boolean>(false);
+
+  const effectiveEntities = entities.length > 0 ? entities : localEntities;
+  const effectiveDepartments = departments.length > 0 ? departments : localDepartments;
+  const effectiveEmployees = employees.length > 0 ? employees : localEmployees;
 
   // Form State
   // Step 1: Role & Entity
@@ -78,45 +79,95 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
   const [sourcingChannel, setSourcingChannel] = useState('');
   const [keyRequirements, setKeyRequirements] = useState('');
 
-  // Keep department synced when entityId changes
-  useEffect(() => {
-    if (!entityId && entities.length > 0) {
-      setEntityId(entities[0].id);
-    }
-  }, [entities, entityId]);
+  const [payGrades, setPayGrades] = useState<PayGrade[]>([]);
+  const [gradesLoading, setGradesLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    const entityDepts = departments.filter((d) => String(d.entityId) === String(entityId));
+    if (!isOpen) return;
+    let cancelled = false;
+    setGradesLoading(true);
+    classificationRepository
+      .getPayGrades()
+      .then((grades) => {
+        if (!cancelled) setPayGrades(Array.isArray(grades) ? grades : []);
+      })
+      .catch(() => {
+        if (!cancelled) setPayGrades([]);
+      })
+      .finally(() => {
+        if (!cancelled) setGradesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
+  // Self-fetch fallback if opened before parent finishes loading dropdown options
+  useEffect(() => {
+    if (!isOpen) return;
+    if (entities.length > 0 && departments.length > 0 && employees.length > 0) return;
+
+    let cancelled = false;
+    setOptionsLoading(true);
+    Promise.allSettled([
+      entities.length > 0 ? Promise.resolve(entities) : organizationRepository.getEntities(),
+      departments.length > 0 ? Promise.resolve(departments) : organizationRepository.getDepartments(),
+      employees.length > 0 ? Promise.resolve(employees) : employeeRepository.getAll(),
+    ])
+      .then(([entRes, deptRes, empRes]) => {
+        if (cancelled) return;
+        if (entRes.status === 'fulfilled') setLocalEntities(entRes.value);
+        if (deptRes.status === 'fulfilled') setLocalDepartments(deptRes.value);
+        if (empRes.status === 'fulfilled') setLocalEmployees(empRes.value);
+      })
+      .finally(() => {
+        if (!cancelled) setOptionsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, entities.length, departments.length, employees.length]);
+
+  // Keep department synced when entityId changes
+  useEffect(() => {
+    if (!entityId && effectiveEntities.length > 0) {
+      setEntityId(String(effectiveEntities[0].id));
+    }
+  }, [effectiveEntities, entityId]);
+
+  useEffect(() => {
+    const entityDepts = filterDepartmentsByEntity(effectiveDepartments, entityId, { activeOnly: true });
     if (entityDepts.length > 0) {
       if (!entityDepts.some((d) => String(d.id) === String(departmentId))) {
-        setDepartmentId(entityDepts[0].id);
+        setDepartmentId(String(entityDepts[0].id));
       }
     } else {
       setDepartmentId('');
     }
-  }, [entityId, departments]);
+  }, [entityId, effectiveDepartments, departmentId]);
 
   // Set default hiring manager from employees
   useEffect(() => {
-    if (!hiringManager && employees.length > 0) {
-      const pccmLead = employees.find(
+    if (!hiringManager && effectiveEmployees.length > 0) {
+      const pccmLead = effectiveEmployees.find(
         (e) =>
           e.departmentName?.toLowerCase().includes('people') ||
           e.departmentName?.toLowerCase().includes('pccm')
       );
       setHiringManager(
         pccmLead
-          ? `${pccmLead.firstName} ${pccmLead.lastName}`
-          : `${employees[0].firstName} ${employees[0].lastName}`
+          ? pccmLead.fullName || `${pccmLead.firstName} ${pccmLead.lastName}`
+          : effectiveEmployees[0].fullName || `${effectiveEmployees[0].firstName} ${effectiveEmployees[0].lastName}`
       );
     }
-  }, [employees, hiringManager]);
+  }, [effectiveEmployees, hiringManager]);
 
   if (!isOpen) return null;
 
-  const selectedEntity = entities.find((e) => String(e.id) === String(entityId));
-  const filteredDepartments = departments.filter((d) => String(d.entityId) === String(entityId));
-  const selectedDept = departments.find((d) => String(d.id) === String(departmentId));
+  const selectedEntity = findMatchingEntity(effectiveEntities, entityId);
+  const filteredDepartments = filterDepartmentsByEntity(effectiveDepartments, entityId, { activeOnly: true });
+  const selectedDept = filteredDepartments.find((d) => String(d.id) === String(departmentId));
 
   const validateStep = (step: number): boolean => {
     setValidationError(null);
@@ -303,10 +354,17 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                   <select
                     value={entityId}
                     onChange={(e) => setEntityId(e.target.value)}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition cursor-pointer"
+                    disabled={optionsLoading && effectiveEntities.length === 0}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition cursor-pointer disabled:opacity-60"
                   >
-                    <option value="">Select an entity</option>
-                    {entities.map((ent) => (
+                    <option value="">
+                      {optionsLoading && effectiveEntities.length === 0
+                        ? 'Loading business entities...'
+                        : effectiveEntities.length === 0
+                        ? 'No business entities available'
+                        : 'Select an entity'}
+                    </option>
+                    {effectiveEntities.map((ent) => (
                       <option key={ent.id} value={ent.id}>
                         {ent.name} ({ent.shortCode})
                       </option>
@@ -321,18 +379,23 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                   <select
                     value={departmentId}
                     onChange={(e) => setDepartmentId(e.target.value)}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition cursor-pointer"
+                    disabled={!entityId || (optionsLoading && filteredDepartments.length === 0)}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition cursor-pointer disabled:opacity-60"
                   >
-                    <option value="">Select a department</option>
-                    {filteredDepartments.length > 0 ? (
-                      filteredDepartments.map((dept) => (
-                        <option key={dept.id} value={dept.id}>
-                          {dept.name}
-                        </option>
-                      ))
-                    ) : (
-                      <option value="">No departments available</option>
-                    )}
+                    <option value="">
+                      {!entityId
+                        ? 'Select an entity first'
+                        : optionsLoading && filteredDepartments.length === 0
+                        ? 'Loading departments...'
+                        : filteredDepartments.length === 0
+                        ? 'No departments available for this entity'
+                        : 'Select a department'}
+                    </option>
+                    {filteredDepartments.map((dept) => (
+                      <option key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -415,7 +478,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition"
                   />
                   <datalist id="cgcc-hiring-managers-list">
-                    {employees.map((emp) => (
+                    {effectiveEmployees.map((emp) => (
                       <option key={emp.id} value={emp.fullName || `${emp.firstName} ${emp.lastName}`}>
                         {emp.jobTitle || emp.departmentName}
                       </option>
@@ -431,14 +494,28 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                 <select
                   value={salaryBand}
                   onChange={(e) => setSalaryBand(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition cursor-pointer"
+                  disabled={gradesLoading}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition cursor-pointer disabled:opacity-60"
                 >
-                  <option value="">Select an approved salary band</option>
-                  {SALARY_BANDS.map((band) => (
-                    <option key={band.id} value={band.name}>
-                      {band.name}
-                    </option>
-                  ))}
+                  <option value="">
+                    {gradesLoading
+                      ? 'Loading pay grades...'
+                      : payGrades.length > 0
+                      ? 'Select an approved pay grade'
+                      : 'No pay grades configured'}
+                  </option>
+                  {payGrades.map((grade) => {
+                    const label = `${grade.name}${
+                      grade.minSalary && grade.maxSalary
+                        ? ` (${grade.currency || 'NGN'} ${grade.minSalary.toLocaleString()} - ${grade.maxSalary.toLocaleString()})`
+                        : ''
+                    }`;
+                    return (
+                      <option key={grade.id} value={label}>
+                        {label}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 

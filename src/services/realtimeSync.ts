@@ -14,7 +14,7 @@ import {
   isLaravelApiConfigured,
   requestLaravelData,
 } from './laravelClient';
-import { shouldUseLaravelBackend } from '../utils/authMode';
+import { canUseSupabaseDirectAccess, shouldUseLaravelBackend } from '../utils/authMode';
 
 export type RealtimeTable =
   | 'employees'
@@ -75,6 +75,16 @@ class RealtimeSyncManager {
     return shouldUseLaravelBackend(import.meta.env.PROD, isLaravelApiConfigured());
   }
 
+  private shouldUseSupabaseRealtime(useLaravel: boolean): boolean {
+    if (useLaravel) return false;
+    if (import.meta.env.MODE === 'test') return true;
+    return canUseSupabaseDirectAccess(
+      import.meta.env.DEV,
+      useLaravel,
+      import.meta.env.VITE_ENABLE_SUPABASE_DIRECT_DEV_ACCESS === 'true'
+    );
+  }
+
   public subscribe<T extends { [key: string]: any } = { [key: string]: any }>(
     table: RealtimeTable,
     callback: RealtimeCallback<T>,
@@ -82,12 +92,13 @@ class RealtimeSyncManager {
   ): () => void {
     const channelKey = `realtime:${table}`;
     const useLaravel = this.shouldUseLaravelRealtime();
+    const useSupabase = this.shouldUseSupabaseRealtime(useLaravel);
     let state = this.channels.get(channelKey);
 
     if (!state) {
-      state = useLaravel
-        ? this.initLaravelChannel()
-        : this.initSupabaseChannel(channelKey, table, event);
+      state = useSupabase
+        ? this.initSupabaseChannel(channelKey, table, event)
+        : this.initLaravelChannel();
       this.channels.set(channelKey, state);
     }
 

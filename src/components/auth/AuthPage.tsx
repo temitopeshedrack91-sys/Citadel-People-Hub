@@ -37,10 +37,17 @@ interface DemoAccount {
 
 const DEMO_ACCOUNTS: DemoAccount[] = import.meta.env.DEV ? [
   {
+    label: 'System Admin',
+    name: 'Engr. Tunde Afolabi',
+    email: 'sysadmin@citadel.ng',
+    role: 'System Admin (Settings & Org)',
+    password: 'Password123!',
+  },
+  {
     label: 'HR Admin',
     name: 'Dr. Bukola Adeleke',
     email: 'dr.adeleke@citadel.ng',
-    role: 'HR Admin (ADMIN)',
+    role: 'HR Admin (PCCM)',
     password: 'Password123!',
   },
   {

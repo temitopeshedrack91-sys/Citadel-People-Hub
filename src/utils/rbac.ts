@@ -101,6 +101,7 @@ export const ROLE_MODULE_PERMISSIONS: Record<CanonicalRole, NavModule[]> = {
     'notifications',
     'integrations',
     'ai-assistant',
+    'governance',
     'settings',
     'audit-logs',
   ],
@@ -124,6 +125,7 @@ export const ROLE_MODULE_PERMISSIONS: Record<CanonicalRole, NavModule[]> = {
     'reports',
     'notifications',
     'ai-assistant',
+    'governance',
   ],
 
   // Managers see team approvals, team performance, team offboarding, & team calendar
@@ -141,6 +143,7 @@ export const ROLE_MODULE_PERMISSIONS: Record<CanonicalRole, NavModule[]> = {
     'documents',
     'notifications',
     'ai-assistant',
+    'governance',
   ],
 
   EMPLOYEE: [
@@ -156,6 +159,7 @@ export const ROLE_MODULE_PERMISSIONS: Record<CanonicalRole, NavModule[]> = {
     'documents',
     'notifications',
     'ai-assistant',
+    'governance',
   ],
 
   VIEWER: [
@@ -168,6 +172,7 @@ export const ROLE_MODULE_PERMISSIONS: Record<CanonicalRole, NavModule[]> = {
     'payroll',
     'notifications',
     'ai-assistant',
+    'governance',
   ],
 };
 
