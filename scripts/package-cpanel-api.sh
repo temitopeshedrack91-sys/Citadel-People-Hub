@@ -40,7 +40,6 @@ rm -rf "${STAGE_DIR}" "${ARCHIVE_PATH}"
 mkdir -p "${STAGE_DIR}"
 
 rsync -a \
-  --exclude='.env' \
   --exclude='.git' \
   --exclude='node_modules' \
   --exclude='tests' \

@@ -1,0 +1,11 @@
+backend/
+supabase/
+scripts/
+dev-dist/
+dist/
+node_modules/
+.git/
+*.sql
+*.zip
+.env
+.env.local

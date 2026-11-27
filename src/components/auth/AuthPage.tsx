@@ -35,7 +35,10 @@ interface DemoAccount {
   password: string;
 }
 
-const DEMO_ACCOUNTS: DemoAccount[] = import.meta.env.DEV ? [
+const DEMO_ACCOUNTS: DemoAccount[] =
+  import.meta.env.VITE_ENABLE_DEMO_PERSONA_LOGIN === 'false'
+    ? []
+    : [
   {
     label: 'System Admin',
     name: 'Engr. Tunde Afolabi',
@@ -99,7 +102,7 @@ const DEMO_ACCOUNTS: DemoAccount[] = import.meta.env.DEV ? [
     role: 'Read-Only Viewer',
     password: 'Password123!',
   },
-] : [];
+];
 
 const KELVORA_ALIASES: Record<string, string> = {
   'admin@kelvora.com': 'dr.adeleke@citadel.ng',
@@ -119,7 +122,8 @@ export const AuthPage: React.FC = () => {
   );
 
   const showDevSeededAccounts =
-    localDemoAuthenticationEnabled || (import.meta.env.DEV && backendEnabled && DEMO_ACCOUNTS.length > 0);
+    localDemoAuthenticationEnabled ||
+    (import.meta.env.VITE_ENABLE_DEMO_PERSONA_LOGIN !== 'false' && DEMO_ACCOUNTS.length > 0);
 
   const [activeTab, setActiveTab] = useState<'signin' | 'register'>('signin');
   const [email, setEmail] = useState(localDemoAuthenticationEnabled ? 'dr.adeleke@citadel.ng' : '');
@@ -629,7 +633,7 @@ export const AuthPage: React.FC = () => {
                   <span>
                     {localDemoAuthenticationEnabled
                       ? 'Demo Credentials (1-Click Fill)'
-                      : 'Seeded Dev Accounts (1-Click Fill · API Auth)'}
+                      : 'Demo Accounts (1-Click Fill · Live API Auth)'}
                   </span>
                 </div>
                 {isDemoAccordionOpen ? (

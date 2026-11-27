@@ -390,7 +390,7 @@ class DatabaseSeeder extends Seeder
                 'employee_name' => $nadia->full_name,
                 'entity_name' => $nadia->entity->name,
                 'department_name' => $nadia->department->name,
-                'leave_type' => 'Casual Leave',
+                'leave_type' => 'Compassionate Leave',
                 'start_date' => now()->addDays(18)->toDateString(),
                 'end_date' => now()->addDays(19)->toDateString(),
                 'total_days' => 2,
@@ -426,7 +426,7 @@ class DatabaseSeeder extends Seeder
             ]);
 
             $casualBalanceNadia = EmployeeLeaveBalance::where('employee_id', $nadia->id)
-                ->where('leave_category_id', $categories['Casual Leave']['category']->id)
+                ->where('leave_category_id', $categories['Compassionate Leave']['category']->id)
                 ->where('year', $year)
                 ->first();
             if ($casualBalanceNadia) {

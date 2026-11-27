@@ -35,6 +35,7 @@ import {
   auditRepository,
 } from '../../services';
 import { useAuth } from '../../context/AuthContext';
+import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import {
   SalaryTemplate,
   EmployeeSalaryAssignment,
@@ -191,6 +192,19 @@ export const PayrollView: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  useRealtimeTable('payroll_runs', () => {
+    void loadData();
+  });
+  useRealtimeTable('payroll_items', () => {
+    void loadData();
+  });
+  useRealtimeTable('employee_loans', () => {
+    void loadData();
+  });
+  useRealtimeTable('salary_templates', () => {
+    void loadData();
+  });
 
   const showNotification = (msg: string) => {
     setActionSuccessMessage(msg);

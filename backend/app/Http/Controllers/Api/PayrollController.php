@@ -12,6 +12,7 @@ use App\Models\PayrollItem;
 use App\Models\PayrollRun;
 use App\Models\SalaryTemplate;
 use App\Services\PayrollService;
+use App\Services\RealtimeEventService;
 use App\Support\AuditLogger;
 use App\Support\RoleAuthorization;
 use Illuminate\Http\JsonResponse;
@@ -107,6 +108,7 @@ class PayrollController extends Controller
 
         $template = $this->payrollService->saveSalaryTemplate($validated);
         AuditLogger::record($request, 'Payroll', 'Created salary template', $template->id, $template->name, null, 'Created');
+        RealtimeEventService::publish('salary_templates', 'INSERT', $template->id, ['name' => $template->name], (int) $request->user()->id);
 
         return response()->json(['data' => $template], 201);
     }
@@ -197,6 +199,7 @@ class PayrollController extends Controller
         try {
             $assignment = $this->payrollService->assignSalaryTemplate($validated);
             AuditLogger::record($request, 'Payroll', 'Assigned salary template', $assignment->id, "Employee {$assignment->employee_id}", null, 'Assigned');
+            RealtimeEventService::publish('salary_templates', 'UPDATE', $assignment->id, ['employeeId' => $assignment->employee_id], (int) $request->user()->id);
 
             return response()->json(['data' => $assignment->load(['employee', 'salaryTemplate'])], 201);
         } catch (InvalidArgumentException $e) {
@@ -275,6 +278,7 @@ class PayrollController extends Controller
         try {
             $run = $this->payrollService->generatePayrollRun($validated, (int) $request->user()->id);
             AuditLogger::record($request, 'Payroll', 'Generated payroll run draft', $run->id, "Period {$run->period_label}", null, 'Draft');
+            RealtimeEventService::publish('payroll_runs', 'INSERT', $run->id, ['status' => $run->status], (int) $request->user()->id);
 
             return response()->json(['data' => $run], 201);
         } catch (RuntimeException $e) {
@@ -318,6 +322,7 @@ class PayrollController extends Controller
         try {
             $finalized = $this->payrollService->finalizePayrollRun($run, (int) $request->user()->id);
             AuditLogger::record($request, 'Payroll', 'Finalized payroll run', $finalized->id, "Period {$finalized->period_label}", 'draft', 'processed');
+            RealtimeEventService::publish('payroll_runs', 'UPDATE', $finalized->id, ['status' => 'processed'], (int) $request->user()->id);
 
             return response()->json(['data' => $finalized, 'message' => 'Payroll run finalized successfully.']);
         } catch (RuntimeException $e) {
@@ -373,6 +378,7 @@ class PayrollController extends Controller
         try {
             $paidItem = $this->payrollService->markItemPaid($item, $validated['payment_reference'] ?? $validated['payment_method'] ?? null);
             AuditLogger::record($request, 'Payroll', 'Marked payslip as paid', $paidItem->id, "Employee {$paidItem->employee_id}", 'pending', 'paid');
+            RealtimeEventService::publish('payroll_items', 'UPDATE', $paidItem->id, ['status' => 'paid'], (int) $request->user()->id);
 
             return response()->json(['data' => $paidItem, 'message' => 'Payment reference recorded and payslip marked as paid.']);
         } catch (RuntimeException $e) {
@@ -443,6 +449,7 @@ class PayrollController extends Controller
 
         $loan = $this->payrollService->saveLoan($validated);
         AuditLogger::record($request, 'Payroll', 'Created employee loan', $loan->id, $loan->loan_reference, null, 'Active');
+        RealtimeEventService::publish('employee_loans', 'INSERT', $loan->id, ['status' => $loan->status], (int) $request->user()->id);
 
         return response()->json(['data' => $loan->load('installments')], 201);
     }
@@ -464,6 +471,7 @@ class PayrollController extends Controller
         try {
             $approved = $this->payrollService->approveLoan($loan, $validated['step'], (int) $request->user()->id, $validated['remarks'] ?? null);
             AuditLogger::record($request, 'Payroll', "Approved loan ({$validated['step']})", $approved->id, $approved->loan_reference, null, $approved->status);
+            RealtimeEventService::publish('employee_loans', 'UPDATE', $approved->id, ['status' => $approved->status], (int) $request->user()->id);
 
             return response()->json(['data' => $approved]);
         } catch (InvalidArgumentException $e) {

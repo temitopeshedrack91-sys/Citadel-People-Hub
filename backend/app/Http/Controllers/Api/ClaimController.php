@@ -9,6 +9,7 @@ use App\Models\ClaimRequest;
 use App\Models\Employee;
 use App\Models\ExpenseType;
 use App\Services\ClaimService;
+use App\Services\RealtimeEventService;
 use App\Support\AuditLogger;
 use App\Support\RoleAuthorization;
 use Illuminate\Http\JsonResponse;
@@ -189,6 +190,8 @@ class ClaimController extends Controller
             $claim->status
         );
 
+        RealtimeEventService::publish('claim_requests', 'INSERT', $claim->id, ['status' => $claim->status], (int) $user->id);
+
         return response()->json(['data' => $claim], 201);
     }
 
@@ -221,6 +224,8 @@ class ClaimController extends Controller
             'Added'
         );
 
+        RealtimeEventService::publish('claim_requests', 'UPDATE', $claimRequest->id, ['expenseAdded' => true], (int) $request->user()->id);
+
         return response()->json(['data' => $claimRequest->fresh(['employee', 'claimEvent', 'expenses.expenseType'])], 201);
     }
 
@@ -248,6 +253,8 @@ class ClaimController extends Controller
             'Active',
             'Deleted'
         );
+
+        RealtimeEventService::publish('claim_requests', 'UPDATE', $claim->id, ['expenseDeleted' => true], (int) $request->user()->id);
 
         return response()->json(['data' => $claim->fresh(['employee', 'claimEvent', 'expenses.expenseType'])]);
     }
@@ -290,6 +297,8 @@ class ClaimController extends Controller
             $prevStatus,
             $updated->status
         );
+
+        RealtimeEventService::publish('claim_requests', 'UPDATE', $updated->id, ['status' => $updated->status], (int) $user->id);
 
         return response()->json(['data' => $updated]);
     }

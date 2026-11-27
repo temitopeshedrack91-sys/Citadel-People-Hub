@@ -31,7 +31,12 @@ export type RealtimeTable =
   | 'performance_reviews'
   | 'onboarding_journeys'
   | 'onboarding_checklist_templates'
-  | 'offboarding_requests';
+  | 'offboarding_requests'
+  | 'payroll_runs'
+  | 'payroll_items'
+  | 'employee_loans'
+  | 'salary_templates'
+  | 'claim_requests';
 
 export type RealtimeEventType = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
 

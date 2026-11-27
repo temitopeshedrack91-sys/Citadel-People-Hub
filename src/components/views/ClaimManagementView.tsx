@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { claimRepository, employeeRepository, auditRepository } from '../../services';
 import { useAuth } from '../../context/AuthContext';
+import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import {
   ClaimRequest,
   ClaimEvent,
@@ -128,6 +129,10 @@ export const ClaimManagementView: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  useRealtimeTable('claim_requests', () => {
+    void loadData();
+  });
 
   // Summary KPI Metrics
   const metrics = useMemo(() => {
