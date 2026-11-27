@@ -1,4 +1,5 @@
 import { isLaravelApiConfigured, requestLaravelData } from './laravelClient';
+import { shouldUseLaravelBackend } from '../utils/authMode';
 import type {
   LifecycleEventRecord,
   ProfileChangeRequest,
@@ -7,6 +8,13 @@ import type {
 
 const CHANGE_REQ_STORAGE_KEY = 'citadel_workbook_profile_change_requests';
 const LIFECYCLE_STORAGE_KEY = 'citadel_workbook_lifecycle_events';
+
+function shouldUseGovernanceApi(): boolean {
+  if (import.meta.env.MODE === 'test') {
+    return isLaravelApiConfigured();
+  }
+  return shouldUseLaravelBackend(import.meta.env.PROD, isLaravelApiConfigured());
+}
 
 function loadLocal<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
@@ -103,7 +111,7 @@ function mapDtoToLifecycle(dto: LaravelLifecycleDTO): LifecycleEventRecord {
 
 export const governanceRepository = {
   async listProfileChangeRequests(): Promise<ProfileChangeRequest[]> {
-    if (isLaravelApiConfigured()) {
+    if (shouldUseGovernanceApi()) {
       const rows = await requestLaravelData<LaravelProfileChangeDTO[]>('/governance/profile-change-requests');
       return rows.map(mapDtoToProfileChange);
     }
@@ -111,7 +119,7 @@ export const governanceRepository = {
   },
 
   async createProfileChangeRequest(request: ProfileChangeRequest): Promise<ProfileChangeRequest> {
-    if (isLaravelApiConfigured()) {
+    if (shouldUseGovernanceApi()) {
       const changes = Object.entries(request.proposedChanges).map(([fieldKey, newValue]) => ({
         fieldKey,
         fieldLabel: fieldKey,
@@ -140,7 +148,7 @@ export const governanceRepository = {
     comments?: string,
     localFallbackUpdated?: ProfileChangeRequest
   ): Promise<ProfileChangeRequest> {
-    if (isLaravelApiConfigured()) {
+    if (shouldUseGovernanceApi()) {
       const dto = await requestLaravelData<LaravelProfileChangeDTO>(
         `/governance/profile-change-requests/${id}/review`,
         {
@@ -159,7 +167,7 @@ export const governanceRepository = {
   },
 
   async listLifecycleEvents(): Promise<LifecycleEventRecord[]> {
-    if (isLaravelApiConfigured()) {
+    if (shouldUseGovernanceApi()) {
       const rows = await requestLaravelData<LaravelLifecycleDTO[]>('/governance/lifecycle-events');
       return rows.map(mapDtoToLifecycle);
     }
@@ -167,7 +175,7 @@ export const governanceRepository = {
   },
 
   async createLifecycleEvent(event: LifecycleEventRecord): Promise<LifecycleEventRecord> {
-    if (isLaravelApiConfigured()) {
+    if (shouldUseGovernanceApi()) {
       const dto = await requestLaravelData<LaravelLifecycleDTO>('/governance/lifecycle-events', {
         method: 'POST',
         body: JSON.stringify({
@@ -189,7 +197,7 @@ export const governanceRepository = {
     id: string,
     localFallbackUpdated?: LifecycleEventRecord
   ): Promise<LifecycleEventRecord> {
-    if (isLaravelApiConfigured()) {
+    if (shouldUseGovernanceApi()) {
       const dto = await requestLaravelData<LaravelLifecycleDTO>(
         `/governance/lifecycle-events/${id}/approve`,
         {

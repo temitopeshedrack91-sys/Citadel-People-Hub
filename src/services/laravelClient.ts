@@ -32,10 +32,23 @@ export class LaravelApiError extends Error {
 }
 
 /**
+ * Normalizes a configured API base URL by stripping trailing slashes and an optional
+ * trailing `/api/v1` segment so callers that append `/api/v1/...` work identically
+ * whether `VITE_API_BASE_URL` is `https://api.africabroadcastingacademy.com` or
+ * `https://api.africabroadcastingacademy.com/api/v1`.
+ */
+export const normalizeLaravelApiBaseUrl = (rawUrl: string): string =>
+  (rawUrl || '')
+    .trim()
+    .replace(/\/+$/, '')
+    .replace(/\/api\/v1$/i, '')
+    .replace(/\/+$/, '');
+
+/**
  * Checks whether the Laravel backend API base URL is configured in the environment.
  */
 export const getLaravelApiBaseUrl = (): string =>
-  (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
+  normalizeLaravelApiBaseUrl(import.meta.env.VITE_API_BASE_URL || '');
 export const isLaravelApiConfigured = (): boolean => Boolean(getLaravelApiBaseUrl());
 
 function inferRealtimeTablesFromPath(path: string): string[] {

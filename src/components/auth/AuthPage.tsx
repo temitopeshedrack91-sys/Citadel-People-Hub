@@ -58,6 +58,13 @@ const DEMO_ACCOUNTS: DemoAccount[] = import.meta.env.DEV ? [
     password: 'Password123!',
   },
   {
+    label: 'Business Head',
+    name: 'Pastor Tunde Bakare',
+    email: 'pastor.bakare@citadel.ng',
+    role: 'Business Head (CGCC)',
+    password: 'Password123!',
+  },
+  {
     label: 'Manager (ICT)',
     name: 'Engr. Femi Olatunji',
     email: 'femi.olatunji@citadel.ng',
@@ -459,11 +466,12 @@ export const AuthPage: React.FC = () => {
                   <span>Continue with Google Workspace</span>
                 </button>
 
-                <div className="relative flex items-center justify-center">
-                  <div className="border-t border-slate-200 w-full" />
-                  <span className="bg-white px-3 text-xs font-medium text-slate-500 relative whitespace-nowrap">
+                <div className="flex items-center gap-3">
+                  <div className="h-px flex-1 bg-slate-200" />
+                  <span className="text-xs font-medium text-slate-500 whitespace-nowrap">
                     or continue with corporate email
                   </span>
+                  <div className="h-px flex-1 bg-slate-200" />
                 </div>
               </>
             )}

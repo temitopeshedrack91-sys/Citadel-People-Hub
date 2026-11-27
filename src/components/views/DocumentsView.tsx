@@ -19,6 +19,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useOrganizationCatalog } from '../../hooks/useOrganizationCatalog';
 import { Badge } from '../common/Badge';
 import { downloadLaravelFile, isLaravelApiConfigured } from '../../services/laravelClient';
+import { isHrOrAdminUser } from '../../utils/rbac';
+import { DOCUMENT_FILTER_OPTIONS, matchesDocumentCategoryFilter } from '../../utils/hrisHelpers';
 
 export const DocumentsView: React.FC = () => {
   const { currentUser, currentRole, permissions, isAuthenticated } = useAuth();
@@ -63,11 +65,11 @@ export const DocumentsView: React.FC = () => {
   }, []);
 
   const filteredDocs = documents.filter((doc) => {
-    if (categoryFilter !== 'All' && doc.category !== categoryFilter) return false;
+    if (!matchesDocumentCategoryFilter(doc.category, categoryFilter)) return false;
     if (search && !doc.title.toLowerCase().includes(search.toLowerCase())) return false;
 
     // Access level filter
-    if (doc.accessLevel === 'PCCM_Only' && currentRole !== 'PCCM_SUPER_ADMIN') {
+    if (doc.accessLevel === 'PCCM_Only' && !isHrOrAdminUser(currentUser)) {
       return false;
     }
     return true;
@@ -257,7 +259,7 @@ Timestamp:     ${new Date().toLocaleString()}
         </div>
 
         <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar">
-          {['All', 'Policy', 'Handbook', 'Template', 'Contract'].map((cat) => (
+          {DOCUMENT_FILTER_OPTIONS.map((cat) => (
             <button
               key={cat}
               onClick={() => setCategoryFilter(cat)}

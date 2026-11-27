@@ -47,6 +47,7 @@ import {
 } from '../../types';
 import { ChevronStepper, StepItem } from '../common/ChevronStepper';
 import { StatusPill } from '../common/StatusPill';
+import { calculatePayrollDraftSummary, resolveEmployeeBankDetails } from '../../utils/hrisHelpers';
 
 export const PayrollView: React.FC = () => {
   const { currentUser, currentRole } = useAuth();
@@ -221,6 +222,18 @@ export const PayrollView: React.FC = () => {
       pfReserve,
     };
   }, [runs, templates, assignments, loans, providentFunds]);
+
+  const wizardSummary = useMemo(
+    () =>
+      calculatePayrollDraftSummary({
+        employees,
+        assignments,
+        templates,
+        loans,
+        deductions,
+      }),
+    [employees, assignments, templates, loans, deductions]
+  );
 
   // Stepper Items for Pay Run Modal
   const wizardSteps: StepItem[] = [
@@ -667,7 +680,7 @@ export const PayrollView: React.FC = () => {
     <div className="space-y-6 animate-fade-in text-slate-800">
       {/* Toast Notification */}
       {actionSuccessMessage && (
-        <div className="fixed top-5 right-5 z-50 flex items-center gap-3 bg-[#174EA6] text-white px-5 py-3 rounded-xl shadow-xl border border-[#D4AF37]/40 animate-slide-in">
+        <div className="fixed top-5 right-5 z-50 flex items-center gap-3 bg-[#083E34] text-white px-5 py-3 rounded-xl shadow-xl border border-[#D4AF37]/40 animate-slide-in">
           <CheckCircle2 className="w-5 h-5 text-[#D4AF37] shrink-0" />
           <span className="text-sm font-semibold">{actionSuccessMessage}</span>
           <button
@@ -683,9 +696,9 @@ export const PayrollView: React.FC = () => {
       {actionErrorMessage && (
         <div
           role="alert"
-          className="fixed top-20 right-5 z-50 flex items-center gap-3 bg-[#111827] text-white px-5 py-3 rounded-xl shadow-xl border border-[#111827]/25 animate-slide-in"
+          className="fixed top-20 right-5 z-50 flex items-center gap-3 bg-rose-950 text-white px-5 py-3 rounded-xl shadow-xl border border-rose-400/50 animate-slide-in"
         >
-          <AlertCircle className="w-5 h-5 text-[#D4AF37] shrink-0" />
+          <AlertCircle className="w-5 h-5 text-rose-300 shrink-0" />
           <span className="text-sm font-semibold">{actionErrorMessage}</span>
           <button
             type="button"
@@ -752,13 +765,13 @@ export const PayrollView: React.FC = () => {
         <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
           <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
             <span>YTD Payroll Volume</span>
-            <DollarSign className="w-4 h-4 text-[#174EA6]" />
+            <DollarSign className="w-4 h-4 text-[#083E34]" />
           </div>
           <div className="mt-2 text-2xl font-black text-slate-900">
             {formatMoney(metrics.totalGrossYtd)}
           </div>
           <div className="mt-1 text-xs text-slate-500 flex items-center gap-1 font-medium">
-            <span className="text-[#174EA6] font-bold">100% compliant</span>
+            <span className="text-emerald-600 font-bold">100% compliant</span>
             <span>across all entities</span>
           </div>
         </div>
@@ -767,7 +780,7 @@ export const PayrollView: React.FC = () => {
         <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
           <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
             <span>Latest Net Payout</span>
-            <TrendingUp className="w-4 h-4 text-[#174EA6]" />
+            <TrendingUp className="w-4 h-4 text-emerald-600" />
           </div>
           <div className="mt-2 text-2xl font-black text-slate-900">
             {formatMoney(metrics.latestNet)}
@@ -779,17 +792,17 @@ export const PayrollView: React.FC = () => {
         </div>
 
         {/* Assigned Staff on Structure */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs">
-          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-500">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
+          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
             <span>Structure Coverage</span>
-            <Users className="w-4 h-4 text-[#174EA6]" />
+            <Users className="w-4 h-4 text-blue-600" />
           </div>
-          <div className="mt-2 text-2xl font-bold text-slate-900 tabular-nums">
+          <div className="mt-2 text-2xl font-black text-slate-900">
             {metrics.assignedStaffCount}{' '}
             <span className="text-sm font-normal text-slate-400">/ {employees.length} Staff</span>
           </div>
-          <div className="mt-1 text-xs text-slate-500 flex items-center gap-1 font-medium tabular-nums">
-            <span className="text-[#174EA6] font-semibold">{metrics.structuresCount}</span>
+          <div className="mt-1 text-xs text-slate-500 flex items-center gap-1 font-medium">
+            <span className="text-blue-600 font-bold">{metrics.structuresCount}</span>
             <span>active compensation tiers</span>
           </div>
         </div>
@@ -804,7 +817,7 @@ export const PayrollView: React.FC = () => {
             {formatMoney(metrics.totalLoanRemaining)}
           </div>
           <div className="mt-1 text-xs text-slate-500 flex items-center gap-1 font-medium">
-            <span className="text-[#174EA6] font-bold">{metrics.activeLoansCount} active loans</span>
+            <span className="text-[#083E34] font-bold">{metrics.activeLoansCount} active loans</span>
             <span>repaying via payroll</span>
           </div>
         </div>
@@ -918,20 +931,20 @@ export const PayrollView: React.FC = () => {
                         <td className="py-3.5 px-4 text-right font-semibold text-slate-900">
                           {formatMoney(Number(run.total_gross ?? run.gross_total ?? 0))}
                         </td>
-                        <td className="py-3.5 px-4 text-right font-medium text-[#111827]">
+                        <td className="py-3.5 px-4 text-right font-medium text-rose-600">
                           -{formatMoney(Number(run.total_deduction ?? run.deduction_total ?? 0))}
                         </td>
-                        <td className="py-3.5 px-4 text-right font-black text-[#174EA6]">
+                        <td className="py-3.5 px-4 text-right font-black text-emerald-700">
                           {formatMoney(Number(run.total_net ?? run.net_total ?? 0))}
                         </td>
                         <td className="py-3.5 px-4 text-center">
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                               run.status === 'paid'
-                                ? 'bg-[#DBEAFE] text-[#174EA6] border border-[#BFDBFE]'
+                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                                 : run.status === 'approved'
-                                ? 'bg-[#EFF6FF] text-[#174EA6] border border-[#BFDBFE]/60'
-                                : 'bg-[#FAF5EB] text-[#B88A24] border border-[#E9D59A]'
+                                ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                                : 'bg-amber-100 text-amber-800 border border-amber-200'
                             }`}
                           >
                             {run.status}
@@ -973,7 +986,7 @@ export const PayrollView: React.FC = () => {
       {activeTab === 'worksheet' && (
         <div className="space-y-6 animate-fade-in">
           {/* CGCC Official Compensation Distribution Card */}
-          <div className="bg-gradient-to-r from-slate-900 via-[#174EA6] to-slate-900 rounded-2xl p-6 text-white shadow-md border border-[#D4AF37]/30">
+          <div className="bg-gradient-to-r from-slate-900 via-[#083E34] to-slate-900 rounded-2xl p-6 text-white shadow-md border border-[#D4AF37]/30">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -1040,12 +1053,12 @@ export const PayrollView: React.FC = () => {
                 <span className="text-lg font-black text-white">10%</span>
                 <span className="text-[10px] text-white/60 block mt-0.5">Welfare & Meal</span>
               </div>
-              <div className="bg-[#0B1F3A]/40 rounded-xl p-3 border border-[#BFDBFE]">
-                <span className="text-[10px] uppercase font-bold text-blue-100 tracking-wider block">
+              <div className="bg-emerald-950/40 rounded-xl p-3 border border-emerald-500/30">
+                <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider block">
                   Pension & Tax
                 </span>
                 <span className="text-sm font-black text-white">8% EE / 10% ER</span>
-                <span className="text-[10px] text-blue-100 block mt-0.5">PAYE + PRA 2014</span>
+                <span className="text-[10px] text-emerald-300/80 block mt-0.5">PAYE + PRA 2014</span>
               </div>
             </div>
           </div>
@@ -1147,7 +1160,7 @@ export const PayrollView: React.FC = () => {
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
                     Total Deductions
                   </span>
-                  <span className="text-base font-black text-[#111827]">
+                  <span className="text-base font-black text-rose-600">
                     -{formatMoney(worksheetData.reduce((acc, r) => acc + r.totalDeductions, 0))}
                   </span>
                 </div>
@@ -1155,7 +1168,7 @@ export const PayrollView: React.FC = () => {
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
                     Net Payout
                   </span>
-                  <span className="text-base font-black text-[#174EA6]">
+                  <span className="text-base font-black text-emerald-700">
                     {formatMoney(worksheetData.reduce((acc, r) => acc + r.net, 0))}
                   </span>
                 </div>
@@ -1200,24 +1213,24 @@ export const PayrollView: React.FC = () => {
                         <td className="py-3 px-3.5 text-right font-bold text-slate-900">
                           {formatMoney(row.gross)}
                         </td>
-                        <td className="py-3 px-3.5 text-right font-medium text-[#111827]">
+                        <td className="py-3 px-3.5 text-right font-medium text-rose-600">
                           -{formatMoney(row.paye)}
                         </td>
-                        <td className="py-3 px-3.5 text-right font-medium text-[#111827]">
+                        <td className="py-3 px-3.5 text-right font-medium text-rose-600">
                           -{formatMoney(row.pension)}
                         </td>
-                        <td className="py-3 px-3.5 text-right font-medium text-[#111827]">
+                        <td className="py-3 px-3.5 text-right font-medium text-rose-600">
                           {row.loan + row.penalty > 0 ? `-${formatMoney(row.loan + row.penalty)}` : '—'}
                         </td>
-                        <td className="py-3 px-3.5 text-right font-black text-[#174EA6]">
+                        <td className="py-3 px-3.5 text-right font-black text-emerald-700">
                           {formatMoney(row.net)}
                         </td>
                         <td className="py-3 px-3.5 text-center">
                           <span
                             className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
                               row.status === 'valid'
-                                ? 'bg-[#DBEAFE] text-[#174EA6]'
-                                : 'bg-[#FAF5EB] text-[#B88A24]'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-amber-100 text-amber-800'
                             }`}
                             title={row.statusMessage}
                           >
@@ -1290,7 +1303,7 @@ export const PayrollView: React.FC = () => {
                         {tpl.description || 'Citadel baseline compensation model.'}
                       </p>
                     </div>
-                    <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#EFF6FF] text-[#174EA6] border border-[#BFDBFE]">
+                    <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
                       Active
                     </span>
                   </div>
@@ -1300,7 +1313,7 @@ export const PayrollView: React.FC = () => {
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                       Basic Base Salary
                     </span>
-                    <span className="text-lg font-black text-[#174EA6]">
+                    <span className="text-lg font-black text-[#083E34]">
                       {formatMoney(tpl.basic_salary)}
                     </span>
                   </div>
@@ -1324,7 +1337,7 @@ export const PayrollView: React.FC = () => {
                       Statutory Deductions ({tpl.deductions?.length || 0})
                     </span>
                     {tpl.deductions?.map((d, i) => (
-                      <div key={i} className="flex justify-between text-xs text-[#111827]">
+                      <div key={i} className="flex justify-between text-xs text-rose-600">
                         <span>{d.name}</span>
                         <span className="font-semibold">-{formatMoney(d.amount)}</span>
                       </div>
@@ -1408,11 +1421,11 @@ export const PayrollView: React.FC = () => {
                         <td className="py-3.5 px-4 font-mono text-slate-700">
                           {asgn.effective_date}
                         </td>
-                        <td className="py-3.5 px-4 text-right font-black text-[#174EA6]">
+                        <td className="py-3.5 px-4 text-right font-black text-[#083E34]">
                           {formatMoney(basic)}
                         </td>
                         <td className="py-3.5 px-4 text-center">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#DBEAFE] text-[#174EA6]">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800">
                             Active
                           </span>
                         </td>
@@ -1459,45 +1472,51 @@ export const PayrollView: React.FC = () => {
                 <tbody className="divide-y divide-slate-100">
                   {runs
                     .flatMap((r) => r.items || [])
-                    .map((item) => (
+                    .map((item) => {
+                      const bankDetails = resolveEmployeeBankDetails(
+                        item.employee,
+                        employees,
+                        item.employee_id
+                      );
+                      return (
                       <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
                         <td className="py-3.5 px-4">
                           <div className="font-bold text-slate-900">
                             {item.employee?.name || item.employee?.full_name || item.employee_id}
                           </div>
                           <div className="text-[11px] text-slate-500">
-                            {item.employee?.staff_id} · {item.employee?.department?.name || item.employee?.department_name}
+                            {item.employee?.staff_id} · {item.employee?.department?.name || item.employee?.department_name || '—'}
                           </div>
                         </td>
                         <td className="py-3.5 px-4">
-                          <div className="font-semibold text-slate-800">
-                            {item.employee?.bank_name || 'Zenith Bank'}
+                          <div className={`font-semibold ${bankDetails.hasBankDetails ? 'text-slate-800' : 'text-slate-400 italic'}`}>
+                            {bankDetails.bankName}
                           </div>
                           <div className="font-mono text-[11px] text-slate-500">
-                            {item.employee?.account_number || '1012398450'}
+                            {bankDetails.accountNumber}
                           </div>
                         </td>
                         <td className="py-3.5 px-4 text-right font-medium text-slate-700">
                           {formatMoney(Number(item.basic_salary))}
                         </td>
-                        <td className="py-3.5 px-4 text-right font-medium text-[#174EA6]">
+                        <td className="py-3.5 px-4 text-right font-medium text-emerald-600">
                           +{formatMoney(Number(item.allowance_total))}
                         </td>
                         <td className="py-3.5 px-4 text-right font-bold text-slate-900">
                           {formatMoney(Number(item.gross_salary ?? (Number(item.basic_salary) + Number(item.allowance_total) + Number(item.bonus_total || 0))))}
                         </td>
-                        <td className="py-3.5 px-4 text-right font-medium text-[#111827]">
+                        <td className="py-3.5 px-4 text-right font-medium text-rose-600">
                           -{formatMoney(Number(item.deduction_total ?? item.total_deduction ?? 0))}
                         </td>
-                        <td className="py-3.5 px-4 text-right font-black text-[#174EA6]">
+                        <td className="py-3.5 px-4 text-right font-black text-emerald-700">
                           {formatMoney(Number(item.net_salary ?? item.net_payable ?? 0))}
                         </td>
                         <td className="py-3.5 px-4 text-center">
                           <span
                             className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                               item.payment_status === 'paid'
-                                ? 'bg-[#DBEAFE] text-[#174EA6]'
-                                : 'bg-[#FAF5EB] text-[#B88A24]'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-amber-100 text-amber-800'
                             }`}
                           >
                             {item.payment_status}
@@ -1512,7 +1531,8 @@ export const PayrollView: React.FC = () => {
                           </button>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                 </tbody>
               </table>
             </div>
@@ -1564,7 +1584,7 @@ export const PayrollView: React.FC = () => {
                       <td className="py-3.5 px-4 text-right font-semibold text-slate-900">
                         {formatMoney(Number(loan.principal_amount))}
                       </td>
-                      <td className="py-3.5 px-4 text-right font-medium text-[#111827]">
+                      <td className="py-3.5 px-4 text-right font-medium text-rose-600">
                         -{formatMoney(Number(loan.monthly_installment ?? loan.installment_amount ?? 0))} / mo
                       </td>
                       <td className="py-3.5 px-4 text-center">
@@ -1573,7 +1593,7 @@ export const PayrollView: React.FC = () => {
                         </span>
                         <div className="w-20 bg-slate-200 h-1.5 rounded-full mx-auto mt-1 overflow-hidden">
                           <div
-                            className="bg-[#174EA6] h-full rounded-full"
+                            className="bg-emerald-600 h-full rounded-full"
                             style={{
                               width: `${Math.min(100, (((loan.paid_installments ?? 0) / (loan.total_installments ?? loan.installment_count ?? 1)) * 100))}%`,
                             }}
@@ -1587,9 +1607,9 @@ export const PayrollView: React.FC = () => {
                         <span
                           className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                             loan.status === 'active'
-                              ? 'bg-[#DBEAFE] text-[#174EA6]'
+                              ? 'bg-emerald-100 text-emerald-800'
                               : loan.status === 'pending'
-                              ? 'bg-[#FAF5EB] text-[#B88A24]'
+                              ? 'bg-amber-100 text-amber-800'
                               : 'bg-slate-100 text-slate-700'
                           }`}
                         >
@@ -1641,10 +1661,10 @@ export const PayrollView: React.FC = () => {
                   {deductions.map((d) => (
                     <tr key={d.id}>
                       <td className="p-2.5 font-bold text-slate-900">
-                        {d.employee?.name || d.employee_id}
+                        {(d.employee as any)?.full_name || d.employee?.name || d.employee_id}
                       </td>
-                      <td className="p-2.5">{d.title}</td>
-                      <td className="p-2.5 text-right font-black text-[#111827]">
+                      <td className="p-2.5">{d.title || d.deduction_type || d.reason || 'Custom Deduction'}</td>
+                      <td className="p-2.5 text-right font-black text-rose-600">
                         -{formatMoney(d.amount)}
                       </td>
                     </tr>
@@ -1678,15 +1698,15 @@ export const PayrollView: React.FC = () => {
                   {providentFunds.map((pf) => (
                     <tr key={pf.id}>
                       <td className="p-2.5 font-bold text-slate-900">
-                        {pf.employee?.name || pf.employee_id}
+                        {pf.employee?.full_name || pf.employee?.name || pf.employee_id}
                       </td>
                       <td className="p-2.5 text-right font-medium text-slate-700">
                         {formatMoney(pf.total_employee_contribution)}
                       </td>
-                      <td className="p-2.5 text-right font-medium text-[#174EA6]">
+                      <td className="p-2.5 text-right font-medium text-emerald-700">
                         {formatMoney(pf.total_employer_contribution)}
                       </td>
-                      <td className="p-2.5 text-right font-black text-[#174EA6]">
+                      <td className="p-2.5 text-right font-black text-[#083E34]">
                         {formatMoney(pf.current_balance)}
                       </td>
                     </tr>
@@ -1736,7 +1756,7 @@ export const PayrollView: React.FC = () => {
                     type="text"
                     value={wizardData.title}
                     onChange={(e) => setWizardData({ ...wizardData, title: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#174EA6]/30"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#083E34]/30"
                   />
                 </div>
 
@@ -1776,7 +1796,7 @@ export const PayrollView: React.FC = () => {
             {/* Step 2: Employee Scope & Structure Details */}
             {wizardStep === 2 && (
               <div className="space-y-4 animate-fade-in text-xs">
-                <div className="p-4 bg-[#EFF6FF] border border-[#BFDBFE] rounded-xl text-[#174EA6]">
+                <div className="p-4 bg-emerald-50/70 border border-emerald-200/80 rounded-xl text-emerald-900">
                   <div className="font-bold">Active Staff Eligibility Check</div>
                   <p className="mt-1 text-slate-600 leading-relaxed">
                     All active employees assigned to compensation structures will be computed.
@@ -1790,15 +1810,20 @@ export const PayrollView: React.FC = () => {
                       Assigned Employees
                     </span>
                     <span className="text-xl font-black text-slate-900">
-                      {assignments.filter((a) => a.is_active).length}
+                      {wizardSummary.eligibleCount}
                     </span>
+                    {wizardSummary.unassignedCount > 0 && (
+                      <span className="text-[10px] text-amber-700 font-semibold block mt-0.5">
+                        {wizardSummary.unassignedCount} active staff unassigned
+                      </span>
+                    )}
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                       Active Loans To Deduct
                     </span>
                     <span className="text-xl font-black text-slate-900">
-                      {loans.filter((l) => l.status === 'active').length}
+                      {wizardSummary.activeLoanCount}
                     </span>
                   </div>
                 </div>
@@ -1811,27 +1836,33 @@ export const PayrollView: React.FC = () => {
                 <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-2">
                   <div className="flex justify-between text-slate-700">
                     <span>Estimated Baseline Basic Pay</span>
-                    <span className="font-bold text-slate-900">₦1,690,000.00</span>
+                    <span className="font-bold text-slate-900">{formatMoney(wizardSummary.totalBasic)}</span>
                   </div>
                   <div className="flex justify-between text-slate-700">
                     <span>Estimated Total Allowances</span>
-                    <span className="font-bold text-[#174EA6]">+₦975,000.00</span>
+                    <span className="font-bold text-emerald-700">+{formatMoney(wizardSummary.totalAllowances)}</span>
                   </div>
                   <div className="flex justify-between text-slate-700">
                     <span>Gross Payroll Payout</span>
-                    <span className="font-bold text-slate-900">₦2,665,000.00</span>
+                    <span className="font-bold text-slate-900">{formatMoney(wizardSummary.totalGross)}</span>
                   </div>
                   <div className="flex justify-between text-slate-700 border-t border-slate-200 pt-2">
                     <span>Statutory Taxes (PAYE) & Pension</span>
-                    <span className="font-bold text-[#111827]">-₦403,000.00</span>
+                    <span className="font-bold text-rose-600">-{formatMoney(wizardSummary.totalStatutoryDeductions)}</span>
                   </div>
                   <div className="flex justify-between text-slate-700">
                     <span>Monthly Loan Installment Deductions</span>
-                    <span className="font-bold text-[#111827]">-₦20,000.00</span>
+                    <span className="font-bold text-rose-600">-{formatMoney(wizardSummary.totalLoanDeductions)}</span>
                   </div>
+                  {wizardSummary.totalOtherDeductions > 0 && (
+                    <div className="flex justify-between text-slate-700">
+                      <span>Other Recurring Staff Deductions</span>
+                      <span className="font-bold text-rose-600">-{formatMoney(wizardSummary.totalOtherDeductions)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-slate-900 border-t border-slate-300 pt-2 text-sm font-black">
                     <span>Estimated Net Disbursement</span>
-                    <span className="text-[#174EA6]">₦2,242,000.00</span>
+                    <span className="text-emerald-700">{formatMoney(wizardSummary.totalNet)}</span>
                   </div>
                 </div>
               </div>
@@ -1906,10 +1937,10 @@ export const PayrollView: React.FC = () => {
 
             <form onSubmit={handleCreateStructure} className="space-y-4 text-xs">
               {/* Quick Load CGCC Standard Preset */}
-              <div className="bg-[#FAF5EB] border border-[#E9D59A] rounded-xl p-3 flex items-center justify-between gap-3">
+              <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-[#D4AF37] shrink-0" />
-                  <span className="text-[11px] font-medium text-[#B88A24]">
+                  <span className="text-[11px] font-medium text-amber-900">
                     Load CGCC standard 40/25/15/10/10 structure.
                   </span>
                 </div>
@@ -2190,7 +2221,7 @@ export const PayrollView: React.FC = () => {
                   type="number"
                   readOnly
                   value={loanForm.monthly_installment}
-                  className="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-xl font-bold text-[#174EA6]"
+                  className="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-xl font-bold text-[#083E34]"
                 />
               </div>
 
@@ -2226,10 +2257,10 @@ export const PayrollView: React.FC = () => {
                   Citadel People Hub · Official Pay Slip
                 </span>
                 <h2 className="text-base font-bold text-slate-900">
-                  {selectedPayslip.employee?.name || 'Staff Member'}
+                  {selectedPayslip.employee?.name || selectedPayslip.employee?.full_name || 'Staff Member'}
                 </h2>
                 <div className="text-xs text-slate-500">
-                  Staff ID: {selectedPayslip.employee?.staff_id} · {selectedPayslip.employee?.department_name}
+                  Staff ID: {selectedPayslip.employee?.staff_id || '—'} · {selectedPayslip.employee?.department?.name || selectedPayslip.employee?.department_name || '—'}
                 </div>
               </div>
               <button
@@ -2241,17 +2272,24 @@ export const PayrollView: React.FC = () => {
             </div>
 
             {/* Banking Details */}
+            {(() => {
+              const bankDetails = resolveEmployeeBankDetails(
+                selectedPayslip.employee,
+                employees,
+                selectedPayslip.employee_id
+              );
+              return (
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between text-xs">
               <div>
                 <span className="text-[10px] text-slate-400 uppercase font-bold block">Disbursement Bank</span>
-                <span className="font-bold text-slate-800">
-                  {selectedPayslip.employee?.bank_name || 'Zenith Bank PLC'}
+                <span className={`font-bold ${bankDetails.hasBankDetails ? 'text-slate-800' : 'text-slate-400 italic'}`}>
+                  {bankDetails.bankName}
                 </span>
               </div>
               <div>
                 <span className="text-[10px] text-slate-400 uppercase font-bold block">Account Number</span>
                 <span className="font-mono font-bold text-slate-800">
-                  {selectedPayslip.employee?.account_number || '1012398450'}
+                  {bankDetails.accountNumber}
                 </span>
               </div>
               <div>
@@ -2259,20 +2297,22 @@ export const PayrollView: React.FC = () => {
                 <span
                   className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
                     selectedPayslip.payment_status === 'paid'
-                      ? 'bg-[#DBEAFE] text-[#174EA6]'
-                      : 'bg-[#FAF5EB] text-[#B88A24]'
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-amber-100 text-amber-800'
                   }`}
                 >
                   {selectedPayslip.payment_status}
                 </span>
               </div>
             </div>
+              );
+            })()}
 
             {/* Earnings & Deductions Tables */}
             <div className="grid grid-cols-2 gap-4 text-xs">
               {/* Earnings */}
               <div className="space-y-2 border border-slate-200 p-3 rounded-xl">
-                <span className="font-bold text-[#174EA6] text-[11px] block border-b border-slate-100 pb-1">
+                <span className="font-bold text-[#083E34] text-[11px] block border-b border-slate-100 pb-1">
                   Gross Earnings
                 </span>
                 <div className="flex justify-between text-slate-600">
@@ -2283,7 +2323,7 @@ export const PayrollView: React.FC = () => {
                 </div>
                 <div className="flex justify-between text-slate-600">
                   <span>Allowances</span>
-                  <span className="font-semibold text-[#174EA6]">
+                  <span className="font-semibold text-emerald-600">
                     +{formatMoney(Number(selectedPayslip.allowance_total))}
                   </span>
                 </div>
@@ -2295,30 +2335,30 @@ export const PayrollView: React.FC = () => {
 
               {/* Deductions */}
               <div className="space-y-2 border border-slate-200 p-3 rounded-xl">
-                <span className="font-bold text-[#111827] text-[11px] block border-b border-slate-100 pb-1">
+                <span className="font-bold text-rose-700 text-[11px] block border-b border-slate-100 pb-1">
                   Statutory & Loan Deductions
                 </span>
                 <div className="flex justify-between text-slate-600">
                   <span>PAYE Tax</span>
-                  <span className="font-semibold text-[#111827]">
+                  <span className="font-semibold text-rose-600">
                     -{formatMoney(Number(selectedPayslip.tax_amount ?? (selectedPayslip as any).tax_deduction ?? 0))}
                   </span>
                 </div>
                 <div className="flex justify-between text-slate-600">
                   <span>Pension / PF (8%)</span>
-                  <span className="font-semibold text-[#111827]">
+                  <span className="font-semibold text-rose-600">
                     -{formatMoney(Number(selectedPayslip.provident_fund_amount ?? (selectedPayslip as any).provident_fund_deduction ?? 0))}
                   </span>
                 </div>
                 {(Number(selectedPayslip.loan_repayment_amount ?? (selectedPayslip as any).loan_deduction ?? 0)) > 0 && (
                   <div className="flex justify-between text-slate-600">
                     <span>Loan Installment</span>
-                    <span className="font-semibold text-[#111827]">
+                    <span className="font-semibold text-rose-600">
                       -{formatMoney(Number(selectedPayslip.loan_repayment_amount ?? (selectedPayslip as any).loan_deduction))}
                     </span>
                   </div>
                 )}
-                <div className="flex justify-between font-bold text-[#111827] border-t border-slate-100 pt-1">
+                <div className="flex justify-between font-bold text-rose-700 border-t border-slate-100 pt-1">
                   <span>Total Deductions</span>
                   <span>-{formatMoney(Number(selectedPayslip.deduction_total ?? (selectedPayslip as any).total_deduction ?? 0))}</span>
                 </div>
@@ -2326,7 +2366,7 @@ export const PayrollView: React.FC = () => {
             </div>
 
             {/* Net Salary Highlight */}
-            <div className="p-4 bg-[#174EA6] text-white rounded-xl flex items-center justify-between">
+            <div className="p-4 bg-[#083E34] text-white rounded-xl flex items-center justify-between">
               <div>
                 <span className="text-[10px] text-[#D4AF37] uppercase font-bold tracking-wider block">
                   Net Disbursable Take-Home

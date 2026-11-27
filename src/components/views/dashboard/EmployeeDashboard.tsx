@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   CalendarDays,
   Clock,
@@ -18,6 +18,9 @@ import {
   MapPin,
   X,
   CheckCircle2,
+  UserCheck,
+  ClipboardCheck,
+  Send,
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useRealtimeTable } from '../../../hooks/useRealtimeTable';
@@ -27,10 +30,15 @@ import {
   employeeRepository,
   offboardingRepository,
   performanceRepository,
+  attendanceRepository,
+  talentRepository,
   auditRepository,
 } from '../../../services';
+import { attendanceImportService } from '../../../features/attendance-import';
+import { maskSensitiveEmployeeData } from '../../../utils/rbac';
+import { classifyDailySummaryStatus } from '../../../utils/hrisHelpers';
+import { EmployeeProfileModal } from '../../employee/EmployeeProfileModal';
 import { LoadingSkeleton } from '../../common/LoadingSkeleton';
-import { StatusPill } from '../../common/StatusPill';
 import {
   LeaveRequest,
   LeaveBalanceRecord,
@@ -38,6 +46,8 @@ import {
   EmployeeHierarchy,
   ExitRequest,
   PerformanceReview,
+  AttendanceRecord,
+  OnboardingJourney,
 } from '../../../types';
 
 interface EmployeeDashboardProps {
@@ -76,10 +86,17 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
   const [allEmployees, setAllEmployees] = useState<Employee[]>([]);
   const [myExitRequest, setMyExitRequest] = useState<ExitRequest | null>(null);
   const [myReviews, setMyReviews] = useState<PerformanceReview[]>([]);
+  const [myOnboarding, setMyOnboarding] = useState<OnboardingJourney | null>(null);
+  const [myAttendanceLogs, setMyAttendanceLogs] = useState<
+    { date: string; checkIn: string; status: string; source: string }[]
+  >([]);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [selfAppraisalComments, setSelfAppraisalComments] = useState<Record<number, string>>({});
+  const [savingAppraisalId, setSavingAppraisalId] = useState<number | null>(null);
+  const [togglingTaskId, setTogglingTaskId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionToast, setActionToast] = useState<string | null>(null);
-  const reloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Resignation Modal state
   const [isResignModalOpen, setIsResignModalOpen] = useState(false);
@@ -97,13 +114,9 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
   const actorEmployeeId = String(currentUser.employeeId || currentUser.id || '');
 
   const loadEmployeeData = useCallback(async () => {
-    if (reloadTimerRef.current) {
-      clearTimeout(reloadTimerRef.current);
-      reloadTimerRef.current = null;
-    }
     setLoadError(null);
     try {
-      const [allLeaves, balData, empData, allEmpData, hierData, allExits, allReviews] =
+      const [allLeaves, balData, empData, allEmpData, hierData, allExits, allReviews, allOnboarding, recentAttLogs] =
         await Promise.all([
           leaveRepository.getAll().catch(() => [] as LeaveRequest[]),
           leaveRepository.getBalances(actorEmployeeId || undefined).catch(() => [] as LeaveBalanceRecord[]),
@@ -118,6 +131,8 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
             : Promise.resolve(null),
           offboardingRepository.getAll().catch(() => [] as ExitRequest[]),
           performanceRepository.getReviews().catch(() => [] as PerformanceReview[]),
+          talentRepository.getOnboardingJourneys().catch(() => [] as OnboardingJourney[]),
+          attendanceRepository.getRecentLogs().catch(() => [] as AttendanceRecord[]),
         ]);
 
       const ownLeaves = allLeaves.filter(
@@ -144,12 +159,56 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
             rev.employeeName.toLowerCase() === currentUser.name.toLowerCase())
       );
 
+      const ownOnboarding =
+        allOnboarding.find(
+          (j) =>
+            (actorEmployeeId && String(j.employeeId) === actorEmployeeId) ||
+            (currentUser.staffId && j.staffId?.toLowerCase() === currentUser.staffId.toLowerCase()) ||
+            (currentUser.name && j.employeeName?.toLowerCase() === currentUser.name.toLowerCase())
+        ) || null;
+
+      const selfRec = allEmpData.find(
+        (e) =>
+          (actorEmployeeId && String(e.id) === actorEmployeeId) ||
+          (currentUser.staffId && e.staffId === currentUser.staffId)
+      );
+
+      const ownLogs = recentAttLogs.filter(
+        (rec) =>
+          (actorEmployeeId && String(rec.employeeId) === actorEmployeeId) ||
+          (currentUser.staffId && rec.employeeStaffId === currentUser.staffId)
+      );
+
+      if (ownLogs.length > 0) {
+        setMyAttendanceLogs(
+          ownLogs.slice(0, 5).map((r) => ({
+            date: r.date,
+            checkIn: r.clockInTime || 'Logged',
+            status: r.status,
+            source: r.verificationSource || 'Biometric',
+          }))
+        );
+      } else if (!import.meta.env.PROD && selfRec) {
+        const snap = attendanceImportService.getSnapshot([selfRec]);
+        setMyAttendanceLogs(
+          snap.summaries.slice(0, 5).map((s) => ({
+            date: s.date,
+            checkIn: s.clockInTime || '—',
+            status: classifyDailySummaryStatus(s, selfRec).dashboardStatus,
+            source: 'ZKTeco Biometric',
+          }))
+        );
+      } else {
+        setMyAttendanceLogs([]);
+      }
+
       setMyLeaves(ownLeaves);
       setMyBalances(balData);
       setHierarchy(hierData);
       setAllEmployees(allEmpData);
       setMyExitRequest(ownExit);
       setMyReviews(ownReviews);
+      setMyOnboarding(ownOnboarding);
       setDeptTeammates(
         empData.filter(
           (e) =>
@@ -164,32 +223,27 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
     }
   }, [actorEmployeeId, currentUser.departmentId, currentUser.name, currentUser.staffId]);
 
-  const scheduleReload = useCallback(() => {
-    if (reloadTimerRef.current) clearTimeout(reloadTimerRef.current);
-    reloadTimerRef.current = setTimeout(() => {
-      reloadTimerRef.current = null;
-      void loadEmployeeData();
-    }, 150);
-  }, [loadEmployeeData]);
-
   useEffect(() => {
     void loadEmployeeData();
-    return () => {
-      if (reloadTimerRef.current) {
-        clearTimeout(reloadTimerRef.current);
-        reloadTimerRef.current = null;
-      }
-    };
   }, [loadEmployeeData]);
 
-  useRealtimeTable('leave_requests', scheduleReload);
-  useRealtimeTable('leave_balances', scheduleReload);
+  useRealtimeTable('leave_requests', () => {
+    void loadEmployeeData();
+  });
+
+  useRealtimeTable('leave_balances', () => {
+    void loadEmployeeData();
+  });
 
   useRealtimeTable('offboarding_requests', () => {
     void loadEmployeeData();
   });
 
   useRealtimeTable('performance_reviews', () => {
+    void loadEmployeeData();
+  });
+
+  useRealtimeTable('onboarding_journeys', () => {
     void loadEmployeeData();
   });
 
@@ -270,34 +324,238 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
     }
   };
 
+  const selfEmployeeRecord: Employee | null = useMemo(() => {
+    const normStaff = (val?: string | null) =>
+      (val || '').trim().toLowerCase().replace(/[-/\s]/g, '');
+    const userStaffNorm = normStaff(currentUser.staffId);
+    const userEmailLower = (currentUser.email || '').trim().toLowerCase();
+    const userNameLower = (currentUser.name || '').trim().toLowerCase();
+
+    const matched =
+      allEmployees.find((e) => userStaffNorm && normStaff(e.staffId) === userStaffNorm && (!userNameLower || e.fullName.toLowerCase() === userNameLower)) ||
+      allEmployees.find((e) => userEmailLower && (e.email || '').trim().toLowerCase() === userEmailLower) ||
+      allEmployees.find(
+        (e) =>
+          actorEmployeeId &&
+          String(e.id) === actorEmployeeId &&
+          (!userNameLower || e.fullName.toLowerCase() === userNameLower)
+      );
+    if (matched) return maskSensitiveEmployeeData(currentUser, matched);
+    if (!currentUser.id && !currentUser.staffId) return null;
+    const nameParts = (currentUser.name || 'Staff Member').trim().split(/\s+/);
+    return {
+      id: actorEmployeeId || currentUser.id,
+      staffId: currentUser.staffId || 'STAFF',
+      fullName: currentUser.name,
+      firstName: nameParts[0] || currentUser.name,
+      lastName: nameParts.slice(1).join(' ') || '',
+      dateOfBirth: '',
+      gender: 'Male',
+      phone: currentUser.phone || '',
+      email: currentUser.email || '',
+      address: currentUser.location || '',
+      emergencyContact: { name: '', relationship: '', phone: '' },
+      nextOfKin: { name: '', relationship: '', phone: '', address: '' },
+      entityId: currentUser.entityId || '',
+      entityName: currentUser.entityName || '',
+      departmentId: currentUser.departmentId || '',
+      departmentName: currentUser.departmentName || '',
+      jobTitle: currentUser.jobTitle || 'Employee',
+      gradeLevel: '',
+      employmentType: 'Full-Time',
+      employmentDate: '',
+      managerId: currentUser.managerId,
+      managerName: currentUser.managerName,
+      contractStatus: 'Permanent',
+      yearsOfService: 0,
+      qualifications: [],
+      certifications: [],
+      bankPayroll: { bankName: '', accountNumber: '', accountName: '', salaryGrade: '', currency: 'NGN' },
+      pensionHmo: { pfaName: '', rsaPin: '', hmoProvider: '', hmoPlan: '', hmoIdNumber: '' },
+      status: 'Active',
+    };
+  }, [actorEmployeeId, allEmployees, currentUser]);
+
+  const handleToggleOnboardingTask = async (taskId: string, nextDone: boolean) => {
+    if (!myOnboarding) return;
+    setTogglingTaskId(taskId);
+    try {
+      const updated = await talentRepository.toggleTaskCompletion(
+        myOnboarding.id,
+        taskId,
+        nextDone,
+        myOnboarding.version
+      );
+      setMyOnboarding(updated);
+      setActionToast(`Onboarding task ${nextDone ? 'completed' : 'reopened'}.`);
+      setTimeout(() => setActionToast(null), 3500);
+    } catch (err: any) {
+      setLoadError(err?.message || 'Unable to update onboarding task.');
+    } finally {
+      setTogglingTaskId(null);
+    }
+  };
+
+  const handleSubmitSelfAppraisal = async (rev: PerformanceReview) => {
+    const comment = (selfAppraisalComments[rev.id] || '').trim();
+    if (!comment) return;
+    setSavingAppraisalId(rev.id);
+    try {
+      await performanceRepository.evaluateReview(rev.id, {
+        ratings: rev.ratings || [],
+        employeeComments: comment,
+        reviewerComments: rev.reviewerComments || undefined,
+        version: rev.version,
+      });
+      setSelfAppraisalComments((prev) => ({ ...prev, [rev.id]: '' }));
+      setActionToast('Self-appraisal reflection submitted to your reviewer.');
+      setTimeout(() => setActionToast(null), 4000);
+      await loadEmployeeData();
+    } catch (err: any) {
+      setLoadError(err?.message || 'Unable to submit self-appraisal notes.');
+    } finally {
+      setSavingAppraisalId(null);
+    }
+  };
+
   return (
-    <div className="space-y-5 animate-fade-in" data-testid="employee-dashboard">
+    <div className="space-y-6 animate-fade-in" data-testid="employee-dashboard">
       {loadError && (
-        <div role="alert" className="p-3 rounded-xl bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] text-xs font-medium flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0 text-[#111827]" aria-hidden="true" />
+        <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
           <span>{loadError}</span>
         </div>
       )}
 
-      {/* 1. Employee Welcome & Reporting Context */}
-      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-5 sm:p-6">
+      {actionToast && (
+        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold flex items-center justify-between gap-2">
+          <span className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+            <span>{actionToast}</span>
+          </span>
+          <button onClick={() => setActionToast(null)} className="text-emerald-700 hover:text-emerald-950 cursor-pointer">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Scheduled Exit Interview Banner (Visible immediately on Employee Dashboard once HR schedules it) */}
+      {myExitRequest && (
+        <div
+          data-testid="employee-exit-interview-card"
+          className={`rounded-xl border p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] space-y-4 ${
+            myExitRequest.exitInterview
+              ? 'bg-amber-50/70 border-amber-300'
+              : 'bg-white border-slate-200/80'
+          }`}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-[#083E34] text-[#D4AF37] shrink-0">
+                <LogOut className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="font-display text-sm font-bold text-slate-900">
+                    {myExitRequest.exitInterview
+                      ? 'Scheduled Exit Interview & Separation Progress'
+                      : 'Active Resignation & Exit Process'}
+                  </h2>
+                  <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
+                    {myExitRequest.status.replace(/_/g, ' ')}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Resigned: <strong className="font-mono">{myExitRequest.resignationDate}</strong> · Proposed Last Day:{' '}
+                  <strong className="font-mono">{myExitRequest.proposedLastDay}</strong> ({myExitRequest.noticePeriodDays} days notice)
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* 5-Stage Exit Stepper */}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-[11px]">
+            {[
+              { label: '1. Submitted', done: true },
+              { label: '2. Manager Forwarded', done: myExitRequest.managerEndorsed },
+              { label: '3. HR Notice Verified', done: myExitRequest.hrVerified },
+              { label: '4. Exit Interview', done: Boolean(myExitRequest.exitInterview) },
+              { label: '5. Settled', done: myExitRequest.status === 'OFFBOARDED' },
+            ].map((stage) => (
+              <div
+                key={stage.label}
+                className={`px-2.5 py-2 rounded-lg border font-semibold flex items-center gap-1.5 ${
+                  stage.done
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                    : 'bg-white/70 text-slate-500 border-slate-200'
+                }`}
+              >
+                <Check className={`w-3.5 h-3.5 shrink-0 ${stage.done ? 'text-emerald-600' : 'text-slate-300'}`} />
+                <span className="truncate">{stage.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {myExitRequest.exitInterview && (
+            <div className="p-4 rounded-xl bg-white border border-amber-200/90 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                  Interview Date &amp; Time
+                </span>
+                <span className="font-bold text-slate-900 flex items-center gap-1.5 mt-1">
+                  <Calendar className="w-3.5 h-3.5 text-[#083E34]" />
+                  <span>
+                    {myExitRequest.exitInterview.date} at {myExitRequest.exitInterview.time}
+                  </span>
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                  Format &amp; Location
+                </span>
+                <span className="font-bold text-slate-900 flex items-center gap-1.5 mt-1">
+                  {myExitRequest.exitInterview.mode === 'MS Teams' ? (
+                    <Video className="w-3.5 h-3.5 text-[#083E34]" />
+                  ) : (
+                    <MapPin className="w-3.5 h-3.5 text-[#083E34]" />
+                  )}
+                  <span>{myExitRequest.exitInterview.mode}</span>
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                  Assigned Interviewer
+                </span>
+                <span className="font-bold text-slate-900 block mt-1">
+                  {myExitRequest.exitInterview.interviewer}
+                </span>
+              </div>
+              {myExitRequest.exitInterview.feedback && (
+                <div className="sm:col-span-3 pt-2 border-t border-slate-100 text-slate-700">
+                  <strong className="text-slate-900">HR Notes:</strong> {myExitRequest.exitInterview.feedback}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 1. Employee Welcome & Profile Banner */}
+      <div className="bg-white rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.03)] p-5 sm:p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500">
-              <span className="uppercase tracking-wider text-[#174EA6]">
-                {currentUser.role === 'VIEWER' ? 'Read-Only Profile' : 'Employee Self-Service'}
-              </span>
-              <span aria-hidden="true">·</span>
-              <span className="font-mono text-slate-600">Staff ID: {currentUser.staffId}</span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              {currentUser.role === 'VIEWER' ? 'Read-Only Profile' : 'Employee Self-Service'} · Staff ID{' '}
+              <span className="font-mono">{currentUser.staffId}</span>
+            </p>
+            <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
               Welcome back, {currentUser.name}
             </h1>
-            <p className="text-xs text-slate-600 font-medium">
+            <p className="text-xs text-slate-600">
               {currentUser.jobTitle} · {currentUser.departmentName} · {currentUser.entityName}
             </p>
-            <p className="text-xs text-slate-500 flex items-center gap-1.5">
-              <GitBranch className="w-3.5 h-3.5 text-[#174EA6]" aria-hidden="true" />
+            <p className="text-xs text-slate-500 flex items-center gap-1.5 pt-0.5">
+              <GitBranch className="w-3.5 h-3.5 text-[#083E34] shrink-0" />
               <span>
                 Direct Supervisor:{' '}
                 <strong className="font-semibold text-slate-800">{directSupervisor}</strong>
@@ -309,11 +567,21 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
             {currentUser.role !== 'VIEWER' && (
               <button
                 type="button"
+                onClick={() => setIsProfileModalOpen(true)}
+                data-testid="employee-open-profile-btn"
+                className="px-3.5 py-2 rounded-lg font-semibold text-xs transition border flex items-center gap-1.5 cursor-pointer min-h-[38px] bg-amber-50 text-amber-950 border-amber-200 hover:bg-amber-100"
+              >
+                <UserCheck className="w-3.5 h-3.5 text-[#083E34]" />
+                <span>My Profile &amp; Documents</span>
+              </button>
+            )}
+            {currentUser.role !== 'VIEWER' && (
+              <button
                 onClick={onOpenLeaveModal}
                 id="employee-apply-leave-btn"
-                className="px-3.5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-semibold text-xs shadow-2xs transition flex items-center gap-2 cursor-pointer min-h-[38px] border border-[#C59B27]"
+                className="px-4 py-2 rounded-lg bg-[#083E34] hover:bg-[#062E27] text-white font-semibold text-xs shadow-2xs transition flex items-center gap-2 active:scale-[0.98] cursor-pointer min-h-[38px]"
               >
-                <CalendarDays className="w-4 h-4 text-slate-950" aria-hidden="true" />
+                <CalendarDays className="w-4 h-4 text-white" />
                 <span>Apply for Leave</span>
               </button>
             )}
@@ -325,25 +593,24 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                   setIsResignModalOpen(true);
                 }}
                 data-testid="employee-submit-resignation-btn"
-                className="px-3.5 py-2 rounded-lg font-semibold text-xs transition border flex items-center gap-1.5 cursor-pointer min-h-[38px] bg-white text-[#111827] border-[#111827]/25 hover:bg-[#F5F7FA]"
+                className="px-3.5 py-2 rounded-lg font-semibold text-xs transition border flex items-center gap-1.5 cursor-pointer min-h-[38px] bg-white text-rose-700 border-rose-200 hover:bg-rose-50"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span>Submit Resignation</span>
               </button>
             )}
             <button
-              type="button"
               onClick={() => onNavigate('leave')}
-              className="px-3.5 py-2 rounded-xl font-semibold text-xs transition border flex items-center gap-1.5 cursor-pointer min-h-[38px] bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+              className="px-3.5 py-2 rounded-lg font-semibold text-xs transition border flex items-center gap-1.5 cursor-pointer min-h-[38px] bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
             >
               <span>All My Requests</span>
-              <ArrowUpRight className="w-4 h-4 text-slate-500" aria-hidden="true" />
+              <ArrowUpRight className="w-3.5 h-3.5 text-slate-500" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* 2. Leave Balances Row */}
+      {/* 2. Real Leave Balances Row */}
       {loading && myBalances.length === 0 ? (
         <LoadingSkeleton type="stats" />
       ) : (
@@ -358,59 +625,56 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
               return (
                 <div
                   key={String(bal.id)}
-                  className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs"
+                  className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.03)]"
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-semibold text-slate-600">
+                  <div className="flex items-center justify-between mb-2.5">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                       {bal.category?.name || 'Leave Quota'}
                     </span>
-                    <div className="w-8 h-8 rounded-lg bg-[#FAF5EB] text-[#B45309] border border-[#F2E4B8] flex items-center justify-center">
-                      <CalendarDays className="w-4 h-4" aria-hidden="true" />
-                    </div>
+                    <CalendarDays className="w-4 h-4 text-slate-400" />
                   </div>
                   <div className="flex items-baseline gap-1.5 tabular-nums">
-                    <span className="text-2xl font-bold text-[#174EA6]">{remaining}</span>
-                    <span className="text-xs text-slate-500 font-medium">/ {total} days left</span>
+                    <span className="font-display text-2xl font-bold text-slate-900">{remaining}</span>
+                    <span className="text-xs text-slate-500">/ {total} days left</span>
                   </div>
                   <div className="mt-3 w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                     <div
-                      className="bg-[#174EA6] h-full rounded-full transition-all duration-300"
+                      className="bg-[#083E34] h-full rounded-full transition-all duration-500"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <p className="text-[11px] text-slate-600 mt-2 font-medium tabular-nums">
+                  <p className="text-[11px] text-slate-500 mt-2 tabular-nums">
                     Used: {used}d {pending > 0 ? `· Pending: ${pending}d` : ''}
                   </p>
                 </div>
               );
             })
           ) : (
-            <div className="sm:col-span-2 lg:col-span-4 bg-white p-5 rounded-xl border border-slate-200 text-xs text-slate-500">
-              Leave balance records will appear once annual allocations are initialized by HR.
+            <div className="sm:col-span-2 lg:col-span-4 bg-white p-5 rounded-xl border border-slate-200/80 text-xs text-slate-500">
+              Leave balance records will populate once annual allocations are initialized.
             </div>
           )}
         </div>
       )}
 
-      {/* 3. Latest Request Two-Stage Progress & History */}
-      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
+      {/* 3. Latest Request Two-Stage Progress + Full Request History */}
+      <div className="bg-white rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.03)] overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-[#174EA6]" aria-hidden="true" />
+            <h3 className="font-display text-sm font-bold text-slate-900 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-[#083E34]" />
               <span>My Leave Requests &amp; Two-Stage Status</span>
-            </h2>
+            </h3>
             <p className="text-xs text-slate-500 mt-0.5">
               Requests pass through Stage 1 (Direct Supervisor) and Stage 2 (HR Final Approval).
             </p>
           </div>
           {currentUser.role !== 'VIEWER' && (
             <button
-              type="button"
               onClick={onOpenLeaveModal}
-              className="px-3 py-1.5 rounded-xl bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-2xs border border-[#C59B27]"
+              className="px-3.5 py-2 rounded-lg bg-[#083E34] text-white hover:bg-[#062E27] font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-2xs shrink-0"
             >
-              <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+              <Plus className="w-3.5 h-3.5" />
               <span>New Request</span>
             </button>
           )}
@@ -418,6 +682,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
 
         {latestLeave ? (
           <div className="p-5 space-y-5">
+            {/* Highlight Latest Request & Stage Tracker */}
             {(() => {
               const stoppedStage =
                 latestLeave.stoppedAtStage ||
@@ -439,48 +704,47 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                   <div className="pb-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-[#174EA6]">
+                        <span className="font-display text-sm font-bold text-slate-900">
                           {latestLeave.leaveType}
                         </span>
-                        <StatusPill
-                          status={
+                        <span
+                          className={`px-2 py-0.5 rounded-md text-[11px] font-semibold border ${
                             latestLeave.status === 'Approved'
-                              ? 'confirmed'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200/70'
                               : latestLeave.status === 'Rejected'
-                              ? 'rejected'
-                              : 'pending'
-                          }
-                          label={`${latestLeave.status}${
-                            latestLeave.status === 'Rejected' && stoppedStage
-                              ? ` (Stopped at ${stoppedStage})`
-                              : ''
+                              ? 'bg-rose-50 text-rose-700 border-rose-200/70'
+                              : 'bg-amber-50 text-amber-800 border-amber-200/70'
                           }`}
-                          size="sm"
-                        />
+                        >
+                          {latestLeave.status}
+                          {latestLeave.status === 'Rejected' && stoppedStage
+                            ? ` (Stopped at ${stoppedStage})`
+                            : ''}
+                        </span>
                       </div>
                       <p className="text-xs text-slate-700 tabular-nums">
-                        <strong className="font-semibold">Dates:</strong> {latestLeave.startDate} to {latestLeave.endDate} (
+                        <strong className="font-semibold text-slate-900">Dates:</strong> {latestLeave.startDate} to {latestLeave.endDate} (
                         {latestLeave.totalDays} days)
                       </p>
                       <p className="text-xs text-slate-600">
-                        <strong className="font-semibold">Reason:</strong> {latestLeave.reason}
+                        <strong className="font-semibold text-slate-900">Reason:</strong> {latestLeave.reason}
                       </p>
                     </div>
-                    <span className="text-[11px] font-mono text-slate-500">
+                    <span className="text-[11px] font-mono text-slate-500 tabular-nums">
                       Ref #{latestLeave.id} · {latestLeave.appliedDate}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="p-3 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] flex items-start gap-2.5">
-                      <div className="w-6 h-6 rounded-full bg-[#174EA6] text-white flex items-center justify-center shrink-0">
-                        <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                    <div className="p-3 rounded-xl border border-emerald-200 bg-emerald-50/60 flex items-start gap-2.5">
+                      <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                        <Check className="w-3.5 h-3.5" />
                       </div>
                       <div>
-                        <span className="text-[10px] uppercase font-semibold text-[#174EA6] block">
+                        <span className="text-[10px] uppercase font-bold text-emerald-800 block">
                           Submitted
                         </span>
-                        <span className="text-xs font-semibold text-slate-900 block">
+                        <span className="text-xs font-bold text-slate-900 block">
                           {latestLeave.appliedDate}
                         </span>
                       </div>
@@ -489,37 +753,37 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                     <div
                       className={`p-3 rounded-xl border flex items-start gap-2.5 ${
                         rejectedAtMgr
-                          ? 'border-[#111827]/25 bg-[#F5F7FA]'
+                          ? 'border-rose-200 bg-rose-50/70'
                           : mgrApproved
-                          ? 'border-[#BFDBFE] bg-[#EFF6FF]'
-                          : 'border-[#E9D59A] bg-[#FAF5EB]'
+                          ? 'border-emerald-200 bg-emerald-50/60'
+                          : 'border-amber-200 bg-amber-50/70'
                       }`}
                     >
                       <div
                         className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-white ${
                           rejectedAtMgr
-                            ? 'bg-[#111827]'
+                            ? 'bg-rose-600'
                             : mgrApproved
-                            ? 'bg-[#174EA6]'
-                            : 'bg-[#B88A24]'
+                            ? 'bg-emerald-600'
+                            : 'bg-amber-500'
                         }`}
                       >
                         {rejectedAtMgr ? (
-                          <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
+                          <XCircle className="w-3.5 h-3.5" />
                         ) : mgrApproved ? (
-                          <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                          <Check className="w-3.5 h-3.5" />
                         ) : (
-                          <Clock className="w-3.5 h-3.5" aria-hidden="true" />
+                          <Clock className="w-3.5 h-3.5" />
                         )}
                       </div>
                       <div>
-                        <span className="text-[10px] uppercase font-semibold text-slate-700 block">
+                        <span className="text-[10px] uppercase font-bold text-slate-700 block">
                           Stage 1: Manager
                         </span>
-                        <span className="text-xs font-semibold text-slate-900 block">
+                        <span className="text-xs font-bold text-slate-900 block">
                           {latestLeave.managerActorName || latestLeave.managerName || 'Direct HR'}
                         </span>
-                        <span className="text-[11px] text-slate-500 block">
+                        <span className="text-[10px] text-slate-500 block">
                           {rejectedAtMgr
                             ? `Rejected ${formatDateTime(latestLeave.managerActedAt)}`
                             : mgrApproved
@@ -532,41 +796,41 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                     <div
                       className={`p-3 rounded-xl border flex items-start gap-2.5 ${
                         rejectedAtHr
-                          ? 'border-[#111827]/25 bg-[#F5F7FA]'
+                          ? 'border-rose-200 bg-rose-50/70'
                           : hrApproved
-                          ? 'border-[#BFDBFE] bg-[#EFF6FF]'
+                          ? 'border-emerald-200 bg-emerald-50/60'
                           : latestLeave.approvalStage === 'HR' && latestLeave.status !== 'Rejected'
-                          ? 'border-[#E9D59A] bg-[#FAF5EB]'
+                          ? 'border-amber-200 bg-amber-50/70'
                           : 'border-slate-200 bg-slate-50'
                       }`}
                     >
                       <div
                         className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-white ${
                           rejectedAtHr
-                            ? 'bg-[#111827]'
+                            ? 'bg-rose-600'
                             : hrApproved
-                            ? 'bg-[#174EA6]'
+                            ? 'bg-emerald-600'
                             : latestLeave.approvalStage === 'HR' && latestLeave.status !== 'Rejected'
-                            ? 'bg-[#B88A24]'
+                            ? 'bg-amber-500'
                             : 'bg-slate-400'
                         }`}
                       >
                         {rejectedAtHr ? (
-                          <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
+                          <XCircle className="w-3.5 h-3.5" />
                         ) : hrApproved ? (
-                          <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                          <Check className="w-3.5 h-3.5" />
                         ) : (
-                          <Clock className="w-3.5 h-3.5" aria-hidden="true" />
+                          <Clock className="w-3.5 h-3.5" />
                         )}
                       </div>
                       <div>
-                        <span className="text-[10px] uppercase font-semibold text-slate-700 block">
+                        <span className="text-[10px] uppercase font-bold text-slate-700 block">
                           Stage 2: HR Final
                         </span>
-                        <span className="text-xs font-semibold text-slate-900 block">
+                        <span className="text-xs font-bold text-slate-900 block">
                           {latestLeave.hrActorName || 'HR Team'}
                         </span>
-                        <span className="text-[11px] text-slate-500 block">
+                        <span className="text-[10px] text-slate-500 block">
                           {rejectedAtHr
                             ? `Rejected ${formatDateTime(latestLeave.hrActedAt)}`
                             : rejectedAtMgr
@@ -584,14 +848,15 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
               );
             })()}
 
+            {/* Complete Request History Table */}
             {myLeaves.length > 0 && (
               <div className="pt-3 border-t border-slate-100">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                   Request History ({myLeaves.length})
-                </h3>
+                </h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="text-[11px] font-semibold uppercase text-slate-500 border-b border-slate-200">
+                    <thead className="text-[10px] uppercase text-slate-500 border-b border-slate-200">
                       <tr>
                         <th className="py-2 pr-3">Leave Type</th>
                         <th className="py-2 pr-3">Dates</th>
@@ -602,32 +867,31 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {myLeaves.map((lv) => (
-                        <tr key={lv.id} className="hover:bg-slate-50/70">
+                        <tr key={lv.id} className="hover:bg-slate-50">
                           <td className="py-2.5 pr-3 font-semibold text-slate-900">
                             {lv.leaveType}
                           </td>
-                          <td className="py-2.5 pr-3 text-slate-600 tabular-nums">
+                          <td className="py-2.5 pr-3 text-slate-600">
                             {lv.startDate} → {lv.endDate}
                           </td>
-                          <td className="py-2.5 pr-3 font-mono font-semibold text-slate-800 tabular-nums">
+                          <td className="py-2.5 pr-3 font-mono font-bold text-slate-800">
                             {lv.totalDays}
                           </td>
                           <td className="py-2.5 pr-3">
-                            <StatusPill
-                              status={
+                            <span
+                              className={`px-2 py-0.5 rounded-md text-[11px] font-semibold ${
                                 lv.status === 'Approved'
-                                  ? 'confirmed'
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/70'
                                   : lv.status === 'Rejected'
-                                  ? 'rejected'
-                                  : 'pending'
-                              }
-                              label={`${lv.status}${
-                                lv.status === 'Rejected' && lv.stoppedAtStage
-                                  ? ` @ ${lv.stoppedAtStage}`
-                                  : ''
+                                  ? 'bg-rose-50 text-rose-700 border border-rose-200/70'
+                                  : 'bg-amber-50 text-amber-800 border border-amber-200/70'
                               }`}
-                              size="sm"
-                            />
+                            >
+                              {lv.status}
+                              {lv.status === 'Rejected' && lv.stoppedAtStage
+                                ? ` @ ${lv.stoppedAtStage}`
+                                : ''}
+                            </span>
                           </td>
                           <td className="py-2.5 text-[11px] text-slate-600">
                             {lv.managerActorName ? `Mgr: ${lv.managerActorName}` : 'Pending Mgr'}
@@ -642,60 +906,60 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
             )}
           </div>
         ) : (
-          <div className="p-6 text-center space-y-2.5">
-            <CalendarDays className="w-6 h-6 text-[#B88A24] mx-auto" aria-hidden="true" />
-            <h3 className="text-sm font-semibold text-slate-900">No Leave Applications Yet</h3>
-            <p className="text-xs text-slate-500 max-w-md mx-auto tabular-nums">
+          <div className="p-8 text-center space-y-3">
+            <CalendarDays className="w-9 h-9 text-slate-400 mx-auto" />
+            <h4 className="text-sm font-semibold text-slate-900">No Leave Applications Yet</h4>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
               You have {annualRemaining} of {annualTotal} annual leave days remaining.
             </p>
             {currentUser.role !== 'VIEWER' && (
               <button
-                type="button"
                 onClick={onOpenLeaveModal}
-                className="px-4 py-2 rounded-xl bg-[#D4AF37] text-slate-950 font-semibold text-xs hover:bg-[#C59B27] transition shadow-2xs cursor-pointer border border-[#C59B27]"
+                className="px-4 py-2 rounded-lg bg-[#083E34] text-white font-semibold text-xs hover:bg-[#062E27] transition shadow-2xs cursor-pointer"
               >
-                Apply for Leave
+                + Apply for Leave Now
               </button>
             )}
           </div>
         )}
       </div>
 
-      {/* 4. Department Teammates & Shortcuts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs">
-          <div className="flex items-center justify-between mb-4">
+      {/* 4. Department Teammates & Calendar Shortcut */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.03)] overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
             <div>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <Users className="w-4 h-4 text-[#174EA6]" aria-hidden="true" />
+              <h3 className="font-display text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Users className="w-4 h-4 text-[#083E34]" />
                 <span>Department Teammates ({currentUser.departmentName})</span>
               </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5">
                 Colleagues in your department directory.
               </p>
             </div>
             <button
-              type="button"
               onClick={() => onNavigate('directory')}
-              className="text-xs font-semibold text-[#174EA6] hover:underline flex items-center gap-1 cursor-pointer"
+              className="text-xs font-semibold text-[#083E34] hover:text-[#062E27] flex items-center gap-1 cursor-pointer"
             >
               <span>Directory</span>
-              <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
+              <ArrowUpRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          <div className="space-y-2">
+          <div className="divide-y divide-slate-100">
             {deptTeammates.length > 0 ? (
               deptTeammates.slice(0, 5).map((mate) => (
                 <div
                   key={mate.id}
-                  className="p-3 rounded-xl border border-slate-200/70 bg-slate-50/60 flex items-center justify-between gap-3 text-xs"
+                  className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/70 transition text-xs"
                 >
-                  <div>
-                    <span className="font-semibold text-slate-900 block">{mate.fullName}</span>
-                    <span className="text-[11px] text-slate-500">{mate.jobTitle}</span>
+                  <div className="min-w-0">
+                    <span className="font-semibold text-slate-900 block truncate">{mate.fullName}</span>
+                    <span className="text-[11px] text-slate-500 block truncate">{mate.jobTitle}</span>
                   </div>
-                  <StatusPill status="active" label={mate.status} size="sm" />
+                  <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70 shrink-0">
+                    {mate.status}
+                  </span>
                 </div>
               ))
             ) : (
@@ -704,14 +968,14 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col justify-between gap-4">
+        <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.03)] flex flex-col justify-between gap-4">
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-              <Calendar className="w-4 h-4 text-[#174EA6]" aria-hidden="true" />
-              <span>Quick Shortcuts</span>
+            <h3 className="font-display text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Award className="w-4 h-4 text-[#083E34]" />
+              <span>My Performance &amp; KPI Appraisals ({myReviews.length})</span>
             </h3>
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              Jump directly to your leave schedule or HR policies.
+            <p className="text-xs text-slate-500 mt-0.5">
+              Weighted appraisal scores and manager feedback recorded on your staff profile.
             </p>
           </div>
 
@@ -720,24 +984,70 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
               {myReviews.slice(0, 3).map((rev) => (
                 <div
                   key={rev.id}
-                  className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/70 space-y-1.5 text-xs"
+                  className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/70 space-y-2 text-xs"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-bold text-slate-900">
                       {rev.reviewPeriodStart} → {rev.reviewPeriodEnd}
                     </span>
-                    <span className="px-2 py-0.5 rounded-md font-bold bg-[#EFF6FF] text-[#174EA6] border border-[#BFDBFE]">
+                    <span className="px-2 py-0.5 rounded-md font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/70">
                       {rev.finalRating ? `${Number(rev.finalRating).toFixed(2)} / 5.00` : rev.status.replace(/_/g, ' ')}
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-600">
                     Reviewer: <strong className="text-slate-800">{rev.reviewerName || 'Line Manager'}</strong>
-                    {rev.ratings && rev.ratings.length > 0 ? ` · ${rev.ratings.length} KPIs assessed` : ''}
+                    {rev.ratings && rev.ratings.length > 0 ? ` · ${rev.ratings.length} KPIs assigned` : ''}
                   </p>
+                  {rev.ratings && rev.ratings.length > 0 && (
+                    <div className="space-y-1 bg-white p-2 rounded-lg border border-slate-100">
+                      {rev.ratings.slice(0, 3).map((r, rIdx) => {
+                        const ratingVal =
+                          typeof r.rating === 'number'
+                            ? r.rating
+                            : (r as { score?: number }).score;
+                        return (
+                          <div key={`${rev.id}-kpi-${rIdx}`} className="flex items-center justify-between text-[11px]">
+                            <span className="text-slate-700 truncate">{r.kpiTitle || `KPI #${r.kpiId}`}</span>
+                            <span className="font-mono font-semibold text-[#083E34] shrink-0">
+                              {ratingVal ? `${ratingVal}/${r.maxRating || 5}` : `${r.weight || 0}% wt`}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                   {rev.reviewerComments && (
                     <p className="text-[11px] text-slate-700 italic bg-white p-2 rounded-lg border border-slate-100">
                       &ldquo;{rev.reviewerComments}&rdquo;
                     </p>
+                  )}
+                  {rev.employeeComments && (
+                    <p className="text-[11px] text-emerald-900 bg-emerald-50/70 p-2 rounded-lg border border-emerald-200">
+                      <strong>Your Self-Appraisal:</strong> {rev.employeeComments}
+                    </p>
+                  )}
+                  {currentUser.role !== 'VIEWER' && rev.status !== 'APPROVED' && (
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        type="text"
+                        value={selfAppraisalComments[rev.id] || ''}
+                        onChange={(e) =>
+                          setSelfAppraisalComments((prev) => ({ ...prev, [rev.id]: e.target.value }))
+                        }
+                        placeholder="Add self-appraisal note or goal update..."
+                        aria-label="Self-appraisal reflection"
+                        className="flex-1 px-2.5 py-1.5 text-[11px] rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-[#083E34]"
+                      />
+                      <button
+                        type="button"
+                        disabled={savingAppraisalId === rev.id || !(selfAppraisalComments[rev.id] || '').trim()}
+                        onClick={() => void handleSubmitSelfAppraisal(rev)}
+                        className="px-2.5 py-1.5 rounded-lg bg-[#083E34] text-white text-[11px] font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                      >
+                        <Send className="w-3 h-3" />
+                        <span>Save</span>
+                      </button>
+                    </div>
                   )}
                 </div>
               ))}
@@ -750,26 +1060,162 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
 
           <div className="grid grid-cols-2 gap-3 text-xs pt-2 border-t border-slate-100">
             <button
-              type="button"
               onClick={() => onNavigate('calendar')}
-              className="p-3.5 rounded-xl border border-slate-200 hover:border-[#174EA6]/40 hover:bg-slate-50 text-left space-y-1 transition cursor-pointer"
+              className="p-3.5 rounded-xl border border-slate-200/90 hover:border-[#083E34] hover:bg-slate-50/70 text-left space-y-1 transition cursor-pointer"
             >
-              <Calendar className="w-4 h-4 text-[#174EA6]" aria-hidden="true" />
-              <span className="font-semibold text-slate-900 block">My Calendar</span>
+              <Calendar className="w-4 h-4 text-[#083E34]" />
+              <span className="font-semibold text-slate-900 block pt-1">My Calendar</span>
               <span className="text-[11px] text-slate-500 block">Holidays &amp; leave dates</span>
             </button>
             <button
-              type="button"
               onClick={() => onNavigate('documents')}
-              className="p-3.5 rounded-xl border border-slate-200 hover:border-[#174EA6]/40 hover:bg-slate-50 text-left space-y-1 transition cursor-pointer"
+              className="p-3.5 rounded-xl border border-slate-200/90 hover:border-[#083E34] hover:bg-slate-50/70 text-left space-y-1 transition cursor-pointer"
             >
-              <FileText className="w-4 h-4 text-[#174EA6]" aria-hidden="true" />
-              <span className="font-semibold text-slate-900 block">Documents</span>
+              <FileText className="w-4 h-4 text-[#083E34]" />
+              <span className="font-semibold text-slate-900 block pt-1">Documents</span>
               <span className="text-[11px] text-slate-500 block">HR policies &amp; files</span>
             </button>
           </div>
         </div>
       </div>
+
+      {/* 5. My Attendance & My Onboarding Tasks */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* My Attendance Summary */}
+        <div
+          data-testid="employee-attendance-card"
+          className="bg-white rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.03)] overflow-hidden"
+        >
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+            <div>
+              <h3 className="font-display text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-[#083E34]" />
+                <span>My Attendance Records ({myAttendanceLogs.length})</span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Your personal biometric check-ins and shift punctuality.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onNavigate('attendance')}
+              className="text-xs font-semibold text-[#083E34] hover:text-[#062E27] flex items-center gap-1 cursor-pointer"
+            >
+              <span>Attendance</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="divide-y divide-slate-100">
+            {myAttendanceLogs.length > 0 ? (
+              myAttendanceLogs.map((log, idx) => (
+                <div key={`${log.date}-${idx}`} className="px-5 py-3 flex items-center justify-between text-xs">
+                  <div>
+                    <span className="font-semibold text-slate-900 block">{log.date}</span>
+                    <span className="text-[11px] text-slate-500">{log.source}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-slate-700">{log.checkIn}</span>
+                    <span
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${
+                        log.status === 'Late'
+                          ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                          : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      }`}
+                    >
+                      {log.status}
+                    </span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-slate-500 p-6 text-center">
+                No personal attendance check-ins recorded yet. Open Attendance to view your schedule or clock in.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* My Onboarding Tasks */}
+        <div
+          data-testid="employee-onboarding-card"
+          className="bg-white rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.03)] overflow-hidden"
+        >
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+            <div>
+              <h3 className="font-display text-sm font-bold text-slate-900 flex items-center gap-2">
+                <ClipboardCheck className="w-4 h-4 text-[#083E34]" />
+                <span>My Onboarding Tasks</span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {myOnboarding
+                  ? `${myOnboarding.tasks.filter((t) => t.isCompleted).length}/${myOnboarding.tasks.length} tasks completed (${myOnboarding.overallProgressPercent}%)`
+                  : 'Checklist items assigned during employee onboarding.'}
+              </p>
+            </div>
+            {myOnboarding && (
+              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                {myOnboarding.overallProgressPercent}%
+              </span>
+            )}
+          </div>
+
+          {myOnboarding ? (
+            <div className="p-4 space-y-2.5">
+              <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-[#083E34] h-full rounded-full transition-all duration-300"
+                  style={{ width: `${myOnboarding.overallProgressPercent}%` }}
+                />
+              </div>
+              <div className="divide-y divide-slate-100">
+                {myOnboarding.tasks.slice(0, 5).map((task) => (
+                  <label
+                    key={task.id}
+                    className="py-2.5 flex items-start gap-2.5 text-xs cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={task.isCompleted}
+                      disabled={togglingTaskId === task.id || currentUser.role === 'VIEWER'}
+                      onChange={(e) => void handleToggleOnboardingTask(task.id, e.target.checked)}
+                      className="mt-0.5 rounded border-slate-300 text-[#083E34] focus:ring-[#083E34]"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <span
+                        className={`font-medium block ${
+                          task.isCompleted ? 'line-through text-slate-400' : 'text-slate-900'
+                        }`}
+                      >
+                        {task.title}
+                      </span>
+                      <span className="text-[10px] text-slate-500">
+                        Due: {task.dueDate} · {task.category}
+                      </span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-slate-500 p-6 text-center">
+              No active onboarding tasks pending for your profile.
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Self-Service Profile & Document Upload Modal */}
+      {isProfileModalOpen && (
+        <EmployeeProfileModal
+          employee={selfEmployeeRecord}
+          onClose={() => setIsProfileModalOpen(false)}
+          onNavigateLeave={() => {
+            setIsProfileModalOpen(false);
+            onNavigate('leave');
+          }}
+        />
+      )}
 
       {/* Resignation Submission Modal */}
       {isResignModalOpen && (
@@ -792,8 +1238,8 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
 
             <form onSubmit={handleSubmitResignation} className="p-6 space-y-4 text-xs">
               {resignError && (
-                <div className="p-3 rounded-lg bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] font-medium flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0 text-[#111827]" />
+                <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 font-medium flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
                   <span>{resignError}</span>
                 </div>
               )}
@@ -806,7 +1252,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                   value={resignManagerId}
                   onChange={(e) => setResignManagerId(e.target.value)}
                   data-testid="resignation-manager-select"
-                  className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 font-medium focus:outline-none focus:border-[#174EA6]"
+                  className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 font-medium focus:outline-none focus:border-[#083E34]"
                 >
                   <option value="">
                     {directSupervisor !== 'Top-Level (Routes to HR)'
@@ -829,7 +1275,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                     required
                     value={resignDate}
                     onChange={(e) => setResignDate(e.target.value)}
-                    className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#174EA6]"
+                    className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#083E34]"
                   />
                 </div>
                 <div>
@@ -840,7 +1286,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                     value={resignLastDay}
                     onChange={(e) => setResignLastDay(e.target.value)}
                     data-testid="resignation-last-day-input"
-                    className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#174EA6]"
+                    className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#083E34]"
                   />
                 </div>
               </div>
@@ -848,8 +1294,8 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
               <div
                 className={`p-3 rounded-lg border text-[11px] font-semibold ${
                   calculatedNoticeDays >= 30
-                    ? 'bg-[#EFF6FF] border-[#BFDBFE] text-[#174EA6]'
-                    : 'bg-[#FAF5EB] border-[#E9D59A] text-[#B88A24]'
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                    : 'bg-amber-50 border-amber-200 text-amber-800'
                 }`}
               >
                 Notice Period: {calculatedNoticeDays} day(s) —{' '}
@@ -867,7 +1313,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                   onChange={(e) => setResignReason(e.target.value)}
                   data-testid="resignation-reason-input"
                   placeholder="State your reason for leaving and handover availability..."
-                  className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#174EA6]"
+                  className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#083E34]"
                 />
               </div>
 
@@ -883,7 +1329,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                   type="submit"
                   disabled={isSubmittingResign}
                   data-testid="resignation-submit-btn"
-                  className="px-5 py-2 bg-[#174EA6] hover:bg-[#0B1F3A] text-white font-semibold rounded-lg transition cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2 bg-[#083E34] hover:bg-[#062E27] text-white font-semibold rounded-lg transition cursor-pointer disabled:opacity-50"
                 >
                   {isSubmittingResign ? 'Submitting...' : 'Submit Resignation to Manager'}
                 </button>

@@ -73,6 +73,16 @@ export function isHrOrAdminUser(user?: User | null): boolean {
   return canonical === 'ADMIN' || canonical === 'HR_STAFF';
 }
 
+export function isBusinessHeadUser(user?: User | null): boolean {
+  if (!user || isHrOrAdminUser(user)) return false;
+  return (user.role || '').trim().toUpperCase() === 'BUSINESS_HEAD';
+}
+
+export function isDepartmentHeadUser(user?: User | null): boolean {
+  if (!user || isHrOrAdminUser(user)) return false;
+  return (user.role || '').trim().toUpperCase() === 'DEPARTMENT_HEAD';
+}
+
 export function isManagerUser(user?: User | null): boolean {
   if (!user || isHrOrAdminUser(user)) return false;
   if (normalizeRole(user.role) === 'MANAGER') return true;
@@ -128,9 +138,10 @@ export const ROLE_MODULE_PERMISSIONS: Record<CanonicalRole, NavModule[]> = {
     'governance',
   ],
 
-  // Managers see team approvals, team performance, team offboarding, & team calendar
+  // Business Heads & Department Heads/Managers see scoped staff, team approvals, reports, performance, offboarding, & calendar
   MANAGER: [
     'dashboard',
+    'employees',
     'directory',
     'leave',
     'attendance',
@@ -141,6 +152,7 @@ export const ROLE_MODULE_PERMISSIONS: Record<CanonicalRole, NavModule[]> = {
     'offboarding',
     'performance',
     'documents',
+    'reports',
     'notifications',
     'ai-assistant',
     'governance',
@@ -225,7 +237,7 @@ export function checkRouteAccess(
     if (canonical === 'HR_STAFF' && ['settings', 'integrations', 'audit-logs'].includes(module)) {
       reason = `System-level module '${module}' is restricted to Admin personnel only. HR Staff access is prohibited.`;
     } else if (canonical === 'MANAGER') {
-      reason = `Manager access is scoped to team approvals and calendar. '${module}' requires HR or Admin privileges.`;
+      reason = `Leadership access is scoped to your entity or reporting team. '${module}' requires HR or Admin privileges.`;
     } else if (canonical === 'EMPLOYEE') {
       reason = `Employee access is restricted to self-service and department views. '${module}' requires elevated privileges.`;
     } else if (canonical === 'VIEWER') {
@@ -305,7 +317,7 @@ export function getRolePermissions(role?: string | null): RolePermissions {
         canManagePerformance: true,
         canManageDocuments: false,
         canConfigureIntegrations: false,
-        canExportReports: false,
+        canExportReports: true,
         canManageSettings: false,
         canManagePayroll: false,
         canViewPayroll: true,
@@ -367,6 +379,8 @@ export function getRolePermissions(role?: string | null): RolePermissions {
         canConfigureIntegrations: false,
         canExportReports: false,
         canManageSettings: false,
+        canManagePayroll: false,
+        canViewPayroll: false,
         isReadOnly: true,
       };
   }
@@ -425,6 +439,7 @@ export function canPerformAction(
         'edit_task',
         'manage_performance',
         'manage_offboarding',
+        'export_reports',
       ].includes(action)
     ) {
       return { allowed: true, status: 200 };
@@ -489,8 +504,28 @@ export function isDepartmentMatch(deptA?: string, deptB?: string): boolean {
   return cleanA === cleanB || cleanA.includes(cleanB) || cleanB.includes(cleanA);
 }
 
+export function isEntityMatchForUser(
+  user: Pick<User, 'entityId' | 'entityName'> | null | undefined,
+  record: { entityId?: string; entityName?: string } | null | undefined
+): boolean {
+  if (!user || !record) return false;
+  const uId = (user.entityId || '').trim().toLowerCase();
+  const rId = (record.entityId || '').trim().toLowerCase();
+  if (uId && rId && (uId === rId || uId.includes(rId) || rId.includes(uId))) {
+    return true;
+  }
+  const uName = (user.entityName || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  const rName = (record.entityName || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  if (uName && rName && (uName === rName || uName.includes(rName) || rName.includes(uName))) {
+    return true;
+  }
+  return false;
+}
+
 export function filterEmployeesForUser<
   T extends {
+    entityId?: string;
+    entityName?: string;
     departmentName?: string;
     departmentId?: string;
     id?: string;
@@ -510,6 +545,8 @@ export function filterEmployeesForUser<
   const userNameLower = (user.name || '').toLowerCase();
   const userStaffId = (user.staffId || '').toLowerCase();
   const userId = (user.id || '').toLowerCase();
+  const userEmpId = (user.employeeId || '').toLowerCase();
+  const isBizHead = isBusinessHeadUser(user);
 
   return employees.filter((e) => {
     const mId = (e.managerId || '').toLowerCase();
@@ -517,15 +554,28 @@ export function filterEmployeesForUser<
     const isDirectReport =
       Boolean(userStaffId && mId && mId === userStaffId) ||
       Boolean(userId && mId && mId === userId) ||
+      Boolean(userEmpId && mId && mId === userEmpId) ||
       Boolean(userNameLower && mName && (mName.includes(userNameLower) || userNameLower.includes(mName)));
 
     if (isDirectReport) return true;
 
-    if (String(e.id) === String(user.id) || (userStaffId && e.staffId && e.staffId.toLowerCase() === userStaffId)) {
+    if (
+      String(e.id) === String(user.id) ||
+      (userEmpId && String(e.id).toLowerCase() === userEmpId) ||
+      (userStaffId && e.staffId && e.staffId.toLowerCase() === userStaffId)
+    ) {
       return true;
     }
 
+    if (isBizHead) {
+      return isEntityMatchForUser(user, e);
+    }
+
     if (canonical === 'MANAGER') {
+      if (userDept) {
+        const empDept = e.departmentName || e.departmentId || '';
+        return isDepartmentMatch(userDept, empDept);
+      }
       return false;
     }
 
@@ -540,6 +590,8 @@ export function filterEmployeesForUser<
 
 export function filterLeaveRequestsForUser<
   T extends {
+    entityId?: string;
+    entityName?: string;
     department?: string;
     departmentName?: string;
     employeeId?: string;
@@ -560,9 +612,12 @@ export function filterLeaveRequestsForUser<
   const userNameLower = (user.name || '').toLowerCase();
   const userStaffId = (user.staffId || '').toLowerCase();
   const userId = (user.id || '').toLowerCase();
+  const userEmpId = (user.employeeId || '').toLowerCase();
+  const isBizHead = isBusinessHeadUser(user);
 
   return requests.filter((r) => {
     if (String(r.employeeId) === String(user.id)) return true;
+    if (userEmpId && String(r.employeeId) === userEmpId) return true;
     if (userStaffId && r.staffId && r.staffId.toLowerCase() === userStaffId) return true;
     if (userStaffId && r.employeeStaffId && r.employeeStaffId.toLowerCase() === userStaffId) return true;
 
@@ -571,13 +626,14 @@ export function filterLeaveRequestsForUser<
     if (
       (userStaffId && mId && mId === userStaffId) ||
       (userId && mId && mId === userId) ||
+      (userEmpId && mId && mId === userEmpId) ||
       (userNameLower && mName && (mName.includes(userNameLower) || userNameLower.includes(mName)))
     ) {
       return true;
     }
 
-    if (canonical === 'MANAGER') {
-      return false;
+    if (isBizHead) {
+      return isEntityMatchForUser(user, r);
     }
 
     const reqDept = r.department || r.departmentName;
@@ -591,9 +647,15 @@ export function filterLeaveRequestsForUser<
 
 export function filterAttendanceForUser<
   T extends {
+    entityId?: string;
+    entityName?: string;
     department?: string;
+    departmentName?: string;
     employeeId?: string;
     staffId?: string;
+    employeeStaffId?: string;
+    managerId?: string;
+    managerName?: string;
   }
 >(user: User | null | undefined, records: T[]): T[] {
   if (!user) return [];
@@ -603,10 +665,45 @@ export function filterAttendanceForUser<
     return records;
   }
 
+  const userStaffId = (user.staffId || '').toLowerCase();
+  const userEmpId = (user.employeeId || '').toLowerCase();
+  const userId = (user.id || '').toLowerCase();
   const userDept = user.departmentName || user.departmentId || '';
+  const userNameLower = (user.name || '').toLowerCase();
+  const isBizHead = isBusinessHeadUser(user);
+
   return records.filter((rec) => {
-    if (rec.employeeId === user.id || rec.staffId === user.staffId) return true;
-    if (userDept && rec.department && isDepartmentMatch(userDept, rec.department)) return true;
+    const recEmpId = String(rec.employeeId || '').toLowerCase();
+    const recStaffId = (rec.staffId || rec.employeeStaffId || '').toLowerCase();
+    const isSelfRecord =
+      (userId && recEmpId === userId) ||
+      (userEmpId && recEmpId === userEmpId) ||
+      (userStaffId && recStaffId === userStaffId);
+
+    if (isSelfRecord) return true;
+
+    if (isBizHead) {
+      return isEntityMatchForUser(user, rec);
+    }
+
+    if (canonical === 'MANAGER' || isManagerUser(user)) {
+      const mId = (rec.managerId || '').toLowerCase();
+      const mName = (rec.managerName || '').toLowerCase();
+      if (
+        (userStaffId && mId && mId === userStaffId) ||
+        (userId && mId && mId === userId) ||
+        (userEmpId && mId && mId === userEmpId) ||
+        (userNameLower && mName && (mName.includes(userNameLower) || userNameLower.includes(mName)))
+      ) {
+        return true;
+      }
+      const recDept = rec.department || rec.departmentName || '';
+      if (userDept && recDept && isDepartmentMatch(userDept, recDept)) {
+        return true;
+      }
+      return false;
+    }
+
     return false;
   });
 }

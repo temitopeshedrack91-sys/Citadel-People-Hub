@@ -29,6 +29,7 @@ import {
 } from './interfaces';
 import { findEntityById, matchesEntityId } from '../utils/orgHelpers';
 import { calculateYearsOfService } from '../domain/workbook';
+import { calculatePayrollDraftSummary } from '../utils/hrisHelpers';
 import {
   Employee,
   EmployeeHierarchy,
@@ -1424,8 +1425,16 @@ export class MockPayrollRepository implements IPayrollRepository {
     notes?: string;
   }): Promise<PayrollRun> {
     await sleep();
+    const runId = `run-${Date.now()}`;
+    const summary = calculatePayrollDraftSummary({
+      employees,
+      assignments: payrollAssignments,
+      templates: salaryTemplates,
+      loans: employeeLoans,
+      deductions: employeeDeductions,
+    });
     const newRun: PayrollRun = {
-      id: `run-${Date.now()}`,
+      id: runId,
       run_number: `PR-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${Math.floor(100 + Math.random() * 900)}`,
       title: data.title || `Payroll Run for ${data.period_start} to ${data.period_end}`,
       period_start: data.period_start,
@@ -1433,13 +1442,32 @@ export class MockPayrollRepository implements IPayrollRepository {
       pay_date: data.pay_date || new Date().toISOString().split('T')[0],
       status: 'draft',
       currency: 'NGN',
-      total_basic: 1690000,
-      total_allowance: 975000,
-      total_gross: 2665000,
-      total_deduction: 423000,
-      total_net: 2242000,
+      total_basic: summary.totalBasic,
+      total_allowance: summary.totalAllowances,
+      total_gross: summary.totalGross,
+      total_deduction: summary.totalDeductions,
+      total_net: summary.totalNet,
       notes: data.notes,
       created_at: new Date().toISOString(),
+      items: summary.items.map((item, idx) => ({
+        id: `item-${runId}-${idx + 1}`,
+        payroll_run_id: runId,
+        employee_id: item.employee_id,
+        employee: item.employee,
+        basic_salary: item.basic_salary,
+        allowance_total: item.allowance_total,
+        gross_salary: item.gross_salary,
+        tax_amount: item.tax_amount,
+        provident_fund_amount: item.provident_fund_amount,
+        loan_repayment_amount: item.loan_repayment_amount,
+        other_deduction: item.other_deduction,
+        total_deduction: item.total_deduction,
+        deduction_total: item.total_deduction,
+        net_salary: item.net_salary,
+        net_payable: item.net_salary,
+        payment_status: 'unpaid',
+        payment_method: 'Direct Bank Transfer',
+      })),
     };
     payrollRuns = [newRun, ...payrollRuns];
     saveStorage('payroll_runs', payrollRuns);

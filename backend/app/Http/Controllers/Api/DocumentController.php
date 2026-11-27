@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
 /**
@@ -303,7 +304,7 @@ class DocumentController extends Controller
     /**
      * Stream an institutional policy or general managed document file to the client.
      */
-    public function download(Request $request, HubDocument $document): JsonResponse
+    public function download(Request $request, HubDocument $document): StreamedResponse
     {
         abort_unless($this->canAccess($request, $document), 404);
         abort_unless(Storage::disk(config('filesystems.default'))->exists($document->storage_path), 404);
@@ -316,7 +317,7 @@ class DocumentController extends Controller
     /**
      * Stream a secured employee compliance document file to the client.
      */
-    public function downloadEmployeeDocument(Request $request, Employee $employee, HubDocument $document): JsonResponse
+    public function downloadEmployeeDocument(Request $request, Employee $employee, HubDocument $document): StreamedResponse
     {
         abort_unless($document->employee_id === $employee->id, 404);
         abort_unless($this->canAccessEmployeeDocument($request, $employee, $document), 403);

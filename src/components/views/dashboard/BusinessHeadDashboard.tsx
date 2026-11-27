@@ -1,22 +1,53 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Building2,
   Users,
   CheckCircle2,
+  Clock,
   CalendarDays,
   Check,
   X,
-  AlertCircle,
   ArrowUpRight,
   ShieldCheck,
   BarChart3,
+  Eye,
+  FileEdit,
+  AlertCircle,
+  Search,
+  Send,
+  LogOut,
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useRealtimeTable } from '../../../hooks/useRealtimeTable';
 import { NavModule } from '../../layout/Sidebar';
-import { leaveRepository, employeeRepository, auditRepository } from '../../../services';
-import { StatusPill } from '../../common/StatusPill';
-import { LeaveRequest, Employee } from '../../../types';
+import {
+  leaveRepository,
+  employeeRepository,
+  organizationRepository,
+  offboardingRepository,
+  attendanceRepository,
+  auditRepository,
+} from '../../../services';
+import { governanceRepository } from '../../../services/governanceRepository';
+import { attendanceImportService } from '../../../features/attendance-import';
+import {
+  LeaveRequest,
+  Employee,
+  CitadelDepartment,
+  ExitRequest,
+  AttendanceRecord,
+} from '../../../types';
+import {
+  isEntityMatchForUser,
+  maskSensitiveEmployeeData,
+} from '../../../utils/rbac';
+import { classifyDailySummaryStatus } from '../../../utils/hrisHelpers';
+import { EmployeeProfileModal } from '../../employee/EmployeeProfileModal';
+import {
+  createProfileChangeRequest,
+  mapAppRoleToWorkbookRole,
+  type ProfileChangeRequest,
+} from '../../../domain/workbook';
 
 interface BusinessHeadDashboardProps {
   onNavigate: (module: NavModule) => void;
@@ -30,168 +61,304 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
   const { currentUser, currentRole } = useAuth();
 
   const [entityEmployees, setEntityEmployees] = useState<Employee[]>([]);
-  const [executiveLeaves, setExecutiveLeaves] = useState<LeaveRequest[]>([]);
+  const [entityDepartments, setEntityDepartments] = useState<CitadelDepartment[]>([]);
+  const [entityLeaves, setEntityLeaves] = useState<LeaveRequest[]>([]);
+  const [entityExits, setEntityExits] = useState<ExitRequest[]>([]);
+  const [entityChangeRequests, setEntityChangeRequests] = useState<ProfileChangeRequest[]>([]);
+  const [attendanceRate, setAttendanceRate] = useState<{ pct: number | null; presentCount: number; sampleSize: number }>({
+    pct: null,
+    presentCount: 0,
+    sampleSize: 0,
+  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [changeTargetEmp, setChangeTargetEmp] = useState<Employee | null>(null);
+  const [proposedPhone, setProposedPhone] = useState('');
+  const [proposedEmail, setProposedEmail] = useState('');
+  const [proposedAddress, setProposedAddress] = useState('');
+  const [changeReason, setChangeReason] = useState('');
+  const [isSubmittingChange, setIsSubmittingChange] = useState(false);
+  const [processingLeaveId, setProcessingLeaveId] = useState<string | null>(null);
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [processingId, setProcessingId] = useState<string | null>(null);
-  const reloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const actorEmployeeId = String(currentUser.employeeId || currentUser.id || '');
 
   const loadData = useCallback(async () => {
-    if (reloadTimerRef.current) {
-      clearTimeout(reloadTimerRef.current);
-      reloadTimerRef.current = null;
-    }
-    setActionError(null);
     try {
-      const [allEmps, allLeaves] = await Promise.all([
-        employeeRepository.getAll(
-          currentUser.entityId ? { entityId: currentUser.entityId } : undefined
-        ),
-        leaveRepository.getAll(),
+      setActionError(null);
+      const [allEmps, allDepts, allLeaves, allExits, recentLogs, allChangeReqs] = await Promise.all([
+        employeeRepository.getAll({ entityId: currentUser.entityId || undefined }).catch(() => [] as Employee[]),
+        organizationRepository.getDepartments().catch(() => [] as CitadelDepartment[]),
+        leaveRepository.getAll().catch(() => [] as LeaveRequest[]),
+        offboardingRepository.getAll().catch(() => [] as ExitRequest[]),
+        attendanceRepository.getRecentLogs().catch(() => [] as AttendanceRecord[]),
+        governanceRepository.listProfileChangeRequests().catch(() => [] as ProfileChangeRequest[]),
       ]);
 
-      setEntityEmployees(allEmps);
+      const scopedEmps = allEmps
+        .filter((emp) => isEntityMatchForUser(currentUser, emp))
+        .map((emp) => maskSensitiveEmployeeData(currentUser, emp));
 
-      const empIds = new Set(allEmps.map((e) => String(e.id)));
-      const selfId = String(currentUser.employeeId || currentUser.id || '');
-      const entityLeaves = allLeaves.filter(
-        (l) =>
-          String(l.employeeId) !== selfId &&
-          (empIds.has(String(l.employeeId)) || l.entityName === currentUser.entityName)
+      const scopedDepts = allDepts.filter((dept) => isEntityMatchForUser(currentUser, dept));
+      const empIdSet = new Set(scopedEmps.map((e) => String(e.id)));
+      const staffIdSet = new Set(scopedEmps.map((e) => (e.staffId || '').toLowerCase()).filter(Boolean));
+
+      const scopedLeaves = allLeaves.filter((l) => {
+        if (actorEmployeeId && String(l.employeeId) === actorEmployeeId) return false;
+        return (
+          isEntityMatchForUser(currentUser, l) ||
+          empIdSet.has(String(l.employeeId)) ||
+          (l.employeeStaffId && staffIdSet.has(l.employeeStaffId.toLowerCase()))
+        );
+      });
+
+      const scopedExits = allExits.filter(
+        (ex) =>
+          empIdSet.has(String(ex.employeeId)) ||
+          (ex.staffId && staffIdSet.has(ex.staffId.toLowerCase())) ||
+          isEntityMatchForUser(currentUser, ex)
       );
-      setExecutiveLeaves(entityLeaves);
-    } catch (err: any) {
-      setActionError(err?.message || 'Unable to load divisional workspace.');
-    }
-  }, [currentUser.employeeId, currentUser.entityId, currentUser.entityName, currentUser.id]);
 
-  const scheduleReload = useCallback(() => {
-    if (reloadTimerRef.current) clearTimeout(reloadTimerRef.current);
-    reloadTimerRef.current = setTimeout(() => {
-      reloadTimerRef.current = null;
-      void loadData();
-    }, 150);
-  }, [loadData]);
+      const scopedReqs = allChangeReqs.filter(
+        (req) =>
+          empIdSet.has(String(req.employeeId)) ||
+          staffIdSet.has((req.employeeStaffId || '').toLowerCase())
+      );
+
+      // Compute live attendance adherence for entity staff from attendance logs or biometric snapshot
+      const entityLogs = recentLogs.filter(
+        (log) =>
+          empIdSet.has(String(log.employeeId)) ||
+          (log.employeeStaffId && staffIdSet.has(log.employeeStaffId.toLowerCase()))
+      );
+
+      if (entityLogs.length > 0) {
+        const compliant = entityLogs.filter((l) => l.status === 'Present').length;
+        setAttendanceRate({
+          pct: Math.round((compliant / entityLogs.length) * 1000) / 10,
+          presentCount: compliant,
+          sampleSize: entityLogs.length,
+        });
+      } else if (!import.meta.env.PROD && scopedEmps.length > 0) {
+        const bioSnap = attendanceImportService.getSnapshot(scopedEmps);
+        if (bioSnap.summaries.length > 0) {
+          const onTime = bioSnap.summaries.filter(
+            (s) => classifyDailySummaryStatus(s).dashboardStatus === 'Present'
+          ).length;
+          setAttendanceRate({
+            pct: Math.round((onTime / bioSnap.summaries.length) * 1000) / 10,
+            presentCount: onTime,
+            sampleSize: bioSnap.summaries.length,
+          });
+        } else {
+          setAttendanceRate({ pct: null, presentCount: 0, sampleSize: 0 });
+        }
+      } else {
+        setAttendanceRate({ pct: null, presentCount: 0, sampleSize: 0 });
+      }
+
+      setEntityEmployees(scopedEmps);
+      setEntityDepartments(scopedDepts);
+      setEntityLeaves(scopedLeaves);
+      setEntityExits(scopedExits);
+      setEntityChangeRequests(scopedReqs);
+    } catch (err: any) {
+      setActionError(err?.message || 'Unable to load Business Head workspace.');
+    }
+  }, [actorEmployeeId, currentUser]);
 
   useEffect(() => {
     void loadData();
-    return () => {
-      if (reloadTimerRef.current) {
-        clearTimeout(reloadTimerRef.current);
-        reloadTimerRef.current = null;
-      }
-    };
   }, [loadData]);
 
-  useRealtimeTable('leave_requests', scheduleReload);
-  useRealtimeTable('employees', scheduleReload);
+  useRealtimeTable('employees', () => void loadData());
+  useRealtimeTable('departments', () => void loadData());
+  useRealtimeTable('leave_requests', () => void loadData());
+  useRealtimeTable('offboarding_requests', () => void loadData());
 
-  const handleExecutiveSignOff = async (leave: LeaveRequest) => {
+  const pendingLeaveQueue = useMemo(
+    () =>
+      entityLeaves.filter(
+        (l) => l.status === 'Pending Review' || l.status === 'Submitted'
+      ),
+    [entityLeaves]
+  );
+
+  const activeExitRequests = useMemo(
+    () =>
+      entityExits.filter(
+        (ex) => ex.status === 'SUBMITTED' || ex.status === 'MANAGER_REVIEWED'
+      ),
+    [entityExits]
+  );
+
+  const pendingHrChangeRequests = useMemo(
+    () => entityChangeRequests.filter((r) => r.status === 'PENDING_HR_APPROVAL'),
+    [entityChangeRequests]
+  );
+
+  const filteredEntityEmployees = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return entityEmployees;
+    return entityEmployees.filter(
+      (e) =>
+        e.fullName.toLowerCase().includes(q) ||
+        e.staffId.toLowerCase().includes(q) ||
+        (e.departmentName || '').toLowerCase().includes(q) ||
+        (e.jobTitle || '').toLowerCase().includes(q)
+    );
+  }, [entityEmployees, searchQuery]);
+
+  const handleLeaveEndorse = async (leave: LeaveRequest) => {
     setActionError(null);
-    setProcessingId(leave.id);
+    setProcessingLeaveId(leave.id);
     try {
-      const updated = await leaveRepository.updateStatus(
-        leave.id,
-        'Approved',
-        currentUser.name,
-        `Stage 1 divisional approval granted by ${currentUser.name}. Forwarded to HR for final validation.`
-      );
-
+      const comment = `Reviewed by Business Head (${currentUser.name}) for ${currentUser.entityName}.`;
+      if (leave.status === 'Submitted') {
+        await leaveRepository.updateStatus(leave.id, 'Pending Review', currentUser.name, comment);
+      } else {
+        await leaveRepository.updateStatus(leave.id, 'Approved', currentUser.name, comment);
+      }
       await auditRepository.logAction({
         userId: currentUser.id,
         userName: currentUser.name,
         userRole: currentRole,
         module: 'Leave Management',
-        action: 'Divisional Leave Approval',
+        action: 'Business Head Reviewed Leave Request',
         recordAffectedId: leave.id,
         recordAffectedTitle: `${leave.leaveType} for ${leave.employeeName}`,
         previousValue: leave.status,
-        newValue: updated.status,
+        newValue: leave.status === 'Submitted' ? 'Pending Review (HR)' : 'Approved',
         severity: 'Info',
       });
-
-      setActionFeedback(`Approved ${leave.leaveType} for ${leave.employeeName}. Forwarded to HR.`);
+      setActionFeedback(`Reviewed leave request for ${leave.employeeName}.`);
       setTimeout(() => setActionFeedback(null), 4000);
       await loadData();
     } catch (err: any) {
-      setActionError(err?.message || 'Unable to approve request.');
+      setActionError(err?.message || 'Unable to process leave review.');
     } finally {
-      setProcessingId(null);
+      setProcessingLeaveId(null);
     }
   };
 
-  const handleExecutiveDecline = async (leave: LeaveRequest) => {
+  const handleLeaveDecline = async (leave: LeaveRequest) => {
     setActionError(null);
-    setProcessingId(leave.id);
+    setProcessingLeaveId(leave.id);
     try {
-      await leaveRepository.updateStatus(
-        leave.id,
-        'Rejected',
-        currentUser.name,
-        `Request declined by divisional lead (${currentUser.name}).`
-      );
-
+      const reason = `Declined by Business Head (${currentUser.name}) based on entity operational needs.`;
+      await leaveRepository.updateStatus(leave.id, 'Rejected', currentUser.name, reason);
       await auditRepository.logAction({
         userId: currentUser.id,
         userName: currentUser.name,
         userRole: currentRole,
         module: 'Leave Management',
-        action: 'Divisional Leave Decline',
+        action: 'Business Head Declined Leave Request',
         recordAffectedId: leave.id,
         recordAffectedTitle: `${leave.leaveType} for ${leave.employeeName}`,
         previousValue: leave.status,
         newValue: 'Rejected',
         severity: 'Warning',
       });
-
-      setActionFeedback(`Request for ${leave.employeeName} rejected.`);
+      setActionFeedback(`Declined leave request for ${leave.employeeName}.`);
       setTimeout(() => setActionFeedback(null), 4000);
       await loadData();
     } catch (err: any) {
-      setActionError(err?.message || 'Unable to reject request.');
+      setActionError(err?.message || 'Unable to decline leave request.');
     } finally {
-      setProcessingId(null);
+      setProcessingLeaveId(null);
     }
   };
 
-  const pendingExecutiveQueue = useMemo(
-    () =>
-      executiveLeaves.filter(
-        (l) => l.status === 'Submitted' || l.status === 'Pending Review'
-      ),
-    [executiveLeaves]
-  );
+  const openChangeModalForEmployee = (emp: Employee) => {
+    setChangeTargetEmp(emp);
+    setProposedPhone(emp.phone || '');
+    setProposedEmail(emp.email || '');
+    setProposedAddress(emp.address || '');
+    setChangeReason('');
+  };
 
-  const departmentBreakdown = useMemo(() => {
-    const map = new Map<string, { name: string; count: number; active: number }>();
-    for (const emp of entityEmployees) {
-      const dept = emp.departmentName || 'General';
-      const entry = map.get(dept) || { name: dept, count: 0, active: 0 };
-      entry.count += 1;
-      if (emp.status === 'Active') entry.active += 1;
-      map.set(dept, entry);
+  const handleSubmitPermittedChangeForHr = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!changeTargetEmp || !changeReason.trim()) return;
+
+    const proposed: Record<string, string> = {};
+    if (proposedPhone.trim() && proposedPhone.trim() !== (changeTargetEmp.phone || '')) {
+      proposed.phone = proposedPhone.trim();
     }
-    return Array.from(map.values()).sort((a, b) => b.count - a.count);
-  }, [entityEmployees]);
+    if (proposedEmail.trim() && proposedEmail.trim() !== (changeTargetEmp.email || '')) {
+      proposed.email = proposedEmail.trim();
+    }
+    if (proposedAddress.trim() && proposedAddress.trim() !== (changeTargetEmp.address || '')) {
+      proposed.address = proposedAddress.trim();
+    }
 
-  const approvedCount = executiveLeaves.filter((l) => l.status === 'Approved').length;
+    if (Object.keys(proposed).length === 0) {
+      setActionError('Modify at least one field before submitting a change request for HR approval.');
+      return;
+    }
+
+    setIsSubmittingChange(true);
+    setActionError(null);
+    try {
+      const request = createProfileChangeRequest({
+        employee: changeTargetEmp,
+        actorRole: mapAppRoleToWorkbookRole(currentRole),
+        actorName: currentUser.name,
+        proposedChanges: proposed,
+        reason: changeReason.trim(),
+      });
+
+      await governanceRepository.createProfileChangeRequest(request);
+      await auditRepository.logAction({
+        userId: currentUser.id,
+        userName: currentUser.name,
+        userRole: currentRole,
+        module: 'Employee Governance',
+        action: 'Business Head Submitted Staff Change for HR Approval',
+        recordAffectedId: request.id,
+        recordAffectedTitle: `${changeTargetEmp.fullName} (${Object.keys(proposed).join(', ')})`,
+        previousValue: JSON.stringify(request.previousValues),
+        newValue: JSON.stringify(request.proposedChanges),
+        severity: 'Info',
+      });
+
+      setChangeTargetEmp(null);
+      setActionFeedback(
+        `Submitted proposed change for ${changeTargetEmp.fullName} to PCCM HR for formal approval.`
+      );
+      setTimeout(() => setActionFeedback(null), 5000);
+      await loadData();
+    } catch (err: any) {
+      setActionError(err?.message || 'Unable to submit change request for HR approval.');
+    } finally {
+      setIsSubmittingChange(false);
+    }
+  };
+
+  const activeStaffCount = entityEmployees.filter(
+    (e) => e.status === 'Active' || e.status === 'Confirmed'
+  ).length;
 
   return (
-    <div className="space-y-5 animate-fade-in" data-testid="business-head-dashboard">
-      {/* 1. Header */}
-      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-5 sm:p-6">
+    <div className="space-y-6 animate-fade-in" data-testid="business-head-dashboard">
+      {/* 1. Business Head Executive Header */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] p-5 sm:p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500">
-              <span className="uppercase tracking-wider text-[#174EA6]">Divisional Governance</span>
-              <span aria-hidden="true">·</span>
-              <span>{currentUser.entityName}</span>
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-bold">
+                Business Head · Entity Scoped
+              </span>
+              <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 text-[#083E34] text-[11px] font-semibold border border-emerald-200">
+                {currentUser.entityName || 'Assigned Business Entity'}
+              </span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-              {currentUser.entityName} Leadership Overview
+            <h1 className="text-xl font-bold tracking-tight text-slate-900">
+              {currentUser.entityName || 'Business Entity'} Executive Overview
             </h1>
-            <p className="text-xs text-slate-500 font-medium">
-              {currentUser.name} ({currentUser.jobTitle}) · Real-time reporting scope across {departmentBreakdown.length} active units.
+            <p className="text-xs text-slate-500 font-medium max-w-2xl">
+              Executive: <strong className="text-slate-800">{currentUser.name}</strong> ({currentUser.jobTitle}) · Strictly scoped to {currentUser.entityName || 'your assigned entity'}. Protected employee changes route to HR for approval.
             </p>
           </div>
 
@@ -200,209 +367,459 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
               type="button"
               onClick={onOpenLeaveModal}
               id="business-head-apply-leave-btn"
-              className="px-3.5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-semibold text-xs shadow-2xs transition flex items-center gap-2 cursor-pointer min-h-[38px] border border-[#C59B27]"
+              className="px-3.5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold text-xs shadow-xs transition flex items-center gap-2 active:scale-95 cursor-pointer min-h-[38px] border border-[#C59B27]"
             >
-              <CalendarDays className="w-4 h-4 text-slate-950" aria-hidden="true" />
+              <CalendarDays className="w-4 h-4 text-slate-950" />
               <span>Apply for Leave</span>
             </button>
             <button
               type="button"
-              onClick={() => onNavigate('directory')}
-              className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs border border-slate-200 transition flex items-center gap-1.5 cursor-pointer min-h-[38px]"
+              data-testid="business-head-reports-btn"
+              onClick={() => onNavigate('reports')}
+              className="px-3.5 py-2 rounded-xl bg-[#083E34] hover:bg-[#062E27] text-white font-semibold text-xs transition flex items-center gap-2 cursor-pointer min-h-[38px]"
             >
-              <BarChart3 className="w-4 h-4 text-slate-500" aria-hidden="true" />
-              <span>Division Directory</span>
+              <BarChart3 className="w-4 h-4" />
+              <span>Entity HR Reports</span>
             </button>
           </div>
         </div>
 
         {actionFeedback && (
-          <div role="status" className="mt-4 p-3 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] text-[#174EA6] text-xs font-medium flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-[#174EA6] shrink-0" aria-hidden="true" />
+          <div role="status" className="mt-4 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>{actionFeedback}</span>
           </div>
         )}
 
         {actionError && (
-          <div role="alert" className="mt-4 p-3 rounded-xl bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] text-xs font-medium flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-[#111827] shrink-0" aria-hidden="true" />
+          <div role="alert" className="mt-4 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
             <span>{actionError}</span>
           </div>
         )}
       </div>
 
-      {/* 2. Live Divisional KPIs */}
+      {/* 2. Live Entity KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-600">Scoped Headcount</span>
-            <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] text-[#174EA6] flex items-center justify-center border border-[#BFDBFE]/50">
-              <Users className="w-4 h-4" aria-hidden="true" />
+            <span className="text-xs font-black uppercase text-slate-700">Entity Workforce</span>
+            <div className="w-8 h-8 rounded-xl bg-[#083E34] text-amber-300 flex items-center justify-center">
+              <Users className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5 tabular-nums">
-            <span className="text-2xl font-bold text-slate-900">{entityEmployees.length}</span>
-            <span className="text-xs text-slate-500 font-medium">staff in scope</span>
+            <span className="text-2xl font-black text-[#083E34]">{entityEmployees.length}</span>
+            <span className="text-xs text-slate-500 font-bold">personnel in entity</span>
           </div>
+          <p className="text-[11px] text-slate-600 mt-2 font-medium">
+            {activeStaffCount} active / confirmed staff
+          </p>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-600">Departments</span>
-            <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center border border-slate-200">
-              <Building2 className="w-4 h-4" aria-hidden="true" />
+            <span className="text-xs font-black uppercase text-slate-700">Departments</span>
+            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center">
+              <Building2 className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5 tabular-nums">
-            <span className="text-2xl font-bold text-slate-900">{departmentBreakdown.length}</span>
-            <span className="text-xs text-slate-500 font-medium">active units</span>
+            <span className="text-2xl font-black text-[#083E34]">{entityDepartments.length}</span>
+            <span className="text-xs text-slate-500 font-bold">entity units</span>
           </div>
+          <p className="text-[11px] text-slate-600 mt-2 font-medium truncate">
+            {entityDepartments.map((d) => d.name).join(', ') || 'No departments mapped'}
+          </p>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-600">Pending Approvals</span>
-            <div className="w-8 h-8 rounded-lg bg-[#F5F7FA] text-[#111827] flex items-center justify-center border border-[#111827]/25">
-              <CalendarDays className="w-4 h-4" aria-hidden="true" />
+            <span className="text-xs font-black uppercase text-slate-700">Pending Requests</span>
+            <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-800 flex items-center justify-center">
+              <CalendarDays className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5 tabular-nums">
-            <span className={`text-2xl font-bold ${pendingExecutiveQueue.length > 0 ? 'text-[#111827]' : 'text-slate-900'}`}>
-              {pendingExecutiveQueue.length}
+            <span className="text-2xl font-black text-rose-600">
+              {pendingLeaveQueue.length + activeExitRequests.length}
             </span>
-            <span className="text-xs text-slate-500 font-medium">awaiting review</span>
+            <span className="text-xs text-slate-500 font-bold">open leave &amp; exit items</span>
           </div>
+          <p className="text-[11px] text-slate-500 mt-2 font-medium">
+            {pendingHrChangeRequests.length} change request(s) awaiting HR
+          </p>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-600">Approved Leaves</span>
-            <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] text-[#174EA6] flex items-center justify-center border border-[#BFDBFE]">
-              <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+            <span className="text-xs font-black uppercase text-slate-700">Entity Attendance</span>
+            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+              <Clock className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5 tabular-nums">
-            <span className="text-2xl font-bold text-slate-900">{approvedCount}</span>
-            <span className="text-xs text-slate-500 font-medium">cleared requests</span>
+            <span className="text-2xl font-black text-[#083E34]">
+              {attendanceRate.pct !== null ? `${attendanceRate.pct}%` : 'No Logs'}
+            </span>
+            <span className="text-xs text-slate-500 font-bold">
+              {attendanceRate.sampleSize > 0 ? `(${attendanceRate.presentCount}/${attendanceRate.sampleSize})` : 'yet'}
+            </span>
           </div>
+          <p className="text-[11px] text-emerald-700 mt-2 font-semibold">
+            {attendanceRate.sampleSize > 0 ? 'Live shift adherence across entity' : 'Awaiting biometric / clock-in logs'}
+          </p>
         </div>
       </div>
 
-      {/* 3. Divisional Leave Approval Queue */}
-      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
+      {/* 3. Entity Leave & Offboarding Review Queue */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
           <div>
-            <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-[#174EA6]" aria-hidden="true" />
-              <span>Pending Divisional Leave Queue ({pendingExecutiveQueue.length})</span>
+            <h2 className="text-sm font-black text-slate-900 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-amber-600" />
+              <span>Entity Leave &amp; Exit Review Queue ({pendingLeaveQueue.length + activeExitRequests.length})</span>
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Open leave requests within your supervised scope.
+            <p className="text-xs text-slate-600 mt-0.5">
+              Relevant leave and exit requests strictly within {currentUser.entityName}.
             </p>
           </div>
+          <button
+            type="button"
+            onClick={() => onNavigate('leave')}
+            className="text-xs font-bold text-[#083E34] hover:underline flex items-center gap-1 cursor-pointer"
+          >
+            <span>Open Leave Module</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </button>
         </div>
 
-        {pendingExecutiveQueue.length > 0 ? (
+        {pendingLeaveQueue.length > 0 ? (
           <div className="divide-y divide-slate-100">
-            {pendingExecutiveQueue.map((req) => (
-              <div
-                key={req.id}
-                className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/70 transition-colors"
-              >
+            {pendingLeaveQueue.map((req) => (
+              <div key={req.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/70 transition">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-semibold text-slate-900">{req.employeeName}</span>
+                    <span className="text-sm font-black text-slate-900">{req.employeeName}</span>
                     <span className="text-xs font-mono text-slate-500">({req.employeeStaffId})</span>
-                    <StatusPill status="pending" label={req.leaveType} size="sm" />
-                    <span className="text-xs font-medium text-slate-700 tabular-nums">
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                      {req.leaveType}
+                    </span>
+                    <span className="text-xs font-bold text-slate-700">
                       {req.departmentName} · {req.totalDays} days ({req.startDate} to {req.endDate})
                     </span>
                   </div>
                   <p className="text-xs text-slate-600">
-                    <strong className="font-semibold text-slate-800">Reason:</strong> {req.reason}
+                    <strong className="text-slate-800">Reason:</strong> {req.reason}
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
-                    disabled={processingId === req.id}
-                    onClick={() => handleExecutiveDecline(req)}
-                    className="px-3.5 py-2 rounded-xl border border-[#111827]/25 text-[#111827] hover:bg-[#F5F7FA] font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                    disabled={processingLeaveId === req.id}
+                    onClick={() => handleLeaveDecline(req)}
+                    className="px-3.5 py-2 rounded-xl border border-rose-200 text-rose-700 hover:bg-rose-50 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
                   >
-                    <X className="w-3.5 h-3.5" aria-hidden="true" />
+                    <X className="w-3.5 h-3.5" />
                     <span>Decline</span>
                   </button>
                   <button
                     type="button"
-                    disabled={processingId === req.id}
-                    onClick={() => handleExecutiveSignOff(req)}
-                    className="px-4 py-2 rounded-xl bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] font-semibold text-xs shadow-2xs flex items-center gap-1.5 transition cursor-pointer border border-[#C59B27] disabled:opacity-50"
+                    disabled={processingLeaveId === req.id}
+                    onClick={() => handleLeaveEndorse(req)}
+                    className="px-4 py-2 rounded-xl bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] font-black text-xs shadow-xs flex items-center gap-1.5 transition cursor-pointer border border-[#C59B27] disabled:opacity-50"
                   >
-                    <Check className="w-4 h-4 text-slate-950" aria-hidden="true" />
-                    <span>Approve &amp; Forward</span>
+                    <Check className="w-4 h-4 text-slate-950" />
+                    <span>Endorse Request</span>
                   </button>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="p-6 text-center space-y-1.5">
-            <CheckCircle2 className="w-6 h-6 text-[#174EA6] mx-auto" aria-hidden="true" />
-            <h3 className="text-xs font-semibold text-slate-900">All Divisional Approvals Up to Date</h3>
-            <p className="text-xs text-slate-500">
-              No pending leave requests require review in your division right now.
+          <div className="p-8 text-center space-y-2">
+            <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
+            <h3 className="text-sm font-bold text-slate-900">All Entity Requests Reviewed</h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              There are no open leave applications awaiting your review in {currentUser.entityName}.
             </p>
+          </div>
+        )}
+
+        {activeExitRequests.length > 0 && (
+          <div className="border-t border-slate-200 bg-amber-50/40 p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
+                <LogOut className="w-3.5 h-3.5 text-amber-700" />
+                <span>Entity Resignations / Exits in Progress ({activeExitRequests.length})</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => onNavigate('offboarding')}
+                className="text-xs font-bold text-[#083E34] hover:underline cursor-pointer"
+              >
+                Review Offboarding →
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {activeExitRequests.map((ex) => (
+                <div key={ex.id} className="p-3 bg-white rounded-xl border border-amber-200 text-xs flex items-center justify-between">
+                  <div>
+                    <span className="font-bold text-slate-900 block">{ex.employeeName} ({ex.staffId})</span>
+                    <span className="text-[11px] text-slate-500">Last Day: {ex.proposedLastDay} · {ex.status.replace(/_/g, ' ')}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
 
-      {/* 4. Department Headcount Breakdown from Live Data */}
-      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-5 sm:p-6">
+      {/* 4. Departmental Structures in Assigned Business Entity */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-[#174EA6]" aria-hidden="true" />
-              <span>Departments Breakdown</span>
+            <h2 className="text-sm font-black text-slate-900 flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-[#083E34]" />
+              <span>Departmental Structures ({entityDepartments.length})</span>
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Live headcount distribution across departments in your reporting line.
+            <p className="text-xs text-slate-600 mt-0.5">
+              Live departments, heads of department, and staff distribution within {currentUser.entityName}.
             </p>
           </div>
           <button
             type="button"
             onClick={() => onNavigate('directory')}
-            className="text-xs font-semibold text-[#174EA6] hover:underline flex items-center gap-1 cursor-pointer"
+            className="text-xs font-bold text-[#083E34] hover:text-amber-700 flex items-center gap-1 cursor-pointer"
           >
-            <span>View Workforce</span>
-            <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>Org Directory</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {departmentBreakdown.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-            {departmentBreakdown.map((dept) => (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-testid="business-head-departments-grid">
+          {entityDepartments.map((dept) => {
+            const deptStaff = entityEmployees.filter(
+              (e) =>
+                e.departmentId === dept.id ||
+                (e.departmentName || '').toLowerCase() === dept.name.toLowerCase()
+            );
+            return (
               <div
-                key={dept.name}
-                className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/50 space-y-2"
+                key={dept.id}
+                className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 transition space-y-2.5"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-semibold text-slate-900 text-xs truncate">{dept.name}</span>
-                  <StatusPill status="active" label="Active" size="sm" />
-                </div>
-                <div className="text-xs text-slate-600 tabular-nums flex items-center justify-between">
-                  <span>Staff Count</span>
-                  <span className="font-mono font-semibold text-slate-900">
-                    {dept.count} ({dept.active} active)
+                  <span className="font-bold text-slate-900 text-xs truncate">{dept.name}</span>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 shrink-0">
+                    {deptStaff.length} Staff
                   </span>
                 </div>
+                <div className="text-[11px] text-slate-600 space-y-1">
+                  <p>
+                    <strong>HOD:</strong> {dept.headOfDepartmentName || dept.headOfDepartment || 'Assigned to Entity Lead'}
+                  </p>
+                  <p>
+                    <strong>Code:</strong> <span className="font-mono">{dept.code}</span>
+                  </p>
+                </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-xs text-slate-500 py-3">No department staff records loaded for this scope.</p>
-        )}
+            );
+          })}
+        </div>
       </div>
+
+      {/* 5. Entity Employees & Permitted Change Requests for HR */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
+          <div>
+            <h2 className="text-sm font-black text-slate-900 flex items-center gap-2">
+              <Users className="w-4 h-4 text-[#083E34]" />
+              <span>Entity Employees ({filteredEntityEmployees.length})</span>
+            </h2>
+            <p className="text-xs text-slate-600 mt-0.5">
+              Inspect authorised staff dossiers or submit permitted updates for HR approval.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search entity staff..."
+                aria-label="Search entity employees"
+                className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-[#083E34]"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => onNavigate('employees')}
+              className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs font-semibold text-slate-700 cursor-pointer"
+            >
+              Full List
+            </button>
+          </div>
+        </div>
+
+        <div className="divide-y divide-slate-100">
+          {filteredEntityEmployees.slice(0, 8).map((emp) => (
+            <div
+              key={emp.id}
+              data-testid={`business-head-emp-row-${emp.staffId}`}
+              className="px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/70 transition text-xs"
+            >
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-semibold text-slate-900">{emp.fullName}</span>
+                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                    {emp.staffId}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    {emp.status}
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-500 block mt-0.5">
+                  {emp.jobTitle} · {emp.departmentName}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setSelectedEmployee(emp)}
+                  className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:border-[#083E34] text-slate-700 hover:text-[#083E34] font-semibold text-[11px] flex items-center gap-1 cursor-pointer"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>View Dossier</span>
+                </button>
+                <button
+                  type="button"
+                  data-testid={`propose-change-${emp.staffId}`}
+                  onClick={() => openChangeModalForEmployee(emp)}
+                  className="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-semibold text-[11px] flex items-center gap-1 cursor-pointer"
+                >
+                  <FileEdit className="w-3.5 h-3.5" />
+                  <span>Propose Change (HR)</span>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Employee Dossier Modal */}
+      <EmployeeProfileModal
+        employee={selectedEmployee}
+        onClose={() => setSelectedEmployee(null)}
+        onNavigateLeave={() => {
+          setSelectedEmployee(null);
+          onNavigate('leave');
+        }}
+      />
+
+      {/* Business Head Permitted Change Request Modal (routes to HR Approval) */}
+      {changeTargetEmp && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Submit Permitted Change for ${changeTargetEmp.fullName}`}
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4"
+        >
+          <div className="bg-white rounded-2xl max-w-md w-full border border-slate-200 shadow-xl overflow-hidden">
+            <div className="px-5 py-4 bg-[#083E34] text-white flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold">Submit Change Request for HR Approval</h3>
+                <p className="text-[11px] text-amber-200 mt-0.5">
+                  {changeTargetEmp.fullName} ({changeTargetEmp.staffId})
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Close change request modal"
+                onClick={() => setChangeTargetEmp(null)}
+                className="p-1 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitPermittedChangeForHr} className="p-5 space-y-3.5 text-xs">
+              <p className="text-[11px] text-slate-600 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+                Updates proposed by Business Heads enter the PCCM HR approval queue before updating authoritative personnel records.
+              </p>
+
+              <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600 flex items-center justify-between gap-2">
+                <span>Role: <strong className="text-slate-900">{changeTargetEmp.jobTitle}</strong></span>
+                <span className="text-slate-500">{changeTargetEmp.departmentName}</span>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Proposed Work Phone</label>
+                <input
+                  type="text"
+                  value={proposedPhone}
+                  onChange={(e) => setProposedPhone(e.target.value)}
+                  className="w-full p-2 rounded-lg border border-slate-200 focus:outline-none focus:border-[#083E34]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Proposed Corporate Email</label>
+                <input
+                  type="email"
+                  value={proposedEmail}
+                  onChange={(e) => setProposedEmail(e.target.value)}
+                  className="w-full p-2 rounded-lg border border-slate-200 focus:outline-none focus:border-[#083E34]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Proposed Office / Contact Address</label>
+                <input
+                  type="text"
+                  value={proposedAddress}
+                  onChange={(e) => setProposedAddress(e.target.value)}
+                  className="w-full p-2 rounded-lg border border-slate-200 focus:outline-none focus:border-[#083E34]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Justification for HR Review *</label>
+                <textarea
+                  rows={2}
+                  required
+                  value={changeReason}
+                  onChange={(e) => setChangeReason(e.target.value)}
+                  placeholder="Explain the operational reason for this update..."
+                  className="w-full p-2 rounded-lg border border-slate-200 focus:outline-none focus:border-[#083E34]"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setChangeTargetEmp(null)}
+                  className="px-3.5 py-2 rounded-lg border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingChange}
+                  data-testid="submit-business-head-change-btn"
+                  className="px-4 py-2 rounded-lg bg-[#083E34] text-white font-semibold hover:bg-[#062E27] flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>{isSubmittingChange ? 'Submitting...' : 'Submit for HR Approval'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

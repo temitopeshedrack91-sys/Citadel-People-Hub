@@ -2,8 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Clock,
   Fingerprint,
-  Cpu,
-  Radio,
   Building,
   Info,
   CheckCircle2,
@@ -20,7 +18,13 @@ import {
 import { Employee, Timesheet } from '../../types';
 import { attendanceRepository, employeeRepository, timesheetRepository } from '../../services';
 import { useAuth } from '../../context/AuthContext';
-import { normalizeRole } from '../../utils/rbac';
+import {
+  normalizeRole,
+  filterEmployeesForUser,
+  filterAttendanceForUser,
+  isHrOrAdminUser,
+  isManagerUser,
+} from '../../utils/rbac';
 import { Badge } from '../common/Badge';
 import { CitadelLogo } from '../brand/CitadelLogo';
 import { CITADEL_ATTENDANCE_SCHEDULES } from '../../data/mockData';
@@ -34,6 +38,7 @@ import {
   parseBiometricExport,
 } from '../../features/attendance-import';
 import { evaluateAttendancePunch } from '../../domain/workbook';
+import { classifyDailySummaryStatus } from '../../utils/hrisHelpers';
 
 const MONTH_LABELS = [
   'Jan',
@@ -72,7 +77,7 @@ function unmatchedReasonLabel(reason: UnmatchedDeviceRecord['reason']): string {
 }
 
 export const AttendanceView: React.FC = () => {
-  const { currentRole } = useAuth();
+  const { currentUser, currentRole } = useAuth();
   const [activeTab, setActiveTab] = useState<'daily_summary' | 'schedules' | 'timesheets'>('daily_summary');
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [timesheets, setTimesheets] = useState<Timesheet[]>([]);
@@ -112,8 +117,9 @@ export const AttendanceView: React.FC = () => {
     [evalUnit, evalClockIn, evalClockOut, evalSource, evalEventDay, evalEventStart, evalEventEnd]
   );
 
-  const canonicalRole = normalizeRole(currentRole);
-  const canImport = canonicalRole === 'ADMIN' || canonicalRole === 'HR_STAFF';
+  const isHrOrAdmin = isHrOrAdminUser(currentUser);
+  const canImport = isHrOrAdmin;
+  const canApproveTimesheets = isHrOrAdmin || isManagerUser(currentUser);
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -125,45 +131,100 @@ export const AttendanceView: React.FC = () => {
 
     const loadAttendance = async () => {
       try {
-        const staff = await employeeRepository.getAll();
+        const allStaff = await employeeRepository.getAll();
         if (cancelled) return;
-        setEmployees(staff);
+        const isEmployeeSelfOnly = normalizeRole(currentRole) === 'EMPLOYEE';
+        const scopedStaff = isHrOrAdmin
+          ? allStaff
+          : isEmployeeSelfOnly
+          ? allStaff.filter(
+              (e) =>
+                String(e.id) === String(currentUser.employeeId || currentUser.id) ||
+                (currentUser.staffId && e.staffId === currentUser.staffId)
+            )
+          : filterEmployeesForUser(currentUser, allStaff);
+        setEmployees(scopedStaff);
+
+        const visibleEmpIds = new Set(scopedStaff.map((e) => String(e.id)));
+        const visibleStaffIds = new Set(
+          scopedStaff.map((e) => e.staffId?.toLowerCase()).filter(Boolean)
+        );
 
         try {
           const tsList = await timesheetRepository.getTimesheets();
-          if (!cancelled) setTimesheets(tsList);
+          if (!cancelled) {
+            setTimesheets(
+              isHrOrAdmin
+                ? tsList
+                : tsList.filter(
+                    (ts) =>
+                      visibleEmpIds.has(String(ts.employeeId)) ||
+                      (ts.employeeStaffId &&
+                        visibleStaffIds.has(ts.employeeStaffId.toLowerCase()))
+                  )
+            );
+          }
         } catch {
           // Non-critical if timesheets empty
         }
-        if (staff.length === 0) {
-          setImportError('No employee records were returned. Attendance punches cannot be reconciled.');
+        if (scopedStaff.length === 0) {
+          setSummaries([]);
           return;
         }
 
         if (import.meta.env.PROD) {
-          if (!canImport) {
-            setImportError('Biometric import summaries are available to authorized People & Culture users.');
-            return;
+          if (attendanceRepository.getBiometricPunchSnapshot) {
+            try {
+              const snapshot = await attendanceRepository.getBiometricPunchSnapshot(scopedStaff);
+              if (cancelled) return;
+              setSummaries(snapshot.summaries);
+              setUnmatched(canImport ? snapshot.unmatchedDeviceIds : []);
+              setStoredPunchCount(snapshot.punchCount);
+              setLastImportedAt(snapshot.lastImportedAt || null);
+              setLastFileName(snapshot.lastFileName || null);
+              return;
+            } catch {
+              // Fall back to recent attendance logs scoped to user if full biometric snapshot is HR-only
+            }
           }
-          if (!attendanceRepository.getBiometricPunchSnapshot) {
-            throw new Error('The authenticated API does not provide biometric attendance history.');
-          }
-          const snapshot = await attendanceRepository.getBiometricPunchSnapshot(staff);
+          const recentLogs = await attendanceRepository.getRecentLogs(60).catch(() => []);
           if (cancelled) return;
-          setSummaries(snapshot.summaries);
-          setUnmatched(snapshot.unmatchedDeviceIds);
-          setStoredPunchCount(snapshot.punchCount);
-          setLastImportedAt(snapshot.lastImportedAt || null);
-          setLastFileName(snapshot.lastFileName || null);
+          const scopedLogs = filterAttendanceForUser(currentUser, recentLogs);
+          setSummaries(
+            scopedLogs.map((log) => {
+              const empMatch = scopedStaff.find(
+                (e) =>
+                  String(e.id) === String(log.employeeId) ||
+                  (e.staffId && log.employeeStaffId && e.staffId === log.employeeStaffId)
+              );
+              const clockIn = log.clockInTime || '—';
+              const clockOut = log.clockOutTime || clockIn;
+              return {
+                id: String(log.id),
+                employeeId: String(log.employeeId),
+                employeeStaffId: log.employeeStaffId || empMatch?.staffId || '',
+                employeeName: log.employeeName || empMatch?.fullName || 'Staff Member',
+                entityName: log.entityName || empMatch?.entityName || '',
+                departmentName: log.departmentName || empMatch?.departmentName || '',
+                date: log.date,
+                clockInTime: clockIn,
+                clockOutTime: clockOut,
+                firstPunchAt: `${log.date}T${clockIn}`,
+                lastPunchAt: `${log.date}T${clockOut}`,
+                punchCount: log.clockOutTime && log.clockOutTime !== log.clockInTime ? 2 : 1,
+                punchDirections: { in: 1, out: log.clockOutTime ? 1 : 0, unknown: 0 },
+                punches: [],
+              };
+            })
+          );
           return;
         }
 
-        const validStaff = staff;
-        const snapshot = attendanceImportService.getSnapshot(validStaff);
+        const snapshot = attendanceImportService.getSnapshot(scopedStaff);
         if (cancelled) return;
 
         setSummaries(snapshot.summaries);
-        setUnmatched(snapshot.unmatchedDeviceIds);
+        setUnmatched(canImport ? snapshot.unmatchedDeviceIds : []);
         setStoredPunchCount(snapshot.punchCount);
         setLastImportedAt(snapshot.lastImportedAt || null);
         setLastFileName(snapshot.lastFileName || null);
@@ -180,7 +241,7 @@ export const AttendanceView: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [currentUser?.id, currentUser?.employeeId, currentUser?.staffId, currentUser?.role, currentUser?.entityId, currentUser?.departmentName, isHrOrAdmin, canImport, currentRole]);
 
   const handleImportFile = async (file: File) => {
     if (!canImport || isImporting) return;
@@ -309,7 +370,7 @@ export const AttendanceView: React.FC = () => {
 
       <div>
         <h1 className="text-lg sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-          <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-[#174EA6] shrink-0" />
+          <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-[#083E34] shrink-0" />
           <span>Attendance &amp; Biometric Imports</span>
         </h1>
         <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -366,8 +427,8 @@ export const AttendanceView: React.FC = () => {
       {activeTab === 'daily_summary' ? (
         <div className="space-y-5">
           {/* Biometric Import Panel */}
-          <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
-            <div className="p-5 bg-[#174EA6] text-white">
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] overflow-hidden">
+            <div className="p-5 bg-gradient-to-r from-[#083E34] via-[#062C25] to-[#0F5447] text-white">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
@@ -377,7 +438,7 @@ export const AttendanceView: React.FC = () => {
                     <h2 className="text-sm font-bold tracking-tight text-white">
                       Biometric Attendance Import
                     </h2>
-                    <p className="text-[11px] text-blue-100 font-medium mt-0.5 max-w-2xl">
+                    <p className="text-[11px] text-emerald-100/90 font-medium mt-0.5 max-w-2xl">
                       Upload the export from the biometric device software. A single upload
                       refreshes the whole daily summary and never duplicates an overlapping
                       record.
@@ -404,8 +465,8 @@ export const AttendanceView: React.FC = () => {
                   onClick={() => fileInputRef.current?.click()}
                   className={`rounded-xl border-2 border-dashed p-6 text-center transition cursor-pointer ${
                     isDragOver
-                      ? 'border-[#D4AF37] bg-[#FAF5EB] scale-[1.01]'
-                      : 'border-slate-300 bg-slate-50/70 hover:border-[#D4AF37] hover:bg-[#FAF5EB]'
+                      ? 'border-[#D4AF37] bg-amber-50/80 scale-[1.01]'
+                      : 'border-slate-300 bg-slate-50/70 hover:border-[#D4AF37] hover:bg-amber-50/30'
                   }`}
                 >
                   <input
@@ -416,7 +477,7 @@ export const AttendanceView: React.FC = () => {
                     data-testid="attendance-import-input"
                     onChange={handleFileInputChange}
                   />
-                  <FileSpreadsheet className="w-8 h-8 mx-auto text-[#174EA6]" />
+                  <FileSpreadsheet className="w-8 h-8 mx-auto text-[#083E34]" />
                   <p className="text-xs font-black text-slate-900 mt-2.5">
                     Drop the biometric export here or click to browse
                   </p>
@@ -448,7 +509,7 @@ export const AttendanceView: React.FC = () => {
                       className="px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 font-bold text-xs transition inline-flex items-center gap-2 shadow-2xs active:scale-[0.98] cursor-pointer"
                       title="Load built-in ZKTeco biometric punches for demonstration"
                     >
-                      <Fingerprint className="w-4 h-4 text-[#174EA6]" />
+                      <Fingerprint className="w-4 h-4 text-[#083E34]" />
                       <span>Load Sample Biometric Data</span>
                     </button>}
 
@@ -466,7 +527,7 @@ export const AttendanceView: React.FC = () => {
                       <button
                         type="button"
                         onClick={handleClearData}
-                        className="px-3 py-2.5 rounded-xl text-[#111827] hover:text-[#111827] hover:bg-[#F5F7FA] border border-transparent font-semibold text-xs transition inline-flex items-center gap-1.5 cursor-pointer"
+                        className="px-3 py-2.5 rounded-xl text-rose-600 hover:text-rose-800 hover:bg-rose-50 border border-transparent font-semibold text-xs transition inline-flex items-center gap-1.5 cursor-pointer"
                         title="Clear stored punches to test an empty import"
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
@@ -495,7 +556,7 @@ export const AttendanceView: React.FC = () => {
               </div>
 
               {importError && (
-                <div className="p-3 rounded-xl border border-[#111827]/25 bg-[#F5F7FA] text-[#111827] text-xs font-semibold flex items-center gap-2">
+                <div className="p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-xs font-semibold flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{importError}</span>
                 </div>
@@ -515,14 +576,14 @@ export const AttendanceView: React.FC = () => {
                         {importResult.totalRecords}
                       </p>
                     </div>
-                    <div className="rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] p-3">
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-[#174EA6]">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700">
                           Matched
                         </span>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#174EA6]" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                       </div>
-                      <p className="text-lg font-black text-[#174EA6] mt-1">
+                      <p className="text-lg font-black text-emerald-800 mt-1">
                         {importResult.matchedRecords}
                       </p>
                     </div>
@@ -540,7 +601,7 @@ export const AttendanceView: React.FC = () => {
                     <div
                       className={`rounded-xl border p-3 ${
                         importResult.unmatchedDeviceIds.length > 0
-                          ? 'border-[#E9D59A] bg-[#FAF5EB]'
+                          ? 'border-amber-300 bg-amber-50/70'
                           : 'border-slate-200 bg-white'
                       }`}
                     >
@@ -551,7 +612,7 @@ export const AttendanceView: React.FC = () => {
                         <AlertTriangle
                           className={`w-3.5 h-3.5 ${
                             importResult.unmatchedDeviceIds.length > 0
-                              ? 'text-[#B88A24]'
+                              ? 'text-amber-600'
                               : 'text-slate-400'
                           }`}
                         />
@@ -563,7 +624,7 @@ export const AttendanceView: React.FC = () => {
                   </div>
 
                   {importResult.skippedRows.length > 0 && (
-                    <div className="p-3 rounded-xl border border-[#E9D59A] bg-[#FAF5EB] text-[#B88A24] text-xs">
+                    <div className="p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 text-xs">
                       <div className="flex items-center gap-2 font-bold">
                         <AlertTriangle className="w-4 h-4 shrink-0" />
                         <span>
@@ -601,7 +662,7 @@ export const AttendanceView: React.FC = () => {
             <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
               <div>
                 <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                  <CalendarDays className="w-4 h-4 text-[#174EA6]" />
+                  <CalendarDays className="w-4 h-4 text-[#083E34]" />
                   <span>Daily Attendance Summary</span>
                 </h3>
                 <p className="text-[11px] text-slate-500 font-medium mt-0.5">
@@ -666,7 +727,7 @@ export const AttendanceView: React.FC = () => {
                         <td className="py-3 px-4 font-semibold text-slate-800 whitespace-nowrap">
                           {formatDateLabel(summary.date)}
                         </td>
-                        <td className="py-3 px-4 font-mono font-semibold text-[#174EA6] whitespace-nowrap">
+                        <td className="py-3 px-4 font-mono font-semibold text-emerald-700 whitespace-nowrap">
                           {summary.clockInTime}
                         </td>
                         <td className="py-3 px-4 font-mono font-semibold text-slate-800 whitespace-nowrap">
@@ -678,19 +739,25 @@ export const AttendanceView: React.FC = () => {
                           </Badge>
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
-                          {summary.punchCount === 1 ? (
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                              Single Punch
-                            </span>
-                          ) : summary.clockInTime <= '08:10:00' ? (
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#EFF6FF] text-[#174EA6] border border-[#BFDBFE]">
-                              On Time
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#FAF5EB] text-[#B88A24] border border-[#E9D59A]">
-                              Late Arrival
-                            </span>
-                          )}
+                          {(() => {
+                            const statusMeta = classifyDailySummaryStatus(summary);
+                            const badgeClasses =
+                              statusMeta.badgeTone === 'emerald'
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                : statusMeta.badgeTone === 'amber'
+                                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                : statusMeta.badgeTone === 'rose'
+                                ? 'bg-rose-50 text-rose-800 border-rose-200'
+                                : 'bg-slate-100 text-slate-700 border-slate-200';
+                            return (
+                              <span
+                                className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${badgeClasses}`}
+                                title={`Shift ${statusMeta.evaluation.effectiveShiftStart}–${statusMeta.evaluation.effectiveShiftEnd} (Grace cutoff ${statusMeta.evaluation.graceCutoffTime})`}
+                              >
+                                {statusMeta.label}
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="py-3 px-4">
                           <p className="text-slate-800 font-semibold">{summary.entityName || '—'}</p>
@@ -706,27 +773,27 @@ export const AttendanceView: React.FC = () => {
             )}
           </div>
 
-          {/* Unmatched Device IDs */}
-          {unmatched.length > 0 && (
-            <div className="bg-white rounded-2xl border border-[#E9D59A] shadow-[0_2px_10px_rgba(15,23,42,0.03)] overflow-hidden">
-              <div className="p-4 border-b border-[#E9D59A] bg-[#FAF5EB] flex items-center justify-between gap-3">
+          {/* Unmatched Device IDs (HR / Admin Only) */}
+          {canImport && unmatched.length > 0 && (
+            <div className="bg-white rounded-2xl border border-amber-200 shadow-[0_2px_10px_rgba(15,23,42,0.03)] overflow-hidden">
+              <div className="p-4 border-b border-amber-100 bg-amber-50/70 flex items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-xs font-black text-[#B88A24] uppercase tracking-wider flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 text-[#B88A24]" />
+                  <h3 className="text-xs font-black text-amber-950 uppercase tracking-wider flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-700" />
                     <span>Flagged Device IDs</span>
                   </h3>
-                  <p className="text-[11px] text-[#B88A24]/80 font-medium mt-0.5">
+                  <p className="text-[11px] text-amber-900/80 font-medium mt-0.5">
                     These punches were kept but not counted in the daily summary until a
                     staff record is mapped.
                   </p>
                 </div>
-                <span className="text-[11px] font-black px-2.5 py-1 rounded-lg bg-amber-200 text-[#B88A24] border border-[#E9D59A]">
+                <span className="text-[11px] font-black px-2.5 py-1 rounded-lg bg-amber-200 text-amber-950 border border-amber-300">
                   {unmatched.length} ID{unmatched.length === 1 ? '' : 's'}
                 </span>
               </div>
               <div className="overflow-x-auto custom-scrollbar">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-[#FAF5EB] border-b border-[#E9D59A] text-[#B88A24] font-black uppercase tracking-wider text-[11px]">
+                  <thead className="bg-amber-50/40 border-b border-amber-100 text-amber-900 font-black uppercase tracking-wider text-[11px]">
                     <tr>
                       <th className="py-3 px-4 whitespace-nowrap">Device ID</th>
                       <th className="py-3 px-4 whitespace-nowrap">Reason</th>
@@ -738,11 +805,11 @@ export const AttendanceView: React.FC = () => {
                   </thead>
                   <tbody className="divide-y divide-amber-100/70">
                     {unmatched.map((record) => (
-                      <tr key={`${record.deviceId}-${record.reason}`} className="hover:bg-[#FAF5EB] transition">
-                        <td className="py-3 px-4 font-mono font-black text-[#B88A24] whitespace-nowrap">
+                      <tr key={`${record.deviceId}-${record.reason}`} className="hover:bg-amber-50/40 transition">
+                        <td className="py-3 px-4 font-mono font-black text-amber-950 whitespace-nowrap">
                           {record.deviceId || '(blank)'}
                         </td>
-                        <td className="py-3 px-4 font-semibold text-[#B88A24] whitespace-nowrap">
+                        <td className="py-3 px-4 font-semibold text-amber-900 whitespace-nowrap">
                           {unmatchedReasonLabel(record.reason)}
                         </td>
                         <td className="py-3 px-4 font-bold text-slate-800 whitespace-nowrap">
@@ -766,64 +833,19 @@ export const AttendanceView: React.FC = () => {
               </div>
             </div>
           )}
-
-          {/* Hardware Device Health Monitor */}
-          <div className="bg-slate-900 text-white rounded-xl p-4 border border-slate-800">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <Cpu className="w-4 h-4 text-[#D4AF37]" />
-                <h4 className="text-xs font-bold text-slate-100">
-                  Citadel Biometric Hardware Nodes (ZKTeco Live Status)
-                </h4>
-              </div>
-              <div className="flex items-center gap-1.5 text-[10px] text-blue-100">
-                <Radio className="w-3 h-3" />
-                <span>Telemetry Configured</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3 text-xs">
-              <div className="p-2.5 rounded-lg bg-slate-800/80 border border-slate-700">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-200">CGCC Main Gate / Reception</span>
-                  <span className="w-2 h-2 rounded-full bg-[#174EA6]"></span>
-                </div>
-                <p className="text-[10px] text-slate-400 font-mono mt-0.5">DEV-ZK-01 • IP: 192.168.10.24</p>
-                <p className="text-[10px] text-slate-400 mt-1">Status: Online • Sync: 12 sec ago</p>
-              </div>
-
-              <div className="p-2.5 rounded-lg bg-slate-800/80 border border-slate-700">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-200">School of Government (CSOG)</span>
-                  <span className="w-2 h-2 rounded-full bg-[#174EA6]"></span>
-                </div>
-                <p className="text-[10px] text-slate-400 font-mono mt-0.5">DEV-ZK-02 • IP: 192.168.20.18</p>
-                <p className="text-[10px] text-slate-400 mt-1">Status: Online • Sync: 45 sec ago</p>
-              </div>
-
-              <div className="p-2.5 rounded-lg bg-slate-800/80 border border-slate-700">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-200">Citadel Holdings Reception</span>
-                  <span className="w-2 h-2 rounded-full bg-[#174EA6]"></span>
-                </div>
-                <p className="text-[10px] text-slate-400 font-mono mt-0.5">DEV-ZK-03 • IP: 192.168.30.12</p>
-                <p className="text-[10px] text-slate-400 mt-1">Status: Online • Sync: 1 min ago</p>
-              </div>
-            </div>
-          </div>
         </div>
       ) : activeTab === 'schedules' ? (
         /* Sheet 7: Shift Schedules & Grace Period Policies */
         <div className="space-y-4">
           {/* Institutional Grace Period Highlight Card */}
-          <div className="p-4 bg-[#FAF5EB] border border-[#E9D59A] rounded-xl flex items-start gap-3">
-            <Info className="w-5 h-5 text-[#B88A24] shrink-0 mt-0.5" />
+          <div className="p-4 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-3">
+            <Info className="w-5 h-5 text-amber-800 shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-xs font-black text-[#B88A24] uppercase tracking-wider">
+              <h3 className="text-xs font-black text-amber-950 uppercase tracking-wider">
                 Citadel 10-Minute Punctuality Grace Period Policy (Sheet 7 Mandate)
               </h3>
-              <p className="text-xs text-[#B88A24] mt-0.5 leading-relaxed font-medium">
-                All entities operate with an institutional <span className="font-black text-[#B88A24]">10-minute grace period</span>. Employees clocking in after the threshold (e.g. 9:10 AM for regular shifts or 7:10 AM for Facilities) are flagged as <span className="font-bold text-[#B88A24]">Late</span>. Biometric verification via ZKTeco SilkBio readers is mandatory upon entry and exit across all entities.
+              <p className="text-xs text-amber-900 mt-0.5 leading-relaxed font-medium">
+                All entities operate with an institutional <span className="font-black text-amber-950">10-minute grace period</span>. Employees clocking in after the threshold (e.g. 9:10 AM for regular shifts or 7:10 AM for Facilities) are flagged as <span className="font-bold text-amber-950">Late</span>. Biometric verification via ZKTeco SilkBio readers is mandatory upon entry and exit across all entities.
               </p>
             </div>
           </div>
@@ -837,7 +859,7 @@ export const AttendanceView: React.FC = () => {
                 </h3>
                 <p className="text-[11px] text-slate-600">Standard operating shifts, early shifts, and special schedules from Workbook Sheet 7</p>
               </div>
-              <span className="text-xs font-bold px-2.5 py-1 bg-[#174EA6] text-[#D4AF37] border border-[#D4AF37]/30 rounded-lg">
+              <span className="text-xs font-bold px-2.5 py-1 bg-[#083E34] text-[#D4AF37] border border-[#D4AF37]/30 rounded-lg">
                 5 Active Schedules
               </span>
             </div>
@@ -845,7 +867,7 @@ export const AttendanceView: React.FC = () => {
             {/* Desktop: horizontal table */}
             <div className="hidden lg:block overflow-x-auto custom-scrollbar">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[#174EA6] text-white uppercase tracking-wider text-xs font-bold">
+                <thead className="bg-[#083E34] text-white uppercase tracking-wider text-xs font-bold">
                   <tr>
                     <th className="py-3.5 px-4 whitespace-nowrap">Entity / Operational Unit</th>
                     <th className="py-3.5 px-4 whitespace-nowrap">Shift Timings</th>
@@ -861,7 +883,7 @@ export const AttendanceView: React.FC = () => {
                     <tr key={sched.id} className="hover:bg-slate-50 transition">
                       <td className="py-3.5 px-4 font-black text-black">
                         <div className="flex items-center gap-2">
-                          <Building className="w-4 h-4 text-[#174EA6]" />
+                          <Building className="w-4 h-4 text-[#083E34]" />
                           <span>{sched.entityOrUnit}</span>
                         </div>
                         <span className="text-[10px] text-slate-500 font-semibold block ml-6">
@@ -871,13 +893,13 @@ export const AttendanceView: React.FC = () => {
                       <td className="py-3.5 px-4">
                         <span className={`font-black px-2 py-0.5 rounded text-xs ${
                           sched.shiftStart === '7:00 AM'
-                            ? 'bg-[#FAF5EB] text-[#B88A24] border border-[#E9D59A]'
+                            ? 'bg-amber-100 text-amber-900 border border-amber-300'
                             : 'bg-slate-100 text-black'
                         }`}>
                           {sched.shiftStart} – {sched.shiftEnd}
                         </span>
                         {sched.shiftStart === '7:00 AM' && (
-                          <span className="text-[10px] text-[#B88A24] font-bold block mt-0.5">
+                          <span className="text-[10px] text-amber-800 font-bold block mt-0.5">
                             Early Operational Shift
                           </span>
                         )}
@@ -886,7 +908,7 @@ export const AttendanceView: React.FC = () => {
                         {sched.hoursPerDay} Hours
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className="inline-flex items-center gap-1 text-xs font-bold text-[#174EA6] bg-[#DBEAFE] px-2 py-0.5 rounded border border-[#BFDBFE]">
+                        <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300">
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           <span>YES (Mandatory)</span>
                         </span>
@@ -895,7 +917,7 @@ export const AttendanceView: React.FC = () => {
                         {sched.gracePeriodMinutes} Minutes
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className="font-mono font-black text-[#111827] bg-[#F5F7FA] px-2 py-0.5 rounded border border-[#111827]/25">
+                        <span className="font-mono font-black text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
                           After {sched.lateThreshold}
                         </span>
                       </td>
@@ -913,7 +935,7 @@ export const AttendanceView: React.FC = () => {
               {CITADEL_ATTENDANCE_SCHEDULES.map((sched) => (
                 <div key={sched.id} className="p-3 space-y-2 hover:bg-slate-50/60 rounded-lg transition border border-transparent hover:border-slate-200">
                   <div className="flex items-center gap-2 text-xs font-black text-black">
-                    <Building className="w-3.5 h-3.5 text-[#174EA6]" />
+                    <Building className="w-3.5 h-3.5 text-[#083E34]" />
                     <span>{sched.entityOrUnit}</span>
                   </div>
                   <div className="text-[10px] text-slate-500 font-semibold">
@@ -926,13 +948,13 @@ export const AttendanceView: React.FC = () => {
                       </span>
                       <span className={`font-black block ${
                         sched.shiftStart === '7:00 AM'
-                          ? 'text-[#B88A24]'
+                          ? 'text-amber-900'
                           : 'text-black'
                       }`}>
                         {sched.shiftStart} – {sched.shiftEnd}
                       </span>
                       {sched.shiftStart === '7:00 AM' && (
-                        <span className="text-[10px] text-[#B88A24] font-bold mt-0.5">
+                        <span className="text-[10px] text-amber-800 font-bold mt-0.5">
                           Early Operational Shift
                         </span>
                       )}
@@ -949,7 +971,7 @@ export const AttendanceView: React.FC = () => {
                       <span className="block text-[10px] text-slate-500 font-semibold">
                         Biometric Capture
                       </span>
-                      <span className="inline-flex items-center gap-1 font-black text-[#174EA6]">
+                      <span className="inline-flex items-center gap-1 font-black text-emerald-800">
                         <CheckCircle2 className="w-3 h-3" />
                         <span>YES (Mandatory)</span>
                       </span>
@@ -966,7 +988,7 @@ export const AttendanceView: React.FC = () => {
                       <span className="block text-[10px] text-slate-500 font-semibold">
                         Late Threshold
                       </span>
-                      <span className="font-mono font-black text-[#111827] block">
+                      <span className="font-mono font-black text-rose-700 block">
                         After {sched.lateThreshold}
                       </span>
                     </div>
@@ -1046,8 +1068,8 @@ export const AttendanceView: React.FC = () => {
               </div>
 
               {evalUnit === 'Citadel School of Government' && (
-                <div className="flex flex-wrap items-center gap-4 p-3 rounded-xl bg-[#FAF5EB] border border-[#E9D59A] text-xs">
-                  <label className="inline-flex items-center gap-2 font-semibold text-[#B88A24] cursor-pointer">
+                <div className="flex flex-wrap items-center gap-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs">
+                  <label className="inline-flex items-center gap-2 font-semibold text-amber-950 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={evalEventDay}
@@ -1062,14 +1084,14 @@ export const AttendanceView: React.FC = () => {
                         type="time"
                         value={evalEventStart}
                         onChange={(e) => setEvalEventStart(e.target.value)}
-                        className="px-2 py-1 rounded border border-[#E9D59A] bg-white font-mono"
+                        className="px-2 py-1 rounded border border-amber-300 bg-white font-mono"
                       />
                       <span>to</span>
                       <input
                         type="time"
                         value={evalEventEnd}
                         onChange={(e) => setEvalEventEnd(e.target.value)}
-                        className="px-2 py-1 rounded border border-[#E9D59A] bg-white font-mono"
+                        className="px-2 py-1 rounded border border-amber-300 bg-white font-mono"
                       />
                     </div>
                   )}
@@ -1086,10 +1108,10 @@ export const AttendanceView: React.FC = () => {
                     <span
                       className={`font-bold text-sm ${
                         shiftEvaluation.status === 'Present'
-                          ? 'text-[#174EA6]'
+                          ? 'text-emerald-700'
                           : shiftEvaluation.status === 'Late'
-                            ? 'text-[#111827]'
-                            : 'text-[#B88A24]'
+                            ? 'text-rose-700'
+                            : 'text-amber-700'
                       }`}
                     >
                       {shiftEvaluation.status}
@@ -1115,8 +1137,8 @@ export const AttendanceView: React.FC = () => {
                 <span
                   className={`px-2.5 py-1 rounded-lg font-semibold ${
                     shiftEvaluation.biometricCompliant
-                      ? 'bg-[#DBEAFE] text-[#174EA6]'
-                      : 'bg-[#E5E7EB] text-[#111827]'
+                      ? 'bg-emerald-100 text-emerald-900'
+                      : 'bg-rose-100 text-rose-800'
                   }`}
                 >
                   {shiftEvaluation.biometricCompliant ? 'Biometric Verified' : 'Biometric Policy Warning'}
@@ -1170,7 +1192,7 @@ export const AttendanceView: React.FC = () => {
                       <Badge variant={ts.status === 'APPROVED' ? 'success' : ts.status === 'SUBMITTED' ? 'info' : ts.status === 'REJECTED' ? 'danger' : 'warning'}>
                         {ts.status}
                       </Badge>
-                      {canImport && ts.status === 'SUBMITTED' && (
+                      {canApproveTimesheets && ts.status === 'SUBMITTED' && (
                         <div className="flex items-center gap-1.5 ml-2">
                           <button
                             onClick={async () => {
@@ -1183,7 +1205,7 @@ export const AttendanceView: React.FC = () => {
                                 showToast(e.message || 'Approval failed');
                               }
                             }}
-                            className="px-2.5 py-1 text-xs font-bold rounded-lg bg-[#174EA6] hover:bg-[#174EA6] text-white transition cursor-pointer"
+                            className="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition cursor-pointer"
                           >
                             Approve
                           </button>
@@ -1198,7 +1220,7 @@ export const AttendanceView: React.FC = () => {
                                 showToast(e.message || 'Rejection failed');
                               }
                             }}
-                            className="px-2.5 py-1 text-xs font-bold rounded-lg bg-[#F5F7FA] hover:bg-[#E5E7EB] text-[#111827] border border-[#111827]/25 transition cursor-pointer"
+                            className="px-2.5 py-1 text-xs font-bold rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition cursor-pointer"
                           >
                             Reject
                           </button>

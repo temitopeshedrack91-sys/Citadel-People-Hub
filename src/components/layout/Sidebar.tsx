@@ -34,7 +34,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import { leaveRepository } from '../../services';
 import { CitadelLogo } from '../brand/CitadelLogo';
-import { canAccessModule, canPerformAction, isHrOrAdminUser, isManagerUser } from '../../utils/rbac';
+import { canAccessModule, canPerformAction, filterLeaveRequestsForUser, isBusinessHeadUser, isHrOrAdminUser, isManagerUser } from '../../utils/rbac';
 
 export type NavModule =
   | 'dashboard'
@@ -92,14 +92,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (import.meta.env.MODE === 'test') return;
     try {
       const list = await leaveRepository.getAll();
+      const scopedList = filterLeaveRequestsForUser(currentUser, list);
       const actorId = String(currentUser.employeeId || currentUser.id || '');
       const isHr = isHrOrAdminUser(currentUser);
+      const isBizHead = isBusinessHeadUser(currentUser);
       const isMgr = isManagerUser(currentUser);
-      const actionable = list.filter((req) => {
+      const actionable = scopedList.filter((req) => {
         const isOpen = req.status === 'Submitted' || req.status === 'Pending Review';
         if (!isOpen) return false;
         const stage = req.approvalStage || (req.status === 'Pending Review' ? 'HR' : 'MANAGER');
         if (isHr) return stage === 'HR' || req.status === 'Pending Review';
+        if (isBizHead) {
+          return Boolean(actorId) && String(req.employeeId) !== actorId;
+        }
         if (isMgr) {
           return (
             (stage === 'MANAGER' || stage === 'LINE_MANAGER') &&

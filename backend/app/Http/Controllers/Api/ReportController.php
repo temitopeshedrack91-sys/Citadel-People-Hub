@@ -30,32 +30,33 @@ class ReportController extends Controller
      */
     public function workforce(Request $request): JsonResponse
     {
-        $this->authorizeAdminOrHr($request);
+        $user = $this->authorizeReportsAccess($request);
+        $empQuery = $this->scopedEmployeesQuery($user);
 
-        $totalActive = Employee::query()->where('status', 'Active')->count();
-        $totalEmployees = Employee::query()->count();
+        $totalActive = (clone $empQuery)->where('status', 'Active')->count();
+        $totalEmployees = (clone $empQuery)->count();
 
         // Entity breakdown
-        $byEntity = Employee::query()
+        $byEntity = (clone $empQuery)
             ->select('entity_id', DB::raw('count(*) as count'))
             ->groupBy('entity_id')
             ->pluck('count', 'entity_id');
 
         // Department breakdown
-        $byDepartment = Employee::query()
+        $byDepartment = (clone $empQuery)
             ->join('departments', 'employees.department_id', '=', 'departments.id')
             ->select('departments.name as department_name', DB::raw('count(*) as count'))
             ->groupBy('departments.name')
             ->pluck('count', 'department_name');
 
         // Gender breakdown
-        $byGender = Employee::query()
+        $byGender = (clone $empQuery)
             ->select('gender', DB::raw('count(*) as count'))
             ->groupBy('gender')
             ->pluck('count', 'gender');
 
         // Employment type breakdown
-        $byEmploymentType = Employee::query()
+        $byEmploymentType = (clone $empQuery)
             ->select('employment_type', DB::raw('count(*) as count'))
             ->groupBy('employment_type')
             ->pluck('count', 'employment_type');
@@ -79,13 +80,16 @@ class ReportController extends Controller
      */
     public function leaveUtilization(Request $request): JsonResponse
     {
-        $this->authorizeAdminOrHr($request);
-
+        $user = $this->authorizeReportsAccess($request);
         $year = (int) $request->input('year', date('Y'));
+        $scopedIds = $this->scopedEmployeeIds($user);
 
         // Totals across leave balances
-        $balanceSummary = EmployeeLeaveBalance::query()
-            ->where('year', $year)
+        $balanceQuery = EmployeeLeaveBalance::query()->where('year', $year);
+        if ($scopedIds !== null) {
+            $balanceQuery->whereIn('employee_id', $scopedIds);
+        }
+        $balanceSummary = $balanceQuery
             ->select(
                 DB::raw('SUM(total_days) as total_entitled'),
                 DB::raw('SUM(used_days) as total_used'),
@@ -95,9 +99,13 @@ class ReportController extends Controller
             ->first();
 
         // Breakdown by category
-        $byCategory = EmployeeLeaveBalance::query()
+        $byCategoryQuery = EmployeeLeaveBalance::query()
             ->join('leave_categories', 'employee_leave_balances.leave_category_id', '=', 'leave_categories.id')
-            ->where('employee_leave_balances.year', $year)
+            ->where('employee_leave_balances.year', $year);
+        if ($scopedIds !== null) {
+            $byCategoryQuery->whereIn('employee_leave_balances.employee_id', $scopedIds);
+        }
+        $byCategory = $byCategoryQuery
             ->select(
                 'leave_categories.name as category_name',
                 DB::raw('SUM(employee_leave_balances.total_days) as entitled'),
@@ -109,8 +117,11 @@ class ReportController extends Controller
             ->get();
 
         // Leave requests status count for year
-        $requestsByStatus = LeaveRequest::query()
-            ->whereYear('start_date', $year)
+        $leaveReqQuery = LeaveRequest::query()->whereYear('start_date', $year);
+        if ($scopedIds !== null) {
+            $leaveReqQuery->whereIn('employee_id', $scopedIds);
+        }
+        $requestsByStatus = $leaveReqQuery
             ->select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
             ->pluck('count', 'status');
@@ -137,9 +148,13 @@ class ReportController extends Controller
      */
     public function attendanceSummary(Request $request): JsonResponse
     {
-        $this->authorizeAdminOrHr($request);
+        $user = $this->authorizeReportsAccess($request);
+        $scopedIds = $this->scopedEmployeeIds($user);
 
         $query = AttendanceRecord::query();
+        if ($scopedIds !== null) {
+            $query->whereIn('employee_id', $scopedIds);
+        }
         if ($request->filled('startDate')) {
             $query->whereDate('date', '>=', $request->input('startDate'));
         }
@@ -197,5 +212,41 @@ class ReportController extends Controller
     private function authorizeAdminOrHr(Request $request): void
     {
         abort_unless(RoleAuthorization::isGlobalHrOrAdmin($request->user()), 403, 'Only HR and Admin users can access enterprise HR reporting.');
+    }
+
+    private function authorizeReportsAccess(Request $request): \App\Models\User
+    {
+        $user = $request->user();
+        abort_unless($user !== null, 401);
+        abort_unless(
+            RoleAuthorization::isGlobalHrOrAdmin($user) || RoleAuthorization::isSupervisor($user),
+            403,
+            'Only HR, Admin, Business Head, and Department Head roles can access HR reporting.'
+        );
+
+        return $user;
+    }
+
+    /** @return \Illuminate\Database\Eloquent\Builder<Employee> */
+    private function scopedEmployeesQuery(\App\Models\User $user): \Illuminate\Database\Eloquent\Builder
+    {
+        if (RoleAuthorization::isGlobalHrOrAdmin($user)) {
+            return Employee::query();
+        }
+
+        return RoleAuthorization::visibleEmployees($user);
+    }
+
+    /** @return array<int, int>|null */
+    private function scopedEmployeeIds(\App\Models\User $user): ?array
+    {
+        if (RoleAuthorization::isGlobalHrOrAdmin($user)) {
+            return null;
+        }
+
+        return RoleAuthorization::visibleEmployees($user)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
     }
 }

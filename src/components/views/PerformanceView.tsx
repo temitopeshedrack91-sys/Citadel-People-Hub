@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useRealtimeTable } from '../../hooks/useRealtimeTable';
-import { isHrOrAdminUser } from '../../utils/rbac';
+import { isHrOrAdminUser, filterEmployeesForUser } from '../../utils/rbac';
 import { Badge } from '../common/Badge';
 import { performanceRepository, employeeRepository, classificationRepository } from '../../services';
 import { PerformanceReview, Kpi, Employee, ReviewRating, JobTitle } from '../../types';
@@ -98,17 +98,28 @@ export const PerformanceView: React.FC = () => {
         employeeRepository.getAll(),
         classificationRepository.getJobTitles().catch(() => [] as JobTitle[]),
       ]);
-      setReviews(revList);
+      const scopedEmps = isHrOrAdmin ? empList : filterEmployeesForUser(currentUser, empList);
+      const scopedEmpIds = new Set(scopedEmps.map((e) => String(e.id)));
+      const scopedReviews = isHrOrAdmin
+        ? revList
+        : revList.filter(
+            (r) =>
+              scopedEmpIds.has(String(r.employeeId)) ||
+              (currentUser.employeeId && String(r.reviewerId) === String(currentUser.employeeId))
+          );
+
+      setReviews(scopedReviews);
       setKpis(kpiList);
-      setEmployees(empList);
+      setEmployees(scopedEmps);
       setJobTitles(titleList);
-      if (empList.length > 0 && !targetEmployeeId) {
-        const firstNonSelf = empList.find((e) => String(e.id) !== String(currentUser.employeeId)) || empList[0];
+      if (scopedEmps.length > 0 && !targetEmployeeId) {
+        const firstNonSelf =
+          scopedEmps.find((e) => String(e.id) !== String(currentUser.employeeId)) || scopedEmps[0];
         setTargetEmployeeId(String(firstNonSelf.id));
         const defaultMgr =
           firstNonSelf.managerId ||
           currentUser.employeeId ||
-          String(empList.find((e) => e.id !== firstNonSelf.id)?.id || empList[0].id);
+          String(scopedEmps.find((e) => e.id !== firstNonSelf.id)?.id || scopedEmps[0].id);
         setTargetReviewerId(String(defaultMgr));
       }
       if (kpiList.length > 0 && assignedKpiIds.length === 0) {
@@ -128,7 +139,7 @@ export const PerformanceView: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [assignedKpiIds.length, currentUser.employeeId, targetEmployeeId]);
+  }, [assignedKpiIds.length, currentUser.employeeId, currentUser.id, currentUser.role, currentUser.entityId, currentUser.departmentName, isHrOrAdmin, targetEmployeeId]);
 
   useEffect(() => {
     void loadData();
@@ -615,7 +626,11 @@ export const PerformanceView: React.FC = () => {
                   String(rev.reviewerId) === String(currentUser.employeeId);
                 const canScore =
                   (rev.status === 'IN_PROGRESS' || rev.status === 'SUBMITTED') &&
-                  (isHrOrAdmin || isAssignedReviewer || currentRole === 'MANAGER');
+                  (isHrOrAdmin ||
+                    isAssignedReviewer ||
+                    currentRole === 'MANAGER' ||
+                    currentRole === 'DEPARTMENT_HEAD' ||
+                    currentRole === 'BUSINESS_HEAD');
                 const canApprove = (rev.status === 'EVALUATED' || rev.status === 'SUBMITTED') && isHrOrAdmin;
 
                 return (

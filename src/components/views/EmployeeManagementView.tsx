@@ -47,6 +47,8 @@ import {
   filterEmployeesForUser,
   maskSensitiveEmployeeData,
   canPerformAction,
+  isBusinessHeadUser,
+  isEntityMatchForUser,
 } from '../../utils/rbac';
 import {
   buildEmployeesCsv,
@@ -73,7 +75,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
   onNavigate,
 }) => {
   const { currentUser, currentRole, selectedEntityFilter, isAuthenticated, canViewSensitiveData } = useAuth();
-  const isPCCM = currentRole === 'PCCM_SUPER_ADMIN';
+  const isBusinessHead = isBusinessHeadUser(currentUser);
   const canManageEmployees = canPerformAction(currentUser, 'manage_employees').allowed;
 
   // Data State
@@ -155,7 +157,12 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
       }
 
       if (entResult.status === 'fulfilled') {
-        setEntities(entResult.value);
+        const entList = isBusinessHead
+          ? entResult.value.filter((ent) =>
+              isEntityMatchForUser(currentUser, { entityId: ent.id, entityName: ent.name })
+            )
+          : entResult.value;
+        setEntities(entList);
       } else {
         failures.push(entResult.reason instanceof Error ? entResult.reason.message : 'Unable to load entities.');
       }

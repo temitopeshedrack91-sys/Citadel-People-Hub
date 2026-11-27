@@ -153,7 +153,7 @@ class RealtimeSyncManager {
     if (!this.localMutationListenerBound) {
       window.addEventListener('citadel:local-mutation', this.handleLocalOrBroadcastEvent as EventListener);
       window.addEventListener('citadel:auth-changed', this.handleAuthChanged);
-      window.addEventListener('focus', this.pollLaravelEventsNow);
+      window.addEventListener('focus', this.handleWindowFocus);
       document.addEventListener('visibilitychange', this.handleVisibilityChange);
       this.localMutationListenerBound = true;
     }
@@ -183,13 +183,14 @@ class RealtimeSyncManager {
     this.connectSseStream();
 
     if (!this.pollTimer) {
+      void this.pollLaravelEventsNow(true);
       this.pollTimer = setInterval(() => {
         if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
         // When SSE is healthy, polling acts only as a lightweight fallback sync
         if (!this.sseConnected) {
           void this.pollLaravelEventsNow();
         }
-      }, 5000);
+      }, 2000);
     }
   }
 
@@ -268,7 +269,7 @@ class RealtimeSyncManager {
           this.eventSource = null;
 
           // Immediately fall back to incremental polling so events during the drop are not delayed
-          void this.pollLaravelEventsNow();
+          void this.pollLaravelEventsNow(true);
 
           if (!this.sseReconnectTimer && this.channels.size > 0 && getLaravelAccessToken()) {
             this.sseReconnectTimer = setTimeout(() => {
@@ -301,7 +302,7 @@ class RealtimeSyncManager {
     if (getLaravelAccessToken()) {
       this.closeSseStream();
       this.connectSseStream();
-      void this.pollLaravelEventsNow();
+      void this.pollLaravelEventsNow(true);
     } else {
       this.closeSseStream();
       this.lastEventId = null;
@@ -323,12 +324,17 @@ class RealtimeSyncManager {
     if (this.localMutationListenerBound && typeof window !== 'undefined') {
       window.removeEventListener('citadel:local-mutation', this.handleLocalOrBroadcastEvent as EventListener);
       window.removeEventListener('citadel:auth-changed', this.handleAuthChanged);
-      window.removeEventListener('focus', this.pollLaravelEventsNow);
+      window.removeEventListener('focus', this.handleWindowFocus);
       document.removeEventListener('visibilitychange', this.handleVisibilityChange);
       this.localMutationListenerBound = false;
     }
     this.lastEventId = null;
+    this.lastPollAt = 0;
   }
+
+  private handleWindowFocus = () => {
+    void this.pollLaravelEventsNow();
+  };
 
   private handleLocalOrBroadcastEvent = (event: CustomEvent<{ table: string; eventType: string }>) => {
     const detail = event.detail;
@@ -347,10 +353,10 @@ class RealtimeSyncManager {
     }
   };
 
-  private pollLaravelEventsNow = async () => {
+  private pollLaravelEventsNow = async (force = false) => {
     if (this.pollingInFlight || this.channels.size === 0 || !getLaravelAccessToken()) return;
     const now = Date.now();
-    if (now - this.lastPollAt < 1500) return;
+    if (!force && now - this.lastPollAt < 1500) return;
     this.lastPollAt = now;
     this.pollingInFlight = true;
     try {

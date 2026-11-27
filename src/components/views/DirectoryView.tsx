@@ -17,9 +17,10 @@ import { useAuth } from '../../context/AuthContext';
 import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import { ListDetailLayout, ListItem } from '../common/ListDetailLayout';
 import { StatusPill } from '../common/StatusPill';
+import { filterEmployeesForUser, maskSensitiveEmployeeData } from '../../utils/rbac';
 
 export const DirectoryView: React.FC = () => {
-  const { selectedEntityFilter } = useAuth();
+  const { currentUser, selectedEntityFilter } = useAuth();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [entities, setEntities] = useState<CitadelEntity[]>([]);
   const [departments, setDepartments] = useState<CitadelDepartment[]>([]);
@@ -63,19 +64,22 @@ export const DirectoryView: React.FC = () => {
         organizationRepository.getEntities(),
         organizationRepository.getDepartments(),
       ]);
-      setEmployees(empList);
+      const scopedEmps = filterEmployeesForUser(currentUser, empList).map((emp) =>
+        maskSensitiveEmployeeData(currentUser, emp)
+      );
+      setEmployees(scopedEmps);
       setEntities(entList);
       setDepartments(deptList);
       setSelectedEmployeeId((prev) => {
-        if (prev && empList.some((e) => String(e.id) === String(prev))) {
+        if (prev && scopedEmps.some((e) => String(e.id) === String(prev))) {
           return prev;
         }
-        return empList.length > 0 ? String(empList[0].id) : null;
+        return scopedEmps.length > 0 ? String(scopedEmps[0].id) : null;
       });
     } catch (err: any) {
       setErrorMessage(err?.message || 'Unable to load directory records.');
     }
-  }, [selectedEntityFilter]);
+  }, [currentUser, selectedEntityFilter]);
 
   useEffect(() => {
     void fetchData();

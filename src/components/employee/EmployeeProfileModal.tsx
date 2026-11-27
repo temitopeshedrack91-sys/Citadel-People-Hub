@@ -31,7 +31,17 @@ import {
   Users,
   GitBranch,
 } from 'lucide-react';
-import { Employee, EmployeeHierarchy, DocumentCategory, HubDocument, PerformanceReview, LeaveBalanceRecord, LeaveRequest, AttendanceRecord, UserRole } from '../../types';
+import {
+  Employee,
+  EmployeeHierarchy,
+  DocumentCategory,
+  HubDocument,
+  PerformanceReview,
+  LeaveBalanceRecord,
+  LeaveRequest,
+  AttendanceRecord,
+  UserRole,
+} from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import { SensitiveField } from '../common/SensitiveField';
@@ -45,13 +55,20 @@ import {
   attendanceRepository,
   governanceRepository,
 } from '../../services';
+import { attendanceImportService, DailyAttendanceSummary } from '../../features/attendance-import';
 import { EmployeeDocumentInput } from '../../types/documents';
 import { isSafeImageUrl } from '../../utils/orgHelpers';
+import {
+  isHrOrAdminUser,
+  isBusinessHeadUser,
+  isEntityMatchForUser,
+} from '../../utils/rbac';
 import {
   applyApprovedChangeRequest,
   createProfileChangeRequest,
   mapAppRoleToWorkbookRole,
 } from '../../domain/workbook';
+import { classifyDailySummaryStatus } from '../../utils/hrisHelpers';
 
 interface EmployeeProfileModalProps {
   employee: Employee | null;
@@ -88,7 +105,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [uploadForm, setUploadForm] = useState<EmployeeDocumentInput & { file?: File }>({
     title: '',
-    category: 'Identification',
+    category: 'National Identification',
     description: '',
     issueDate: '',
     expiryDate: '',
@@ -104,11 +121,6 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   const [hierarchyLoading, setHierarchyLoading] = useState(false);
   const [empReviews, setEmpReviews] = useState<PerformanceReview[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
-  const [empBalances, setEmpBalances] = useState<LeaveBalanceRecord[]>([]);
-  const [empLeaves, setEmpLeaves] = useState<LeaveRequest[]>([]);
-  const [leaveLoading, setLeaveLoading] = useState(false);
-  const [empAttendance, setEmpAttendance] = useState<AttendanceRecord[]>([]);
-  const [attendanceLoading, setAttendanceLoading] = useState(false);
   const replaceFileRef = useRef<HTMLInputElement>(null);
 
   // Employee self-service profile change request state (Sheet 5)
@@ -143,10 +155,28 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
 
   const isSelfActor = Boolean(
     employee &&
-      ((employee.staffId && currentUser.staffId === employee.staffId) ||
-        String(currentUser.employeeId || currentUser.id) === String(employee.id))
+      ((employee.staffId &&
+        currentUser.staffId &&
+        employee.staffId.replace(/[-/]/g, '').toLowerCase() ===
+          currentUser.staffId.replace(/[-/]/g, '').toLowerCase() &&
+        (!currentUser.name ||
+          employee.fullName.toLowerCase() === currentUser.name.toLowerCase())) ||
+        (employee.email &&
+          currentUser.email &&
+          employee.email.toLowerCase() === currentUser.email.toLowerCase()) ||
+        (String(currentUser.employeeId || currentUser.id) === String(employee.id) &&
+          (!currentUser.name ||
+            employee.fullName.toLowerCase() === currentUser.name.toLowerCase())))
   );
 
+  const isEntityBusinessHead = Boolean(
+    employee &&
+      isBusinessHeadUser(currentUser) &&
+      isEntityMatchForUser(currentUser, employee) &&
+      !isSelfActor
+  );
+
+  const canSubmitProfileChange = isSelfActor || isEntityBusinessHead;
   const canManageEmployeeDocs = permissions.canManageDocuments || isSelfActor;
 
   const formatDate = (dateString?: string | null): string => {
@@ -235,6 +265,13 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
     setConfirmDeleteDocId(null);
   }, [employee]);
 
+  const [empLeaveBalances, setEmpLeaveBalances] = useState<LeaveBalanceRecord[]>([]);
+  const [empLeaveHistory, setEmpLeaveHistory] = useState<LeaveRequest[]>([]);
+  const [leaveLoading, setLeaveLoading] = useState(false);
+  const [empAttendanceLogs, setEmpAttendanceLogs] = useState<AttendanceRecord[]>([]);
+  const [empBioSummaries, setEmpBioSummaries] = useState<DailyAttendanceSummary[]>([]);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+
   const loadEmployeePerformance = useCallback(async () => {
     if (!employee?.id) {
       setEmpReviews([]);
@@ -263,8 +300,8 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
 
   const loadEmployeeLeave = useCallback(async () => {
     if (!employee?.id) {
-      setEmpBalances([]);
-      setEmpLeaves([]);
+      setEmpLeaveBalances([]);
+      setEmpLeaveHistory([]);
       return;
     }
     setLeaveLoading(true);
@@ -273,15 +310,54 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
         leaveRepository.getBalances(String(employee.id)).catch(() => [] as LeaveBalanceRecord[]),
         leaveRepository.getByEmployee(String(employee.id)).catch(() => [] as LeaveRequest[]),
       ]);
-      setEmpBalances(balData);
-      setEmpLeaves(reqData);
+      setEmpLeaveBalances(balData);
+      setEmpLeaveHistory(reqData);
     } catch {
-      setEmpBalances([]);
-      setEmpLeaves([]);
+      setEmpLeaveBalances([]);
+      setEmpLeaveHistory([]);
     } finally {
       setLeaveLoading(false);
     }
   }, [employee?.id]);
+
+  const loadEmployeeAttendance = useCallback(async () => {
+    if (!employee?.id) {
+      setEmpAttendanceLogs([]);
+      setEmpBioSummaries([]);
+      return;
+    }
+    setAttendanceLoading(true);
+    try {
+      const recent = await attendanceRepository.getRecentLogs(40).catch(() => []);
+      const filteredLogs = recent.filter(
+        (log) =>
+          String(log.employeeId) === String(employee.id) ||
+          (employee.staffId &&
+            log.employeeStaffId &&
+            log.employeeStaffId.toLowerCase() === employee.staffId.toLowerCase()) ||
+          (log.employeeName &&
+            log.employeeName.toLowerCase() === employee.fullName.toLowerCase())
+      );
+      setEmpAttendanceLogs(filteredLogs);
+
+      if (import.meta.env.PROD && attendanceRepository.getBiometricPunchSnapshot) {
+        try {
+          const snap = await attendanceRepository.getBiometricPunchSnapshot([employee]);
+          setEmpBioSummaries(snap.summaries);
+        } catch {
+          setEmpBioSummaries([]);
+        }
+      } else {
+        const snap = attendanceImportService.getSnapshot([employee]);
+        setEmpBioSummaries(snap.summaries);
+      }
+    } catch {
+      setEmpAttendanceLogs([]);
+      setEmpBioSummaries([]);
+    } finally {
+      setAttendanceLoading(false);
+    }
+  }, [employee]);
 
   useEffect(() => {
     if (activeTab === 'performance' && employee?.id) {
@@ -290,51 +366,10 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
     if (activeTab === 'leave' && employee?.id) {
       void loadEmployeeLeave();
     }
-  }, [activeTab, employee?.id, loadEmployeePerformance, loadEmployeeLeave]);
-
-  useEffect(() => {
-    if (activeTab !== 'leave' || !employee?.id) return;
-    let cancelled = false;
-    setLeaveLoading(true);
-    Promise.all([
-      leaveRepository.getBalances(employee.id).catch(() => [] as LeaveBalanceRecord[]),
-      leaveRepository.getByEmployee(employee.id).catch(() => [] as LeaveRequest[]),
-    ])
-      .then(([bals, lvs]) => {
-        if (cancelled) return;
-        setEmpBalances(bals.filter((b) => String(b.employee_id) === String(employee.id) || (employee.staffId && b.employee?.staff_id === employee.staffId)));
-        setEmpLeaves(lvs);
-      })
-      .finally(() => {
-        if (!cancelled) setLeaveLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [activeTab, employee?.id, employee?.staffId]);
-
-  useEffect(() => {
-    if (activeTab !== 'attendance' || !employee?.id) return;
-    let cancelled = false;
-    setAttendanceLoading(true);
-    attendanceRepository
-      .getRecentLogs(50)
-      .then((logs) => {
-        if (cancelled) return;
-        setEmpAttendance(
-          logs.filter(
-            (r) =>
-              String(r.employeeId) === String(employee.id) ||
-              (employee.staffId && r.employeeStaffId === employee.staffId)
-          )
-        );
-      })
-      .catch(() => {
-        if (!cancelled) setEmpAttendance([]);
-      })
-      .finally(() => {
-        if (!cancelled) setAttendanceLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [activeTab, employee?.id, employee?.staffId]);
+    if (activeTab === 'attendance' && employee?.id) {
+      void loadEmployeeAttendance();
+    }
+  }, [activeTab, employee?.id, loadEmployeePerformance, loadEmployeeLeave, loadEmployeeAttendance]);
 
   useRealtimeTable('performance_reviews', () => {
     if (employee?.id) {
@@ -404,7 +439,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
       setStatusMessage(`"${newDoc.title}" uploaded successfully.`);
       clearStatus();
       setUploadModalOpen(false);
-      setUploadForm({ title: '', category: 'Identification', description: '', issueDate: '', expiryDate: '', version: '1.0' });
+      setUploadForm({ title: '', category: 'National Identification', description: '', issueDate: '', expiryDate: '', version: '1.0' });
     } catch (error: any) {
       setDocsError(error?.message || 'Upload failed.');
     } finally {
@@ -574,7 +609,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs focus:ring-1 focus:ring-[#174EA6] focus:border-[#174EA6] outline-none transition"
+        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs focus:ring-1 focus:ring-[#083E34] focus:border-[#083E34] outline-none transition"
         required={required}
       />
     </div>
@@ -582,9 +617,8 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
 
   if (!employee) return null;
 
-  const isPCCM = currentRole === 'PCCM_SUPER_ADMIN';
   const isSelf = isSelfActor;
-  const isAuthorizedHR = isPCCM || currentRole === 'SYSTEM_ADMIN';
+  const isAuthorizedHR = isHrOrAdminUser(currentUser);
 
   const handleCopyContact = () => {
     navigator.clipboard?.writeText(`${employee!.fullName} (${employee.phone}, ${employee.email})`);
@@ -616,7 +650,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
     >
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-6 flex flex-col max-h-[90vh]">
         {/* Modal Top Header */}
-        <div className="bg-[#174EA6] text-white p-5 sm:p-6 relative border-b border-[#BFDBFE] shrink-0">
+        <div className="bg-[#083E34] text-white p-5 sm:p-6 relative border-b border-emerald-950/30 shrink-0">
           <button
             type="button"
             onClick={onClose}
@@ -637,7 +671,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                   className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover shadow-lg border-2 border-white/25 shrink-0"
                 />
               ) : (
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[#B88A24] text-white font-black text-2xl flex items-center justify-center shadow-lg border-2 border-white/20 shrink-0">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-amber-600 text-white font-black text-2xl flex items-center justify-center shadow-lg border-2 border-white/20 shrink-0">
                   {employee.firstName[0]}
                   {employee.lastName[0]}
                 </div>
@@ -648,7 +682,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                   <h2 className="text-lg sm:text-xl font-bold text-white tracking-wide">
                     {employee!.fullName}
                   </h2>
-                  <span className="px-2 py-0.5 rounded bg-[#B88A24] text-[#D4AF37] font-mono text-[11px] font-bold border border-[#E9D59A]">
+                  <span className="px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 font-mono text-[11px] font-bold border border-amber-400/30">
                     {employee.staffId}
                   </span>
                   <Badge
@@ -666,13 +700,13 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                   </Badge>
                 </div>
 
-                <p className="text-xs sm:text-sm text-[#D4AF37] font-medium mt-1">
+                <p className="text-xs sm:text-sm text-amber-200/90 font-medium mt-1">
                   {employee.jobTitle} • {employee.gradeLevel}
                 </p>
 
                 <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-slate-300">
                   <span className="flex items-center gap-1">
-                    <Building2 className="w-3.5 h-3.5 text-[#D4AF37]" />
+                    <Building2 className="w-3.5 h-3.5 text-amber-400" />
                     <span>{employee.entityName}</span>
                   </span>
                   <span>•</span>
@@ -684,7 +718,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
             {/* Quick Contact & Action Buttons */}
             <div className="flex sm:flex-col items-end gap-2 shrink-0">
               <div className="flex items-center gap-2 flex-wrap justify-end">
-                {isSelf && (
+                {canSubmitProfileChange && (
                   <button
                     type="button"
                     data-testid="request-self-service-update-btn"
@@ -695,7 +729,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                     className="px-3 py-1.5 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold border border-[#C59B27] transition flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
                   >
                     <Shield className="w-3.5 h-3.5" />
-                    <span>Request Info Update</span>
+                    <span>{isEntityBusinessHead ? 'Propose Change (HR)' : 'Request Info Update'}</span>
                   </button>
                 )}
                 <button
@@ -703,7 +737,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                   onClick={handleCopyContact}
                   className="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-slate-100 text-xs font-semibold border border-white/20 transition flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
                 >
-                  <Share2 className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <Share2 className="w-3.5 h-3.5 text-amber-300" />
                   <span>{isCopied ? 'Copied Contact!' : 'Share Contact'}</span>
                 </button>
               </div>
@@ -726,11 +760,11 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                 onClick={() => setActiveTab(tab.id)}
                 className={`py-3 px-3.5 text-xs font-bold whitespace-nowrap flex items-center gap-2 border-b-2 transition cursor-pointer ${
                   isActive
-                    ? 'border-[#174EA6] text-[#174EA6] bg-white rounded-t-xl shadow-2xs'
+                    ? 'border-[#083E34] text-[#083E34] bg-white rounded-t-xl shadow-2xs'
                     : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-[#B88A24]' : 'text-slate-400'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-amber-600' : 'text-slate-400'}`} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -792,13 +826,13 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
               {/* Phase 1: Reporting Hierarchy (Upward Chain & Direct Reports) */}
               <div>
                 <h3 className="font-bold text-slate-900 uppercase tracking-wider text-xs pb-1.5 border-b border-slate-200 flex items-center gap-2">
-                  <GitBranch className="w-4 h-4 text-[#174EA6]" />
+                  <GitBranch className="w-4 h-4 text-[#083E34]" />
                   <span>Reporting Hierarchy</span>
                 </h3>
 
                 {hierarchyLoading ? (
                   <div className="mt-3 p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-500 flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-[#174EA6]" />
+                    <Loader2 className="w-4 h-4 animate-spin text-[#083E34]" />
                     <span>Loading reporting chain and direct reports...</span>
                   </div>
                 ) : (
@@ -818,7 +852,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                                 <span className="font-semibold text-slate-900">{sup.fullName}</span>
                                 <span className="text-[10px] text-slate-500 block">{sup.jobTitle}</span>
                               </div>
-                              <span className="text-[10px] font-mono text-[#174EA6] font-semibold">
+                              <span className="text-[10px] font-mono text-[#083E34] font-semibold">
                                 L{idx + 1}
                               </span>
                             </div>
@@ -833,7 +867,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
 
                     <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5 text-[#174EA6]" />
+                        <Users className="w-3.5 h-3.5 text-[#083E34]" />
                         Direct Reports ({hierarchy?.directReports?.length ?? employee.directReportsCount ?? 0})
                       </span>
                       {hierarchy?.directReports && hierarchy.directReports.length > 0 ? (
@@ -870,14 +904,14 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-[#EFF6FF] text-[#174EA6]">
+                    <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
                       <Mail className="w-4 h-4" />
                     </div>
                     <div>
                       <span className="text-[10px] text-slate-400 block">Official Citadel Email</span>
                       <a
                         href={`mailto:${employee.email}`}
-                        className="font-bold text-[#174EA6] hover:underline"
+                        className="font-bold text-[#083E34] hover:underline"
                       >
                         {employee.email}
                       </a>
@@ -885,14 +919,14 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                   </div>
 
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-[#EFF6FF] text-[#174EA6]">
+                    <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
                       <Phone className="w-4 h-4" />
                     </div>
                     <div>
                       <span className="text-[10px] text-slate-400 block">Official Phone</span>
                       <a
                         href={`tel:${employee.phone}`}
-                        className="font-bold text-[#174EA6] hover:underline font-mono"
+                        className="font-bold text-[#083E34] hover:underline font-mono"
                       >
                         {employee.phone}
                       </a>
@@ -906,7 +940,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
           {/* TAB 2: PERSONAL INFORMATION */}
           {activeTab === 'personal' && (
             <div className="space-y-6 animate-fade-in">
-              <div className="p-3.5 rounded-xl bg-[#FAF5EB] border border-[#E9D59A] text-[#B88A24] text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-2.5">
                   <Shield className="w-4 h-4 text-[#C59B27] shrink-0 mt-0.5" />
                   <div>
@@ -914,14 +948,18 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                     Personal identifying fields including residential address and date of birth are protected by the PCCM Privacy Charter. Unmasking actions are recorded in the Citadel audit trail.
                   </div>
                 </div>
-                {isSelf && (
+                {canSubmitProfileChange && (
                   <button
                     type="button"
                     data-testid="dossier-request-profile-update-btn"
                     onClick={() => setSelfEditOpen((prev) => !prev)}
-                    className="px-3 py-1.5 rounded-lg bg-[#174EA6] text-white hover:bg-[#0B1F3A] text-xs font-semibold shrink-0 transition cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg bg-[#083E34] text-white hover:bg-[#062E27] text-xs font-semibold shrink-0 transition cursor-pointer"
                   >
-                    {selfEditOpen ? 'Close Update Form' : 'Request Profile Update'}
+                    {selfEditOpen
+                      ? 'Close Update Form'
+                      : isEntityBusinessHead
+                      ? 'Propose Change for HR Approval'
+                      : 'Request Profile Update'}
                   </button>
                 )}
               </div>
@@ -932,20 +970,20 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                   data-testid="dossier-self-update-feedback"
                   className={`p-3 rounded-xl border text-xs font-semibold flex items-center gap-2 ${
                     selfFeedback.type === 'success'
-                      ? 'bg-[#EFF6FF] border-[#BFDBFE] text-[#174EA6]'
-                      : 'bg-[#F5F7FA] border-[#111827]/25 text-[#111827]'
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                      : 'bg-rose-50 border-rose-200 text-rose-800'
                   }`}
                 >
                   {selfFeedback.type === 'success' ? (
-                    <CheckCircle2 className="w-4 h-4 text-[#174EA6] shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                   ) : (
-                    <AlertCircle className="w-4 h-4 text-[#111827] shrink-0" />
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                   )}
                   <span>{selfFeedback.text}</span>
                 </div>
               )}
 
-              {isSelf && selfEditOpen && (
+              {canSubmitProfileChange && selfEditOpen && (
                 <form
                   onSubmit={handleSelfUpdateSubmit}
                   data-testid="dossier-self-update-form"
@@ -969,7 +1007,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="tel"
                         value={selfPhone}
                         onChange={(e) => setSelfPhone(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
                       />
                     </div>
                     <div>
@@ -978,7 +1016,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="email"
                         value={selfEmail}
                         onChange={(e) => setSelfEmail(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
                       />
                     </div>
                     <div>
@@ -987,7 +1025,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="date"
                         value={selfDob}
                         onChange={(e) => setSelfDob(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
                       />
                     </div>
                     <div>
@@ -995,7 +1033,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                       <select
                         value={selfGender}
                         onChange={(e) => setSelfGender(e.target.value as 'Male' | 'Female')}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
                       >
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
@@ -1007,7 +1045,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="text"
                         value={selfAddress}
                         onChange={(e) => setSelfAddress(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
                       />
                     </div>
                     <div className="sm:col-span-2">
@@ -1017,7 +1055,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         value={selfPhoto}
                         onChange={(e) => setSelfPhoto(e.target.value)}
                         placeholder="https://example.org/photo.jpg"
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
                       />
                     </div>
                   </div>
@@ -1029,7 +1067,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="text"
                         value={selfEcName}
                         onChange={(e) => setSelfEcName(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
                       />
                     </div>
                     <div>
@@ -1038,7 +1076,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="text"
                         value={selfEcRel}
                         onChange={(e) => setSelfEcRel(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
                       />
                     </div>
                     <div>
@@ -1047,7 +1085,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="tel"
                         value={selfEcPhone}
                         onChange={(e) => setSelfEcPhone(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
                       />
                     </div>
                   </div>
@@ -1059,7 +1097,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="text"
                         value={selfNokName}
                         onChange={(e) => setSelfNokName(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
                       />
                     </div>
                     <div>
@@ -1068,7 +1106,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="text"
                         value={selfNokRel}
                         onChange={(e) => setSelfNokRel(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
                       />
                     </div>
                     <div>
@@ -1077,7 +1115,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="tel"
                         value={selfNokPhone}
                         onChange={(e) => setSelfNokPhone(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
                       />
                     </div>
                     <div>
@@ -1086,7 +1124,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="text"
                         value={selfNokAddr}
                         onChange={(e) => setSelfNokAddr(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
                       />
                     </div>
                   </div>
@@ -1099,7 +1137,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                       value={selfReason}
                       onChange={(e) => setSelfReason(e.target.value)}
                       placeholder="e.g. Relocated residential address / updated phone number"
-                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
                     />
                   </div>
 
@@ -1164,8 +1202,8 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* Emergency Contact */}
                 <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-200 text-[#174EA6] font-bold">
-                    <HeartPulse className="w-4 h-4 text-[#B88A24]" />
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-200 text-[#083E34] font-bold">
+                    <HeartPulse className="w-4 h-4 text-amber-600" />
                     <span>Primary Emergency Contact</span>
                   </div>
 
@@ -1191,8 +1229,8 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
 
                 {/* Next of Kin */}
                 <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-200 text-[#174EA6] font-bold">
-                    <Shield className="w-4 h-4 text-[#B88A24]" />
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-200 text-[#083E34] font-bold">
+                    <Shield className="w-4 h-4 text-amber-600" />
                     <span>Next of Kin (Confidential)</span>
                   </div>
 
@@ -1242,7 +1280,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
             <div className="space-y-6 animate-fade-in">
               <div>
                 <h3 className="font-bold text-slate-900 uppercase tracking-wider text-xs pb-1.5 border-b border-slate-200 flex items-center gap-2">
-                  <GraduationCap className="w-4 h-4 text-[#174EA6]" />
+                  <GraduationCap className="w-4 h-4 text-indigo-600" />
                   <span>Academic Qualifications</span>
                 </h3>
 
@@ -1268,7 +1306,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
 
               <div>
                 <h3 className="font-bold text-slate-900 uppercase tracking-wider text-xs pb-1.5 border-b border-slate-200 flex items-center gap-2">
-                  <Award className="w-4 h-4 text-[#174EA6]" />
+                  <Award className="w-4 h-4 text-emerald-600" />
                   <span>Professional Certifications & Licenses</span>
                 </h3>
 
@@ -1287,7 +1325,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                           <p className="font-bold text-slate-900 text-xs sm:text-sm">{c.name}</p>
                           <p className="text-slate-600 mt-0.5">{c.issuingBody}</p>
                         </div>
-                        <span className="font-mono font-bold text-[#174EA6] bg-[#EFF6FF] px-2.5 py-1 rounded border border-[#BFDBFE]">
+                        <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
                           {c.yearObtained}
                         </span>
                       </div>
@@ -1301,7 +1339,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
           {/* TAB 5: BENEFITS & PAYROLL (ROLE-RESTRICTED) */}
           {activeTab === 'payroll' && (
             <div className="space-y-6 animate-fade-in">
-              <div className="p-4 rounded-xl bg-[#B88A24] border border-[#E9D59A] flex items-start justify-between">
+              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-400/40 flex items-start justify-between">
                 <div className="flex items-start gap-3">
                   <CreditCard className="w-5 h-5 text-[#C59B27] shrink-0 mt-0.5" />
                   <div>
@@ -1313,7 +1351,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                     </p>
                   </div>
                 </div>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#FAF5EB] text-[#B88A24] border border-[#E9D59A] shrink-0">
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200 shrink-0">
                   PCCM PROTECTED
                 </span>
               </div>
@@ -1429,7 +1467,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                 {canManageEmployeeDocs && (
                   <button
                     onClick={() => setUploadModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#174EA6] text-white text-xs font-bold hover:bg-[#0B1F3A] transition shadow-sm"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#083E34] text-white text-xs font-bold hover:bg-[#04241e] transition shadow-sm"
                   >
                     <Upload className="w-3.5 h-3.5" /> Upload Document
                   </button>
@@ -1437,7 +1475,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
               </div>
 
               {docsError && (
-                <div className="p-3 rounded-xl bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] text-xs flex items-center gap-2 animate-fade-in">
+                <div className="p-3 rounded-xl bg-red-50 border border-red-100 text-red-800 text-xs flex items-center gap-2 animate-fade-in">
                   <AlertCircle className="w-4 h-4 shrink-0" /> {docsError}
                 </div>
               )}
@@ -1462,7 +1500,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 animate-fade-in"
                       >
                         <div className="flex items-center gap-3 w-full sm:w-auto">
-                          <div className="p-1.5 rounded-lg bg-[#FAF5EB] text-[#B88A24] shrink-0">
+                          <div className="p-1.5 rounded-lg bg-amber-50 text-amber-600 shrink-0">
                             <FileText className="w-5 h-5" />
                           </div>
                           <div className="min-w-0 flex-1">
@@ -1491,10 +1529,10 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                           </div>
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 ${
                             status.variant === 'success'
-                              ? 'bg-[#EFF6FF] text-[#174EA6] border border-[#BFDBFE]'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
                               : status.variant === 'warning'
-                              ? 'bg-[#FAF5EB] text-[#B88A24] border border-[#E9D59A]'
-                              : 'bg-[#F5F7FA] text-[#111827] border border-[#111827]/25'
+                              ? 'bg-amber-50 text-amber-700 border border-amber-100'
+                              : 'bg-red-50 text-red-700 border border-red-100'
                           }`}>
                             {status.label}
                           </span>
@@ -1504,7 +1542,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                           <button
                             disabled={downloadingDocId === doc.id}
                             onClick={() => handleDownload(doc)}
-                            className="p-1.5 text-slate-500 hover:text-[#174EA6] hover:bg-[#EFF6FF] rounded transition disabled:opacity-60"
+                            className="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50/50 rounded transition disabled:opacity-60"
                             title="Download document"
                           >
                             <Download className="w-4 h-4" />
@@ -1516,7 +1554,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                                 setReplaceDocId(doc.id);
                                 if (replaceFileRef.current) replaceFileRef.current.click();
                               }}
-                              className="p-1.5 text-slate-500 hover:text-[#B88A24] hover:bg-[#FAF5EB] rounded transition disabled:opacity-60"
+                              className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50/50 rounded transition disabled:opacity-60"
                               title="Replace document"
                             >
                               <RefreshCw className="w-4 h-4" />
@@ -1528,7 +1566,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => handleDelete(doc)}
-                                  className="px-2 py-1 rounded bg-[#111827] text-white text-[10px] font-bold hover:bg-[#111827] cursor-pointer"
+                                  className="px-2 py-1 rounded bg-rose-600 text-white text-[10px] font-bold hover:bg-rose-700 cursor-pointer"
                                 >
                                   Confirm
                                 </button>
@@ -1544,7 +1582,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                               <button
                                 type="button"
                                 onClick={() => setConfirmDeleteDocId(doc.id)}
-                                className="p-1.5 text-slate-500 hover:text-[#111827] hover:bg-[#F5F7FA] rounded transition cursor-pointer"
+                                className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50/50 rounded transition cursor-pointer"
                                 title="Delete document"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -1569,14 +1607,14 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
               {/* Upload Form */}
               <div
                 className={`rounded-xl border p-3.5 animate-fade-in ${
-                  uploadModalOpen ? 'bg-[#FAF5EB] border-[#E9D59A]' : 'bg-slate-50 border-slate-200'
+                  uploadModalOpen ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2.5 cursor-pointer" onClick={() => setUploadModalOpen((o) => !o)}>
                   <span className="font-bold text-slate-900 text-xs uppercase tracking-wider">
                     {uploadModalOpen ? 'Close' : 'Add New Employee Document'}
                   </span>
-                  <span className={`text-[10px] ${uploadModalOpen ? 'text-[#174EA6]' : 'text-slate-500'}`}>
+                  <span className={`text-[10px] ${uploadModalOpen ? 'text-[#083E34]' : 'text-slate-500'}`}>
                     {uploadModalOpen ? 'Hide form' : 'Upload a new personnel document'}
                   </span>
                 </div>
@@ -1594,7 +1632,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         <select
                           value={uploadForm.category}
                           onChange={(e) => setUploadForm({ ...uploadForm, category: e.target.value as DocumentCategory })}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs focus:ring-1 focus:ring-[#174EA6] focus:border-[#174EA6] outline-none transition"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs focus:ring-1 focus:ring-[#083E34] focus:border-[#083E34] outline-none transition"
                         >
                           {EMPLOYEE_DOCUMENT_CATEGORIES.map((cat) => (
                             <option key={cat} value={cat}>
@@ -1642,7 +1680,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="file"
                         accept=".pdf,.jpg,.jpeg,.png"
                         onChange={(e) => setUploadForm({ ...uploadForm, file: e.target.files?.[0] })}
-                        className="w-full block text-xs text-slate-600 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-[#174EA6] file:text-white hover:file:bg-[#0B1F3A] cursor-pointer"
+                        className="w-full block text-xs text-slate-600 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-[#083E34] file:text-white hover:file:bg-[#04241e] cursor-pointer"
                       />
                     </div>
                     <div className="flex items-center justify-between gap-2 pt-1.5">
@@ -1650,7 +1688,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="button"
                         onClick={() => {
                           setUploadModalOpen(false);
-                          setUploadForm({ title: '', category: 'Identification', description: '', issueDate: '', expiryDate: '', version: '1.0' });
+                          setUploadForm({ title: '', category: 'National Identification', description: '', issueDate: '', expiryDate: '', version: '1.0' });
                         }}
                         className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-semibold hover:bg-slate-100 transition"
                       >
@@ -1669,11 +1707,11 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
               </div>
 
               {statusMessage && (
-                <div className="p-3 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] text-[#174EA6] text-xs flex items-center justify-between animate-fade-in">
+                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between animate-fade-in">
                   <span>{statusMessage}</span>
                   <button
                     onClick={() => setStatusMessage(null)}
-                    className="p-1 text-[#174EA6] hover:text-[#174EA6] rounded"
+                    className="p-1 text-emerald-500 hover:text-emerald-700 rounded"
                     title="Dismiss"
                   >
                     <X className="w-3 h-3" />
@@ -1687,69 +1725,81 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
           {activeTab === 'leave' && (
             <div className="space-y-6 animate-fade-in">
               {leaveLoading ? (
-                <p className="text-xs text-slate-500 py-4 text-center">Loading leave balances &amp; history...</p>
+                <div className="p-8 text-center text-xs text-slate-500">Loading leave balances &amp; history...</div>
               ) : (
                 <>
-                  {empBalances.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 tabular-nums">
-                      {empBalances.slice(0, 4).map((bal) => (
-                        <div key={String(bal.id)} className="p-3.5 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE]/60 text-center">
-                          <span className="text-[11px] text-[#174EA6] font-semibold block truncate">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 tabular-nums">
+                    {empLeaveBalances.length > 0 ? (
+                      empLeaveBalances.map((bal) => (
+                        <div
+                          key={String(bal.id)}
+                          className="p-3.5 rounded-xl bg-[#EBF5F2] border border-[#A3D4C7]/60 text-center"
+                        >
+                          <span className="text-[11px] text-[#083E34] font-bold block">
                             {bal.category?.name || 'Leave Quota'}
                           </span>
-                          <div className="text-xl font-bold text-[#0B1F3A] mt-1">
+                          <div className="text-xl font-bold text-[#052C25] mt-1">
                             {Number(bal.remaining_days)} / {Number(bal.total_days)}
                           </div>
-                          <span className="text-[11px] text-[#174EA6]/80">Days Remaining</span>
+                          <span className="text-[11px] text-[#083E34]/80">
+                            Days Remaining ({Number(bal.used_days)} used · {Number(bal.pending_days)} pending)
+                          </span>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-500">
-                      No leave balance allocations recorded for this staff member.
-                    </div>
-                  )}
+                      ))
+                    ) : (
+                      <div className="sm:col-span-3 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-500 text-center">
+                        No leave balance records provisioned yet for {employee.fullName}.
+                      </div>
+                    )}
+                  </div>
 
                   <div>
-                    <h4 className="font-semibold text-slate-900 uppercase tracking-wider text-xs pb-1.5 border-b border-slate-200">
-                      Recent Leave Applications ({empLeaves.length})
+                    <h4 className="font-bold text-slate-900 uppercase tracking-wider text-xs pb-1.5 border-b border-slate-200">
+                      Leave Applications ({empLeaveHistory.length})
                     </h4>
-                    {empLeaves.length > 0 ? (
-                      <div className="space-y-2 mt-3">
-                        {empLeaves.slice(0, 5).map((lv) => (
-                          <div key={lv.id} className="p-3 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-between gap-2">
+                    <div className="space-y-2 mt-3">
+                      {empLeaveHistory.length > 0 ? (
+                        empLeaveHistory.map((lv) => (
+                          <div
+                            key={lv.id}
+                            className="p-3 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-between gap-3"
+                          >
                             <div>
-                              <p className="font-semibold text-slate-800">{lv.leaveType} ({lv.totalDays} Days)</p>
-                              <p className="text-[11px] text-slate-500 font-mono tabular-nums">
+                              <p className="font-semibold text-slate-800">
+                                {lv.leaveType} ({lv.totalDays || lv.daysRequested} Days)
+                              </p>
+                              <p className="text-[10px] text-slate-500 font-mono">
                                 {lv.startDate} → {lv.endDate}
                               </p>
+                              {lv.reason && <p className="text-[11px] text-slate-600 mt-0.5">{lv.reason}</p>}
                             </div>
                             <span
-                              className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded border shrink-0 ${
                                 lv.status === 'Approved'
-                                  ? 'text-[#174EA6] bg-[#EFF6FF] border-[#BFDBFE]'
+                                  ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
                                   : lv.status === 'Rejected'
-                                  ? 'text-[#111827] bg-[#F5F7FA] border-[#111827]/25'
-                                  : 'text-[#B88A24] bg-[#FAF5EB] border-[#E9D59A]'
+                                  ? 'text-rose-700 bg-rose-50 border-rose-200'
+                                  : 'text-amber-700 bg-amber-50 border-amber-200'
                               }`}
                             >
                               {lv.status}
                             </span>
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-slate-500 py-3">No leave requests submitted by this employee.</p>
-                    )}
+                        ))
+                      ) : (
+                        <p className="text-xs text-slate-500 py-3">
+                          No leave requests recorded for {employee.fullName}.
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </>
               )}
 
               {onNavigateLeave && (
                 <button
-                  type="button"
                   onClick={onNavigateLeave}
-                  className="w-full py-2.5 rounded-xl bg-[#174EA6] text-[#D4AF37] font-semibold text-xs hover:bg-[#0B1F3A] transition text-center cursor-pointer shadow-2xs"
+                  className="w-full py-2.5 rounded-xl bg-[#083E34] text-amber-300 font-bold text-xs hover:bg-[#062f28] transition text-center cursor-pointer shadow-xs active:scale-95"
                 >
                   Manage Leave Requests in Leave Module →
                 </button>
@@ -1758,59 +1808,102 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
           )}
 
           {/* TAB 8: ATTENDANCE */}
-          {activeTab === 'attendance' && (
-            <div className="space-y-6 animate-fade-in">
-              {attendanceLoading ? (
-                <p className="text-xs text-slate-500 py-4 text-center">Loading attendance telemetry...</p>
-              ) : (
-                <>
-                  <div className="grid grid-cols-3 gap-3 tabular-nums">
-                    <div className="p-3.5 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] text-center">
-                      <span className="text-[11px] text-[#174EA6] font-semibold block">Total Logs</span>
-                      <div className="text-xl font-bold text-[#174EA6] mt-1">{empAttendance.length}</div>
-                      <span className="text-[10px] text-[#174EA6]">Recorded punches</span>
-                    </div>
-                    <div className="p-3.5 rounded-xl bg-[#FAF5EB] border border-[#E9D59A] text-center">
-                      <span className="text-[11px] text-[#B88A24] font-semibold block">Late Instances</span>
-                      <div className="text-xl font-bold text-[#B88A24] mt-1">
-                        {empAttendance.filter((r) => r.status === 'Late').length}
-                      </div>
-                      <span className="text-[10px] text-[#B88A24]">In window</span>
-                    </div>
-                    <div className="p-3.5 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE]/60 text-center">
-                      <span className="text-[11px] text-[#174EA6] font-semibold block">Device ID</span>
-                      <div className="text-sm font-bold text-[#0B1F3A] mt-2 font-mono">
-                        {employee.biometricDeviceId || 'Web / Unassigned'}
-                      </div>
-                      <span className="text-[10px] text-[#174EA6]/80">Verification Profile</span>
-                    </div>
-                  </div>
+          {activeTab === 'attendance' && (() => {
+            const combinedEntries = [
+              ...empBioSummaries.map((s) => ({
+                id: s.id,
+                date: s.date,
+                checkIn: s.clockInTime,
+                checkOut: s.clockOutTime,
+                source: 'ZKTeco Biometric',
+                status: classifyDailySummaryStatus(s, employee).dashboardStatus,
+              })),
+              ...empAttendanceLogs
+                .filter((log) => !empBioSummaries.some((s) => s.date === log.date))
+                .map((log) => ({
+                  id: log.id,
+                  date: log.date,
+                  checkIn: log.clockInTime || '—',
+                  checkOut: log.clockOutTime || '—',
+                  source: log.verificationSource || 'Biometric_ZKTeco',
+                  status: log.status,
+                })),
+            ].sort((a, b) => b.date.localeCompare(a.date));
 
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-slate-900 uppercase tracking-wider text-xs pb-1 border-b border-slate-200">
-                      Recent Attendance Clock-Ins
-                    </h4>
-                    {empAttendance.length > 0 ? (
-                      <div className="divide-y divide-slate-100 text-xs">
-                        {empAttendance.slice(0, 6).map((rec) => (
-                          <div key={rec.id} className="py-2 flex justify-between gap-2 tabular-nums">
-                            <span className="font-medium text-slate-800">{rec.date}</span>
-                            <span className="font-mono text-[#174EA6] font-semibold">
-                              {rec.clockInTime || 'Logged'} · {rec.status}
+            const totalLogs = combinedEntries.length;
+            const lateLogs = combinedEntries.filter((e) => e.status === 'Late').length;
+            const punctuality =
+              totalLogs > 0 ? Math.round(((totalLogs - lateLogs) / totalLogs) * 100) : null;
+
+            return (
+              <div className="space-y-6 animate-fade-in">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-100 text-center">
+                    <span className="text-[10px] text-emerald-700 font-bold block">Punctuality Rate</span>
+                    <div className="text-xl font-bold text-emerald-900 mt-1">
+                      {punctuality !== null ? `${punctuality}%` : '—'}
+                    </div>
+                    <span className="text-[10px] text-emerald-600">
+                      {totalLogs > 0 ? `${totalLogs} recorded day${totalLogs === 1 ? '' : 's'}` : 'No punches yet'}
+                    </span>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-100 text-center">
+                    <span className="text-[10px] text-amber-700 font-bold block">Late Instances</span>
+                    <div className="text-xl font-bold text-amber-900 mt-1">{lateLogs}</div>
+                    <span className="text-[10px] text-amber-600">10-min grace applied</span>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-100 text-center">
+                    <span className="text-[10px] text-blue-700 font-bold block">Verification Channel</span>
+                    <div className="text-sm font-bold text-blue-900 mt-2 font-mono">
+                      {combinedEntries[0]?.source || 'ZKTeco Biometric'}
+                    </div>
+                    <span className="text-[10px] text-blue-600">{employee.entityName}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="font-bold text-slate-900 uppercase tracking-wider text-xs pb-1 border-b border-slate-200">
+                    Recorded Biometric &amp; Attendance Logs
+                  </h4>
+                  {attendanceLoading ? (
+                    <p className="text-xs text-slate-500 py-3">Loading attendance logs...</p>
+                  ) : combinedEntries.length > 0 ? (
+                    <div className="divide-y divide-slate-100 text-xs">
+                      {combinedEntries.slice(0, 10).map((entry) => (
+                        <div key={entry.id} className="py-2.5 flex items-center justify-between gap-2">
+                          <div>
+                            <span className="font-medium text-slate-800 block">{formatDate(entry.date)}</span>
+                            <span className="text-[10px] text-slate-500">{entry.source}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-slate-800 font-semibold">
+                              {entry.checkIn}
+                              {entry.checkOut && entry.checkOut !== '—' && entry.checkOut !== entry.checkIn
+                                ? ` → ${entry.checkOut}`
+                                : ''}
+                            </span>
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                entry.status === 'Late'
+                                  ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              }`}
+                            >
+                              {entry.status}
                             </span>
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-slate-500 py-3">
-                        No recent clock-in logs recorded for this staff member.
-                      </p>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-500 py-4 text-center bg-slate-50 rounded-xl border border-slate-100">
+                      No biometric clock-ins imported yet for {employee.fullName}. Records will appear here once ZKTeco attendance logs are synced.
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* TAB 9: PERFORMANCE */}
           {activeTab === 'performance' && (
@@ -1835,9 +1928,9 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
 
                 return (
                   <>
-                    <div className="p-4 bg-[#FAF5EB] rounded-xl border border-[#E9D59A] flex items-center justify-between">
+                    <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 flex items-center justify-between">
                       <div>
-                        <span className="text-[10px] text-[#B88A24] font-bold uppercase tracking-wider block">
+                        <span className="text-[10px] text-amber-800 font-bold uppercase tracking-wider block">
                           Latest PCCM Performance Calibration
                         </span>
                         {reviewsLoading ? (
@@ -1846,7 +1939,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                           <div className="text-2xl font-black text-slate-900 mt-1 flex items-center gap-2 flex-wrap">
                             <span>{scoreVal !== null ? scoreVal.toFixed(2) : '—'}</span>
                             <span className="text-xs font-semibold text-slate-500">/ 5.0</span>
-                            <span className="text-xs px-2 py-0.5 rounded bg-[#B88A24] text-slate-950 font-bold">
+                            <span className="text-xs px-2 py-0.5 rounded bg-amber-400 text-slate-950 font-bold">
                               {bandLabel}
                             </span>
                             {latestScored && (
@@ -1857,7 +1950,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                           </div>
                         )}
                       </div>
-                      <Award className="w-10 h-10 text-[#B88A24] shrink-0" />
+                      <Award className="w-10 h-10 text-amber-600 shrink-0" />
                     </div>
 
                     <div className="space-y-3">
@@ -1874,12 +1967,12 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                                 <span className="font-semibold text-slate-800">
                                   {idx + 1}. {rating.kpiTitle} ({Number(rating.weight ?? 0)}%)
                                 </span>
-                                <span className="font-mono font-bold text-[#174EA6] shrink-0">
+                                <span className="font-mono font-bold text-emerald-700 shrink-0">
                                   {rVal > 0 ? `${rVal.toFixed(1)} / 5.0` : 'Pending'}
                                 </span>
                               </div>
                               <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                                <div className="h-full bg-[#174EA6] rounded-full" style={{ width: `${pct}%` }} />
+                                <div className="h-full bg-emerald-600 rounded-full" style={{ width: `${pct}%` }} />
                               </div>
                               {rating.comment && (
                                 <p className="text-[11px] text-slate-600 italic">"{rating.comment}"</p>
@@ -1914,7 +2007,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                   setActiveTab('personal');
                   setSelfEditOpen(true);
                 }}
-                className="px-4 py-2 border border-[#BFDBFE] bg-[#EFF6FF] text-[#174EA6] rounded-xl text-xs font-semibold hover:bg-[#DBEAFE] transition cursor-pointer"
+                className="px-4 py-2 border border-emerald-300 bg-emerald-50 text-[#083E34] rounded-xl text-xs font-semibold hover:bg-emerald-100 transition cursor-pointer"
               >
                 Update Personal Info
               </button>

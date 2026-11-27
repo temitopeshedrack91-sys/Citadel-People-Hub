@@ -22,8 +22,8 @@ class RoleAuthorization
     {
         return match (strtoupper(trim($role ?? ''))) {
             'ADMIN', 'SYSTEM_ADMIN', 'SYSADMIN', 'SUPER_ADMIN' => 'ADMIN',
-            'HR_STAFF', 'HR', 'HR_MANAGER', 'PCCM_SUPER_ADMIN', 'BUSINESS_HEAD', 'DEPARTMENT_HEAD' => 'HR_STAFF',
-            'MANAGER' => 'MANAGER',
+            'HR_STAFF', 'HR', 'HR_MANAGER', 'PCCM_SUPER_ADMIN' => 'HR_STAFF',
+            'MANAGER', 'BUSINESS_HEAD', 'DEPARTMENT_HEAD' => 'MANAGER',
             'EMPLOYEE', 'STAFF', 'USER' => 'EMPLOYEE',
             'VIEWER', 'AUDITOR', 'READONLY', 'GUEST' => 'VIEWER',
             default => null,

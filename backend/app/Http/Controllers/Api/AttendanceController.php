@@ -274,7 +274,11 @@ class AttendanceController extends Controller
             );
 
             $clockInTime = now();
-            $shiftStart = $data['shiftStart'] ?? '08:00';
+            $deptLower = strtolower((string) ($employee->department()->value('name') ?? $data['department'] ?? ''));
+            $defaultShiftStart = (str_contains($deptLower, 'facilit') || str_contains($deptLower, 'maintenance'))
+                ? '07:00'
+                : '09:00';
+            $shiftStart = $data['shiftStart'] ?? $defaultShiftStart;
             [$shiftHour, $shiftMinute] = array_map('intval', explode(':', $shiftStart));
             $graceCutoff = $clockInTime->copy()->setTime($shiftHour, $shiftMinute, 0)->addMinutes(10);
             $isLate = $clockInTime->gt($graceCutoff);
