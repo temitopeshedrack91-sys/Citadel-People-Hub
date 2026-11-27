@@ -183,7 +183,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500">
-              <span className="uppercase tracking-wider text-[#083E34]">Divisional Governance</span>
+              <span className="uppercase tracking-wider text-[#174EA6]">Divisional Governance</span>
               <span aria-hidden="true">·</span>
               <span>{currentUser.entityName}</span>
             </div>
@@ -217,15 +217,15 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
         </div>
 
         {actionFeedback && (
-          <div role="status" className="mt-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" aria-hidden="true" />
+          <div role="status" className="mt-4 p-3 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] text-[#174EA6] text-xs font-medium flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-[#174EA6] shrink-0" aria-hidden="true" />
             <span>{actionFeedback}</span>
           </div>
         )}
 
         {actionError && (
-          <div role="alert" className="mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" aria-hidden="true" />
+          <div role="alert" className="mt-4 p-3 rounded-xl bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] text-xs font-medium flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-[#111827] shrink-0" aria-hidden="true" />
             <span>{actionError}</span>
           </div>
         )}
@@ -236,7 +236,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
         <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-slate-600">Scoped Headcount</span>
-            <div className="w-8 h-8 rounded-lg bg-[#EBF5F2] text-[#083E34] flex items-center justify-center border border-[#A3D4C7]/50">
+            <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] text-[#174EA6] flex items-center justify-center border border-[#BFDBFE]/50">
               <Users className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
@@ -262,12 +262,12 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
         <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-slate-600">Pending Approvals</span>
-            <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-700 flex items-center justify-center border border-rose-200">
+            <div className="w-8 h-8 rounded-lg bg-[#F5F7FA] text-[#111827] flex items-center justify-center border border-[#111827]/25">
               <CalendarDays className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5 tabular-nums">
-            <span className={`text-2xl font-bold ${pendingExecutiveQueue.length > 0 ? 'text-rose-700' : 'text-slate-900'}`}>
+            <span className={`text-2xl font-bold ${pendingExecutiveQueue.length > 0 ? 'text-[#111827]' : 'text-slate-900'}`}>
               {pendingExecutiveQueue.length}
             </span>
             <span className="text-xs text-slate-500 font-medium">awaiting review</span>
@@ -277,7 +277,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
         <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-slate-600">Approved Leaves</span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200">
+            <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] text-[#174EA6] flex items-center justify-center border border-[#BFDBFE]">
               <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
@@ -293,7 +293,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
         <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
           <div>
             <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-[#083E34]" aria-hidden="true" />
+              <ShieldCheck className="w-4 h-4 text-[#174EA6]" aria-hidden="true" />
               <span>Pending Divisional Leave Queue ({pendingExecutiveQueue.length})</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -328,7 +328,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
                     type="button"
                     disabled={processingId === req.id}
                     onClick={() => handleExecutiveDecline(req)}
-                    className="px-3.5 py-2 rounded-xl border border-rose-200 text-rose-700 hover:bg-rose-50 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                    className="px-3.5 py-2 rounded-xl border border-[#111827]/25 text-[#111827] hover:bg-[#F5F7FA] font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
                   >
                     <X className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Decline</span>
@@ -348,7 +348,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
           </div>
         ) : (
           <div className="p-6 text-center space-y-1.5">
-            <CheckCircle2 className="w-6 h-6 text-emerald-600 mx-auto" aria-hidden="true" />
+            <CheckCircle2 className="w-6 h-6 text-[#174EA6] mx-auto" aria-hidden="true" />
             <h3 className="text-xs font-semibold text-slate-900">All Divisional Approvals Up to Date</h3>
             <p className="text-xs text-slate-500">
               No pending leave requests require review in your division right now.
@@ -362,7 +362,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-[#083E34]" aria-hidden="true" />
+              <Building2 className="w-4 h-4 text-[#174EA6]" aria-hidden="true" />
               <span>Departments Breakdown</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -372,7 +372,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
           <button
             type="button"
             onClick={() => onNavigate('directory')}
-            className="text-xs font-semibold text-[#083E34] hover:underline flex items-center gap-1 cursor-pointer"
+            className="text-xs font-semibold text-[#174EA6] hover:underline flex items-center gap-1 cursor-pointer"
           >
             <span>View Workforce</span>
             <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />

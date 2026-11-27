@@ -227,7 +227,7 @@ export const AuthPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#F6F7F9] grid grid-cols-1 lg:grid-cols-12 font-sans antialiased text-slate-900">
+    <div className="min-h-screen w-full bg-[#F5F7FA] grid grid-cols-1 lg:grid-cols-12 font-sans antialiased text-slate-900">
       {/* Left Architectural Brand Column (Desktop) */}
       <aside className="hidden lg:flex lg:col-span-5 bg-[#072620] text-white flex-col justify-between p-12 xl:p-16 relative overflow-hidden border-r border-white/10">
         {/* Subtle architectural hairline grid */}
@@ -254,7 +254,7 @@ export const AuthPage: React.FC = () => {
             <p className="font-display text-sm font-bold tracking-tight text-white leading-tight">
               Citadel People Hub
             </p>
-            <p className="text-xs text-emerald-100/70 font-medium mt-0.5">
+            <p className="text-xs text-blue-100 font-medium mt-0.5">
               The Citadel Global Community Church
             </p>
           </div>
@@ -269,7 +269,7 @@ export const AuthPage: React.FC = () => {
             <h2 className="font-display text-3xl xl:text-4xl font-bold tracking-tight text-white leading-[1.15]">
               Workforce stewardship, built for every Citadel entity.
             </h2>
-            <p className="text-sm text-emerald-100/75 leading-relaxed">
+            <p className="text-sm text-blue-100 leading-relaxed">
               Manage staff directories, reporting hierarchies, two-stage leave workflows, attendance, and payroll from one unified workspace.
             </p>
           </div>
@@ -277,21 +277,21 @@ export const AuthPage: React.FC = () => {
           <div className="pt-6 border-t border-white/12 grid grid-cols-3 gap-6">
             <div>
               <p className="font-display text-sm font-semibold text-white">CGCC</p>
-              <p className="text-xs text-emerald-100/65 mt-0.5">Church &amp; Ministry</p>
+              <p className="text-xs text-blue-100 mt-0.5">Church &amp; Ministry</p>
             </div>
             <div>
               <p className="font-display text-sm font-semibold text-white">CSOG</p>
-              <p className="text-xs text-emerald-100/65 mt-0.5">School of Government</p>
+              <p className="text-xs text-blue-100 mt-0.5">School of Government</p>
             </div>
             <div>
               <p className="font-display text-sm font-semibold text-white">Holdings</p>
-              <p className="text-xs text-emerald-100/65 mt-0.5">Commercial Units</p>
+              <p className="text-xs text-blue-100 mt-0.5">Commercial Units</p>
             </div>
           </div>
         </div>
 
         {/* Quiet Institutional Footer */}
-        <div className="relative z-10 flex items-center justify-between text-xs text-emerald-100/55 pt-6 border-t border-white/10">
+        <div className="relative z-10 flex items-center justify-between text-xs text-blue-100 pt-6 border-t border-white/10">
           <span>Citadel PCCM Directorate</span>
           <span>Role-Based Access Control</span>
         </div>
@@ -394,15 +394,15 @@ export const AuthPage: React.FC = () => {
 
             {/* Alerts */}
             {errorMessage && (
-              <div role="alert" className="p-3.5 bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium rounded-xl flex items-start gap-2.5">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
+              <div role="alert" className="p-3.5 bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] text-xs font-medium rounded-xl flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0 text-[#111827] mt-0.5" />
                 <span>{errorMessage}</span>
               </div>
             )}
 
             {successMessage && (
-              <div role="status" className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium rounded-xl flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 mt-0.5" />
+              <div role="status" className="p-3.5 bg-[#EFF6FF] border border-[#BFDBFE] text-[#174EA6] text-xs font-medium rounded-xl flex items-start gap-2.5">
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-[#174EA6] mt-0.5" />
                 <span>{successMessage}</span>
               </div>
             )}
@@ -423,7 +423,7 @@ export const AuthPage: React.FC = () => {
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="e.g. Dr. Bukola Adeleke"
-                      className="w-full pl-10 pr-4 py-2.5 min-h-[44px] bg-white border border-slate-200 hover:border-slate-300 focus:border-[#083E34] rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#083E34]/15 transition"
+                      className="w-full pl-10 pr-4 py-2.5 min-h-[44px] bg-white border border-slate-200 hover:border-slate-300 focus:border-[#174EA6] rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#174EA6]/15 transition"
                     />
                   </div>
                 </div>
@@ -443,7 +443,7 @@ export const AuthPage: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@citadel.ng"
-                    className="w-full pl-10 pr-4 py-2.5 min-h-[44px] bg-white border border-slate-200 hover:border-slate-300 focus:border-[#083E34] rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#083E34]/15 transition"
+                    className="w-full pl-10 pr-4 py-2.5 min-h-[44px] bg-white border border-slate-200 hover:border-slate-300 focus:border-[#174EA6] rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#174EA6]/15 transition"
                   />
                 </div>
               </div>
@@ -467,7 +467,7 @@ export const AuthPage: React.FC = () => {
                         setSuccessMessage('Password reset link dispatched to your registered work email.');
                         setTimeout(() => setSuccessMessage(''), 4000);
                       }}
-                      className="text-xs font-semibold text-[#083E34] hover:text-[#052C25] hover:underline cursor-pointer"
+                      className="text-xs font-semibold text-[#174EA6] hover:text-[#0B1F3A] hover:underline cursor-pointer"
                     >
                       Forgot password?
                     </button>
@@ -483,7 +483,7 @@ export const AuthPage: React.FC = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
-                    className="w-full pl-10 pr-11 py-2.5 min-h-[44px] bg-white border border-slate-200 hover:border-slate-300 focus:border-[#083E34] rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#083E34]/15 transition"
+                    className="w-full pl-10 pr-11 py-2.5 min-h-[44px] bg-white border border-slate-200 hover:border-slate-300 focus:border-[#174EA6] rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#174EA6]/15 transition"
                   />
                   <button
                     type="button"
@@ -504,7 +504,7 @@ export const AuthPage: React.FC = () => {
                   id="rememberDevice"
                   checked={rememberDevice}
                   onChange={(e) => setRememberDevice(e.target.checked)}
-                  className="w-4 h-4 rounded text-[#083E34] accent-[#083E34] border-slate-300 focus:ring-[#083E34] cursor-pointer"
+                  className="w-4 h-4 rounded text-[#174EA6] accent-[#174EA6] border-slate-300 focus:ring-[#174EA6] cursor-pointer"
                 />
                 <label
                   htmlFor="rememberDevice"
@@ -518,7 +518,7 @@ export const AuthPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-[#083E34] hover:bg-[#062E27] active:scale-[0.99] text-white font-semibold py-3 px-4 min-h-[44px] rounded-xl transition flex items-center justify-center gap-2 text-sm cursor-pointer disabled:opacity-60"
+                className="w-full bg-[#174EA6] hover:bg-[#0B1F3A] active:scale-[0.99] text-white font-semibold py-3 px-4 min-h-[44px] rounded-xl transition flex items-center justify-center gap-2 text-sm cursor-pointer disabled:opacity-60"
               >
                 <span>
                   {isSubmitting
@@ -541,7 +541,7 @@ export const AuthPage: React.FC = () => {
                 className="w-full flex items-center justify-between text-left cursor-pointer group"
               >
                 <div className="flex items-center gap-2 text-xs font-semibold text-slate-800">
-                  <Fingerprint className="w-4 h-4 text-[#083E34]" />
+                  <Fingerprint className="w-4 h-4 text-[#174EA6]" />
                   <span>
                     {localDemoAuthenticationEnabled
                       ? 'Demo Credentials (1-Click Fill)'
@@ -566,7 +566,7 @@ export const AuthPage: React.FC = () => {
                         onClick={() => handleSelectDemo(acc)}
                         className={`p-2.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between ${
                           isSelected
-                            ? 'border-[#083E34] bg-[#EBF5F2]/60 ring-1 ring-[#083E34]/20'
+                            ? 'border-[#174EA6] bg-[#EFF6FF]/60 ring-1 ring-[#174EA6]/20'
                             : 'border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50'
                         }`}
                       >

@@ -11,46 +11,46 @@ export const CITADEL_BRAND = {
   primaryHrFunction: 'People, Culture & Change Management (PCCM)',
   officialHrRole: 'People, Culture & Change Manager (PCCM)',
   
-  // Color Palette Tokens
+  // Color Palette Tokens (Strictly White, Gold, Black, and Blue)
   colors: {
-    // Primary Action: Deep Forest Green matching Hrivio/Citadel reference
-    primary: '#083E34',
-    primaryLight: '#0F5447',
-    primaryDark: '#052C25',
-    primarySubtle: '#EBF5F2',
-    
-    // Accent: Vibrant Citadel Classic Gold (Official Church brand color from Onboarding SOP & SOP Brand Guidelines)
+    // Primary Action: Royal Blue (#174EA6) & Deep Navy (#0B1F3A)
+    primary: '#174EA6',
+    primaryLight: '#2563EB',
+    primaryDark: '#0B1F3A',
+    primarySubtle: '#EFF6FF',
+
+    // Accent: Premium Gold (#D4AF37 / #B88A24)
     accent: '#D4AF37',
     accentLight: '#FAF5EB',
-    accentDark: '#D97706',
+    accentDark: '#B88A24',
     gold: '#D4AF37',
     goldLight: '#FAF5EB',
-    goldHover: '#C59B27',
-    goldDark: '#D97706',
-    goldBorder: '#F2E4B8',
+    goldHover: '#B88A24',
+    goldDark: '#B88A24',
+    goldBorder: '#E9D59A',
     citadelGold: '#D4AF37',
-    
+
     // Supporting Neutrals
-    slate900: '#0F172A',
+    slate900: '#111827',
     slate800: '#1E293B',
     slate700: '#334155',
-    slate600: '#475569',
+    slate600: '#64748B',
     slate400: '#94A3B8',
-    slate200: '#E2E8F0',
-    slate100: '#F1F5F9',
-    slate50: '#F8FAFC',
+    slate200: '#E5E7EB',
+    slate100: '#F5F7FA',
+    slate50: '#F5F7FA',
     pureWhite: '#FFFFFF',
 
-    // Semantic Status Colors (Color + Text label pattern)
+    // Semantic Status Colors (White, Gold, Black, Blue + labels)
     status: {
-      success: '#059669', // Approved / Active / Confirmed
-      successBg: '#ECFDF5',
-      warning: '#D97706', // Pending / Away / Review
-      warningBg: '#FFFBEB',
-      danger: '#DC2626',  // Rejected / High Alert / Cancelled
-      dangerBg: '#FEF2F2',
-      info: '#0284C7',    // Ongoing / In Review / Informational
-      infoBg: '#F0F9FF',
+      success: '#174EA6',
+      successBg: '#EFF6FF',
+      warning: '#B88A24',
+      warningBg: '#FAF5EB',
+      danger: '#111827',
+      dangerBg: '#F5F7FA',
+      info: '#0B1F3A',
+      infoBg: '#EFF6FF',
     }
   },
 

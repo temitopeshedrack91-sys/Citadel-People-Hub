@@ -17,10 +17,10 @@ export const PWAInstallButton: React.FC = () => {
       <button
         id="btn-pwa-install"
         onClick={install}
-        className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-amber-300 bg-[#083E34] hover:bg-[#052C25] border border-amber-400/30 rounded-xl transition shadow-xs"
+        className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-[#D4AF37] bg-[#0B1F3A] hover:bg-[#174EA6] border border-[#D4AF37]/40 rounded-xl transition shadow-xs"
         title="Install Citadel People Hub as a Progressive Web App"
       >
-        <Download className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+        <Download className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
         <span className="hidden sm:inline">Install App</span>
       </button>
     );
@@ -33,10 +33,10 @@ export const PWAInstallButton: React.FC = () => {
         <button
           id="btn-pwa-install-ios"
           onClick={() => setShowIOSGuide(true)}
-          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-amber-300 bg-[#083E34] hover:bg-[#052C25] border border-amber-400/30 rounded-xl transition shadow-xs"
+          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-[#D4AF37] bg-[#0B1F3A] hover:bg-[#174EA6] border border-[#D4AF37]/40 rounded-xl transition shadow-xs"
           title="Install on iOS"
         >
-          <Smartphone className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <Smartphone className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
           <span className="hidden sm:inline">Install on iOS</span>
         </button>
 
@@ -62,7 +62,7 @@ export const PWAInstallButton: React.FC = () => {
               </ol>
               <button
                 onClick={() => setShowIOSGuide(false)}
-                className="mt-4 w-full rounded-xl bg-[#083E34] text-white py-2 text-xs font-semibold hover:bg-[#052C25] transition"
+                className="mt-4 w-full rounded-xl bg-[#174EA6] text-white py-2 text-xs font-semibold hover:bg-[#0B1F3A] transition"
               >
                 Done
               </button>

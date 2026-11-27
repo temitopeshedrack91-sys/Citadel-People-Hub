@@ -90,10 +90,10 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
     >
       <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 bg-[#083E34] text-white shrink-0 border-b border-emerald-950/30">
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 bg-[#0B1F3A] text-white shrink-0 border-b border-white/10">
           <div>
             <h3 className="text-base font-semibold text-white">Workflow Action</h3>
-            <p className="text-xs text-amber-300/90">{title}</p>
+            <p className="text-xs text-[#D4AF37]">{title}</p>
           </div>
           <button
             type="button"
@@ -112,7 +112,7 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
             {itemDescription}
             <div className="mt-2 flex items-center gap-2">
               <span className="text-slate-500">Current Status:</span>
-              <span className="px-2 py-0.5 rounded-full font-mono font-medium bg-amber-100 text-amber-800 text-[11px] border border-amber-300">
+              <span className="px-2 py-0.5 rounded-full font-mono font-medium bg-[#FAF5EB] text-[#B88A24] text-[11px] border border-[#E9D59A]">
                 {currentStatus}
               </span>
             </div>
@@ -132,15 +132,15 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
                     onClick={() => setSelectedAction(action)}
                     className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition cursor-pointer ${
                       isSelected
-                        ? 'border-[#083E34] bg-[#083E34]/5 text-[#083E34] ring-1 ring-[#083E34]'
-                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                        ? 'border-[#174EA6] bg-[#EFF6FF] text-[#174EA6] ring-1 ring-[#174EA6]'
+                        : 'border-[#E5E7EB] text-[#64748B] hover:bg-[#F5F7FA]'
                     }`}
                   >
-                    {action === 'Approve' && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
-                    {action === 'Reject' && <XCircle className="w-4 h-4 text-rose-600" />}
-                    {action === 'Request Correction' && <AlertCircle className="w-4 h-4 text-amber-600" />}
-                    {action === 'Cancel' && <X className="w-4 h-4 text-slate-500" />}
-                    {action === 'Submit' && <RefreshCw className="w-4 h-4 text-sky-600" />}
+                    {action === 'Approve' && <CheckCircle2 className="w-4 h-4 text-[#174EA6]" />}
+                    {action === 'Reject' && <XCircle className="w-4 h-4 text-[#111827]" />}
+                    {action === 'Request Correction' && <AlertCircle className="w-4 h-4 text-[#B88A24]" />}
+                    {action === 'Cancel' && <X className="w-4 h-4 text-[#64748B]" />}
+                    {action === 'Submit' && <RefreshCw className="w-4 h-4 text-[#174EA6]" />}
                     <span>{action}</span>
                   </button>
                 );
@@ -150,25 +150,25 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Reviewer Comments & Justification {selectedAction === 'Reject' && <span className="text-rose-600">*</span>}
+              Reviewer Comments & Justification {selectedAction === 'Reject' && <span className="text-[#111827]">*</span>}
             </label>
             <textarea
               value={comments}
               onChange={(e) => setComments(e.target.value)}
               rows={3}
               placeholder={`State rationale for ${selectedAction} (will be captured in audit trail and notified to requester)...`}
-              className="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34] outline-none"
+              className="w-full text-xs p-2.5 rounded-xl border border-[#E5E7EB] focus:border-[#174EA6] focus:ring-1 focus:ring-[#174EA6] outline-none"
             />
           </div>
 
-          <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
+          <div className="text-[11px] text-[#64748B] flex items-center gap-1.5">
             <span>Executing as:</span>
-            <strong className="text-slate-700">{currentUser.name}</strong>
+            <strong className="text-[#111827]">{currentUser.name}</strong>
             <span>({currentUser.jobTitle})</span>
           </div>
 
           {error && (
-            <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+            <div className="p-2.5 rounded-xl bg-[#F5F7FA] border border-[#111827] text-[#111827] text-xs font-medium">
               {error}
             </div>
           )}

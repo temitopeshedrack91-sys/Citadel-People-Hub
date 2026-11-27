@@ -15,17 +15,17 @@ import { useTrellis } from './TrellisContext';
 import { TrellisTask, TaskStatus, TaskLabel } from './types';
 
 const labelColors: Record<TaskLabel, string> = {
-  Bug: 'bg-rose-100 text-rose-700 border-rose-200/60',
-  Android: 'bg-sky-100 text-sky-700 border-sky-200/60',
-  Feature: 'bg-purple-100 text-purple-700 border-purple-200/60',
-  High: 'bg-rose-100 text-rose-700 border-rose-200/60',
-  Design: 'bg-indigo-100 text-indigo-700 border-indigo-200/60',
-  Tech: 'bg-emerald-100 text-emerald-700 border-emerald-200/60',
-  Onboarding: 'bg-sky-100 text-sky-700 border-sky-200/60',
-  Marketing: 'bg-[#FFF3E0] text-[#D97706] border-[#F2E4B8]',
-  Data: 'bg-teal-100 text-teal-700 border-teal-200/60',
-  Content: 'bg-amber-100 text-amber-800 border-amber-200/60',
-  'Design system': 'bg-[#FAF5EB] text-[#D97706] border-[#F2E4B8]',
+  Bug: 'bg-[#E5E7EB] text-[#111827] border-[#111827]/25',
+  Android: 'bg-[#DBEAFE] text-[#174EA6] border-[#BFDBFE]',
+  Feature: 'bg-[#DBEAFE] text-[#174EA6] border-[#BFDBFE]',
+  High: 'bg-[#E5E7EB] text-[#111827] border-[#111827]/25',
+  Design: 'bg-[#DBEAFE] text-[#174EA6] border-[#BFDBFE]',
+  Tech: 'bg-[#DBEAFE] text-[#174EA6] border-[#BFDBFE]',
+  Onboarding: 'bg-[#DBEAFE] text-[#174EA6] border-[#BFDBFE]',
+  Marketing: 'bg-[#FFF3E0] text-[#B88A24] border-[#F2E4B8]',
+  Data: 'bg-[#DBEAFE] text-[#0B1F3A] border-[#BFDBFE]/60',
+  Content: 'bg-[#FAF5EB] text-[#B88A24] border-[#E9D59A]',
+  'Design system': 'bg-[#FAF5EB] text-[#B88A24] border-[#F2E4B8]',
 };
 
 const columnConfigs: {
@@ -35,8 +35,8 @@ const columnConfigs: {
 }[] = [
   { status: 'To do', label: 'To do', dotColor: 'bg-slate-400' },
   { status: 'In progress', label: 'In progress', dotColor: 'bg-[#D4AF37]' },
-  { status: 'In review', label: 'In review', dotColor: 'bg-purple-600' },
-  { status: 'Done', label: 'Done', dotColor: 'bg-emerald-600' },
+  { status: 'In review', label: 'In review', dotColor: 'bg-[#174EA6]' },
+  { status: 'Done', label: 'Done', dotColor: 'bg-[#174EA6]' },
 ];
 
 export const TrellisBoard: React.FC = () => {
@@ -154,7 +154,7 @@ export const TrellisBoard: React.FC = () => {
                             setSelectedTaskId(task.id);
                           }
                         }}
-                        className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-[0_2px_8px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_22px_rgba(15,23,42,0.06)] hover:border-slate-300 transition-all duration-150 cursor-pointer space-y-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#083E34] focus-visible:ring-offset-2 select-none"
+                        className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-[0_2px_8px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_22px_rgba(15,23,42,0.06)] hover:border-slate-300 transition-all duration-150 cursor-pointer space-y-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#174EA6] focus-visible:ring-offset-2 select-none"
                       >
                         {/* Top row: Labels & Quick Actions */}
                         <div className="flex items-start justify-between gap-2">
@@ -170,12 +170,12 @@ export const TrellisBoard: React.FC = () => {
                               </span>
                             ))}
                             {task.assignmentStatus === 'pending' && (
-                              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-[#FAF5EB] text-[#B88A24] border border-[#E9D59A]">
                                 Pending
                               </span>
                             )}
                             {task.assignmentStatus === 'declined' && (
-                              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-[#F5F7FA] text-[#111827] border border-[#111827]/25">
                                 Declined
                               </span>
                             )}
@@ -203,7 +203,7 @@ export const TrellisBoard: React.FC = () => {
                               }}
                               data-testid={`trellis-card-delete-${task.id}`}
                               title="Delete task"
-                              className="p-1 rounded-md hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition"
+                              className="p-1 rounded-md hover:bg-[#F5F7FA] text-slate-400 hover:text-[#111827] transition"
                             >
                               <Trash2 className="w-3 h-3" />
                             </button>
@@ -211,7 +211,7 @@ export const TrellisBoard: React.FC = () => {
                         </div>
 
                         {/* Title */}
-                        <h4 className="text-xs sm:text-[13px] font-bold text-slate-900 group-hover:text-[#083E34] transition-colors leading-snug">
+                        <h4 className="text-xs sm:text-[13px] font-bold text-slate-900 group-hover:text-[#174EA6] transition-colors leading-snug">
                           {task.title}
                         </h4>
 

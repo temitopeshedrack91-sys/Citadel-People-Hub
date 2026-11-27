@@ -9,92 +9,91 @@
  */
 
 export const themeTokens = {
-  // Brand & Accent Colors
+  // Brand & Accent Colors (Strictly White, Gold, Black, and Blue)
   colors: {
-    // Primary Action: Deep Forest Green (#083E34 / #0D4A3E)
-    // Used for Quick Actions, active calendar day, progress gauge stroke, primary CTA buttons
+    // Primary Action: Royal Blue (#174EA6) & Deep Navy (#0B1F3A)
     primary: {
-      DEFAULT: '#083E34',
-      hover: '#052C25',
-      dark: '#031E19',
-      light: '#0F5447',
-      subtle: '#EBF5F2',
-      border: '#A3D4C7',
+      DEFAULT: '#174EA6',
+      hover: '#0B1F3A',
+      dark: '#0B1F3A',
+      light: '#2563EB',
+      subtle: '#EFF6FF',
+      border: '#BFDBFE',
     },
 
-    // Secondary / Action Accent (Citadel Classic Gold from Church SOP & Brand Guidelines)
+    // Secondary / Action Accent: Premium Gold (#D4AF37 / #B88A24)
     accent: {
       DEFAULT: '#D4AF37',
-      hover: '#C59B27',
+      hover: '#B88A24',
       light: '#FAF5EB',
-      subtle: '#FFF3E0',
+      subtle: '#FAF5EB',
       gold: '#D4AF37',
     },
 
     // Canvas & Surfaces
     background: {
-      canvas: '#F6F7F9',     // Clean alabaster-slate canvas
-      subtle: '#F8FAFC',
-      card: '#FFFFFF',       // Pure white single-elevation surface
+      canvas: '#F5F7FA',     // Muted light surface
+      subtle: '#F5F7FA',
+      card: '#FFFFFF',       // Pure white surface
       elevated: '#FFFFFF',
-      sidebar: '#071916',    // Obsidian-forest navigation rail
-      hover: '#F8FAFC',
+      sidebar: '#111827',    // Charcoal black navigation rail
+      hover: '#F5F7FA',
     },
 
     // Typography & Neutrals
     text: {
-      primary: '#0F172A',     // Slate 900 dark grey primary
-      secondary: '#334155',   // Slate 700
-      muted: '#64748B',       // Slate 500
-      light: '#94A3B8',       // Slate 400
+      primary: '#111827',     // Charcoal black primary text
+      secondary: '#334155',
+      muted: '#64748B',       // Supporting slate muted text
+      light: '#94A3B8',
       onDark: '#FFFFFF',
       onDarkMuted: '#94A3B8',
     },
 
     // Borders & Dividers
     border: {
-      DEFAULT: '#E5E9F0',     // Crisp hairline border
-      subtle: '#EEF2F6',      // Subtle row divider
-      strong: '#CBD5E1',      // Slate 300
-      active: '#083E34',      // Primary selection border
-      activeSubtle: '#B2DDD4',
+      DEFAULT: '#E5E7EB',     // Supporting hairline border
+      subtle: '#F1F5F9',
+      strong: '#CBD5E1',
+      active: '#174EA6',      // Royal Blue selection border
+      activeSubtle: '#BFDBFE',
     },
 
-    // Semantic Status Colors (Color + Text label pattern)
+    // Semantic Status Colors (Using White, Gold, Black, and Blue + labels/icons)
     status: {
-      // Light green for positive / in-progress / confirmed / online
+      // Royal Blue for positive / in-progress / confirmed / online
       success: {
-        text: '#059669',      // Emerald 600
-        bg: '#ECFDF5',        // Emerald 50
-        border: '#A7F3D0',    // Emerald 200
-        dot: '#10B981',
+        text: '#174EA6',
+        bg: '#EFF6FF',
+        border: '#BFDBFE',
+        dot: '#174EA6',
       },
-      // Yellow / amber for pending / away / review
+      // Premium Gold for pending / away / review
       warning: {
-        text: '#D97706',      // Amber 600
-        bg: '#FFFBEB',        // Amber 50
-        border: '#FDE68A',    // Amber 200
-        dot: '#F59E0B',
+        text: '#B88A24',
+        bg: '#FAF5EB',
+        border: '#E9D59A',
+        dot: '#D4AF37',
       },
-      // Red for rejected / high priority / negative change
+      // Charcoal Black / Deep Navy for rejected / high priority / negative change
       error: {
-        text: '#DC2626',      // Red 600
-        bg: '#FEF2F2',        // Red 50
-        border: '#FECACA',    // Red 200
-        dot: '#EF4444',
+        text: '#111827',
+        bg: '#F5F7FA',
+        border: '#111827',
+        dot: '#111827',
       },
-      // Info / Ongoing / In Review
+      // Deep Navy for ongoing / informational
       info: {
-        text: '#0284C7',      // Sky 600
-        bg: '#F0F9FF',        // Sky 50
-        border: '#BAE6FD',    // Sky 200
-        dot: '#0EA5E9',
+        text: '#0B1F3A',
+        bg: '#EFF6FF',
+        border: '#BFDBFE',
+        dot: '#0B1F3A',
       },
       // Neutral / On Leave / Offline
       neutral: {
-        text: '#334155',      // Slate 700
-        bg: '#F1F5F9',        // Slate 100
-        border: '#CBD5E1',    // Slate 300
+        text: '#64748B',
+        bg: '#F5F7FA',
+        border: '#E5E7EB',
         dot: '#64748B',
       },
     },

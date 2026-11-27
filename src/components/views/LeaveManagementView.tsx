@@ -604,7 +604,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
     subtitle: `${req.leaveType} • ${req.totalDays || req.daysRequested} Days (${req.startDate} to ${req.endDate})`,
     timestamp: req.appliedDate || 'Recent',
     avatar: (
-      <div className="w-9 h-9 rounded-lg bg-[#083E34] text-white font-semibold flex items-center justify-center text-xs shrink-0">
+      <div className="w-9 h-9 rounded-lg bg-[#174EA6] text-white font-semibold flex items-center justify-center text-xs shrink-0">
         {req.employeeName
           .split(' ')
           .map((n) => n[0])
@@ -667,7 +667,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
         {/* Header with Action Buttons */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-12 h-12 rounded-xl bg-[#083E34] text-white font-display font-bold text-base flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-[#174EA6] text-white font-display font-bold text-base flex items-center justify-center shrink-0">
               {req.employeeName
                 .split(' ')
                 .map((n) => n[0])
@@ -694,7 +694,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                   size="sm"
                 />
               </div>
-              <p className="text-xs font-semibold text-[#083E34] mt-0.5">{req.leaveType}</p>
+              <p className="text-xs font-semibold text-[#174EA6] mt-0.5">{req.leaveType}</p>
               <span className="text-xs text-slate-500 font-mono mt-0.5 block truncate">
                 {req.employeeStaffId} · {req.departmentName} · {req.entityName}
               </span>
@@ -708,16 +708,16 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                   onClick={() => handleReject(req)}
                   disabled={isProcessing}
                   data-testid="leave-reject-btn"
-                  className="px-3.5 py-2 rounded-lg bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                  className="px-3.5 py-2 rounded-lg bg-white hover:bg-[#F5F7FA] text-[#111827] border border-[#111827]/25 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
                 >
-                  <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                  <XCircle className="w-3.5 h-3.5 text-[#111827]" />
                   <span>Decline</span>
                 </button>
                 <button
                   onClick={() => handleApprove(req)}
                   disabled={isProcessing}
                   data-testid="leave-approve-btn"
-                  className="px-4 py-2 rounded-lg bg-[#083E34] hover:bg-[#062E27] text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2 rounded-lg bg-[#174EA6] hover:bg-[#0B1F3A] text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition cursor-pointer disabled:opacity-50"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                   <span>{stageLabel}</span>
@@ -741,8 +741,8 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
 
         {/* Review Comments & Feedback */}
         {actionError && (
-          <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+          <div className="p-3 rounded-lg bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] text-xs font-medium flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-[#111827]" />
             <span>{actionError}</span>
           </div>
         )}
@@ -759,14 +759,14 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                 setReviewComments((prev) => ({ ...prev, [req.id]: e.target.value }))
               }
               placeholder="Add operational handover notes or rejection reason..."
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/15"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#174EA6] focus:ring-2 focus:ring-[#174EA6]/15"
             />
           </div>
         )}
 
         {!canAct && waitingReason && (
-          <div className="p-3 rounded-lg bg-amber-50/70 border border-amber-200/80 text-amber-900 text-xs font-medium flex items-center gap-2">
-            <Clock className="w-4 h-4 shrink-0 text-amber-600" />
+          <div className="p-3 rounded-lg bg-[#FAF5EB] border border-[#E9D59A] text-[#B88A24] text-xs font-medium flex items-center gap-2">
+            <Clock className="w-4 h-4 shrink-0 text-[#B88A24]" />
             <span>{waitingReason}</span>
           </div>
         )}
@@ -775,14 +775,14 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
         {req.status === 'Rejected' && (
           <div
             data-testid="leave-rejection-banner"
-            className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 space-y-1"
+            className="p-4 rounded-xl bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] space-y-1"
           >
             <div className="flex items-center gap-2 text-xs font-bold">
-              <XCircle className="w-4 h-4 text-rose-600" />
+              <XCircle className="w-4 h-4 text-[#111827]" />
               <span>Stopped at {formatStageLabel(stoppedStage)}</span>
             </div>
             {req.approverComments && (
-              <p className="text-xs text-rose-800">Reason: {req.approverComments}</p>
+              <p className="text-xs text-[#111827]">Reason: {req.approverComments}</p>
             )}
           </div>
         )}
@@ -791,7 +791,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h4 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#083E34]" />
+              <ShieldCheck className="w-3.5 h-3.5 text-[#174EA6]" />
               <span>Two-Stage Approval Workflow</span>
             </h4>
             <span className="text-[11px] text-slate-500">
@@ -801,10 +801,10 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {/* Step 1: Submission */}
-            <div className="p-3 rounded-lg border bg-emerald-50/50 border-emerald-200/80">
-              <div className="flex items-center justify-between text-[11px] font-semibold text-emerald-900">
+            <div className="p-3 rounded-lg border bg-[#EFF6FF] border-[#BFDBFE]">
+              <div className="flex items-center justify-between text-[11px] font-semibold text-[#174EA6]">
                 <span>1. Submitted</span>
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#174EA6]" />
               </div>
               <p className="text-xs text-slate-800 font-medium mt-1 truncate">
                 {req.employeeName}
@@ -816,20 +816,20 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
             <div
               className={`p-3 rounded-lg border ${
                 rejectedAtManager
-                  ? 'bg-rose-50/60 border-rose-200/80'
+                  ? 'bg-[#F5F7FA] border-[#111827]/25'
                   : managerApproved
-                  ? 'bg-emerald-50/50 border-emerald-200/80'
-                  : 'bg-amber-50/50 border-amber-200/80'
+                  ? 'bg-[#EFF6FF] border-[#BFDBFE]'
+                  : 'bg-[#FAF5EB] border-[#E9D59A]'
               }`}
             >
               <div className="flex items-center justify-between text-[11px] font-semibold text-slate-900">
                 <span>2. Stage 1: Manager</span>
                 {rejectedAtManager ? (
-                  <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                  <XCircle className="w-3.5 h-3.5 text-[#111827]" />
                 ) : managerApproved ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#174EA6]" />
                 ) : (
-                  <Clock className="w-3.5 h-3.5 text-amber-600" />
+                  <Clock className="w-3.5 h-3.5 text-[#B88A24]" />
                 )}
               </div>
               <p className="text-xs text-slate-800 font-medium mt-1 truncate">
@@ -850,22 +850,22 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
             <div
               className={`p-3 rounded-lg border ${
                 rejectedAtHr
-                  ? 'bg-rose-50/60 border-rose-200/80'
+                  ? 'bg-[#F5F7FA] border-[#111827]/25'
                   : hrApproved
-                  ? 'bg-emerald-50/50 border-emerald-200/80'
+                  ? 'bg-[#EFF6FF] border-[#BFDBFE]'
                   : req.approvalStage === 'HR' && isPending
-                  ? 'bg-amber-50/50 border-amber-200/80'
+                  ? 'bg-[#FAF5EB] border-[#E9D59A]'
                   : 'bg-slate-50/70 border-slate-200/80'
               }`}
             >
               <div className="flex items-center justify-between text-[11px] font-semibold text-slate-900">
                 <span>3. Stage 2: HR Final</span>
                 {rejectedAtHr ? (
-                  <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                  <XCircle className="w-3.5 h-3.5 text-[#111827]" />
                 ) : hrApproved ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#174EA6]" />
                 ) : req.approvalStage === 'HR' && isPending ? (
-                  <Clock className="w-3.5 h-3.5 text-amber-600" />
+                  <Clock className="w-3.5 h-3.5 text-[#B88A24]" />
                 ) : (
                   <Clock className="w-3.5 h-3.5 text-slate-400" />
                 )}
@@ -936,7 +936,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
               </div>
               <div className="col-span-2">
                 <dt className="text-slate-500 font-medium">Total Duration</dt>
-                <dd className="font-bold text-[#083E34] tabular-nums mt-0.5">
+                <dd className="font-bold text-[#174EA6] tabular-nums mt-0.5">
                   {req.totalDays || req.daysRequested} Working Days
                 </dd>
               </div>
@@ -996,7 +996,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
           </div>
           <button
             onClick={() => showToast(`Exported leave summary for #${req.id}.`)}
-            className="text-xs text-[#083E34] hover:text-[#062E27] hover:underline font-semibold flex items-center gap-1.5 cursor-pointer"
+            className="text-xs text-[#174EA6] hover:text-[#0B1F3A] hover:underline font-semibold flex items-center gap-1.5 cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Export</span>
@@ -1009,7 +1009,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
   return (
     <div className="space-y-5 animate-fade-in font-sans">
       {toastMessage && (
-        <div role="status" className="fixed bottom-6 right-6 z-50 bg-[#083E34] text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-semibold animate-slide-up border border-emerald-900/40">
+        <div role="status" className="fixed bottom-6 right-6 z-50 bg-[#174EA6] text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-semibold animate-slide-up border border-[#BFDBFE]">
           <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />
           <span>{toastMessage}</span>
         </div>
@@ -1046,7 +1046,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                   setShowApplyModal(true);
                 }}
                 data-testid="leave-apply-btn"
-                className="px-4 py-2.5 rounded-lg bg-[#083E34] hover:bg-[#062E27] text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition active:scale-[0.98] shrink-0 min-h-[40px] cursor-pointer"
+                className="px-4 py-2.5 rounded-lg bg-[#174EA6] hover:bg-[#0B1F3A] text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition active:scale-[0.98] shrink-0 min-h-[40px] cursor-pointer"
               >
                 <Plus className="w-4 h-4 text-white stroke-[2.25]" />
                 <span>Apply for Leave</span>
@@ -1061,11 +1061,11 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
             {personalBalances.map((bal) => (
               <div key={String(bal.id)} className="flex items-baseline gap-1.5">
                 <span className="font-medium text-slate-600">{bal.category?.name || 'Leave'}</span>
-                <span className="font-mono font-semibold text-[#083E34]">
+                <span className="font-mono font-semibold text-[#174EA6]">
                   {Number(bal.remaining_days)}/{Number(bal.total_days)}d
                 </span>
                 {Number(bal.pending_days) > 0 && (
-                  <span className="text-[11px] text-amber-700 font-medium">
+                  <span className="text-[11px] text-[#B88A24] font-medium">
                     ({Number(bal.pending_days)} pending)
                   </span>
                 )}
@@ -1107,7 +1107,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in"
         >
           <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
-            <div className="bg-[#083E34] text-white p-5 relative border-b border-emerald-950/30 shrink-0">
+            <div className="bg-[#174EA6] text-white p-5 relative border-b border-[#BFDBFE] shrink-0">
               <button
                 type="button"
                 aria-label="Close leave modal"
@@ -1123,7 +1123,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                 <CalendarDays className="w-4 h-4 text-[#D4AF37]" />
                 <span>Submit Leave Application</span>
               </h3>
-              <p className="text-xs text-emerald-100/85 mt-0.5">
+              <p className="text-xs text-blue-100 mt-0.5">
                 Staff: {currentUser.name} ({currentUser.staffId}) · {currentUser.departmentName}
               </p>
             </div>
@@ -1132,9 +1132,9 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
               {submitError && (
                 <div
                   data-testid="leave-submit-error"
-                  className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-center gap-2"
+                  className="p-3 rounded-lg bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] text-xs font-medium flex items-center gap-2"
                 >
-                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                  <AlertCircle className="w-4 h-4 shrink-0 text-[#111827]" />
                   <span>{submitError}</span>
                 </div>
               )}
@@ -1145,7 +1145,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                   value={leaveType}
                   onChange={(e) => setLeaveType(e.target.value as LeaveType)}
                   data-testid="leave-type-select"
-                  className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 font-medium focus:outline-none focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/15"
+                  className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 font-medium focus:outline-none focus:border-[#174EA6] focus:ring-2 focus:ring-[#174EA6]/15"
                 >
                   {categoryOptions.map((catName) => {
                     const matchBal = personalBalances.find(
@@ -1173,7 +1173,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
                     data-testid="leave-start-date"
-                    className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/15"
+                    className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#174EA6] focus:ring-2 focus:ring-[#174EA6]/15"
                   />
                 </div>
                 <div>
@@ -1184,7 +1184,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
                     data-testid="leave-end-date"
-                    className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/15"
+                    className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#174EA6] focus:ring-2 focus:ring-[#174EA6]/15"
                   />
                 </div>
               </div>
@@ -1201,8 +1201,8 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                     <span
                       className={`px-2 py-0.5 rounded font-semibold ${
                         isDirectHrLeave
-                          ? 'bg-amber-100 text-amber-900'
-                          : 'bg-emerald-100 text-emerald-900'
+                          ? 'bg-[#FAF5EB] text-[#B88A24]'
+                          : 'bg-[#DBEAFE] text-[#174EA6]'
                       }`}
                     >
                       {isDirectHrLeave ? 'Direct HR Approval' : 'Manager → HR'}
@@ -1222,7 +1222,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                     onChange={(e) => setSelectedManagerId(e.target.value)}
                     disabled={isLoadingOptions && availableManagers.length === 0}
                     data-testid="leave-manager-select"
-                    className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 font-medium focus:outline-none focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/15 disabled:opacity-60"
+                    className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 font-medium focus:outline-none focus:border-[#174EA6] focus:ring-2 focus:ring-[#174EA6]/15 disabled:opacity-60"
                   >
                     <option value="">
                       {isLoadingOptions && availableManagers.length === 0
@@ -1238,7 +1238,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                     ))}
                   </select>
                   {directoryLoadError && (
-                    <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] text-rose-700 font-medium">
+                    <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] text-[#111827] font-medium">
                       <span>{directoryLoadError}</span>
                       <button
                         type="button"
@@ -1252,8 +1252,8 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                 </div>
               ) : null}
 
-              <div className="p-3 rounded-lg bg-emerald-50/60 border border-emerald-200/80 space-y-1">
-                <span className="font-semibold text-[#083E34] flex items-center gap-1.5">
+              <div className="p-3 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] space-y-1">
+                <span className="font-semibold text-[#174EA6] flex items-center gap-1.5">
                   <GitBranch className="w-3.5 h-3.5" />
                   {isDirectHrLeave ? 'Direct HR Approval Route (Sheet 7)' : 'Approval Route (Two-Stage Workflow)'}
                 </span>
@@ -1278,7 +1278,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                     onChange={(e) => setAttachmentName(e.target.value)}
                     data-testid="leave-attachment-input"
                     placeholder={`e.g. ${activeLeavePolicy?.attachmentLabel || 'Document'}.pdf`}
-                    className="flex-1 p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/15"
+                    className="flex-1 p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#174EA6] focus:ring-2 focus:ring-[#174EA6]/15"
                   />
                   <label className="px-3 py-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold cursor-pointer shrink-0">
                     Choose File
@@ -1295,7 +1295,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
               </div>
 
               {policyWarnings.length > 0 && (
-                <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-[11px]">
+                <div className="p-2.5 rounded-lg bg-[#FAF5EB] border border-[#E9D59A] text-[#B88A24] text-[11px]">
                   {policyWarnings.join(' ')}
                 </div>
               )}
@@ -1309,7 +1309,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                   value={handoverColleague}
                   onChange={(e) => setHandoverColleague(e.target.value)}
                   placeholder="Colleague who will cover responsibilities"
-                  className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/15"
+                  className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#174EA6] focus:ring-2 focus:ring-[#174EA6]/15"
                 />
               </div>
 
@@ -1322,7 +1322,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="Please state details regarding your leave request..."
                   data-testid="leave-reason-input"
-                  className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/15"
+                  className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#174EA6] focus:ring-2 focus:ring-[#174EA6]/15"
                 />
               </div>
 
@@ -1341,7 +1341,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                   type="submit"
                   disabled={isSubmitting}
                   data-testid="leave-submit-btn"
-                  className="px-5 py-2 bg-[#083E34] hover:bg-[#062E27] text-white font-semibold rounded-lg transition shadow-2xs cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2 bg-[#174EA6] hover:bg-[#0B1F3A] text-white font-semibold rounded-lg transition shadow-2xs cursor-pointer disabled:opacity-50"
                 >
                   {isSubmitting ? 'Submitting...' : `Submit (${daysRequested} day${daysRequested === 1 ? '' : 's'})`}
                 </button>

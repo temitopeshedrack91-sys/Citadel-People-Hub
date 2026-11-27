@@ -14,14 +14,14 @@ export const Badge: React.FC<BadgeProps> = ({
   className = '',
 }) => {
   const variantStyles = {
-    default: 'bg-slate-100/80 text-slate-700 border-slate-200/80',
-    citadel: 'bg-[#083E34]/8 text-[#083E34] border-[#083E34]/15',
-    gold: 'bg-[#FAF5EB] text-[#B45309] border-[#F2E4B8]/80',
-    success: 'bg-emerald-50/90 text-emerald-700 border-emerald-200/80',
-    warning: 'bg-[#FFFBEB] text-[#B45309] border-[#FDE68A]/80',
-    danger: 'bg-rose-50/90 text-rose-700 border-rose-200/80',
-    info: 'bg-sky-50/90 text-sky-700 border-sky-200/80',
-    neutral: 'bg-slate-100/80 text-slate-600 border-slate-200/80',
+    default: 'bg-[#F5F7FA] text-[#111827] border-[#E5E7EB]',
+    citadel: 'bg-[#174EA6]/10 text-[#174EA6] border-[#174EA6]/20',
+    gold: 'bg-[#FAF5EB] text-[#B88A24] border-[#D4AF37]/40',
+    success: 'bg-[#EFF6FF] text-[#174EA6] border-[#BFDBFE]',
+    warning: 'bg-[#FAF5EB] text-[#B88A24] border-[#E9D59A]',
+    danger: 'bg-[#F5F7FA] text-[#111827] border-[#111827]/35',
+    info: 'bg-[#EFF6FF] text-[#0B1F3A] border-[#BFDBFE]',
+    neutral: 'bg-[#F5F7FA] text-[#64748B] border-[#E5E7EB]',
   };
 
   return (

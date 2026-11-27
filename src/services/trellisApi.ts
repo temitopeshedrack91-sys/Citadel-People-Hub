@@ -58,8 +58,8 @@ const initials = (name: string): string => name.split(/\s+/).filter(Boolean).sli
 
 export function mapEmployeeToTeamMember(employee: Employee, index = 0): TeamMember {
   const colors = [
-    ['bg-amber-400', 'text-slate-900'], ['bg-emerald-500', 'text-white'], ['bg-purple-500', 'text-white'],
-    ['bg-cyan-500', 'text-white'], ['bg-blue-600', 'text-white'], ['bg-[#083E34]', 'text-amber-300'],
+    ['bg-[#B88A24]', 'text-slate-900'], ['bg-[#174EA6]', 'text-white'], ['bg-[#174EA6]', 'text-white'],
+    ['bg-[#174EA6]', 'text-white'], ['bg-blue-600', 'text-white'], ['bg-[#174EA6]', 'text-[#D4AF37]'],
   ];
   const name = employee.fullName || `${employee.firstName} ${employee.lastName}`.trim();
   const [avatarBg, avatarText] = colors[index % colors.length];

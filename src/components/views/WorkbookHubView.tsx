@@ -408,7 +408,7 @@ export const WorkbookHubView: React.FC = () => {
       {/* Header Banner */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-[#083E34]">
+          <div className="flex items-center gap-2 text-xs font-semibold text-[#174EA6]">
             <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />
             <span>Citadel People Hub · 24-Sheet Requirements Governance &amp; Operations</span>
           </div>
@@ -417,7 +417,7 @@ export const WorkbookHubView: React.FC = () => {
           </h2>
           <p className="text-xs text-slate-600 mt-0.5 max-w-3xl">
             Target V1 Launch: <strong className="text-slate-900">{WORKBOOK_PROJECT_SCOPE.targetLaunchDate}</strong> · Active Role:{' '}
-            <strong className="text-[#083E34]">{WORKBOOK_ROLE_SPECS[actorWorkbookRole].label}</strong> (Scope:{' '}
+            <strong className="text-[#174EA6]">{WORKBOOK_ROLE_SPECS[actorWorkbookRole].label}</strong> (Scope:{' '}
             {WORKBOOK_ROLE_SPECS[actorWorkbookRole].scope.replace(/_/g, ' ')})
           </p>
         </div>
@@ -428,9 +428,9 @@ export const WorkbookHubView: React.FC = () => {
               {WORKBOOK_ENTITIES.length} Entities · {WORKBOOK_DEPARTMENTS.length} Depts
             </span>
           </div>
-          <div className="px-3 py-2 rounded-xl bg-amber-50 border border-amber-200">
-            <span className="block text-[10px] uppercase font-bold text-amber-800">Pending HR Approvals</span>
-            <span className="font-mono font-bold text-amber-950" data-testid="pending-change-count">
+          <div className="px-3 py-2 rounded-xl bg-[#FAF5EB] border border-[#E9D59A]">
+            <span className="block text-[10px] uppercase font-bold text-[#B88A24]">Pending HR Approvals</span>
+            <span className="font-mono font-bold text-[#B88A24]" data-testid="pending-change-count">
               {pendingApprovalsCount} Request{pendingApprovalsCount === 1 ? '' : 's'}
             </span>
           </div>
@@ -442,14 +442,14 @@ export const WorkbookHubView: React.FC = () => {
           data-testid="workbook-hub-banner"
           className={`p-3.5 rounded-xl border text-xs font-medium flex items-center gap-2 ${
             banner.type === 'success'
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-              : 'bg-rose-50 border-rose-200 text-rose-900'
+              ? 'bg-[#EFF6FF] border-[#BFDBFE] text-[#174EA6]'
+              : 'bg-[#F5F7FA] border-[#111827]/25 text-[#111827]'
           }`}
         >
           {banner.type === 'success' ? (
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-[#174EA6]" />
           ) : (
-            <XCircle className="w-4 h-4 shrink-0 text-rose-600" />
+            <XCircle className="w-4 h-4 shrink-0 text-[#111827]" />
           )}
           <span>{banner.text}</span>
         </div>
@@ -475,7 +475,7 @@ export const WorkbookHubView: React.FC = () => {
             onClick={() => setActiveTab(tab.id)}
             className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
               activeTab === tab.id
-                ? 'bg-[#083E34] text-white shadow-2xs'
+                ? 'bg-[#174EA6] text-white shadow-2xs'
                 : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
             }`}
           >
@@ -501,7 +501,7 @@ export const WorkbookHubView: React.FC = () => {
               {selfCompleteness && (
                 <div className="text-right shrink-0">
                   <span className="text-[10px] font-bold uppercase text-slate-500 block">Profile Score</span>
-                  <span className="font-mono text-sm font-bold text-[#083E34]">
+                  <span className="font-mono text-sm font-bold text-[#174EA6]">
                     {selfCompleteness.completedCount}/{selfCompleteness.totalFields} ({selfCompleteness.percentComplete}%)
                   </span>
                 </div>
@@ -578,7 +578,7 @@ export const WorkbookHubView: React.FC = () => {
                 <button
                   type="submit"
                   data-testid="profile-change-submit-btn"
-                  className="px-4 py-2 rounded-lg bg-[#083E34] hover:bg-[#062E27] text-white font-semibold cursor-pointer shrink-0 whitespace-nowrap"
+                  className="px-4 py-2 rounded-lg bg-[#174EA6] hover:bg-[#0B1F3A] text-white font-semibold cursor-pointer shrink-0 whitespace-nowrap"
                 >
                   {isHrAdmin ? 'Apply HR Update' : 'Submit for HR Approval'}
                 </button>
@@ -610,10 +610,10 @@ export const WorkbookHubView: React.FC = () => {
                         <span
                           className={`px-2 py-0.5 rounded font-semibold text-[11px] ${
                             req.status === 'APPROVED'
-                              ? 'bg-emerald-100 text-emerald-900'
+                              ? 'bg-[#DBEAFE] text-[#174EA6]'
                               : req.status === 'REJECTED'
-                                ? 'bg-rose-100 text-rose-900'
-                                : 'bg-amber-100 text-amber-900'
+                                ? 'bg-[#E5E7EB] text-[#111827]'
+                                : 'bg-[#FAF5EB] text-[#B88A24]'
                           }`}
                         >
                           {req.status.replace(/_/g, ' ')}
@@ -623,7 +623,7 @@ export const WorkbookHubView: React.FC = () => {
                         {Object.entries(req.proposedChanges).map(([k, v]) => (
                           <div key={k}>
                             <strong>{k}</strong>: <span className="line-through text-slate-400">{req.previousValues[k] || '(empty)'}</span> →{' '}
-                            <span className="font-semibold text-[#083E34]">{v}</span>
+                            <span className="font-semibold text-[#174EA6]">{v}</span>
                           </div>
                         ))}
                         <p className="text-slate-500 mt-0.5">Reason: {req.reason}</p>
@@ -641,14 +641,14 @@ export const WorkbookHubView: React.FC = () => {
                             type="button"
                             data-testid="approve-change-btn"
                             onClick={() => void handleReviewChange(req, 'APPROVED')}
-                            className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-[11px] cursor-pointer"
+                            className="px-3 py-1.5 rounded-lg bg-[#174EA6] hover:bg-[#174EA6] text-white font-semibold text-[11px] cursor-pointer"
                           >
                             Approve &amp; Commit
                           </button>
                           <button
                             type="button"
                             onClick={() => void handleReviewChange(req, 'REJECTED')}
-                            className="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 font-semibold text-[11px] cursor-pointer"
+                            className="px-3 py-1.5 rounded-lg bg-[#F5F7FA] hover:bg-[#E5E7EB] text-[#111827] border border-[#111827]/25 font-semibold text-[11px] cursor-pointer"
                           >
                             Reject
                           </button>
@@ -665,7 +665,7 @@ export const WorkbookHubView: React.FC = () => {
           <section className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
             <div>
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <UserCheck className="w-4 h-4 text-[#083E34]" />
+                <UserCheck className="w-4 h-4 text-[#174EA6]" />
                 <span>Employee Lifecycle Actions (Sheet 14)</span>
               </h3>
               <p className="text-xs text-slate-600 mt-0.5">
@@ -742,7 +742,7 @@ export const WorkbookHubView: React.FC = () => {
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-lg bg-[#083E34] hover:bg-[#062E27] text-white font-semibold cursor-pointer"
+                  className="px-4 py-2 rounded-lg bg-[#174EA6] hover:bg-[#0B1F3A] text-white font-semibold cursor-pointer"
                 >
                   {isHrAdmin ? 'Approve & Apply Lifecycle Event' : 'Submit Lifecycle Request'}
                 </button>
@@ -765,7 +765,7 @@ export const WorkbookHubView: React.FC = () => {
                         </span>
                         <p className="text-[11px] text-slate-600">{ev.trigger} · Effective {ev.effectiveDate}</p>
                       </div>
-                      <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 font-semibold text-[11px]">
+                      <span className="px-2 py-0.5 rounded bg-[#DBEAFE] text-[#174EA6] font-semibold text-[11px]">
                         {ev.status}
                       </span>
                     </div>
@@ -785,8 +785,8 @@ export const WorkbookHubView: React.FC = () => {
             {WORKBOOK_ENTITIES.map((ent) => (
               <div key={ent.id} className="bg-white rounded-2xl border border-slate-200 p-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-bold text-[#083E34]">{ent.shortCode}</span>
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-900">
+                  <span className="text-xs font-mono font-bold text-[#174EA6]">{ent.shortCode}</span>
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-[#EFF6FF] text-[#174EA6]">
                     GEC Business Heads
                   </span>
                 </div>
@@ -845,7 +845,7 @@ export const WorkbookHubView: React.FC = () => {
                         {dept.headEmail ? (
                           <span className="text-slate-800">{dept.headEmail}</span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-semibold">TBD</span>
+                          <span className="px-2 py-0.5 rounded bg-[#FAF5EB] text-[#B88A24] font-semibold">TBD</span>
                         )}
                       </td>
                       <td className="py-2.5 pr-3 text-[11px] text-slate-600">
@@ -853,7 +853,7 @@ export const WorkbookHubView: React.FC = () => {
                       </td>
                       <td className="py-2.5">
                         {dept.isGecSharedService ? (
-                          <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 font-semibold text-[10px]">
+                          <span className="px-2 py-0.5 rounded bg-[#DBEAFE] text-[#174EA6] font-semibold text-[10px]">
                             GEC Shared
                           </span>
                         ) : (
@@ -916,9 +916,9 @@ export const WorkbookHubView: React.FC = () => {
               className={`p-3.5 rounded-xl border text-xs flex flex-wrap items-center justify-between gap-2 ${
                 roleSimResult.allowed
                   ? roleSimResult.requiresApproval
-                    ? 'bg-amber-50 border-amber-200 text-amber-950'
-                    : 'bg-emerald-50 border-emerald-200 text-emerald-950'
-                  : 'bg-rose-50 border-rose-200 text-rose-950'
+                    ? 'bg-[#FAF5EB] border-[#E9D59A] text-[#B88A24]'
+                    : 'bg-[#EFF6FF] border-[#BFDBFE] text-[#174EA6]'
+                  : 'bg-[#F5F7FA] border-[#111827]/25 text-[#D4AF37]'
               }`}
             >
               <div>
@@ -944,7 +944,7 @@ export const WorkbookHubView: React.FC = () => {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <GitBranch className="w-4 h-4 text-[#083E34]" />
+                  <GitBranch className="w-4 h-4 text-[#174EA6]" />
                   <span>Sheet 9 — 10-Stage Recruitment Workflow ({recCase.jobTitle})</span>
                 </h3>
                 <p className="text-xs text-slate-600 mt-0.5">
@@ -965,7 +965,7 @@ export const WorkbookHubView: React.FC = () => {
                         },
                       }))
                     }
-                    className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg bg-[#B88A24] hover:bg-[#B88A24] text-white font-semibold cursor-pointer"
                   >
                     Grant Stage Approval
                   </button>
@@ -990,7 +990,7 @@ export const WorkbookHubView: React.FC = () => {
                       setBanner({ type: 'error', text: err?.message });
                     }
                   }}
-                  className="px-3.5 py-1.5 rounded-lg bg-[#083E34] hover:bg-[#062E27] text-white font-semibold cursor-pointer disabled:opacity-40"
+                  className="px-3.5 py-1.5 rounded-lg bg-[#174EA6] hover:bg-[#0B1F3A] text-white font-semibold cursor-pointer disabled:opacity-40"
                 >
                   Advance to Next Stage
                 </button>
@@ -998,7 +998,7 @@ export const WorkbookHubView: React.FC = () => {
             </div>
 
             {!stageAdvanceCheck.allowed && (
-              <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs">
+              <div className="p-2.5 rounded-lg bg-[#FAF5EB] border border-[#E9D59A] text-[#B88A24] text-xs">
                 {stageAdvanceCheck.errors.join(' ')}
               </div>
             )}
@@ -1012,9 +1012,9 @@ export const WorkbookHubView: React.FC = () => {
                     key={st.code}
                     className={`p-2.5 rounded-xl border ${
                       isActive
-                        ? 'bg-[#083E34] text-white border-[#083E34]'
+                        ? 'bg-[#174EA6] text-white border-[#174EA6]'
                         : isDone
-                          ? 'bg-emerald-50 text-emerald-950 border-emerald-200'
+                          ? 'bg-[#EFF6FF] text-[#174EA6] border-[#BFDBFE]'
                           : 'bg-slate-50 text-slate-600 border-slate-200'
                     }`}
                   >
@@ -1046,7 +1046,7 @@ export const WorkbookHubView: React.FC = () => {
               <p className="text-slate-600">{assessment.candidateName} · {assessment.jobRole}</p>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                 <span>Weighted Score</span>
-                <span className="font-mono text-base font-bold text-[#083E34]">{assessment.weightedScorePercent}%</span>
+                <span className="font-mono text-base font-bold text-[#174EA6]">{assessment.weightedScorePercent}%</span>
               </div>
               <p className="text-[11px] text-slate-600">{assessment.aiDraftSummary}</p>
               <div className="flex items-center justify-between pt-2 border-t border-slate-100">
@@ -1059,7 +1059,7 @@ export const WorkbookHubView: React.FC = () => {
                         recordHrAssessmentDecision(prev, actorWorkbookRole, currentUser.name, 'PASSED')
                       )
                     }
-                    className="px-3 py-1.5 rounded-lg bg-emerald-700 text-white font-semibold cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg bg-[#174EA6] text-white font-semibold cursor-pointer"
                   >
                     HR Pass
                   </button>
@@ -1098,7 +1098,7 @@ export const WorkbookHubView: React.FC = () => {
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                 <span>Combined Score: <strong className="font-mono">{interviewEval.overallScore.toFixed(2)} / 5.0</strong></span>
-                <span className={`font-bold ${interviewEval.readyForFinalSelection ? 'text-emerald-700' : 'text-rose-700'}`}>
+                <span className={`font-bold ${interviewEval.readyForFinalSelection ? 'text-[#174EA6]' : 'text-[#111827]'}`}>
                   {interviewEval.readyForFinalSelection ? 'Ready for Offer' : 'Blocked'}
                 </span>
               </div>
@@ -1131,7 +1131,7 @@ export const WorkbookHubView: React.FC = () => {
                   );
                 })}
               </div>
-              <div className={`p-2.5 rounded-lg font-semibold ${preOnboardingGate.ready ? 'bg-emerald-100 text-emerald-900' : 'bg-amber-50 text-amber-900'}`}>
+              <div className={`p-2.5 rounded-lg font-semibold ${preOnboardingGate.ready ? 'bg-[#DBEAFE] text-[#174EA6]' : 'bg-[#FAF5EB] text-[#B88A24]'}`}>
                 {preOnboardingGate.ready
                   ? 'All steps signed & approved — Candidate ready to activate as Active Employee.'
                   : `${preOnboardingGate.incompleteSteps.length} step(s) pending before Employee activation.`}
@@ -1149,7 +1149,7 @@ export const WorkbookHubView: React.FC = () => {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <FileSpreadsheet className="w-4 h-4 text-[#083E34]" />
+                  <FileSpreadsheet className="w-4 h-4 text-[#174EA6]" />
                   <span>Sheets 6 &amp; 22 — Legacy Bio-Data CSV Migration Validator (24 Mandatory Fields)</span>
                 </h3>
                 <p className="text-xs text-slate-600 mt-0.5">
@@ -1188,17 +1188,17 @@ export const WorkbookHubView: React.FC = () => {
                 <span className="text-[10px] font-bold uppercase text-slate-500 block">Total Rows</span>
                 <span className="font-mono text-base font-bold text-slate-900">{migrationReport.totalRows}</span>
               </div>
-              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
-                <span className="text-[10px] font-bold uppercase text-emerald-700 block">Valid Rows</span>
-                <span className="font-mono text-base font-bold text-emerald-900">{migrationReport.validRows}</span>
+              <div className="p-3 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE]">
+                <span className="text-[10px] font-bold uppercase text-[#174EA6] block">Valid Rows</span>
+                <span className="font-mono text-base font-bold text-[#174EA6]">{migrationReport.validRows}</span>
               </div>
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200">
-                <span className="text-[10px] font-bold uppercase text-rose-700 block">Rows Needing Cleaning</span>
-                <span className="font-mono text-base font-bold text-rose-900">{migrationReport.invalidRows}</span>
+              <div className="p-3 rounded-xl bg-[#F5F7FA] border border-[#111827]/25">
+                <span className="text-[10px] font-bold uppercase text-[#111827] block">Rows Needing Cleaning</span>
+                <span className="font-mono text-base font-bold text-[#111827]">{migrationReport.invalidRows}</span>
               </div>
-              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200">
-                <span className="text-[10px] font-bold uppercase text-amber-800 block">Credential Leaks Blocked</span>
-                <span className="font-mono text-base font-bold text-amber-950">{migrationReport.credentialLeakRows.length}</span>
+              <div className="p-3 rounded-xl bg-[#FAF5EB] border border-[#E9D59A]">
+                <span className="text-[10px] font-bold uppercase text-[#B88A24] block">Credential Leaks Blocked</span>
+                <span className="font-mono text-base font-bold text-[#B88A24]">{migrationReport.credentialLeakRows.length}</span>
               </div>
             </div>
 
@@ -1207,19 +1207,19 @@ export const WorkbookHubView: React.FC = () => {
                 <div
                   key={r.rowNumber}
                   className={`p-3 rounded-xl border ${
-                    r.valid ? 'bg-emerald-50/40 border-emerald-200' : 'bg-rose-50/40 border-rose-200'
+                    r.valid ? 'bg-[#EFF6FF] border-[#BFDBFE]' : 'bg-[#F5F7FA] border-[#111827]/25'
                   }`}
                 >
                   <div className="flex items-center justify-between font-bold">
                     <span>
                       Row {r.rowNumber}: {r.staffId} — {r.fullName}
                     </span>
-                    <span className={r.valid ? 'text-emerald-800' : 'text-rose-800'}>
+                    <span className={r.valid ? 'text-[#174EA6]' : 'text-[#111827]'}>
                       {r.valid ? 'Ready to Import' : `${r.errors.length} Error(s)`}
                     </span>
                   </div>
                   {r.errors.length > 0 && (
-                    <ul className="mt-1 text-[11px] text-rose-800 list-disc pl-4">
+                    <ul className="mt-1 text-[11px] text-[#111827] list-disc pl-4">
                       {r.errors.map((err, i) => (
                         <li key={i}>{err}</li>
                       ))}
@@ -1268,7 +1268,7 @@ export const WorkbookHubView: React.FC = () => {
                   type="button"
                   onClick={handleDownloadCsvReport}
                   data-testid="workbook-export-csv-btn"
-                  className="px-3.5 py-1.5 rounded-lg bg-[#083E34] text-white font-semibold flex items-center gap-1.5 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-lg bg-[#174EA6] text-white font-semibold flex items-center gap-1.5 cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Export CSV</span>
@@ -1317,7 +1317,7 @@ export const WorkbookHubView: React.FC = () => {
               ))}
               <div className="pt-2 text-[11px] text-slate-600">
                 Sample Expiry Check (Sheet 16): Passport expiring in 14 days →{' '}
-                <strong className="text-amber-800">
+                <strong className="text-[#B88A24]">
                   {evaluateDocumentExpiry('Passport', '2026-12-10', 30, '2026-11-26').state}
                 </strong>{' '}
                 ({WORKBOOK_DOCUMENT_POLICIES.length} document policies active).
@@ -1343,26 +1343,26 @@ export const WorkbookHubView: React.FC = () => {
           {/* Explicit Ambiguities & Contradictions Register */}
           <section className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-600" />
+              <AlertTriangle className="w-4 h-4 text-[#B88A24]" />
               <h3 className="text-sm font-bold text-slate-900">
                 Workbook Ambiguities, Contradictions &amp; Blank-Sheet Decisions ({WORKBOOK_AMBIGUITIES_REGISTER.length})
               </h3>
             </div>
             <div className="space-y-2.5 text-xs">
               {WORKBOOK_AMBIGUITIES_REGISTER.map((flag) => (
-                <div key={flag.id} className="p-3.5 rounded-xl border border-amber-200 bg-amber-50/40 space-y-1">
+                <div key={flag.id} className="p-3.5 rounded-xl border border-[#E9D59A] bg-[#FAF5EB] space-y-1">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-bold text-slate-900">
                       Sheet {flag.sheetNumber} ({flag.sheetName}) — {flag.severity}
                     </span>
                     {flag.needsUserDecision && (
-                      <span className="px-2 py-0.5 rounded bg-amber-200 text-amber-950 font-semibold text-[10px]">
+                      <span className="px-2 py-0.5 rounded bg-amber-200 text-[#B88A24] font-semibold text-[10px]">
                         Needs HR Decision
                       </span>
                     )}
                   </div>
                   <p className="text-slate-700">{flag.summary}</p>
-                  <p className="text-[#083E34] font-medium">
+                  <p className="text-[#174EA6] font-medium">
                     <strong>Implemented Interpretation:</strong> {flag.chosenInterpretation}
                   </p>
                 </div>
@@ -1374,14 +1374,14 @@ export const WorkbookHubView: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 text-xs">
             <section className="bg-white rounded-2xl border border-slate-200 p-5 space-y-2.5">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <ClipboardCheck className="w-4 h-4 text-[#083E34]" />
+                <ClipboardCheck className="w-4 h-4 text-[#174EA6]" />
                 <span>Sheet 23 — V1 Launch Priorities (October 4, 2026)</span>
               </h3>
               {WORKBOOK_V1_PRIORITIES.map((item) => (
                 <div key={item.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-bold text-slate-900">{item.feature}</span>
-                    <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 font-semibold text-[10px]">
+                    <span className="px-2 py-0.5 rounded bg-[#DBEAFE] text-[#174EA6] font-semibold text-[10px]">
                       {item.implementationStatus}
                     </span>
                   </div>

@@ -125,7 +125,7 @@ describe('Citadel People Hub (Project Management Module)', () => {
     // Verify Bayu Wirawan has dynamic workload (initial > 40 hrs overloaded)
     const bayuHours = screen.getByTestId('trellis-workload-hours-user-bayu');
     expect(bayuHours.textContent).toContain('/40');
-    expect(bayuHours).toHaveClass('text-rose-600');
+    expect(bayuHours).toHaveClass('text-[#111827]');
   });
 
   it('allows editing a task from the detail drawer and updating the board', async () => {

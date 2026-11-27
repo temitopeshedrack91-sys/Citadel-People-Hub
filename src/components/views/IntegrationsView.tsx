@@ -7,7 +7,7 @@ export const IntegrationsView: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-          <Cpu className="w-5 h-5 text-[#083E34]" />
+          <Cpu className="w-5 h-5 text-[#174EA6]" />
           <span>Integrations</span>
         </h2>
         <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -16,11 +16,11 @@ export const IntegrationsView: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="bg-white rounded-2xl border border-emerald-200 p-5 shadow-xs flex flex-col justify-between">
+        <div className="bg-white rounded-2xl border border-[#BFDBFE] p-5 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-[#083E34] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] text-[#174EA6] flex items-center justify-center">
                   <FileSpreadsheet className="w-5 h-5" />
                 </div>
                 <div>
@@ -33,13 +33,13 @@ export const IntegrationsView: React.FC = () => {
             <p className="text-xs text-slate-600 mt-3 leading-relaxed">
               ZKTeco &amp; RFID attendance exports can be uploaded directly in the Attendance module with automatic staff ID resolution, duplicate protection, and Sheet 8 10-minute grace evaluation.
             </p>
-            <div className="mt-3 bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-200/70 text-[11px] font-mono text-slate-700 space-y-1">
+            <div className="mt-3 bg-[#EFF6FF] p-2.5 rounded-xl border border-[#BFDBFE] text-[11px] font-mono text-slate-700 space-y-1">
               <div>Endpoint: POST /api/v1/attendance/biometric-imports</div>
               <div>Deduplication: SHA-256 device + timestamp hash</div>
               <div>Status: Ready in Attendance module</div>
             </div>
           </div>
-          <div className="mt-4 w-full py-2 bg-emerald-50 text-[#083E34] border border-emerald-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5">
+          <div className="mt-4 w-full py-2 bg-[#EFF6FF] text-[#174EA6] border border-[#BFDBFE] rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5">
             <CheckCircle2 className="w-3.5 h-3.5" />
             <span>Operational via Attendance Import</span>
           </div>
@@ -49,7 +49,7 @@ export const IntegrationsView: React.FC = () => {
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-[#EBF5F2] text-[#083E34] border border-[#A3D4C7]/50 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] text-[#174EA6] border border-[#BFDBFE]/50 flex items-center justify-center">
                   <Fingerprint className="w-5 h-5" />
                 </div>
                 <div>
@@ -100,7 +100,7 @@ export const IntegrationsView: React.FC = () => {
               <div>Required: Tenant ID, Client ID, Server Secret</div>
               <div>Status: Blocked on tenant credentials</div>
             </div>
-            <div className="mt-2.5 p-2 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-900">
+            <div className="mt-2.5 p-2 rounded-lg bg-[#FAF5EB] border border-[#E9D59A] text-[11px] text-[#B88A24]">
               Keep Microsoft client secrets strictly in server environment variables — never in frontend build config.
             </div>
           </div>

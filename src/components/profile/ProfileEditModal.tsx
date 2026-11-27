@@ -311,7 +311,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
     >
       <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-6 flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="bg-[#083E34] text-white p-5 relative border-b border-emerald-950/30 shrink-0">
+        <div className="bg-[#174EA6] text-white p-5 relative border-b border-[#BFDBFE] shrink-0">
           <button
             type="button"
             onClick={onClose}
@@ -322,7 +322,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
             <X className="w-5 h-5" />
           </button>
           <h2 className="text-lg font-bold text-white">My Personal Information</h2>
-          <p className="text-xs text-emerald-100/90 mt-0.5">
+          <p className="text-xs text-blue-100 mt-0.5">
             {isHrAdmin
               ? 'HR/Super Admin edits commit directly to the employee master record.'
               : 'Personal updates enter the HR approval queue before becoming authoritative records (Workbook Sheet 5).'}
@@ -333,7 +333,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
           <div className="p-6 space-y-5 overflow-y-auto flex-1 text-xs">
             {loadingRecord && (
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-[#083E34]" />
+                <Loader2 className="w-4 h-4 animate-spin text-[#174EA6]" />
                 <span>Loading your authoritative employee master record...</span>
               </div>
             )}
@@ -342,9 +342,9 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
               <div
                 role="status"
                 data-testid="profile-edit-success"
-                className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 font-semibold flex items-start gap-2"
+                className="p-3.5 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] text-[#174EA6] font-semibold flex items-start gap-2"
               >
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-4 h-4 text-[#174EA6] shrink-0 mt-0.5" />
                 <span>{saveNotice}</span>
               </div>
             )}
@@ -352,9 +352,9 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
             {saveError && (
               <div
                 role="alert"
-                className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 font-semibold flex items-start gap-2"
+                className="p-3.5 rounded-xl bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] font-semibold flex items-start gap-2"
               >
-                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <AlertCircle className="w-4 h-4 text-[#111827] shrink-0 mt-0.5" />
                 <span>{saveError}</span>
               </div>
             )}
@@ -363,21 +363,21 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
             {pendingRequests.length > 0 && (
               <div
                 data-testid="profile-pending-requests-banner"
-                className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 space-y-1.5"
+                className="p-3.5 rounded-xl bg-[#FAF5EB] border border-[#E9D59A] text-[#B88A24] space-y-1.5"
               >
                 <div className="flex items-center gap-1.5 font-bold">
-                  <Clock className="w-4 h-4 text-amber-700" />
+                  <Clock className="w-4 h-4 text-[#B88A24]" />
                   <span>
                     {pendingRequests.length} Pending HR Approval Request
                     {pendingRequests.length === 1 ? '' : 's'}
                   </span>
                 </div>
                 {pendingRequests.slice(0, 3).map((req) => (
-                  <div key={req.id} className="text-[11px] text-amber-900 flex flex-wrap items-center justify-between gap-2 bg-white/70 px-2.5 py-1.5 rounded-lg border border-amber-200/70">
+                  <div key={req.id} className="text-[11px] text-[#B88A24] flex flex-wrap items-center justify-between gap-2 bg-white/70 px-2.5 py-1.5 rounded-lg border border-[#E9D59A]">
                     <span>
                       Fields: <strong>{Object.keys(req.proposedChanges).join(', ')}</strong> — “{req.reason}”
                     </span>
-                    <span className="font-mono font-bold text-amber-800">{req.status}</span>
+                    <span className="font-mono font-bold text-[#B88A24]">{req.status}</span>
                   </div>
                 ))}
               </div>
@@ -393,7 +393,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                     className="w-16 h-16 rounded-2xl object-cover border-2 border-slate-200 shadow-xs"
                   />
                 ) : (
-                  <div className="w-16 h-16 rounded-2xl bg-[#083E34] text-white font-bold flex items-center justify-center text-lg shadow-xs border-2 border-slate-200">
+                  <div className="w-16 h-16 rounded-2xl bg-[#174EA6] text-white font-bold flex items-center justify-center text-lg shadow-xs border-2 border-slate-200">
                     {initials}
                   </div>
                 )}
@@ -419,7 +419,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="text-xs text-[#083E34] font-semibold hover:underline cursor-pointer"
+                    className="text-xs text-[#174EA6] font-semibold hover:underline cursor-pointer"
                   >
                     Upload image
                   </button>
@@ -429,7 +429,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                   value={avatarPreview}
                   onChange={(e) => setAvatarPreview(e.target.value)}
                   placeholder="Or paste an https:// profile photo URL"
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-[#083E34]"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-[#174EA6]"
                 />
               </div>
             </div>
@@ -441,7 +441,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                   <Lock className="w-3.5 h-3.5 text-slate-400" />
                   <span>HR-Managed Institutional Record (Read-Only)</span>
                 </span>
-                <span className="font-mono text-[10px] font-bold text-[#083E34]">
+                <span className="font-mono text-[10px] font-bold text-[#174EA6]">
                   {employeeRecord?.staffId || currentUser.staffId}
                 </span>
               </div>
@@ -476,7 +476,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
             {/* Editable Personal Information */}
             <div className="space-y-3">
               <h3 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] flex items-center gap-1.5 pb-1 border-b border-slate-100">
-                <User className="w-3.5 h-3.5 text-[#083E34]" />
+                <User className="w-3.5 h-3.5 text-[#174EA6]" />
                 <span>Personal Contact &amp; Bio-Data (Employee Self-Service)</span>
               </h3>
 
@@ -492,7 +492,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+234 800 000 0000"
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:border-[#083E34]"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:border-[#174EA6]"
                   />
                 </div>
                 <div>
@@ -506,7 +506,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="staff@thecitadelglobal.org"
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:border-[#083E34]"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:border-[#174EA6]"
                   />
                 </div>
                 <div>
@@ -515,7 +515,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                     type="date"
                     value={dateOfBirth}
                     onChange={(e) => setDateOfBirth(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:border-[#083E34]"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:border-[#174EA6]"
                   />
                 </div>
                 <div>
@@ -523,7 +523,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                   <select
                     value={gender}
                     onChange={(e) => setGender(e.target.value as 'Male' | 'Female')}
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:border-[#083E34]"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:border-[#174EA6]"
                   >
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
@@ -540,7 +540,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder="Residential street address, Lagos"
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:border-[#083E34]"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:border-[#174EA6]"
                   />
                 </div>
               </div>
@@ -549,7 +549,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
             {/* Emergency Contact & Next of Kin */}
             <div className="space-y-3">
               <h3 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] flex items-center gap-1.5 pb-1 border-b border-slate-100">
-                <HeartPulse className="w-3.5 h-3.5 text-[#083E34]" />
+                <HeartPulse className="w-3.5 h-3.5 text-[#174EA6]" />
                 <span>Emergency Contact &amp; Next of Kin</span>
               </h3>
 
@@ -560,7 +560,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                     type="text"
                     value={ecName}
                     onChange={(e) => setEcName(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#083E34]"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#174EA6]"
                   />
                 </div>
                 <div>
@@ -569,7 +569,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                     type="text"
                     value={ecRelationship}
                     onChange={(e) => setEcRelationship(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#083E34]"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#174EA6]"
                   />
                 </div>
                 <div>
@@ -578,7 +578,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                     type="tel"
                     value={ecPhone}
                     onChange={(e) => setEcPhone(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#083E34]"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#174EA6]"
                   />
                 </div>
               </div>
@@ -590,7 +590,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                     type="text"
                     value={nokName}
                     onChange={(e) => setNokName(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#083E34]"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#174EA6]"
                   />
                 </div>
                 <div>
@@ -599,7 +599,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                     type="text"
                     value={nokRelationship}
                     onChange={(e) => setNokRelationship(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#083E34]"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#174EA6]"
                   />
                 </div>
                 <div>
@@ -608,7 +608,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                     type="tel"
                     value={nokPhone}
                     onChange={(e) => setNokPhone(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#083E34]"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#174EA6]"
                   />
                 </div>
                 <div>
@@ -617,7 +617,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                     type="text"
                     value={nokAddress}
                     onChange={(e) => setNokAddress(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#083E34]"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#174EA6]"
                   />
                 </div>
               </div>
@@ -626,7 +626,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
             {/* Reason for Change */}
             <div>
               <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 mb-1">
-                <Shield className="w-3.5 h-3.5 text-[#083E34]" />
+                <Shield className="w-3.5 h-3.5 text-[#174EA6]" />
                 <span>Reason for Update {!isHrAdmin ? '*' : '(Optional)'}</span>
               </label>
               <input
@@ -636,7 +636,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                 onChange={(e) => setChangeReason(e.target.value)}
                 required={!isHrAdmin}
                 placeholder="e.g. Updated residential address / phone number for HR records"
-                className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:border-[#083E34]"
+                className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:border-[#174EA6]"
               />
             </div>
           </div>

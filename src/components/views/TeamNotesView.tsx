@@ -116,7 +116,7 @@ export const TeamNotesView: React.FC = () => {
     subtitle: n.description,
     timestamp: n.date,
     avatar: (
-      <div className="w-10 h-10 rounded-xl bg-slate-100 text-[#083E34] border border-slate-200/80 flex items-center justify-center font-bold text-xs shadow-2xs shrink-0">
+      <div className="w-10 h-10 rounded-xl bg-slate-100 text-[#174EA6] border border-slate-200/80 flex items-center justify-center font-bold text-xs shadow-2xs shrink-0">
         <StickyNote className="w-5 h-5" />
       </div>
     ),
@@ -211,7 +211,7 @@ export const TeamNotesView: React.FC = () => {
         <div className="p-4 rounded-2xl bg-slate-50/50 border border-slate-200/70 text-xs text-slate-500 space-y-1.5">
           <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
             <span>Governance &amp; Handover Status</span>
-            <span className="text-emerald-700 font-bold">Saved locally</span>
+            <span className="text-[#174EA6] font-bold">Saved locally</span>
           </div>
           <p className="text-[11px] text-slate-500">
             Notes created here persist across sessions and stay synchronized with the Executive Dashboard team notes widget.
@@ -226,7 +226,7 @@ export const TeamNotesView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-lg sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <StickyNote className="w-5 h-5 sm:w-6 sm:h-6 text-[#083E34] shrink-0" />
+            <StickyNote className="w-5 h-5 sm:w-6 sm:h-6 text-[#174EA6] shrink-0" />
             <span>Team Notes</span>
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -261,16 +261,16 @@ export const TeamNotesView: React.FC = () => {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
-            <div className="bg-[#083E34] text-white p-5 relative border-b border-emerald-800 shrink-0">
+            <div className="bg-[#174EA6] text-white p-5 relative border-b border-[#BFDBFE] shrink-0">
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="absolute top-4 right-4 text-emerald-200 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
+                className="absolute top-4 right-4 text-blue-100 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
               <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <StickyNote className="w-4 h-4 text-amber-300" />
+                <StickyNote className="w-4 h-4 text-[#D4AF37]" />
                 <span>Add Team Note</span>
               </h3>
             </div>
@@ -284,7 +284,7 @@ export const TeamNotesView: React.FC = () => {
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="e.g. Monthly Payroll Handover"
-                  className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34]"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#174EA6]"
                 />
               </div>
 
@@ -293,7 +293,7 @@ export const TeamNotesView: React.FC = () => {
                 <select
                   value={newCat}
                   onChange={(e) => setNewCat(e.target.value as TeamNoteItem['category'])}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-bold bg-white focus:outline-none focus:border-[#083E34]"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-bold bg-white focus:outline-none focus:border-[#174EA6]"
                 >
                   <option value="Incoming">Incoming</option>
                   <option value="Ongoing">Ongoing</option>
@@ -309,7 +309,7 @@ export const TeamNotesView: React.FC = () => {
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
                   placeholder="Operational details..."
-                  className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34]"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#174EA6]"
                 />
               </div>
 
@@ -320,7 +320,7 @@ export const TeamNotesView: React.FC = () => {
                   value={newCollab}
                   onChange={(e) => setNewCollab(e.target.value)}
                   placeholder="e.g. Sussan Afuwape, Femi Olatunji"
-                  className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34]"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#174EA6]"
                 />
               </div>
 
@@ -345,7 +345,7 @@ export const TeamNotesView: React.FC = () => {
       )}
       {toastMessage && (
         <div role="status" className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 animate-fade-in">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <CheckCircle2 className="w-4 h-4 text-blue-100" />
           <span>{toastMessage}</span>
         </div>
       )}

@@ -353,7 +353,7 @@ export const ClaimManagementView: React.FC = () => {
     <div className="space-y-6 animate-fade-in text-slate-800">
       {/* Toast Notification */}
       {successToast && (
-        <div role="status" className="fixed top-5 right-5 z-[60] flex items-center gap-3 bg-[#083E34] text-white px-5 py-3 rounded-xl shadow-xl border border-[#D4AF37]/40 animate-slide-in">
+        <div role="status" className="fixed top-5 right-5 z-[60] flex items-center gap-3 bg-[#174EA6] text-white px-5 py-3 rounded-xl shadow-xl border border-[#D4AF37]/40 animate-slide-in">
           <CheckCircle2 className="w-5 h-5 text-[#D4AF37] shrink-0" />
           <span className="text-sm font-semibold">{successToast}</span>
           <button type="button" onClick={() => setSuccessToast(null)} className="text-white/60 hover:text-white ml-2">
@@ -367,9 +367,9 @@ export const ClaimManagementView: React.FC = () => {
         <div
           role="alert"
           data-testid="claim-error-banner"
-          className="fixed top-5 right-5 z-[70] flex items-center gap-3 bg-rose-900 text-white px-5 py-3 rounded-xl shadow-xl border border-rose-400/40 max-w-md animate-slide-in"
+          className="fixed top-5 right-5 z-[70] flex items-center gap-3 bg-[#111827] text-white px-5 py-3 rounded-xl shadow-xl border border-[#111827]/25 max-w-md animate-slide-in"
         >
-          <AlertCircle className="w-5 h-5 text-rose-300 shrink-0" />
+          <AlertCircle className="w-5 h-5 text-[#D4AF37] shrink-0" />
           <span className="text-xs font-semibold leading-snug">{errorBanner}</span>
           <button
             type="button"
@@ -452,13 +452,13 @@ export const ClaimManagementView: React.FC = () => {
         <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
           <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
             <span>Total Claims YTD</span>
-            <ReceiptText className="w-4 h-4 text-[#083E34]" />
+            <ReceiptText className="w-4 h-4 text-[#174EA6]" />
           </div>
           <div className="mt-2 text-2xl font-black text-slate-900">
             {formatMoney(metrics.totalVolume)}
           </div>
           <div className="mt-1 text-xs text-slate-500 flex items-center gap-1 font-medium">
-            <span className="text-[#083E34] font-bold">{metrics.totalCount} total claims</span>
+            <span className="text-[#174EA6] font-bold">{metrics.totalCount} total claims</span>
             <span>recorded</span>
           </div>
         </div>
@@ -467,13 +467,13 @@ export const ClaimManagementView: React.FC = () => {
         <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
           <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
             <span>Pending Review</span>
-            <Clock className="w-4 h-4 text-amber-500" />
+            <Clock className="w-4 h-4 text-[#B88A24]" />
           </div>
-          <div className="mt-2 text-2xl font-black text-amber-600">
+          <div className="mt-2 text-2xl font-black text-[#B88A24]">
             {formatMoney(metrics.pendingTotal)}
           </div>
           <div className="mt-1 text-xs text-slate-500 flex items-center gap-1 font-medium">
-            <span className="text-amber-600 font-bold">{metrics.pendingCount} claims</span>
+            <span className="text-[#B88A24] font-bold">{metrics.pendingCount} claims</span>
             <span>awaiting line sign-off</span>
           </div>
         </div>
@@ -482,13 +482,13 @@ export const ClaimManagementView: React.FC = () => {
         <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs">
           <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-500">
             <span>Approved for Pay</span>
-            <CheckCircle2 className="w-4 h-4 text-[#083E34]" />
+            <CheckCircle2 className="w-4 h-4 text-[#174EA6]" />
           </div>
-          <div className="mt-2 text-2xl font-bold text-[#083E34] tabular-nums">
+          <div className="mt-2 text-2xl font-bold text-[#174EA6] tabular-nums">
             {formatMoney(metrics.approvedTotal)}
           </div>
           <div className="mt-1 text-xs text-slate-500 flex items-center gap-1 font-medium tabular-nums">
-            <span className="text-[#083E34] font-semibold">{metrics.approvedCount} claims</span>
+            <span className="text-[#174EA6] font-semibold">{metrics.approvedCount} claims</span>
             <span>ready for disbursement</span>
           </div>
         </div>
@@ -497,13 +497,13 @@ export const ClaimManagementView: React.FC = () => {
         <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
           <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
             <span>Settled / Paid</span>
-            <DollarSign className="w-4 h-4 text-emerald-600" />
+            <DollarSign className="w-4 h-4 text-[#174EA6]" />
           </div>
-          <div className="mt-2 text-2xl font-black text-emerald-600">
+          <div className="mt-2 text-2xl font-black text-[#174EA6]">
             {formatMoney(metrics.paidTotal)}
           </div>
           <div className="mt-1 text-xs text-slate-500 flex items-center gap-1 font-medium">
-            <span className="text-emerald-600 font-bold">{metrics.paidCount} claims</span>
+            <span className="text-[#174EA6] font-bold">{metrics.paidCount} claims</span>
             <span>disbursed to staff</span>
           </div>
         </div>
@@ -628,13 +628,13 @@ export const ClaimManagementView: React.FC = () => {
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                               claim.status === 'PAID'
-                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                ? 'bg-[#DBEAFE] text-[#174EA6] border border-[#BFDBFE]'
                                 : claim.status === 'APPROVED'
-                                ? 'bg-[#EBF5F2] text-[#083E34] border border-[#A3D4C7]/60'
+                                ? 'bg-[#EFF6FF] text-[#174EA6] border border-[#BFDBFE]/60'
                                 : claim.status === 'SUBMITTED'
-                                ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                                ? 'bg-[#FAF5EB] text-[#B88A24] border border-[#E9D59A]'
                                 : claim.status === 'REJECTED'
-                                ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                ? 'bg-[#E5E7EB] text-[#111827] border border-[#111827]/25'
                                 : 'bg-slate-100 text-slate-700 border border-slate-200'
                             }`}
                           >
@@ -708,7 +708,7 @@ export const ClaimManagementView: React.FC = () => {
                       </td>
                       <td className="p-2.5 font-mono text-slate-600">{ev.code || '—'}</td>
                       <td className="p-2.5">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-[#DBEAFE] text-[#174EA6]">
                           {ev.status}
                         </span>
                       </td>
@@ -751,7 +751,7 @@ export const ClaimManagementView: React.FC = () => {
                       </td>
                       <td className="p-2.5 font-mono text-slate-600">{t.code || '—'}</td>
                       <td className="p-2.5">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-[#DBEAFE] text-[#174EA6]">
                           {t.status}
                         </span>
                       </td>
@@ -906,7 +906,7 @@ export const ClaimManagementView: React.FC = () => {
                           type="button"
                           onClick={() => handleRemoveExpenseRow(idx)}
                           disabled={claimForm.expenses.length <= 1}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 disabled:opacity-30 cursor-pointer"
+                          className="p-1.5 text-slate-400 hover:text-[#111827] disabled:opacity-30 cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -932,9 +932,9 @@ export const ClaimManagementView: React.FC = () => {
                 </div>
 
                 {/* Total Claim Calculation */}
-                <div className="mt-3 p-3 bg-amber-50/70 border border-amber-200 rounded-xl flex items-center justify-between">
-                  <span className="text-xs font-bold text-amber-900">Calculated Total Claim</span>
-                  <span className="text-base font-black text-[#083E34]">
+                <div className="mt-3 p-3 bg-[#FAF5EB] border border-[#E9D59A] rounded-xl flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#B88A24]">Calculated Total Claim</span>
+                  <span className="text-base font-black text-[#174EA6]">
                     {formatMoney(claimForm.expenses.reduce((acc, item) => acc + Number(item.amount || 0), 0))}
                   </span>
                 </div>
@@ -1011,13 +1011,13 @@ export const ClaimManagementView: React.FC = () => {
                   <span
                     className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
                       selectedClaim.status === 'PAID'
-                        ? 'bg-emerald-100 text-emerald-800'
+                        ? 'bg-[#DBEAFE] text-[#174EA6]'
                         : selectedClaim.status === 'APPROVED'
-                        ? 'bg-[#EBF5F2] text-[#083E34]'
+                        ? 'bg-[#EFF6FF] text-[#174EA6]'
                         : selectedClaim.status === 'SUBMITTED'
-                        ? 'bg-amber-100 text-amber-800'
+                        ? 'bg-[#FAF5EB] text-[#B88A24]'
                         : selectedClaim.status === 'REJECTED'
-                        ? 'bg-rose-100 text-rose-800'
+                        ? 'bg-[#E5E7EB] text-[#111827]'
                         : 'bg-slate-200 text-slate-800'
                     }`}
                   >
@@ -1045,7 +1045,7 @@ export const ClaimManagementView: React.FC = () => {
               )}
 
               {selectedClaim.rejection_reason && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800">
+                <div className="p-3 bg-[#F5F7FA] border border-[#111827]/25 rounded-xl text-xs text-[#111827]">
                   <span className="font-bold block">Rejection Justification:</span>
                   <p className="mt-0.5">{selectedClaim.rejection_reason}</p>
                 </div>
@@ -1084,14 +1084,14 @@ export const ClaimManagementView: React.FC = () => {
 
             {/* Rejection Input Box if triggered */}
             {isRejecting && (
-              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl space-y-2 animate-fade-in text-xs">
-                <label className="block font-bold text-rose-900">Reason for Rejection *</label>
+              <div className="p-3 bg-[#F5F7FA] border border-[#111827]/25 rounded-xl space-y-2 animate-fade-in text-xs">
+                <label className="block font-bold text-[#111827]">Reason for Rejection *</label>
                 <textarea
                   rows={2}
                   placeholder="Explain why this claim cannot be approved (required)"
                   value={rejectionReasonInput}
                   onChange={(e) => setRejectionReasonInput(e.target.value)}
-                  className="w-full p-2 bg-white border border-rose-300 rounded-lg text-xs"
+                  className="w-full p-2 bg-white border border-[#111827]/25 rounded-lg text-xs"
                 />
                 <div className="flex justify-end gap-2">
                   <button
@@ -1102,7 +1102,7 @@ export const ClaimManagementView: React.FC = () => {
                   </button>
                   <button
                     onClick={() => handleWorkflowAction('REJECT')}
-                    className="px-3 py-1 bg-rose-600 text-white font-bold rounded-lg"
+                    className="px-3 py-1 bg-[#111827] text-white font-bold rounded-lg"
                   >
                     Confirm Rejection
                   </button>
@@ -1130,14 +1130,14 @@ export const ClaimManagementView: React.FC = () => {
                   <>
                     <button
                       onClick={() => handleWorkflowAction('APPROVE')}
-                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      className="px-4 py-2 bg-[#174EA6] hover:bg-[#174EA6] text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       <span>Approve Claim</span>
                     </button>
                     <button
                       onClick={() => setIsRejecting(true)}
-                      className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold border border-rose-200 rounded-xl text-xs flex items-center gap-1.5 cursor-pointer"
+                      className="px-4 py-2 bg-[#F5F7FA] hover:bg-[#E5E7EB] text-[#111827] font-bold border border-[#111827]/25 rounded-xl text-xs flex items-center gap-1.5 cursor-pointer"
                     >
                       <XCircle className="w-3.5 h-3.5" />
                       <span>Reject Claim</span>
@@ -1148,7 +1148,7 @@ export const ClaimManagementView: React.FC = () => {
                 {selectedClaim.status === 'APPROVED' && (
                   <button
                     onClick={() => handleWorkflowAction('PAY')}
-                    className="px-5 py-2.5 bg-[#083E34] hover:bg-[#062c25] text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shadow-md border border-[#D4AF37]/50"
+                    className="px-5 py-2.5 bg-[#174EA6] hover:bg-[#062c25] text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shadow-md border border-[#D4AF37]/50"
                   >
                     <DollarSign className="w-4 h-4 text-[#D4AF37]" />
                     <span>Mark as Paid / Settled</span>

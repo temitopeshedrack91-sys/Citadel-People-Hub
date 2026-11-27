@@ -72,7 +72,7 @@ export const TrellisList: React.FC = () => {
                       <span className="font-mono text-[11px] font-medium text-slate-400 shrink-0">
                         {task.id}
                       </span>
-                      <h4 className="font-bold text-slate-900 group-hover:text-amber-950 truncate">
+                      <h4 className="font-bold text-slate-900 group-hover:text-[#B88A24] truncate">
                         {task.title}
                       </h4>
                       <div className="flex items-center gap-1 shrink-0">
@@ -134,7 +134,7 @@ export const TrellisList: React.FC = () => {
                           }}
                           data-testid={`trellis-list-delete-${task.id}`}
                           title="Delete task"
-                          className="p-1 rounded-md hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition"
+                          className="p-1 rounded-md hover:bg-[#F5F7FA] text-slate-400 hover:text-[#111827] transition"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>

@@ -280,7 +280,7 @@ export const RecruitmentView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <Briefcase className="w-5 h-5 text-[#083E34]" />
+            <Briefcase className="w-5 h-5 text-[#174EA6]" />
             <span>Recruitment</span>
             <span className="text-slate-400 font-normal">·</span>
             <span className="text-sm font-semibold text-slate-600">Talent Acquisition</span>
@@ -295,7 +295,7 @@ export const RecruitmentView: React.FC = () => {
             onClick={() => setIsAddCandidateOpen(true)}
             className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-800 hover:bg-slate-50 text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
           >
-            <UserCheck className="w-4 h-4 text-[#083E34]" />
+            <UserCheck className="w-4 h-4 text-[#174EA6]" />
             <span>Add Candidate</span>
           </button>
           <button
@@ -309,35 +309,35 @@ export const RecruitmentView: React.FC = () => {
       </div>
 
       {loadError && (
-        <div role="alert" className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center justify-between gap-3">
+        <div role="alert" className="p-3.5 rounded-xl bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] text-xs font-semibold flex items-center justify-between gap-3">
           <span>Recruitment data could not be loaded: {loadError}</span>
           <button
             type="button"
             onClick={() => void loadData()}
-            className="px-3 py-1 rounded-lg bg-white border border-rose-200 text-rose-800 hover:bg-rose-100 text-xs font-bold cursor-pointer shrink-0"
+            className="px-3 py-1 rounded-lg bg-white border border-[#111827]/25 text-[#111827] hover:bg-[#E5E7EB] text-xs font-bold cursor-pointer shrink-0"
           >
             Retry
           </button>
         </div>
       )}
       {actionError && (
-        <div role="alert" className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">
+        <div role="alert" className="p-3.5 rounded-xl bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] text-xs font-semibold">
           Requisition status could not be saved: {actionError}
         </div>
       )}
 
       {/* Success Notification Banner */}
       {successBanner && (
-        <div role="status" className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center justify-between animate-fade-in shadow-2xs">
+        <div role="status" className="p-3.5 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] text-[#174EA6] text-xs flex items-center justify-between animate-fade-in shadow-2xs">
           <div className="flex items-center gap-2 font-semibold">
-            <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-[#174EA6] shrink-0" />
             <span>{successBanner}</span>
           </div>
           <button
             type="button"
             onClick={() => setSuccessBanner(null)}
             aria-label="Dismiss notification"
-            className="p-1 text-emerald-700 hover:text-emerald-950 transition rounded cursor-pointer"
+            className="p-1 text-[#174EA6] hover:text-[#174EA6] transition rounded cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -410,10 +410,10 @@ export const RecruitmentView: React.FC = () => {
                             {req.employmentType || 'Full-Time'}
                           </span>
                         </div>
-                        <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#083E34] transition mt-1">
+                        <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#174EA6] transition mt-1">
                           {req.jobTitle}
                         </h3>
-                        <p className="text-xs text-[#083E34] font-semibold mt-0.5">
+                        <p className="text-xs text-[#174EA6] font-semibold mt-0.5">
                           {req.departmentName} ({req.entityName})
                         </p>
                       </div>
@@ -476,11 +476,11 @@ export const RecruitmentView: React.FC = () => {
                               <span
                                 className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                                   cand.status === 'Hired'
-                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                    ? 'bg-[#EFF6FF] text-[#174EA6] border-[#BFDBFE]'
                                     : cand.status.includes('Interview')
-                                    ? 'bg-[#EBF5F2] text-[#083E34] border-[#A3D4C7]/60'
+                                    ? 'bg-[#EFF6FF] text-[#174EA6] border-[#BFDBFE]/60'
                                     : cand.status === 'Job Offered'
-                                    ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                    ? 'bg-[#FAF5EB] text-[#B88A24] border-[#E9D59A]'
                                     : 'bg-slate-100 text-slate-700 border-slate-200'
                                 }`}
                               >
@@ -493,12 +493,12 @@ export const RecruitmentView: React.FC = () => {
                         <div className="p-3 rounded-xl bg-slate-50/50 border border-slate-100 text-xs">
                           <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600 mb-1.5">
                             <span>Sourcing &amp; Screening Active</span>
-                            <span className="text-emerald-700 font-bold">{req.applicantsCount} Resumes</span>
+                            <span className="text-[#174EA6] font-bold">{req.applicantsCount} Resumes</span>
                           </div>
                           <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden flex">
-                            <div className="bg-[#083E34] h-full" style={{ width: '45%' }} />
-                            <div className="bg-amber-500 h-full" style={{ width: '30%' }} />
-                            <div className="bg-emerald-500 h-full" style={{ width: '15%' }} />
+                            <div className="bg-[#174EA6] h-full" style={{ width: '45%' }} />
+                            <div className="bg-[#B88A24] h-full" style={{ width: '30%' }} />
+                            <div className="bg-[#174EA6] h-full" style={{ width: '15%' }} />
                           </div>
                           <div className="flex justify-between text-[10px] text-slate-400 font-medium mt-1">
                             <span>Screening (60%)</span>
@@ -517,7 +517,7 @@ export const RecruitmentView: React.FC = () => {
                         setSelectedVacancyFilter(req.jobTitle);
                         setActiveTab('candidates');
                       }}
-                      className="text-xs font-bold text-[#083E34] hover:underline flex items-center gap-1 cursor-pointer"
+                      className="text-xs font-bold text-[#174EA6] hover:underline flex items-center gap-1 cursor-pointer"
                     >
                       <span>View All Candidates ({reqCandidates.length || req.applicantsCount})</span>
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -540,7 +540,7 @@ export const RecruitmentView: React.FC = () => {
             </div>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-[#083E34] text-white hover:bg-[#062d26] text-xs font-bold inline-flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+              className="px-4 py-2 rounded-xl bg-[#174EA6] text-white hover:bg-[#062d26] text-xs font-bold inline-flex items-center gap-1.5 transition cursor-pointer shadow-xs"
             >
               <Plus className="w-4 h-4" />
               <span>Create First Requisition</span>
@@ -560,8 +560,8 @@ export const RecruitmentView: React.FC = () => {
               <span className="text-[10px] text-slate-500 block mt-0.5">Active candidates</span>
             </div>
             <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
-              <span className="text-[10px] font-semibold text-[#083E34] uppercase tracking-wider block">Shortlisted</span>
-              <span className="text-xl font-bold text-[#083E34]">{atsStats.shortlisted}</span>
+              <span className="text-[10px] font-semibold text-[#174EA6] uppercase tracking-wider block">Shortlisted</span>
+              <span className="text-xl font-bold text-[#174EA6]">{atsStats.shortlisted}</span>
               <span className="text-[10px] text-slate-500 block mt-0.5">Resume approved</span>
             </div>
             <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
@@ -570,13 +570,13 @@ export const RecruitmentView: React.FC = () => {
               <span className="text-[10px] text-slate-500 block mt-0.5">Tech &amp; Competency</span>
             </div>
             <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
-              <span className="text-[10px] font-semibold text-amber-700 uppercase tracking-wider block">Offers Extended</span>
-              <span className="text-xl font-bold text-amber-900">{atsStats.offers}</span>
+              <span className="text-[10px] font-semibold text-[#B88A24] uppercase tracking-wider block">Offers Extended</span>
+              <span className="text-xl font-bold text-[#B88A24]">{atsStats.offers}</span>
               <span className="text-[10px] text-slate-500 block mt-0.5">Pending acceptance</span>
             </div>
             <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
-              <span className="text-[10px] font-semibold text-emerald-700 uppercase tracking-wider block">Hired</span>
-              <span className="text-xl font-bold text-emerald-900">{atsStats.hired}</span>
+              <span className="text-[10px] font-semibold text-[#174EA6] uppercase tracking-wider block">Hired</span>
+              <span className="text-xl font-bold text-[#174EA6]">{atsStats.hired}</span>
               <span className="text-[10px] text-slate-500 block mt-0.5">Ready for Onboarding</span>
             </div>
           </div>
@@ -653,12 +653,12 @@ export const RecruitmentView: React.FC = () => {
                       {/* Candidate Header */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-[#083E34] text-[#D4AF37] font-black text-sm flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-xl bg-[#174EA6] text-[#D4AF37] font-black text-sm flex items-center justify-center">
                             {candidate.firstName.charAt(0)}{candidate.lastName.charAt(0)}
                           </div>
                           <div>
                             <h3 className="text-sm font-bold text-slate-900">{candidate.fullName}</h3>
-                            <p className="text-xs text-[#083E34] font-semibold">
+                            <p className="text-xs text-[#174EA6] font-semibold">
                               {candidate.vacancyTitle || 'Position not set'} · <span className="text-slate-400 font-normal">{candidate.departmentName || 'CGCC'}</span>
                             </p>
                           </div>
@@ -667,15 +667,15 @@ export const RecruitmentView: React.FC = () => {
                         <span
                           className={`text-[10px] font-black px-2.5 py-1 rounded-full border ${
                             candidate.status === 'Hired'
-                              ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                              ? 'bg-[#EFF6FF] text-[#174EA6] border-[#BFDBFE]'
                               : candidate.status === 'Job Offered'
-                              ? 'bg-amber-50 text-amber-800 border-amber-300'
+                              ? 'bg-[#FAF5EB] text-[#B88A24] border-[#E9D59A]'
                               : candidate.status.includes('Interview')
-                              ? 'bg-purple-50 text-purple-800 border-purple-300'
+                              ? 'bg-[#EFF6FF] text-[#174EA6] border-[#BFDBFE]'
                               : candidate.status === 'Shortlisted'
                               ? 'bg-blue-50 text-blue-800 border-blue-300'
                               : candidate.status === 'Rejected'
-                              ? 'bg-rose-50 text-rose-800 border-rose-300'
+                              ? 'bg-[#F5F7FA] text-[#111827] border-[#111827]/25'
                               : 'bg-slate-100 text-slate-700 border-slate-300'
                           }`}
                         >
@@ -685,12 +685,12 @@ export const RecruitmentView: React.FC = () => {
 
                       {/* Contact Info */}
                       <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-600">
-                        <a href={`mailto:${candidate.email}`} className="flex items-center gap-1 hover:text-[#083E34]">
+                        <a href={`mailto:${candidate.email}`} className="flex items-center gap-1 hover:text-[#174EA6]">
                           <Mail className="w-3.5 h-3.5 text-slate-400" />
                           <span>{candidate.email}</span>
                         </a>
                         {candidate.phone && (
-                          <a href={`tel:${candidate.phone}`} className="flex items-center gap-1 hover:text-[#083E34]">
+                          <a href={`tel:${candidate.phone}`} className="flex items-center gap-1 hover:text-[#174EA6]">
                             <Phone className="w-3.5 h-3.5 text-slate-400" />
                             <span>{candidate.phone}</span>
                           </a>
@@ -719,7 +719,7 @@ export const RecruitmentView: React.FC = () => {
                               setSelectedCandidate(candidate);
                               setIsScheduleInterviewOpen(true);
                             }}
-                            className="text-[11px] font-bold text-[#083E34] hover:underline flex items-center gap-1 cursor-pointer"
+                            className="text-[11px] font-bold text-[#174EA6] hover:underline flex items-center gap-1 cursor-pointer"
                           >
                             <CalendarDays className="w-3 h-3" />
                             <span>Schedule Interview</span>
@@ -738,17 +738,17 @@ export const RecruitmentView: React.FC = () => {
                                     {iv.title.includes('Physical') ? (
                                       <MapPin className="w-3 h-3 text-blue-600 shrink-0" />
                                     ) : (
-                                      <Video className="w-3 h-3 text-purple-600 shrink-0" />
+                                      <Video className="w-3 h-3 text-[#174EA6] shrink-0" />
                                     )}
                                     <span>{iv.title}</span>
                                   </span>
                                   <span
                                     className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${
                                       iv.result === 'Passed'
-                                        ? 'bg-emerald-100 text-emerald-800'
+                                        ? 'bg-[#DBEAFE] text-[#174EA6]'
                                         : iv.result === 'Failed'
-                                        ? 'bg-rose-100 text-rose-800'
-                                        : 'bg-amber-100 text-amber-800'
+                                        ? 'bg-[#E5E7EB] text-[#111827]'
+                                        : 'bg-[#FAF5EB] text-[#B88A24]'
                                     }`}
                                   >
                                     {iv.result}
@@ -771,7 +771,7 @@ export const RecruitmentView: React.FC = () => {
                                         setSelectedCandidate(candidate);
                                         setIsRecordResultOpen(true);
                                       }}
-                                      className="px-2 py-1 rounded bg-[#083E34] text-white text-[10px] font-bold hover:bg-[#062d26] transition cursor-pointer"
+                                      className="px-2 py-1 rounded bg-[#174EA6] text-white text-[10px] font-bold hover:bg-[#062d26] transition cursor-pointer"
                                     >
                                       Record Assessment Result
                                     </button>
@@ -806,7 +806,7 @@ export const RecruitmentView: React.FC = () => {
                               setSelectedCandidate(candidate);
                               setIsScheduleInterviewOpen(true);
                             }}
-                            className="px-2.5 py-1 rounded-lg bg-purple-50 text-purple-800 hover:bg-purple-100 text-[11px] font-bold border border-purple-200 transition cursor-pointer"
+                            className="px-2.5 py-1 rounded-lg bg-[#EFF6FF] text-[#174EA6] hover:bg-[#DBEAFE] text-[11px] font-bold border border-[#BFDBFE] transition cursor-pointer"
                           >
                             Schedule Interview
                           </button>
@@ -814,7 +814,7 @@ export const RecruitmentView: React.FC = () => {
                         {candidate.status === 'Interview Passed' && (
                           <button
                             onClick={() => handleCandidateStatusTransition(candidate, 'Job Offered')}
-                            className="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-900 hover:bg-amber-100 text-[11px] font-bold border border-amber-300 transition cursor-pointer"
+                            className="px-2.5 py-1 rounded-lg bg-[#FAF5EB] text-[#B88A24] hover:bg-[#FAF5EB] text-[11px] font-bold border border-[#E9D59A] transition cursor-pointer"
                           >
                             Extend Job Offer
                           </button>
@@ -822,7 +822,7 @@ export const RecruitmentView: React.FC = () => {
                         {candidate.status === 'Job Offered' && (
                           <button
                             onClick={() => handleCandidateStatusTransition(candidate, 'Hired')}
-                            className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-[11px] font-bold transition cursor-pointer shadow-xs"
+                            className="px-2.5 py-1 rounded-lg bg-[#174EA6] text-white hover:bg-[#174EA6] text-[11px] font-bold transition cursor-pointer shadow-xs"
                           >
                             Mark Hired (Pre-Onboard)
                           </button>
@@ -830,7 +830,7 @@ export const RecruitmentView: React.FC = () => {
                         {candidate.status !== 'Hired' && candidate.status !== 'Rejected' && (
                           <button
                             onClick={() => handleCandidateStatusTransition(candidate, 'Rejected')}
-                            className="px-2 py-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 text-[11px] font-bold border border-rose-200 transition cursor-pointer"
+                            className="px-2 py-1 rounded-lg bg-[#F5F7FA] text-[#111827] hover:bg-[#E5E7EB] text-[11px] font-bold border border-[#111827]/25 transition cursor-pointer"
                           >
                             Reject
                           </button>
@@ -854,7 +854,7 @@ export const RecruitmentView: React.FC = () => {
               </div>
               <button
                 onClick={() => setIsAddCandidateOpen(true)}
-                className="px-4 py-2 rounded-xl bg-[#083E34] text-white hover:bg-[#062d26] text-xs font-bold inline-flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                className="px-4 py-2 rounded-xl bg-[#174EA6] text-white hover:bg-[#062d26] text-xs font-bold inline-flex items-center gap-1.5 transition cursor-pointer shadow-xs"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Candidate to Pipeline</span>
@@ -868,14 +868,14 @@ export const RecruitmentView: React.FC = () => {
       {activeTab === 'sop_stages' && (
         <div className="space-y-5">
           {/* Institutional Highlights Card */}
-          <div className="p-4 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-3">
-            <Info className="w-5 h-5 text-amber-800 shrink-0 mt-0.5" />
+          <div className="p-4 bg-[#FAF5EB] border border-[#E9D59A] rounded-xl flex items-start gap-3">
+            <Info className="w-5 h-5 text-[#B88A24] shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-xs font-black text-amber-950 uppercase tracking-wider">
+              <h3 className="text-xs font-black text-[#B88A24] uppercase tracking-wider">
                 Citadel Standard Operating Procedure for Recruitment (Workbook Sheet 8)
               </h3>
-              <p className="text-xs text-amber-900 mt-1 leading-relaxed font-medium">
-                Recruitment across all Citadel entities follows a rigid 10-stage sequential protocol. Vacancies require formal Manpower Requisitions with approved headcount and salary band validation. Stage 8 requires a <span className="font-black text-amber-950 underline">Two-Stage Interview Assessment</span> comprising <span className="font-bold text-amber-950">Stage 1: Physical Technical Interview</span> and <span className="font-bold text-amber-950">Stage 2: Virtual Competency-Based Assessment</span>.
+              <p className="text-xs text-[#B88A24] mt-1 leading-relaxed font-medium">
+                Recruitment across all Citadel entities follows a rigid 10-stage sequential protocol. Vacancies require formal Manpower Requisitions with approved headcount and salary band validation. Stage 8 requires a <span className="font-black text-[#B88A24] underline">Two-Stage Interview Assessment</span> comprising <span className="font-bold text-[#B88A24]">Stage 1: Physical Technical Interview</span> and <span className="font-bold text-[#B88A24]">Stage 2: Virtual Competency-Based Assessment</span>.
               </p>
             </div>
           </div>
@@ -891,13 +891,13 @@ export const RecruitmentView: React.FC = () => {
                   key={st.step}
                   className={`p-3 rounded-xl border flex flex-col justify-between ${
                     st.step === 8
-                      ? 'bg-amber-50/80 border-amber-400 ring-1 ring-amber-400'
+                      ? 'bg-[#FAF5EB] border-[#E9D59A] ring-1 ring-amber-400'
                       : 'bg-slate-50 border-slate-200'
                   }`}
                 >
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="w-6 h-6 rounded-full bg-[#083E34] text-amber-300 font-black text-xs flex items-center justify-center">
+                      <span className="w-6 h-6 rounded-full bg-[#174EA6] text-[#D4AF37] font-black text-xs flex items-center justify-center">
                         {st.step}
                       </span>
                       <span className="text-[10px] font-bold text-slate-600 font-mono">
@@ -926,14 +926,14 @@ export const RecruitmentView: React.FC = () => {
                 </h3>
                 <p className="text-[11px] text-slate-600">Roles, responsibilities, SLA days, and stage deliverables</p>
               </div>
-              <span className="text-xs font-bold px-2.5 py-1 bg-[#083E34] text-[#D4AF37] rounded-md">
+              <span className="text-xs font-bold px-2.5 py-1 bg-[#174EA6] text-[#D4AF37] rounded-md">
                 Sheet 8 Mandate
               </span>
             </div>
 
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[#083E34] text-white uppercase tracking-wider text-xs font-bold">
+                <thead className="bg-[#174EA6] text-white uppercase tracking-wider text-xs font-bold">
                   <tr>
                     <th className="py-3.5 px-4 w-12 text-center">Step</th>
                     <th className="py-3.5 px-4">Stage Name</th>
@@ -949,7 +949,7 @@ export const RecruitmentView: React.FC = () => {
                     <tr
                       key={st.step}
                       className={`hover:bg-slate-100 transition ${
-                        st.step === 8 ? 'bg-amber-50/40 font-semibold' : ''
+                        st.step === 8 ? 'bg-[#FAF5EB] font-semibold' : ''
                       }`}
                     >
                       <td className="py-3.5 px-4 text-center font-black text-black">
@@ -982,7 +982,7 @@ export const RecruitmentView: React.FC = () => {
                               <MapPin className="w-3 h-3" />
                               Stage 1: Physical Technical
                             </span>
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-900 border border-purple-300 block">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-[#DBEAFE] text-[#174EA6] border border-[#BFDBFE] block">
                               <Video className="w-3 h-3" />
                               Stage 2: Virtual Competency
                             </span>
@@ -1006,7 +1006,7 @@ export const RecruitmentView: React.FC = () => {
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-scale-up space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <UserCheck className="w-5 h-5 text-[#083E34]" />
+                <UserCheck className="w-5 h-5 text-[#174EA6]" />
                 <h3 className="font-bold text-sm text-slate-900">Register New Candidate in ATS</h3>
               </div>
               <button
@@ -1111,7 +1111,7 @@ export const RecruitmentView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#083E34] text-white rounded-xl text-xs font-bold hover:bg-[#062d26] transition cursor-pointer shadow-xs"
+                  className="px-4 py-2 bg-[#174EA6] text-white rounded-xl text-xs font-bold hover:bg-[#062d26] transition cursor-pointer shadow-xs"
                 >
                   Save Candidate to ATS
                 </button>
@@ -1127,7 +1127,7 @@ export const RecruitmentView: React.FC = () => {
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-scale-up space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <CalendarDays className="w-5 h-5 text-[#083E34]" />
+                <CalendarDays className="w-5 h-5 text-[#174EA6]" />
                 <div>
                   <h3 className="font-bold text-sm text-slate-900">Schedule Candidate Interview</h3>
                   <p className="text-[11px] text-slate-500 font-medium">{selectedCandidate.fullName} · {selectedCandidate.vacancyTitle}</p>
@@ -1221,7 +1221,7 @@ export const RecruitmentView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#083E34] text-white rounded-xl text-xs font-bold hover:bg-[#062d26] transition cursor-pointer shadow-xs"
+                  className="px-4 py-2 bg-[#174EA6] text-white rounded-xl text-xs font-bold hover:bg-[#062d26] transition cursor-pointer shadow-xs"
                 >
                   Confirm &amp; Notify Panel
                 </button>
@@ -1237,7 +1237,7 @@ export const RecruitmentView: React.FC = () => {
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-scale-up space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <Award className="w-5 h-5 text-[#083E34]" />
+                <Award className="w-5 h-5 text-[#174EA6]" />
                 <div>
                   <h3 className="font-bold text-sm text-slate-900">Record Assessment Evaluation</h3>
                   <p className="text-[11px] text-slate-500 font-medium">{selectedCandidate.fullName} · {selectedInterview.title}</p>
@@ -1260,11 +1260,11 @@ export const RecruitmentView: React.FC = () => {
                     onClick={() => setResultForm({ ...resultForm, result: 'Passed' })}
                     className={`p-3 rounded-xl border flex items-center justify-center gap-2 font-bold text-xs transition cursor-pointer ${
                       resultForm.result === 'Passed'
-                        ? 'bg-emerald-50 border-emerald-500 text-emerald-900 ring-2 ring-emerald-500/20'
+                        ? 'bg-[#EFF6FF] border-[#BFDBFE] text-[#174EA6] ring-2 ring-[#174EA6]/20'
                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <CheckCircle2 className="w-4 h-4 text-[#174EA6]" />
                     <span>Candidate Passed</span>
                   </button>
 
@@ -1273,11 +1273,11 @@ export const RecruitmentView: React.FC = () => {
                     onClick={() => setResultForm({ ...resultForm, result: 'Failed' })}
                     className={`p-3 rounded-xl border flex items-center justify-center gap-2 font-bold text-xs transition cursor-pointer ${
                       resultForm.result === 'Failed'
-                        ? 'bg-rose-50 border-rose-500 text-rose-900 ring-2 ring-rose-500/20'
+                        ? 'bg-[#F5F7FA] border-[#111827]/25 text-[#111827] ring-2 ring-[#111827]/20'
                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
-                    <X className="w-4 h-4 text-rose-600" />
+                    <X className="w-4 h-4 text-[#111827]" />
                     <span>Candidate Failed</span>
                   </button>
                 </div>
@@ -1285,7 +1285,7 @@ export const RecruitmentView: React.FC = () => {
 
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">
-                  Overall Rating: <span className="text-[#083E34] font-black">{resultForm.rating} / 5</span>
+                  Overall Rating: <span className="text-[#174EA6] font-black">{resultForm.rating} / 5</span>
                 </label>
                 <input
                   type="range"
@@ -1294,7 +1294,7 @@ export const RecruitmentView: React.FC = () => {
                   step="1"
                   value={resultForm.rating}
                   onChange={(e) => setResultForm({ ...resultForm, rating: Number(e.target.value) })}
-                  className="w-full accent-[#083E34] cursor-pointer"
+                  className="w-full accent-[#174EA6] cursor-pointer"
                 />
                 <div className="flex justify-between text-[10px] text-slate-400 font-bold mt-1">
                   <span>1 - Unsatisfactory</span>
@@ -1325,7 +1325,7 @@ export const RecruitmentView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#083E34] text-white rounded-xl text-xs font-bold hover:bg-[#062d26] transition cursor-pointer shadow-xs"
+                  className="px-4 py-2 bg-[#174EA6] text-white rounded-xl text-xs font-bold hover:bg-[#062d26] transition cursor-pointer shadow-xs"
                 >
                   Record Evaluation
                 </button>

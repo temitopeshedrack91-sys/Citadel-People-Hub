@@ -37,8 +37,8 @@ export const TrellisTimeline: React.FC = () => {
       barLabel: 'Checkout address',
       startDay: 14,
       endDay: 23,
-      color: 'bg-indigo-100 text-indigo-700 border-indigo-200',
-      dotColor: 'bg-indigo-500',
+      color: 'bg-[#DBEAFE] text-[#174EA6] border-[#BFDBFE]',
+      dotColor: 'bg-[#174EA6]',
     },
     {
       id: 'PAS-218',
@@ -47,7 +47,7 @@ export const TrellisTimeline: React.FC = () => {
       startDay: 13,
       endDay: 20,
       color: 'bg-slate-900 text-white font-bold',
-      dotColor: 'bg-amber-400',
+      dotColor: 'bg-[#B88A24]',
       hasStatusTag: true,
     },
     {
@@ -56,8 +56,8 @@ export const TrellisTimeline: React.FC = () => {
       barLabel: 'Offline queue 33%',
       startDay: 16,
       endDay: 26,
-      color: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-      dotColor: 'bg-emerald-500',
+      color: 'bg-[#DBEAFE] text-[#174EA6] border-[#BFDBFE]',
+      dotColor: 'bg-[#174EA6]',
     },
     {
       id: 'PAS-219',
@@ -65,8 +65,8 @@ export const TrellisTimeline: React.FC = () => {
       barLabel: 'Crash fix',
       startDay: 18,
       endDay: 22,
-      color: 'bg-rose-100 text-rose-700 border-rose-200',
-      dotColor: 'bg-rose-500',
+      color: 'bg-[#E5E7EB] text-[#111827] border-[#111827]/25',
+      dotColor: 'bg-[#111827]',
     },
     {
       id: 'PAS-227',
@@ -74,8 +74,8 @@ export const TrellisTimeline: React.FC = () => {
       barLabel: 'Search 50%',
       startDay: 13,
       endDay: 20,
-      color: 'bg-purple-100 text-purple-700 border-purple-200',
-      dotColor: 'bg-purple-500',
+      color: 'bg-[#DBEAFE] text-[#174EA6] border-[#BFDBFE]',
+      dotColor: 'bg-[#174EA6]',
     },
     {
       id: 'PAS-221',
@@ -83,8 +83,8 @@ export const TrellisTimeline: React.FC = () => {
       barLabel: 'Token audit',
       startDay: 20,
       endDay: 26,
-      color: 'bg-amber-100 text-amber-800 border-amber-200',
-      dotColor: 'bg-amber-500',
+      color: 'bg-[#FAF5EB] text-[#B88A24] border-[#E9D59A]',
+      dotColor: 'bg-[#B88A24]',
     },
     {
       id: 'PAS-226',
@@ -92,7 +92,7 @@ export const TrellisTimeline: React.FC = () => {
       barLabel: 'Screens',
       startDay: 23,
       endDay: 28,
-      color: 'bg-amber-100 text-amber-900 border-amber-200',
+      color: 'bg-[#FAF5EB] text-[#B88A24] border-[#E9D59A]',
       dotColor: 'bg-[#D4AF37]',
     },
   ];
@@ -120,7 +120,7 @@ export const TrellisTimeline: React.FC = () => {
                   <span
                     className={`mt-0.5 ${
                       d.isCurrent
-                        ? 'bg-amber-400 text-slate-950 w-5 h-5 rounded-full flex items-center justify-center font-black shadow-2xs'
+                        ? 'bg-[#B88A24] text-slate-950 w-5 h-5 rounded-full flex items-center justify-center font-black shadow-2xs'
                         : ''
                     }`}
                   >
@@ -178,7 +178,7 @@ export const TrellisTimeline: React.FC = () => {
                   <span>Code freeze</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-xs bg-amber-400" />
+                  <span className="w-2.5 h-2.5 rounded-xs bg-[#B88A24]" />
                   <span>Release</span>
                 </span>
               </div>
@@ -224,7 +224,7 @@ export const TrellisTimeline: React.FC = () => {
                     <span
                       data-testid={`trellis-workload-hours-${member.id}`}
                       className={`text-xs font-mono font-bold ${
-                        isOverloaded ? 'text-rose-600' : 'text-slate-700'
+                        isOverloaded ? 'text-[#111827]' : 'text-slate-700'
                       }`}
                     >
                       {currentHours}/{maxHours}
@@ -236,7 +236,7 @@ export const TrellisTimeline: React.FC = () => {
                     <div
                       data-testid={`trellis-workload-bar-${member.id}`}
                       className={`h-full rounded-full transition-all duration-300 ${
-                        isOverloaded ? 'bg-rose-500' : 'bg-slate-900'
+                        isOverloaded ? 'bg-[#111827]' : 'bg-slate-900'
                       }`}
                       style={{ width: `${pct}%` }}
                     />
@@ -262,8 +262,8 @@ export const TrellisTimeline: React.FC = () => {
             <svg viewBox="0 0 300 100" className="w-full h-full overflow-visible">
               <defs>
                 <linearGradient id="burndownGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#083E34" stopOpacity="0.12" />
-                  <stop offset="100%" stopColor="#083E34" stopOpacity="0.0" />
+                  <stop offset="0%" stopColor="#174EA6" stopOpacity="0.12" />
+                  <stop offset="100%" stopColor="#174EA6" stopOpacity="0.0" />
                 </linearGradient>
               </defs>
               {/* Area fill under curve */}
@@ -285,12 +285,12 @@ export const TrellisTimeline: React.FC = () => {
               <path
                 d="M 0 20 Q 80 25, 140 45 T 240 70 T 300 90"
                 fill="none"
-                stroke="#083E34"
+                stroke="#174EA6"
                 strokeWidth="2.5"
                 strokeLinecap="round"
               />
               {/* Current day indicator */}
-              <circle cx="140" cy="45" r="4.5" fill="#F59E0B" stroke="#FFFFFF" strokeWidth="2" />
+              <circle cx="140" cy="45" r="4.5" fill="#D4AF37" stroke="#FFFFFF" strokeWidth="2" />
             </svg>
 
             <div className="flex justify-between text-[9px] text-slate-400 pt-1 font-medium">

@@ -60,7 +60,7 @@ export const StatCard: React.FC<StatCardProps> = ({
       tabIndex={onClick ? 0 : undefined}
       className={`bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs flex flex-col justify-between transition-colors duration-150 ${
         onClick
-          ? 'cursor-pointer hover:border-[#083E34]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#083E34] focus-visible:ring-offset-2'
+          ? 'cursor-pointer hover:border-[#174EA6]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#174EA6] focus-visible:ring-offset-2'
           : ''
       } ${className}`}
     >
@@ -86,7 +86,7 @@ export const StatCard: React.FC<StatCardProps> = ({
           <div className="mt-2 flex items-center gap-1.5 text-xs flex-wrap tabular-nums">
             <span
               className={`font-semibold whitespace-nowrap ${
-                trend.isPositive === false ? 'text-rose-600' : 'text-emerald-700'
+                trend.isPositive === false ? 'text-[#111827]' : 'text-[#174EA6]'
               }`}
             >
               {trend.value}

@@ -31,16 +31,16 @@ export const AccessDeniedView: React.FC<AccessDeniedViewProps> = ({
     >
       <div className="w-full bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         {/* Top Accent Strip */}
-        <div className="h-1.5 bg-[#083E34]" />
+        <div className="h-1.5 bg-[#0B1F3A]" />
 
         <div className="p-6 sm:p-10 space-y-6">
           {/* Header Icon & Status */}
           <div className="flex items-start justify-between gap-4">
-            <div className="w-12 h-12 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-[#F5F7FA] border border-[#E5E7EB] text-[#111827] flex items-center justify-center shrink-0">
               {status === 401 ? <Lock className="w-6 h-6" /> : <ShieldAlert className="w-6 h-6" />}
             </div>
 
-            <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-semibold uppercase tracking-wider bg-rose-50 text-rose-800 border border-rose-200">
+            <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-semibold uppercase tracking-wider bg-[#111827] text-white border border-[#111827]">
               HTTP {status} {status === 401 ? 'Unauthorized' : 'Forbidden'}
             </span>
           </div>
@@ -71,7 +71,7 @@ export const AccessDeniedView: React.FC<AccessDeniedViewProps> = ({
                 </div>
                 <div>
                   <dt className="text-slate-500 text-[11px]">Assigned Role</dt>
-                  <dd className="font-semibold text-[#083E34] mt-0.5">
+                  <dd className="font-semibold text-[#174EA6] mt-0.5">
                     {canonical || currentRole}
                   </dd>
                 </div>
@@ -88,7 +88,7 @@ export const AccessDeniedView: React.FC<AccessDeniedViewProps> = ({
           {/* Policy Notice */}
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-700 space-y-1">
             <div className="font-semibold flex items-center gap-1.5 text-slate-900">
-              <Building className="w-3.5 h-3.5 text-[#083E34]" />
+              <Building className="w-3.5 h-3.5 text-[#174EA6]" />
               <span>Role-Based Access Policy</span>
             </div>
             <p className="text-xs text-slate-600 leading-relaxed">
@@ -104,7 +104,7 @@ export const AccessDeniedView: React.FC<AccessDeniedViewProps> = ({
               type="button"
               onClick={onNavigateHome}
               data-testid="access-denied-home-btn"
-              className="px-4 py-2.5 rounded-lg bg-[#083E34] hover:bg-[#062E27] text-white text-xs font-semibold flex items-center gap-2 transition active:scale-[0.98] cursor-pointer"
+              className="px-4 py-2.5 rounded-lg bg-[#174EA6] hover:bg-[#0B1F3A] text-white text-xs font-semibold flex items-center gap-2 transition active:scale-[0.98] cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Return to Dashboard</span>

@@ -203,7 +203,7 @@ export const SettingsView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-black text-black tracking-tight flex items-center gap-2">
-            <Settings className="w-5 h-5 text-[#083E34]" />
+            <Settings className="w-5 h-5 text-[#174EA6]" />
             <span>Organization Settings &amp; Entity Governance</span>
           </h2>
           <p className="text-xs text-slate-500 font-medium">
@@ -257,7 +257,7 @@ export const SettingsView: React.FC = () => {
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
           }`}
         >
-          <ShieldCheck className={`w-3.5 h-3.5 ${activeTab === 'roles_matrix' ? 'text-slate-950' : 'text-emerald-500'}`} />
+          <ShieldCheck className={`w-3.5 h-3.5 ${activeTab === 'roles_matrix' ? 'text-slate-950' : 'text-[#174EA6]'}`} />
           <span>Roles &amp; Permissions Governance Matrix (Sheet 4)</span>
         </button>
 
@@ -277,12 +277,12 @@ export const SettingsView: React.FC = () => {
       {activeTab === 'entities_depts' && (
         <div className="space-y-5">
           {catalogError && (
-            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center justify-between gap-3">
+            <div className="p-3.5 rounded-xl bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] text-xs flex items-center justify-between gap-3">
               <span className="font-semibold">{catalogError}</span>
               <button
                 type="button"
                 onClick={() => void reloadCatalog()}
-                className="px-3 py-1 rounded-lg bg-white border border-rose-200 text-rose-700 font-bold hover:bg-rose-100 transition cursor-pointer"
+                className="px-3 py-1 rounded-lg bg-white border border-[#111827]/25 text-[#111827] font-bold hover:bg-[#E5E7EB] transition cursor-pointer"
               >
                 Retry
               </button>
@@ -299,7 +299,7 @@ export const SettingsView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setEntityTableFilter('all')}
-                  className="text-xs font-bold text-[#083E34] hover:underline cursor-pointer"
+                  className="text-xs font-bold text-[#174EA6] hover:underline cursor-pointer"
                 >
                   Show all entities
                 </button>
@@ -332,13 +332,13 @@ export const SettingsView: React.FC = () => {
                       }
                       className={`text-left bg-white rounded-2xl border p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] flex flex-col justify-between transition cursor-pointer ${
                         isSelected
-                          ? 'border-[#083E34] ring-2 ring-[#083E34]/15'
+                          ? 'border-[#174EA6] ring-2 ring-[#174EA6]/15'
                           : 'border-slate-200/90 hover:border-slate-300'
                       }`}
                     >
                       <div>
                         <div className="flex items-center justify-between">
-                          <span className="px-2.5 py-0.5 rounded-lg font-mono text-xs font-bold bg-[#083E34]/10 text-[#083E34]">
+                          <span className="px-2.5 py-0.5 rounded-lg font-mono text-xs font-bold bg-[#174EA6]/10 text-[#174EA6]">
                             {ent.shortCode || ent.id}
                           </span>
                           <Badge variant={ent.isActive ? 'success' : 'neutral'}>
@@ -361,7 +361,7 @@ export const SettingsView: React.FC = () => {
                         <span className="font-semibold text-slate-500">
                           {ent.employeeCount !== undefined ? `${ent.employeeCount} Staff` : ent.shortCode}
                         </span>
-                        <span className="font-bold text-[#083E34]">
+                        <span className="font-bold text-[#174EA6]">
                           {entDeptCount} {entDeptCount === 1 ? 'Department' : 'Departments'}
                         </span>
                       </div>
@@ -389,7 +389,7 @@ export const SettingsView: React.FC = () => {
                   value={entityTableFilter}
                   onChange={(e) => setEntityTableFilter(e.target.value)}
                   disabled={catalogLoading}
-                  className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-800 outline-none focus:border-[#083E34] cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-800 outline-none focus:border-[#174EA6] cursor-pointer"
                 >
                   <option value="all">All Entities ({departments.length})</option>
                   {entities.map((ent) => (
@@ -439,7 +439,7 @@ export const SettingsView: React.FC = () => {
                               {dept.code}
                             </span>
                             {dept.isGecSharedService && (
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200">
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FAF5EB] text-[#B88A24] border border-[#E9D59A]">
                                 GEC Shared
                               </span>
                             )}
@@ -492,8 +492,8 @@ export const SettingsView: React.FC = () => {
                               onClick={() => handleToggleDeptStatus(dept)}
                               className={`text-xs font-semibold px-2.5 py-1 rounded-lg border transition cursor-pointer ${
                                 dept.isActive
-                                  ? 'border-slate-200 text-slate-600 hover:text-rose-700 hover:bg-rose-50 hover:border-rose-200'
-                                  : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
+                                  ? 'border-slate-200 text-slate-600 hover:text-[#111827] hover:bg-[#F5F7FA] hover:border-[#111827]/25'
+                                  : 'border-[#BFDBFE] text-[#174EA6] hover:bg-[#EFF6FF]'
                               }`}
                             >
                               {dept.isActive ? 'Deactivate' : 'Activate'}
@@ -514,14 +514,14 @@ export const SettingsView: React.FC = () => {
       {activeTab === 'gec_roster' && (
         <div className="space-y-5">
           {/* Highlights Info Banner */}
-          <div className="p-4 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-3">
-            <Info className="w-5 h-5 text-amber-800 shrink-0 mt-0.5" />
+          <div className="p-4 bg-[#FAF5EB] border border-[#E9D59A] rounded-xl flex items-start gap-3">
+            <Info className="w-5 h-5 text-[#B88A24] shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-xs font-black text-amber-950 uppercase tracking-wider">
+              <h3 className="text-xs font-black text-[#B88A24] uppercase tracking-wider">
                 Citadel Group Executive Council (GEC) &amp; Shared Services Governance
               </h3>
-              <p className="text-xs text-amber-900 mt-1 leading-relaxed font-medium">
-                The Group Executive Council oversees strategic alignment across CGCC, CSOG, and Citadel Holdings. Central Shared Services—including <span className="font-bold text-amber-950">People, Culture &amp; Change Management (PCCM)</span>, <span className="font-bold text-amber-950">Campus Security</span>, <span className="font-bold text-amber-950">Administration &amp; Protocol</span>, <span className="font-bold text-amber-950">ICT</span>, and <span className="font-bold text-amber-950">Transport &amp; Logistics</span>—operate across all Citadel entities under designated GEC reporting lines.
+              <p className="text-xs text-[#B88A24] mt-1 leading-relaxed font-medium">
+                The Group Executive Council oversees strategic alignment across CGCC, CSOG, and Citadel Holdings. Central Shared Services—including <span className="font-bold text-[#B88A24]">People, Culture &amp; Change Management (PCCM)</span>, <span className="font-bold text-[#B88A24]">Campus Security</span>, <span className="font-bold text-[#B88A24]">Administration &amp; Protocol</span>, <span className="font-bold text-[#B88A24]">ICT</span>, and <span className="font-bold text-[#B88A24]">Transport &amp; Logistics</span>—operate across all Citadel entities under designated GEC reporting lines.
               </p>
             </div>
           </div>
@@ -539,8 +539,8 @@ export const SettingsView: React.FC = () => {
                       <div className="flex items-center gap-1.5">
                         <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
                           member.roleType === 'Business Head'
-                            ? 'bg-[#083E34] text-amber-300'
-                            : 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                            ? 'bg-[#174EA6] text-[#D4AF37]'
+                            : 'bg-[#DBEAFE] text-[#174EA6] border border-[#BFDBFE]'
                         }`}>
                           {member.roleType}
                         </span>
@@ -551,7 +551,7 @@ export const SettingsView: React.FC = () => {
                         )}
                       </div>
                       <h4 className="text-sm font-black text-slate-900 mt-2">{member.name}</h4>
-                      <p className="text-xs font-bold text-[#083E34]">{member.title}</p>
+                      <p className="text-xs font-bold text-[#174EA6]">{member.title}</p>
                     </div>
                   </div>
 
@@ -576,7 +576,7 @@ export const SettingsView: React.FC = () => {
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                   <a
                     href={`mailto:${member.email}`}
-                    className="inline-flex items-center gap-1.5 font-bold text-[#083E34] hover:underline"
+                    className="inline-flex items-center gap-1.5 font-bold text-[#174EA6] hover:underline"
                   >
                     <Mail className="w-3.5 h-3.5" />
                     <span>{member.email}</span>
@@ -593,13 +593,13 @@ export const SettingsView: React.FC = () => {
       {activeTab === 'roles_matrix' && (
         <div className="space-y-5">
           {/* Matrix Header Banner */}
-          <div className="p-4 bg-[#EBF5F2]/80 border border-[#A3D4C7]/70 rounded-xl flex items-start gap-3 shadow-2xs">
-            <ShieldCheck className="w-5 h-5 text-[#083E34] shrink-0 mt-0.5" />
+          <div className="p-4 bg-[#EFF6FF]/80 border border-[#BFDBFE]/70 rounded-xl flex items-start gap-3 shadow-2xs">
+            <ShieldCheck className="w-5 h-5 text-[#174EA6] shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-xs font-bold text-[#052C25] uppercase tracking-wider">
+              <h3 className="text-xs font-bold text-[#0B1F3A] uppercase tracking-wider">
                 Citadel 5-Tier Role &amp; Permission Governance Charter
               </h3>
-              <p className="text-xs text-[#083E34]/90 mt-1 leading-relaxed font-medium">
+              <p className="text-xs text-[#174EA6]/90 mt-1 leading-relaxed font-medium">
                 Access to Citadel People Hub is strictly partitioned into 5 hierarchical tiers. PCCM Super Admin maintains full multi-entity oversight; Business Heads govern entity subsidiaries; HODs manage departmental leaves and team attendance; Employees utilize self-service; and System Admins manage technical biometrics infrastructure without sensitive HR payroll access.
               </p>
             </div>
@@ -614,14 +614,14 @@ export const SettingsView: React.FC = () => {
                 </h3>
                 <p className="text-[11px] text-slate-500 font-medium">Cross-cutting permission rules from Super Admin to Self-Service Employee</p>
               </div>
-              <span className="text-xs font-bold px-2.5 py-1 bg-[#083E34] text-[#D4AF37] rounded-lg shadow-xs">
+              <span className="text-xs font-bold px-2.5 py-1 bg-[#174EA6] text-[#D4AF37] rounded-lg shadow-xs">
                 5 Standard Tiers
               </span>
             </div>
 
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left text-xs min-w-[900px]">
-                <thead className="bg-[#083E34] text-white uppercase tracking-wider text-[11px] font-bold">
+                <thead className="bg-[#174EA6] text-white uppercase tracking-wider text-[11px] font-bold">
                   <tr>
                     <th className="py-3.5 px-4 w-12 text-center">Tier</th>
                     <th className="py-3.5 px-4">Role Title &amp; Code</th>
@@ -679,10 +679,10 @@ export const SettingsView: React.FC = () => {
 
       {activeTab === 'requirements_form' && (
         <div className="space-y-5">
-          <div className="p-5 bg-[#083E34] border border-[#06241E] rounded-2xl flex items-start gap-3 text-white shadow-xs">
-            <Info className="w-5 h-5 text-amber-300 shrink-0 mt-0.5" />
+          <div className="p-5 bg-[#174EA6] border border-[#06241E] rounded-2xl flex items-start gap-3 text-white shadow-xs">
+            <Info className="w-5 h-5 text-[#D4AF37] shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-xs font-black uppercase tracking-wider text-amber-300">
+              <h3 className="text-xs font-black uppercase tracking-wider text-[#D4AF37]">
                 V1 Requirement Capture &amp; Operational Workflow Summary
               </h3>
               <p className="text-xs text-slate-200 mt-1 leading-relaxed font-medium">
@@ -712,7 +712,7 @@ export const SettingsView: React.FC = () => {
               <ul className="mt-3 space-y-2 text-xs text-slate-700 font-medium">
                 {CITADEL_V1_REQUIREMENTS_FORM.businessHeadStructure.map((item) => (
                   <li key={item} className="flex items-start gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5 shrink-0" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#174EA6] mt-0.5 shrink-0" />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -724,7 +724,7 @@ export const SettingsView: React.FC = () => {
               <ul className="mt-3 space-y-2 text-xs text-slate-700 font-medium">
                 {CITADEL_V1_REQUIREMENTS_FORM.sharedServices.map((item) => (
                   <li key={item} className="flex items-start gap-2">
-                    <Network className="w-3.5 h-3.5 text-[#083E34] mt-0.5 shrink-0" />
+                    <Network className="w-3.5 h-3.5 text-[#174EA6] mt-0.5 shrink-0" />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -738,7 +738,7 @@ export const SettingsView: React.FC = () => {
               <ul className="mt-3 space-y-2 text-xs text-slate-700 font-medium">
                 {CITADEL_V1_REQUIREMENTS_FORM.newEmployeeDocuments.map((item) => (
                   <li key={item} className="flex items-start gap-2">
-                    <FileText className="w-3.5 h-3.5 text-amber-700 mt-0.5 shrink-0" />
+                    <FileText className="w-3.5 h-3.5 text-[#B88A24] mt-0.5 shrink-0" />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -750,7 +750,7 @@ export const SettingsView: React.FC = () => {
               <ul className="mt-3 space-y-2 text-xs text-slate-700 font-medium">
                 {CITADEL_V1_REQUIREMENTS_FORM.attendanceRules.map((item) => (
                   <li key={item} className="flex items-start gap-2">
-                    <Clock className="w-3.5 h-3.5 text-[#083E34] mt-0.5 shrink-0" />
+                    <Clock className="w-3.5 h-3.5 text-[#174EA6] mt-0.5 shrink-0" />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -764,7 +764,7 @@ export const SettingsView: React.FC = () => {
               <ul className="mt-3 space-y-2 text-xs text-slate-700 font-medium">
                 {CITADEL_V1_REQUIREMENTS_FORM.hrOnlyInformation.map((item) => (
                   <li key={item} className="flex items-start gap-2">
-                    <Lock className="w-3.5 h-3.5 text-rose-600 mt-0.5 shrink-0" />
+                    <Lock className="w-3.5 h-3.5 text-[#111827] mt-0.5 shrink-0" />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -775,15 +775,15 @@ export const SettingsView: React.FC = () => {
               <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">Document storage &amp; links</h4>
               <ul className="mt-3 space-y-3 text-xs text-slate-700 font-medium">
                 <li className="flex items-start gap-2">
-                  <FolderTree className="w-3.5 h-3.5 text-emerald-700 mt-0.5 shrink-0" />
+                  <FolderTree className="w-3.5 h-3.5 text-[#174EA6] mt-0.5 shrink-0" />
                   <span><span className="font-black text-slate-900">Storage model:</span> {CITADEL_V1_REQUIREMENTS_FORM.employeeAndHrDocumentStorage}</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <ArrowUpRight className="w-3.5 h-3.5 text-violet-700 mt-0.5 shrink-0" />
+                  <ArrowUpRight className="w-3.5 h-3.5 text-[#174EA6] mt-0.5 shrink-0" />
                   <span><span className="font-black text-slate-900">Template upload:</span> {CITADEL_V1_REQUIREMENTS_FORM.templateUploadLink}</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <ArrowUpRight className="w-3.5 h-3.5 text-violet-700 mt-0.5 shrink-0" />
+                  <ArrowUpRight className="w-3.5 h-3.5 text-[#174EA6] mt-0.5 shrink-0" />
                   <span><span className="font-black text-slate-900">Onboarding process:</span> {CITADEL_V1_REQUIREMENTS_FORM.onboardingProcessLink}</span>
                 </li>
               </ul>
@@ -796,12 +796,12 @@ export const SettingsView: React.FC = () => {
                 <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">V1 feature priority mapping</h3>
                 <p className="text-[11px] text-slate-500 font-medium">Must-have, can-late, and future-phase requirement cycle</p>
               </div>
-              <span className="text-[10px] font-black px-2.5 py-1 bg-[#083E34] text-amber-300 rounded-lg shadow-xs">V1 Release Priority</span>
+              <span className="text-[10px] font-black px-2.5 py-1 bg-[#174EA6] text-[#D4AF37] rounded-lg shadow-xs">V1 Release Priority</span>
             </div>
 
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left text-xs min-w-[500px]">
-                <thead className="bg-[#083E34] text-white uppercase tracking-wider text-[11px] font-bold">
+                <thead className="bg-[#174EA6] text-white uppercase tracking-wider text-[11px] font-bold">
                   <tr>
                     <th className="py-3.5 px-4">Feature</th>
                     <th className="py-3.5 px-4">Priority</th>
@@ -821,9 +821,9 @@ export const SettingsView: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-4.5 text-xs text-amber-900 shadow-xs">
+          <div className="bg-[#FAF5EB] border border-[#E9D59A] rounded-2xl p-4.5 text-xs text-[#B88A24] shadow-xs">
             <div className="flex items-center gap-2 mb-2">
-              <Award className="w-4 h-4 text-amber-700" />
+              <Award className="w-4 h-4 text-[#B88A24]" />
               <span className="font-black uppercase tracking-wider">Additional note</span>
             </div>
             <p className="font-medium leading-relaxed">{CITADEL_V1_REQUIREMENTS_FORM.additionalRequirements}</p>
@@ -836,12 +836,12 @@ export const SettingsView: React.FC = () => {
       {showDeptModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in">
           <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200/90 overflow-hidden my-auto max-h-[90vh] flex flex-col">
-            <div className="bg-[#083E34] text-white p-5 flex items-center justify-between shrink-0">
+            <div className="bg-[#174EA6] text-white p-5 flex items-center justify-between shrink-0">
               <div>
                 <h3 className="text-base font-bold text-white">
                   {editingDept ? 'Edit Department & Governance' : 'Create Department'}
                 </h3>
-                <p className="text-xs text-amber-300 font-medium">PCCM Organizational Structure (Sheet 3)</p>
+                <p className="text-xs text-[#D4AF37] font-medium">PCCM Organizational Structure (Sheet 3)</p>
               </div>
               <button
                 type="button"
@@ -855,7 +855,7 @@ export const SettingsView: React.FC = () => {
 
             <form onSubmit={handleSaveDepartment} className="p-4 sm:p-6 space-y-4 text-xs overflow-y-auto custom-scrollbar flex-1">
               {formError && (
-                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 font-semibold">
+                <div className="p-3 rounded-xl bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] font-semibold">
                   {formError}
                 </div>
               )}
@@ -866,7 +866,7 @@ export const SettingsView: React.FC = () => {
                   value={deptEntityId}
                   onChange={(e) => setDeptEntityId(e.target.value)}
                   disabled={entities.length === 0}
-                  className="w-full p-2.5 border border-slate-300 rounded-xl focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34] outline-none text-slate-900 bg-white"
+                  className="w-full p-2.5 border border-slate-300 rounded-xl focus:border-[#174EA6] focus:ring-1 focus:ring-[#174EA6] outline-none text-slate-900 bg-white"
                 >
                   {entities.length === 0 ? (
                     <option value="">No entities available</option>
@@ -891,7 +891,7 @@ export const SettingsView: React.FC = () => {
                     value={deptName}
                     onChange={(e) => setDeptName(e.target.value)}
                     required
-                    className="w-full p-2.5 border border-slate-300 rounded-xl focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34] outline-none text-slate-900 bg-white"
+                    className="w-full p-2.5 border border-slate-300 rounded-xl focus:border-[#174EA6] focus:ring-1 focus:ring-[#174EA6] outline-none text-slate-900 bg-white"
                   />
                 </div>
                 <div>
@@ -902,7 +902,7 @@ export const SettingsView: React.FC = () => {
                     value={deptCode}
                     onChange={(e) => setDeptCode(e.target.value)}
                     required
-                    className="w-full p-2.5 border border-slate-300 rounded-xl font-mono uppercase focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34] outline-none text-slate-900 bg-white"
+                    className="w-full p-2.5 border border-slate-300 rounded-xl font-mono uppercase focus:border-[#174EA6] focus:ring-1 focus:ring-[#174EA6] outline-none text-slate-900 bg-white"
                   />
                 </div>
               </div>
@@ -917,7 +917,7 @@ export const SettingsView: React.FC = () => {
                     placeholder="e.g. Pastor David Adeleke"
                     value={deptHeadName}
                     onChange={(e) => setDeptHeadName(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-xl focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34] outline-none text-slate-900 bg-white"
+                    className="w-full p-2.5 border border-slate-300 rounded-xl focus:border-[#174EA6] focus:ring-1 focus:ring-[#174EA6] outline-none text-slate-900 bg-white"
                   />
                 </div>
                 <div>
@@ -929,7 +929,7 @@ export const SettingsView: React.FC = () => {
                     placeholder="head@thecitadelglobal.org"
                     value={deptHeadEmail}
                     onChange={(e) => setDeptHeadEmail(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-xl focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34] outline-none text-slate-900 bg-white"
+                    className="w-full p-2.5 border border-slate-300 rounded-xl focus:border-[#174EA6] focus:ring-1 focus:ring-[#174EA6] outline-none text-slate-900 bg-white"
                   />
                 </div>
               </div>
@@ -944,7 +944,7 @@ export const SettingsView: React.FC = () => {
                     placeholder="e.g. Pastor Christian Ike"
                     value={deptBusinessHead}
                     onChange={(e) => setDeptBusinessHead(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-xl focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34] outline-none text-slate-900 bg-white"
+                    className="w-full p-2.5 border border-slate-300 rounded-xl focus:border-[#174EA6] focus:ring-1 focus:ring-[#174EA6] outline-none text-slate-900 bg-white"
                   />
                 </div>
                 <div>
@@ -956,7 +956,7 @@ export const SettingsView: React.FC = () => {
                     placeholder="e.g. Group Executive Council (GEC)"
                     value={deptReportsTo}
                     onChange={(e) => setDeptReportsTo(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-xl focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34] outline-none text-slate-900 bg-white"
+                    className="w-full p-2.5 border border-slate-300 rounded-xl focus:border-[#174EA6] focus:ring-1 focus:ring-[#174EA6] outline-none text-slate-900 bg-white"
                   />
                 </div>
               </div>
@@ -966,7 +966,7 @@ export const SettingsView: React.FC = () => {
                   type="checkbox"
                   checked={deptIsGecShared}
                   onChange={(e) => setDeptIsGecShared(e.target.checked)}
-                  className="rounded border-slate-300 text-[#083E34] focus:ring-[#083E34]"
+                  className="rounded border-slate-300 text-[#174EA6] focus:ring-[#174EA6]"
                 />
                 <span className="font-semibold text-slate-700">
                   Operates as a Group Executive Council (GEC) Shared Service
@@ -980,7 +980,7 @@ export const SettingsView: React.FC = () => {
                   value={deptDescription}
                   onChange={(e) => setDeptDescription(e.target.value)}
                   rows={2}
-                  className="w-full p-2.5 border border-slate-300 rounded-xl focus:border-[#083E34] focus:ring-1 focus:ring-[#083E34] outline-none text-slate-900 bg-white"
+                  className="w-full p-2.5 border border-slate-300 rounded-xl focus:border-[#174EA6] focus:ring-1 focus:ring-[#174EA6] outline-none text-slate-900 bg-white"
                 />
               </div>
 

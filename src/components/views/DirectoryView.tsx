@@ -180,7 +180,7 @@ export const DirectoryView: React.FC = () => {
     subtitle: `${emp.jobTitle} · ${emp.departmentName || 'Unassigned'}`,
     timestamp: emp.staffId,
     avatar: (
-      <div className="w-9 h-9 rounded-full bg-[#083E34] text-white font-semibold flex items-center justify-center text-xs shrink-0">
+      <div className="w-9 h-9 rounded-full bg-[#174EA6] text-white font-semibold flex items-center justify-center text-xs shrink-0">
         {(emp.firstName?.[0] || emp.fullName?.[0] || 'C')}
         {(emp.lastName?.[0] || '')}
       </div>
@@ -224,7 +224,7 @@ export const DirectoryView: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
           <div className="flex items-center gap-4 min-w-0">
-            <div className="w-14 h-14 rounded-xl bg-[#083E34] text-white font-display font-bold text-lg flex items-center justify-center shrink-0">
+            <div className="w-14 h-14 rounded-xl bg-[#174EA6] text-white font-display font-bold text-lg flex items-center justify-center shrink-0">
               {(emp.firstName?.[0] || emp.fullName?.[0] || 'C')}
               {(emp.lastName?.[0] || '')}
             </div>
@@ -238,7 +238,7 @@ export const DirectoryView: React.FC = () => {
                   size="sm"
                 />
               </div>
-              <p className="text-xs font-semibold text-[#083E34] mt-0.5">{emp.jobTitle}</p>
+              <p className="text-xs font-semibold text-[#174EA6] mt-0.5">{emp.jobTitle}</p>
               <div className="flex items-center gap-2 text-xs text-slate-500 mt-1 flex-wrap">
                 <span className="font-mono">{emp.staffId}</span>
                 <span>&middot;</span>
@@ -254,7 +254,7 @@ export const DirectoryView: React.FC = () => {
               <a
                 href={`mailto:${emp.email}`}
                 onClick={() => showToast(`Opening email client to ${emp.email}...`)}
-                className="px-3.5 py-2 rounded-lg bg-[#083E34] hover:bg-[#062E27] text-white text-xs font-semibold flex items-center gap-1.5 transition"
+                className="px-3.5 py-2 rounded-lg bg-[#174EA6] hover:bg-[#0B1F3A] text-white text-xs font-semibold flex items-center gap-1.5 transition"
               >
                 <Mail className="w-3.5 h-3.5" />
                 <span>Send Email</span>
@@ -267,7 +267,7 @@ export const DirectoryView: React.FC = () => {
         <div className="space-y-4" data-testid="directory-hierarchy-card">
           <div className="flex items-center justify-between">
             <h4 className="font-display text-xs font-semibold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-              <GitBranch className="w-4 h-4 text-[#083E34]" />
+              <GitBranch className="w-4 h-4 text-[#174EA6]" />
               <span>Reporting Hierarchy</span>
             </h4>
             {hierarchyLoading && (
@@ -279,7 +279,7 @@ export const DirectoryView: React.FC = () => {
             {/* Upward: Supervisor Chain */}
             <div className="space-y-2.5" data-testid="supervisor-chain-section">
               <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 pb-2 border-b border-slate-100">
-                <ArrowUp className="w-3.5 h-3.5 text-[#083E34]" />
+                <ArrowUp className="w-3.5 h-3.5 text-[#174EA6]" />
                 <span>Supervisor Chain ({supervisorChain.length})</span>
               </div>
               {supervisorChain.length === 0 ? (
@@ -316,7 +316,7 @@ export const DirectoryView: React.FC = () => {
             {/* Downward: Direct Reports */}
             <div className="space-y-2.5" data-testid="direct-reports-section">
               <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 pb-2 border-b border-slate-100">
-                <ArrowDown className="w-3.5 h-3.5 text-emerald-700" />
+                <ArrowDown className="w-3.5 h-3.5 text-[#174EA6]" />
                 <span>Direct Reports ({directReports.length})</span>
               </div>
               {directReports.length === 0 ? (
@@ -349,7 +349,7 @@ export const DirectoryView: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-5 border-t border-slate-100">
           <div className="space-y-3">
             <h4 className="font-display text-xs font-semibold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-              <Mail className="w-3.5 h-3.5 text-[#083E34]" />
+              <Mail className="w-3.5 h-3.5 text-[#174EA6]" />
               <span>Contact &amp; Connectivity</span>
             </h4>
             <dl className="space-y-3 text-xs">
@@ -372,7 +372,7 @@ export const DirectoryView: React.FC = () => {
 
           <div className="space-y-3">
             <h4 className="font-display text-xs font-semibold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-              <Briefcase className="w-3.5 h-3.5 text-[#083E34]" />
+              <Briefcase className="w-3.5 h-3.5 text-[#174EA6]" />
               <span>Employment Placement</span>
             </h4>
             <dl className="space-y-3 text-xs">
@@ -406,14 +406,14 @@ export const DirectoryView: React.FC = () => {
   return (
     <div className="space-y-5 animate-fade-in font-sans">
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#083E34] text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-semibold animate-slide-up">
-          <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+        <div className="fixed bottom-6 right-6 z-50 bg-[#174EA6] text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-semibold animate-slide-up">
+          <CheckCircle2 className="w-4 h-4 text-blue-100" />
           <span>{toastMessage}</span>
         </div>
       )}
 
       {errorMessage && (
-        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-center gap-2">
+        <div className="p-3.5 rounded-xl bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] text-xs font-medium flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{errorMessage}</span>
         </div>

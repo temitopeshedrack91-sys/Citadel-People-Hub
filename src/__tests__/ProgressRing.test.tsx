@@ -12,7 +12,7 @@ describe('ProgressRing / Leave Balance Gauge Component', () => {
         label="65%"
         subtext="13 out of 20"
         type="semicircle"
-        strokeColor="#083E34"
+        strokeColor="#174EA6"
       />
     );
 
@@ -26,15 +26,15 @@ describe('ProgressRing / Leave Balance Gauge Component', () => {
       <ProgressRing
         value={65}
         max={100}
-        strokeColor="#083E34"
+        strokeColor="#174EA6"
         type="semicircle"
       />
     );
 
     const paths = container.querySelectorAll('path');
     expect(paths.length).toBe(2);
-    // Active path has stroke #083E34
-    expect(paths[1].getAttribute('stroke')).toBe('#083E34');
+    // Active path has stroke #174EA6
+    expect(paths[1].getAttribute('stroke')).toBe('#174EA6');
   });
 
   it('supports circular ring mode', () => {

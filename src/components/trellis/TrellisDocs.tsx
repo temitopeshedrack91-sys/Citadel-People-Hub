@@ -46,7 +46,7 @@ export const TrellisDocs: React.FC = () => {
             className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:border-slate-300 transition space-y-2 cursor-pointer"
           >
             <div className="flex items-center gap-2 text-slate-900 font-bold text-xs">
-              <FileText className="w-4 h-4 text-amber-500" />
+              <FileText className="w-4 h-4 text-[#B88A24]" />
               <span>{doc.title}</span>
             </div>
             <p className="text-xs text-slate-500 font-medium leading-relaxed">{doc.summary}</p>

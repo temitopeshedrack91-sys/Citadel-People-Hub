@@ -254,12 +254,12 @@ export const CalendarView: React.FC = () => {
   return (
     <div className="space-y-6 font-sans animate-fade-in text-slate-900">
       {syncNotice && (
-        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between shadow-xs animate-fade-in font-bold">
+        <div className="p-3.5 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] text-[#174EA6] text-xs flex items-center justify-between shadow-xs animate-fade-in font-bold">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-[#174EA6] shrink-0" />
             <span>{syncNotice}</span>
           </div>
-          <button onClick={() => setSyncNotice(null)} className="text-emerald-600 hover:text-emerald-800">
+          <button onClick={() => setSyncNotice(null)} className="text-[#174EA6] hover:text-[#174EA6]">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -268,7 +268,7 @@ export const CalendarView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-lg sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-[#083E34] shrink-0" />
+            <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-[#174EA6] shrink-0" />
             <span>Calendar</span>
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -299,7 +299,7 @@ export const CalendarView: React.FC = () => {
           {!isCurrentMonthActive && (
             <button
               onClick={handleResetToCurrentMonth}
-              className="px-3 py-2 rounded-xl bg-[#FAF5EB] border border-[#F2E4B8] text-[#D97706] text-xs font-bold hover:bg-[#FFF3E0] transition shadow-2xs"
+              className="px-3 py-2 rounded-xl bg-[#FAF5EB] border border-[#F2E4B8] text-[#B88A24] text-xs font-bold hover:bg-[#FFF3E0] transition shadow-2xs"
             >
               Today
             </button>
@@ -359,7 +359,7 @@ export const CalendarView: React.FC = () => {
                 setActiveCategory('All');
                 setFilterByMonth(false);
               }}
-              className="mt-2 text-xs font-bold text-[#083E34] hover:underline"
+              className="mt-2 text-xs font-bold text-[#174EA6] hover:underline"
             >
               Show all upcoming events
             </button>
@@ -373,7 +373,7 @@ export const CalendarView: React.FC = () => {
                     <span className="text-[10px] font-bold text-slate-400 uppercase">
                       {evt.date.split(' ')[1]}
                     </span>
-                    <span className="text-sm font-black text-[#083E34] leading-none">
+                    <span className="text-sm font-black text-[#174EA6] leading-none">
                       {evt.date.split(' ')[0]}
                     </span>
                   </div>
@@ -402,9 +402,9 @@ export const CalendarView: React.FC = () => {
                 <button
                   onClick={() => handleSyncToOutlook(evt)}
                   data-testid={`btn-sync-calendar-${evt.id}`}
-                  className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-[#083E34] text-slate-700 hover:text-white border border-slate-200/90 text-xs font-semibold flex items-center gap-1.5 transition self-start sm:self-center shrink-0 active:scale-95 cursor-pointer shadow-2xs group"
+                  className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-[#174EA6] text-slate-700 hover:text-white border border-slate-200/90 text-xs font-semibold flex items-center gap-1.5 transition self-start sm:self-center shrink-0 active:scale-95 cursor-pointer shadow-2xs group"
                 >
-                  <CalendarDays className="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-300 transition" />
+                  <CalendarDays className="w-3.5 h-3.5 text-slate-500 group-hover:text-blue-100 transition" />
                   <span>Add to Calendar (.ics)</span>
                 </button>
               </div>

@@ -88,7 +88,7 @@ export const TrellisInboxModal: React.FC = () => {
                 className={`p-3 rounded-xl border transition cursor-pointer text-xs space-y-1.5 ${
                   notif.read
                     ? 'bg-slate-50 border-slate-200/60 opacity-80'
-                    : 'bg-white border-amber-200/80 shadow-2xs'
+                    : 'bg-white border-[#E9D59A] shadow-2xs'
                 }`}
               >
                 <div className="flex items-center justify-between">

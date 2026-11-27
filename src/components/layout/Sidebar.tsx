@@ -325,7 +325,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span className="font-display text-xs font-bold text-white tracking-tight leading-none">
                 Citadel People Hub
               </span>
-              <span className="text-[10px] text-emerald-200/70 font-medium mt-0.5">
+              <span className="text-[10px] text-slate-400 font-medium mt-0.5">
                 Workforce Management
               </span>
             </div>
@@ -348,13 +348,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         >
           {!isCollapsed ? (
             <>
-              <span className="text-[10px] font-semibold uppercase text-emerald-100/55 tracking-widest">
+              <span className="text-[10px] font-semibold uppercase text-slate-400 tracking-widest">
                 Workspace
               </span>
               <button
                 type="button"
                 onClick={onToggleCollapse}
-                className="p-1.5 rounded-lg text-emerald-100/60 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
                 title="Collapse Sidebar (Ctrl+B)"
                 aria-label="Collapse Sidebar"
               >
@@ -365,11 +365,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               type="button"
               onClick={onToggleCollapse}
-              className="w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-emerald-100/70 hover:text-white transition group cursor-pointer"
+              className="w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition group cursor-pointer"
               title="Expand Sidebar (Ctrl+B)"
               aria-label="Expand Sidebar"
             >
-              <ChevronsRight className="w-4 h-4 text-emerald-100/70 group-hover:text-white transition" />
+              <ChevronsRight className="w-4 h-4 text-slate-400 group-hover:text-white transition" />
             </button>
           )}
         </div>
@@ -383,7 +383,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             return (
               <div key={idx} className="space-y-0.5">
                 {!isCollapsed ? (
-                  <div className="px-3 pb-1.5 text-[10px] font-semibold text-emerald-100/45 uppercase tracking-widest">
+                  <div className="px-3 pb-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
                     {section.label}
                   </div>
                 ) : (
@@ -410,13 +410,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       } ${
                         isActive
                           ? 'bg-zinc-900 text-white font-semibold border border-[#D4AF37]'
-                          : 'text-emerald-100/70 font-medium border border-transparent hover:bg-white/[0.06] hover:text-white'
+                          : 'text-slate-300 font-medium border border-transparent hover:bg-white/[0.06] hover:text-white'
                       }`}
                     >
                       <div className="flex items-center gap-2.5 truncate">
                         <Icon
                           className={`w-4 h-4 shrink-0 transition-colors ${
-                            isActive ? 'text-[#E5C76B]' : 'text-emerald-100/50 group-hover:text-emerald-100'
+                            isActive ? 'text-[#D4AF37]' : 'text-slate-400 group-hover:text-white'
                           }`}
                         />
                         {!isCollapsed && <span className="truncate">{item.label}</span>}
@@ -424,14 +424,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                       {/* Quiet Tabular Pending Count */}
                       {!isCollapsed && item.badge && (
-                        <span className="text-[11px] font-mono font-semibold text-[#E5C76B] tabular-nums shrink-0 pl-2">
+                        <span className="text-[11px] font-mono font-semibold text-[#D4AF37] tabular-nums shrink-0 pl-2">
                           {item.badge}
                         </span>
                       )}
 
                       {/* Collapsed View Indicator for Pending Count */}
                       {isCollapsed && item.badge && !isActive && (
-                        <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#E5C76B]" />
+                        <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
                       )}
                     </button>
                   );
@@ -453,7 +453,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               }}
               data-testid="sidebar-add-employee-btn"
               title="Add New Employee"
-              className={`w-full bg-[#0E4F43] hover:bg-[#136153] text-white border border-emerald-400/20 rounded-lg font-semibold flex items-center justify-center gap-2 transition active:scale-[0.98] cursor-pointer min-h-[40px] ${
+              className={`w-full bg-[#174EA6] hover:bg-[#0B1F3A] text-white border border-blue-400/20 rounded-lg font-semibold flex items-center justify-center gap-2 transition active:scale-[0.98] cursor-pointer min-h-[40px] ${
                 isCollapsed ? 'w-10 h-10 mx-auto p-0' : 'py-2 px-3 text-xs'
               }`}
             >
@@ -472,15 +472,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
             data-testid="sidebar-logout-btn"
             className={`w-full flex items-center text-xs font-medium rounded-lg transition border min-h-[38px] group cursor-pointer ${
               isCollapsed
-                ? 'w-10 h-10 mx-auto justify-center p-0 text-emerald-100/60 hover:text-rose-300 hover:bg-rose-500/10 border-white/10 hover:border-rose-500/30'
-                : 'justify-between px-3 py-2 text-emerald-100/75 hover:text-rose-200 hover:bg-rose-500/10 border-white/10 hover:border-rose-500/30'
+                ? 'w-10 h-10 mx-auto justify-center p-0 text-slate-400 hover:text-white hover:bg-white/10 border-white/10 hover:border-white/25'
+                : 'justify-between px-3 py-2 text-slate-300 hover:text-white hover:bg-white/10 border-white/10 hover:border-white/25'
             }`}
             title="Log out of Citadel People Hub"
           >
             <div className="flex items-center gap-2.5 truncate">
-              <LogOut className="w-4 h-4 text-emerald-100/50 group-hover:text-rose-300 shrink-0 transition-colors" />
+              <LogOut className="w-4 h-4 text-slate-400 group-hover:text-[#D4AF37] shrink-0 transition-colors" />
               {!isCollapsed && (
-                <span className="truncate text-xs font-semibold text-emerald-50/90 group-hover:text-rose-200 transition-colors">
+                <span className="truncate text-xs font-semibold text-slate-200 group-hover:text-white transition-colors">
                   Sign out
                 </span>
               )}

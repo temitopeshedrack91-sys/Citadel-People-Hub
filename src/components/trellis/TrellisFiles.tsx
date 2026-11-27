@@ -26,7 +26,7 @@ export const TrellisFiles: React.FC = () => {
         {files.map((file, idx) => (
           <div key={idx} className="p-4 flex items-center justify-between hover:bg-slate-50 transition text-xs">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-lg bg-[#FAF5EB] text-[#B88A24] flex items-center justify-center font-bold">
                 <Paperclip className="w-4 h-4" />
               </div>
               <div>

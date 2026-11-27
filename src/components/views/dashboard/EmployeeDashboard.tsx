@@ -273,8 +273,8 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
   return (
     <div className="space-y-5 animate-fade-in" data-testid="employee-dashboard">
       {loadError && (
-        <div role="alert" className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" aria-hidden="true" />
+        <div role="alert" className="p-3 rounded-xl bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] text-xs font-medium flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 text-[#111827]" aria-hidden="true" />
           <span>{loadError}</span>
         </div>
       )}
@@ -284,7 +284,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500">
-              <span className="uppercase tracking-wider text-[#083E34]">
+              <span className="uppercase tracking-wider text-[#174EA6]">
                 {currentUser.role === 'VIEWER' ? 'Read-Only Profile' : 'Employee Self-Service'}
               </span>
               <span aria-hidden="true">·</span>
@@ -297,7 +297,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
               {currentUser.jobTitle} · {currentUser.departmentName} · {currentUser.entityName}
             </p>
             <p className="text-xs text-slate-500 flex items-center gap-1.5">
-              <GitBranch className="w-3.5 h-3.5 text-[#083E34]" aria-hidden="true" />
+              <GitBranch className="w-3.5 h-3.5 text-[#174EA6]" aria-hidden="true" />
               <span>
                 Direct Supervisor:{' '}
                 <strong className="font-semibold text-slate-800">{directSupervisor}</strong>
@@ -325,7 +325,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                   setIsResignModalOpen(true);
                 }}
                 data-testid="employee-submit-resignation-btn"
-                className="px-3.5 py-2 rounded-lg font-semibold text-xs transition border flex items-center gap-1.5 cursor-pointer min-h-[38px] bg-white text-rose-700 border-rose-200 hover:bg-rose-50"
+                className="px-3.5 py-2 rounded-lg font-semibold text-xs transition border flex items-center gap-1.5 cursor-pointer min-h-[38px] bg-white text-[#111827] border-[#111827]/25 hover:bg-[#F5F7FA]"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span>Submit Resignation</span>
@@ -369,12 +369,12 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                     </div>
                   </div>
                   <div className="flex items-baseline gap-1.5 tabular-nums">
-                    <span className="text-2xl font-bold text-[#083E34]">{remaining}</span>
+                    <span className="text-2xl font-bold text-[#174EA6]">{remaining}</span>
                     <span className="text-xs text-slate-500 font-medium">/ {total} days left</span>
                   </div>
                   <div className="mt-3 w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                     <div
-                      className="bg-[#083E34] h-full rounded-full transition-all duration-300"
+                      className="bg-[#174EA6] h-full rounded-full transition-all duration-300"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
@@ -397,7 +397,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
         <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
           <div>
             <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-[#083E34]" aria-hidden="true" />
+              <ShieldCheck className="w-4 h-4 text-[#174EA6]" aria-hidden="true" />
               <span>My Leave Requests &amp; Two-Stage Status</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -439,7 +439,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                   <div className="pb-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-[#083E34]">
+                        <span className="text-sm font-semibold text-[#174EA6]">
                           {latestLeave.leaveType}
                         </span>
                         <StatusPill
@@ -472,12 +472,12 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="p-3 rounded-xl border border-emerald-200 bg-emerald-50/50 flex items-start gap-2.5">
-                      <div className="w-6 h-6 rounded-full bg-emerald-700 text-white flex items-center justify-center shrink-0">
+                    <div className="p-3 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] flex items-start gap-2.5">
+                      <div className="w-6 h-6 rounded-full bg-[#174EA6] text-white flex items-center justify-center shrink-0">
                         <Check className="w-3.5 h-3.5" aria-hidden="true" />
                       </div>
                       <div>
-                        <span className="text-[10px] uppercase font-semibold text-emerald-800 block">
+                        <span className="text-[10px] uppercase font-semibold text-[#174EA6] block">
                           Submitted
                         </span>
                         <span className="text-xs font-semibold text-slate-900 block">
@@ -489,19 +489,19 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                     <div
                       className={`p-3 rounded-xl border flex items-start gap-2.5 ${
                         rejectedAtMgr
-                          ? 'border-rose-200 bg-rose-50/60'
+                          ? 'border-[#111827]/25 bg-[#F5F7FA]'
                           : mgrApproved
-                          ? 'border-emerald-200 bg-emerald-50/50'
-                          : 'border-amber-200 bg-amber-50/60'
+                          ? 'border-[#BFDBFE] bg-[#EFF6FF]'
+                          : 'border-[#E9D59A] bg-[#FAF5EB]'
                       }`}
                     >
                       <div
                         className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-white ${
                           rejectedAtMgr
-                            ? 'bg-rose-600'
+                            ? 'bg-[#111827]'
                             : mgrApproved
-                            ? 'bg-emerald-700'
-                            : 'bg-amber-600'
+                            ? 'bg-[#174EA6]'
+                            : 'bg-[#B88A24]'
                         }`}
                       >
                         {rejectedAtMgr ? (
@@ -532,22 +532,22 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                     <div
                       className={`p-3 rounded-xl border flex items-start gap-2.5 ${
                         rejectedAtHr
-                          ? 'border-rose-200 bg-rose-50/60'
+                          ? 'border-[#111827]/25 bg-[#F5F7FA]'
                           : hrApproved
-                          ? 'border-emerald-200 bg-emerald-50/50'
+                          ? 'border-[#BFDBFE] bg-[#EFF6FF]'
                           : latestLeave.approvalStage === 'HR' && latestLeave.status !== 'Rejected'
-                          ? 'border-amber-200 bg-amber-50/60'
+                          ? 'border-[#E9D59A] bg-[#FAF5EB]'
                           : 'border-slate-200 bg-slate-50'
                       }`}
                     >
                       <div
                         className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-white ${
                           rejectedAtHr
-                            ? 'bg-rose-600'
+                            ? 'bg-[#111827]'
                             : hrApproved
-                            ? 'bg-emerald-700'
+                            ? 'bg-[#174EA6]'
                             : latestLeave.approvalStage === 'HR' && latestLeave.status !== 'Rejected'
-                            ? 'bg-amber-600'
+                            ? 'bg-[#B88A24]'
                             : 'bg-slate-400'
                         }`}
                       >
@@ -643,7 +643,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
           </div>
         ) : (
           <div className="p-6 text-center space-y-2.5">
-            <CalendarDays className="w-6 h-6 text-amber-600 mx-auto" aria-hidden="true" />
+            <CalendarDays className="w-6 h-6 text-[#B88A24] mx-auto" aria-hidden="true" />
             <h3 className="text-sm font-semibold text-slate-900">No Leave Applications Yet</h3>
             <p className="text-xs text-slate-500 max-w-md mx-auto tabular-nums">
               You have {annualRemaining} of {annualTotal} annual leave days remaining.
@@ -667,7 +667,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <Users className="w-4 h-4 text-[#083E34]" aria-hidden="true" />
+                <Users className="w-4 h-4 text-[#174EA6]" aria-hidden="true" />
                 <span>Department Teammates ({currentUser.departmentName})</span>
               </h3>
               <p className="text-[11px] text-slate-500 mt-0.5">
@@ -677,7 +677,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('directory')}
-              className="text-xs font-semibold text-[#083E34] hover:underline flex items-center gap-1 cursor-pointer"
+              className="text-xs font-semibold text-[#174EA6] hover:underline flex items-center gap-1 cursor-pointer"
             >
               <span>Directory</span>
               <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -707,7 +707,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
         <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col justify-between gap-4">
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-              <Calendar className="w-4 h-4 text-[#083E34]" aria-hidden="true" />
+              <Calendar className="w-4 h-4 text-[#174EA6]" aria-hidden="true" />
               <span>Quick Shortcuts</span>
             </h3>
             <p className="text-[11px] text-slate-500 mt-0.5">
@@ -726,7 +726,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                     <span className="font-bold text-slate-900">
                       {rev.reviewPeriodStart} → {rev.reviewPeriodEnd}
                     </span>
-                    <span className="px-2 py-0.5 rounded-md font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/70">
+                    <span className="px-2 py-0.5 rounded-md font-bold bg-[#EFF6FF] text-[#174EA6] border border-[#BFDBFE]">
                       {rev.finalRating ? `${Number(rev.finalRating).toFixed(2)} / 5.00` : rev.status.replace(/_/g, ' ')}
                     </span>
                   </div>
@@ -752,18 +752,18 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('calendar')}
-              className="p-3.5 rounded-xl border border-slate-200 hover:border-[#083E34]/40 hover:bg-slate-50 text-left space-y-1 transition cursor-pointer"
+              className="p-3.5 rounded-xl border border-slate-200 hover:border-[#174EA6]/40 hover:bg-slate-50 text-left space-y-1 transition cursor-pointer"
             >
-              <Calendar className="w-4 h-4 text-[#083E34]" aria-hidden="true" />
+              <Calendar className="w-4 h-4 text-[#174EA6]" aria-hidden="true" />
               <span className="font-semibold text-slate-900 block">My Calendar</span>
               <span className="text-[11px] text-slate-500 block">Holidays &amp; leave dates</span>
             </button>
             <button
               type="button"
               onClick={() => onNavigate('documents')}
-              className="p-3.5 rounded-xl border border-slate-200 hover:border-[#083E34]/40 hover:bg-slate-50 text-left space-y-1 transition cursor-pointer"
+              className="p-3.5 rounded-xl border border-slate-200 hover:border-[#174EA6]/40 hover:bg-slate-50 text-left space-y-1 transition cursor-pointer"
             >
-              <FileText className="w-4 h-4 text-[#083E34]" aria-hidden="true" />
+              <FileText className="w-4 h-4 text-[#174EA6]" aria-hidden="true" />
               <span className="font-semibold text-slate-900 block">Documents</span>
               <span className="text-[11px] text-slate-500 block">HR policies &amp; files</span>
             </button>
@@ -792,8 +792,8 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
 
             <form onSubmit={handleSubmitResignation} className="p-6 space-y-4 text-xs">
               {resignError && (
-                <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 font-medium flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                <div className="p-3 rounded-lg bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] font-medium flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-[#111827]" />
                   <span>{resignError}</span>
                 </div>
               )}
@@ -806,7 +806,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                   value={resignManagerId}
                   onChange={(e) => setResignManagerId(e.target.value)}
                   data-testid="resignation-manager-select"
-                  className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 font-medium focus:outline-none focus:border-[#083E34]"
+                  className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 font-medium focus:outline-none focus:border-[#174EA6]"
                 >
                   <option value="">
                     {directSupervisor !== 'Top-Level (Routes to HR)'
@@ -829,7 +829,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                     required
                     value={resignDate}
                     onChange={(e) => setResignDate(e.target.value)}
-                    className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#083E34]"
+                    className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#174EA6]"
                   />
                 </div>
                 <div>
@@ -840,7 +840,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                     value={resignLastDay}
                     onChange={(e) => setResignLastDay(e.target.value)}
                     data-testid="resignation-last-day-input"
-                    className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#083E34]"
+                    className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#174EA6]"
                   />
                 </div>
               </div>
@@ -848,8 +848,8 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
               <div
                 className={`p-3 rounded-lg border text-[11px] font-semibold ${
                   calculatedNoticeDays >= 30
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                    : 'bg-amber-50 border-amber-200 text-amber-800'
+                    ? 'bg-[#EFF6FF] border-[#BFDBFE] text-[#174EA6]'
+                    : 'bg-[#FAF5EB] border-[#E9D59A] text-[#B88A24]'
                 }`}
               >
                 Notice Period: {calculatedNoticeDays} day(s) —{' '}
@@ -867,7 +867,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                   onChange={(e) => setResignReason(e.target.value)}
                   data-testid="resignation-reason-input"
                   placeholder="State your reason for leaving and handover availability..."
-                  className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#083E34]"
+                  className="w-full p-2.5 rounded-lg border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#174EA6]"
                 />
               </div>
 
@@ -883,7 +883,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
                   type="submit"
                   disabled={isSubmittingResign}
                   data-testid="resignation-submit-btn"
-                  className="px-5 py-2 bg-[#083E34] hover:bg-[#062E27] text-white font-semibold rounded-lg transition cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2 bg-[#174EA6] hover:bg-[#0B1F3A] text-white font-semibold rounded-lg transition cursor-pointer disabled:opacity-50"
                 >
                   {isSubmittingResign ? 'Submitting...' : 'Submit Resignation to Manager'}
                 </button>

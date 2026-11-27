@@ -419,9 +419,9 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
               type="button"
               onClick={() => setShowChangeApprovalsPanel((prev) => !prev)}
               data-testid="pending-profile-approvals-btn"
-              className="px-3 py-2 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+              className="px-3 py-2 rounded-lg bg-[#FAF5EB] hover:bg-[#FAF5EB] text-[#B88A24] border border-[#E9D59A] text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
             >
-              <Clock className="w-3.5 h-3.5 text-amber-700" />
+              <Clock className="w-3.5 h-3.5 text-[#B88A24]" />
               <span>{pendingProfileRequestsCount} Profile Change{pendingProfileRequestsCount === 1 ? '' : 's'} Pending HR</span>
             </button>
           )}
@@ -480,7 +480,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 setEditingEmployee(null);
                 setShowAddModal(true);
               }}
-              className="px-4 py-2 rounded-lg bg-[#083E34] hover:bg-[#062E27] text-white text-xs font-semibold flex items-center gap-1.5 transition active:scale-[0.98] cursor-pointer whitespace-nowrap"
+              className="px-4 py-2 rounded-lg bg-[#174EA6] hover:bg-[#0B1F3A] text-white text-xs font-semibold flex items-center gap-1.5 transition active:scale-[0.98] cursor-pointer whitespace-nowrap"
             >
               <Plus className="w-4 h-4 stroke-[2.25]" />
               <span>Enroll Employee</span>
@@ -493,16 +493,16 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
         <div
           role="alert"
           data-testid="employees-load-error"
-          className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+          className="p-3.5 rounded-xl bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2"
         >
           <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+            <AlertCircle className="w-4 h-4 shrink-0 text-[#111827]" />
             <span>{loadError}</span>
           </div>
           <button
             type="button"
             onClick={() => void loadData()}
-            className="px-3 py-1.5 rounded-lg bg-white hover:bg-rose-100 text-rose-800 border border-rose-200 font-semibold flex items-center gap-1.5 shrink-0 cursor-pointer"
+            className="px-3 py-1.5 rounded-lg bg-white hover:bg-[#E5E7EB] text-[#111827] border border-[#111827]/25 font-semibold flex items-center gap-1.5 shrink-0 cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Retry</span>
@@ -514,9 +514,9 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
         <div
           role="status"
           data-testid="employees-export-toast"
-          className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-medium flex items-center gap-2"
+          className="p-3 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] text-[#174EA6] text-xs font-medium flex items-center gap-2"
         >
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <CheckCircle2 className="w-4 h-4 text-[#174EA6] shrink-0" />
           <span>{exportFeedback}</span>
         </div>
       )}
@@ -525,29 +525,29 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
       {canManageEmployees && showChangeApprovalsPanel && (
         <div
           data-testid="hr-profile-approvals-panel"
-          className="bg-amber-50/70 border border-amber-200 rounded-xl p-4 space-y-3 animate-fade-in"
+          className="bg-[#FAF5EB] border border-[#E9D59A] rounded-xl p-4 space-y-3 animate-fade-in"
         >
           <div className="flex items-center justify-between gap-2">
             <div>
-              <h2 className="text-xs font-black text-amber-950 uppercase tracking-wider flex items-center gap-1.5">
-                <Shield className="w-4 h-4 text-[#083E34]" />
+              <h2 className="text-xs font-black text-[#B88A24] uppercase tracking-wider flex items-center gap-1.5">
+                <Shield className="w-4 h-4 text-[#174EA6]" />
                 <span>Employee Personal Info Change Requests ({pendingProfileRequests.length} Pending)</span>
               </h2>
-              <p className="text-[11px] text-amber-900 mt-0.5">
+              <p className="text-[11px] text-[#B88A24] mt-0.5">
                 Review and approve employee-submitted updates before committing them to authoritative records.
               </p>
             </div>
             <button
               type="button"
               onClick={() => setShowChangeApprovalsPanel(false)}
-              className="text-xs font-semibold text-amber-900 hover:underline cursor-pointer"
+              className="text-xs font-semibold text-[#B88A24] hover:underline cursor-pointer"
             >
               Close
             </button>
           </div>
 
           {pendingProfileRequests.length === 0 ? (
-            <p className="text-xs text-slate-600 bg-white p-3 rounded-lg border border-amber-200/80">
+            <p className="text-xs text-slate-600 bg-white p-3 rounded-lg border border-[#E9D59A]">
               All employee profile update requests have been reviewed.
             </p>
           ) : (
@@ -556,7 +556,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 <div
                   key={req.id}
                   data-testid={`profile-change-card-${req.id}`}
-                  className="bg-white rounded-xl border border-amber-200/90 p-3.5 flex flex-col lg:flex-row lg:items-center justify-between gap-3"
+                  className="bg-white rounded-xl border border-[#E9D59A] p-3.5 flex flex-col lg:flex-row lg:items-center justify-between gap-3"
                 >
                   <div className="space-y-1.5 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -578,7 +578,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                           <span className="line-through text-slate-400">
                             {req.previousValues[fieldKey] || 'empty'}
                           </span>{' '}
-                          <span className="text-[#083E34] font-bold">&rarr; {newVal}</span>
+                          <span className="text-[#174EA6] font-bold">&rarr; {newVal}</span>
                         </div>
                       ))}
                     </div>
@@ -592,14 +592,14 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                       onChange={(e) =>
                         setReviewCommentById((prev) => ({ ...prev, [req.id]: e.target.value }))
                       }
-                      className="px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg outline-none focus:border-[#083E34] min-w-[200px]"
+                      className="px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg outline-none focus:border-[#174EA6] min-w-[200px]"
                     />
                     <button
                       type="button"
                       disabled={reviewingReqId === req.id}
                       data-testid={`approve-profile-change-${req.id}`}
                       onClick={() => void handleReviewProfileChange(req, 'APPROVED')}
-                      className="px-3 py-1.5 rounded-lg bg-[#083E34] hover:bg-[#062E27] text-white text-xs font-bold cursor-pointer disabled:opacity-50"
+                      className="px-3 py-1.5 rounded-lg bg-[#174EA6] hover:bg-[#0B1F3A] text-white text-xs font-bold cursor-pointer disabled:opacity-50"
                     >
                       Approve
                     </button>
@@ -608,7 +608,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                       disabled={reviewingReqId === req.id}
                       data-testid={`reject-profile-change-${req.id}`}
                       onClick={() => void handleReviewProfileChange(req, 'REJECTED')}
-                      className="px-3 py-1.5 rounded-lg bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold cursor-pointer disabled:opacity-50"
+                      className="px-3 py-1.5 rounded-lg bg-white hover:bg-[#F5F7FA] text-[#111827] border border-[#111827]/25 text-xs font-bold cursor-pointer disabled:opacity-50"
                     >
                       Reject
                     </button>
@@ -635,7 +635,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-8 pr-3 py-2 text-xs border border-slate-200/90 rounded-lg focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/12 outline-none transition"
+              className="w-full pl-8 pr-3 py-2 text-xs border border-slate-200/90 rounded-lg focus:border-[#174EA6] focus:ring-2 focus:ring-[#174EA6]/12 outline-none transition"
             />
           </div>
 
@@ -651,7 +651,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 setDeptFilter('');
                 setCurrentPage(1);
               }}
-              className="w-full py-2 px-2.5 text-xs border border-slate-200/90 rounded-lg focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/12 outline-none bg-white text-slate-700 font-medium transition disabled:bg-slate-50"
+              className="w-full py-2 px-2.5 text-xs border border-slate-200/90 rounded-lg focus:border-[#174EA6] focus:ring-2 focus:ring-[#174EA6]/12 outline-none bg-white text-slate-700 font-medium transition disabled:bg-slate-50"
             >
               <option value="">
                 {loading && entities.length === 0
@@ -679,7 +679,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 setDeptFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full py-2 px-2.5 text-xs border border-slate-200/90 rounded-lg focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/12 outline-none bg-white text-slate-700 font-medium transition disabled:bg-slate-50"
+              className="w-full py-2 px-2.5 text-xs border border-slate-200/90 rounded-lg focus:border-[#174EA6] focus:ring-2 focus:ring-[#174EA6]/12 outline-none bg-white text-slate-700 font-medium transition disabled:bg-slate-50"
             >
               <option value="">
                 {loading && departments.length === 0
@@ -705,7 +705,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 setStatusFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full py-2 px-2.5 text-xs border border-slate-200/90 rounded-lg focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/12 outline-none bg-white text-slate-700 font-medium transition"
+              className="w-full py-2 px-2.5 text-xs border border-slate-200/90 rounded-lg focus:border-[#174EA6] focus:ring-2 focus:ring-[#174EA6]/12 outline-none bg-white text-slate-700 font-medium transition"
             >
               <option value="">All Lifecycle Statuses</option>
               <option value="Active">Active</option>
@@ -729,7 +729,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 setTypeFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full py-2 px-2.5 text-xs border border-slate-200/90 rounded-lg focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/12 outline-none bg-white text-slate-700 font-medium transition"
+              className="w-full py-2 px-2.5 text-xs border border-slate-200/90 rounded-lg focus:border-[#174EA6] focus:ring-2 focus:ring-[#174EA6]/12 outline-none bg-white text-slate-700 font-medium transition"
             >
               <option value="">All Contract Types</option>
               <option value="Full-Time">Full-Time</option>
@@ -818,7 +818,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                     className="hover:bg-slate-50/80 cursor-pointer transition group"
                   >
                     {/* Staff ID */}
-                    <td className="py-3 px-3.5 font-mono font-semibold text-slate-700 group-hover:text-[#083E34] whitespace-nowrap tabular-nums">
+                    <td className="py-3 px-3.5 font-mono font-semibold text-slate-700 group-hover:text-[#174EA6] whitespace-nowrap tabular-nums">
                       {emp.staffId}
                     </td>
 
@@ -832,13 +832,13 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                             className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0"
                           />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-[#083E34] text-white font-semibold flex items-center justify-center text-[11px] shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-[#174EA6] text-white font-semibold flex items-center justify-center text-[11px] shrink-0">
                             {emp.firstName?.[0] || emp.fullName?.[0] || 'C'}
                             {emp.lastName?.[0] || ''}
                           </div>
                         )}
                         <div className="min-w-0">
-                          <div className="font-semibold text-slate-900 group-hover:text-[#083E34] truncate">
+                          <div className="font-semibold text-slate-900 group-hover:text-[#174EA6] truncate">
                             {emp.fullName}
                           </div>
                           <div className="text-[11px] text-slate-500 truncate" title={emp.jobTitle}>
@@ -889,7 +889,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                         <button
                           type="button"
                           onClick={() => setSelectedEmployee(emp)}
-                          className="px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-[#083E34] text-slate-700 hover:text-white border border-slate-200/90 text-xs font-semibold transition flex items-center gap-1 cursor-pointer"
+                          className="px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-[#174EA6] text-slate-700 hover:text-white border border-slate-200/90 text-xs font-semibold transition flex items-center gap-1 cursor-pointer"
                           title="View complete employee dossier"
                         >
                           <Eye className="w-3.5 h-3.5" />
@@ -930,7 +930,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
             >
               <div>
                 <div className="flex items-start justify-between gap-2">
-                  <div className="w-11 h-11 rounded-xl bg-[#083E34] text-white font-bold flex items-center justify-center text-sm shadow-xs shrink-0">
+                  <div className="w-11 h-11 rounded-xl bg-[#174EA6] text-white font-bold flex items-center justify-center text-sm shadow-xs shrink-0">
                     {emp.firstName[0]}
                     {emp.lastName[0]}
                   </div>
@@ -954,10 +954,10 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 </div>
 
                 <div className="mt-3">
-                  <h3 className="font-bold text-slate-900 text-sm group-hover:text-[#083E34] transition line-clamp-1">
+                  <h3 className="font-bold text-slate-900 text-sm group-hover:text-[#174EA6] transition line-clamp-1">
                     {emp.fullName}
                   </h3>
-                  <p className="text-xs text-[#083E34] font-semibold line-clamp-1 mt-0.5">
+                  <p className="text-xs text-[#174EA6] font-semibold line-clamp-1 mt-0.5">
                     {emp.jobTitle}
                   </p>
                   <p className="text-xs text-slate-700 font-semibold mt-1 line-clamp-1">
@@ -978,7 +978,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                     e.stopPropagation();
                     setSelectedEmployee(emp);
                   }}
-                  className="text-[#083E34] font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                  className="text-[#174EA6] font-bold hover:underline flex items-center gap-1 cursor-pointer"
                 >
                   <span>Dossier →</span>
                 </button>
@@ -1024,7 +1024,7 @@ export const EmployeeManagementView: React.FC<EmployeeManagementViewProps> = ({
                 aria-current={currentPage === pNum ? 'page' : undefined}
                 className={`w-7 h-7 rounded-lg text-xs font-semibold transition cursor-pointer ${
                   currentPage === pNum
-                    ? 'bg-[#083E34] text-white'
+                    ? 'bg-[#174EA6] text-white'
                     : 'border border-slate-200 hover:bg-slate-100 text-slate-700'
                 }`}
               >

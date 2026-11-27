@@ -833,19 +833,19 @@ export const OnboardingView: React.FC = () => {
     <div className="space-y-6">
       {/* Toast Notification Banner */}
       {toastMessage && (
-        <div role={toastIsError ? 'alert' : 'status'} className={`fixed top-20 right-6 z-50 bg-[#1E1E1E] text-white px-4 py-2.5 rounded-xl shadow-lg border flex items-center gap-2 text-xs font-bold animate-fade-in ${toastIsError ? 'border-rose-500/70' : 'border-[#D4AF37]/40'}`}>
-          {toastIsError ? <AlertTriangle className="w-4 h-4 text-rose-400" /> : <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />}
+        <div role={toastIsError ? 'alert' : 'status'} className={`fixed top-20 right-6 z-50 bg-[#1E1E1E] text-white px-4 py-2.5 rounded-xl shadow-lg border flex items-center gap-2 text-xs font-bold animate-fade-in ${toastIsError ? 'border-[#111827]/25' : 'border-[#D4AF37]/40'}`}>
+          {toastIsError ? <AlertTriangle className="w-4 h-4 text-[#D4AF37]" /> : <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />}
           <span>{toastMessage}</span>
         </div>
       )}
 
       {loadError && (
-        <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-800 flex items-center justify-between gap-2">
+        <div role="alert" className="rounded-xl border border-[#111827]/25 bg-[#F5F7FA] px-4 py-3 text-xs font-semibold text-[#111827] flex items-center justify-between gap-2">
           <span>Some onboarding data could not be loaded. {loadError}</span>
           <button
             type="button"
             onClick={() => void loadData()}
-            className="px-2.5 py-1 rounded-lg bg-white border border-rose-200 text-rose-800 hover:bg-rose-100 font-bold text-[11px] flex items-center gap-1 cursor-pointer shrink-0"
+            className="px-2.5 py-1 rounded-lg bg-white border border-[#111827]/25 text-[#111827] hover:bg-[#E5E7EB] font-bold text-[11px] flex items-center gap-1 cursor-pointer shrink-0"
           >
             <RefreshCw className="w-3 h-3" />
             <span>Retry</span>
@@ -983,7 +983,7 @@ export const OnboardingView: React.FC = () => {
                   {checklistTemplates.length}
                 </div>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold shadow-xs">
+              <div className="w-12 h-12 rounded-xl bg-[#174EA6] text-white flex items-center justify-center font-bold shadow-xs">
                 <Check className="w-6 h-6 stroke-[3]" />
               </div>
             </div>
@@ -1075,7 +1075,7 @@ export const OnboardingView: React.FC = () => {
                         {/* Column 5: Status */}
                         <td className="py-4 px-4">
                           {j.status === 'Completed' ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-600 text-white shadow-2xs">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold bg-[#174EA6] text-white shadow-2xs">
                               <Check className="w-3 h-3 stroke-[3]" />
                               <span>Completed</span>
                             </span>
@@ -1138,7 +1138,7 @@ export const OnboardingView: React.FC = () => {
                                   }}
                                   className="w-full px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer border-t border-slate-100"
                                 >
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-[#174EA6]" />
                                   <span>{j.status === 'Completed' ? 'Completed' : 'Mark as Completed'}</span>
                                 </button>
                               </div>
@@ -1185,7 +1185,7 @@ export const OnboardingView: React.FC = () => {
               </button>
               <label
                 data-testid="upload-checklist-header-label"
-                className="px-3.5 py-2.5 rounded-xl bg-[#083E34] hover:bg-[#062C25] text-white border border-[#D4AF37]/40 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-2.5 rounded-xl bg-[#174EA6] hover:bg-[#062C25] text-white border border-[#D4AF37]/40 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer"
               >
                 <Upload className="w-3.5 h-3.5 text-[#D4AF37]" />
                 <span>Upload Checklist File</span>
@@ -1326,7 +1326,7 @@ export const OnboardingView: React.FC = () => {
           </div>
 
           {/* Official CGCC Onboarding Banner */}
-          <div className="bg-[#083E34] text-white rounded-xl p-5 border border-emerald-950/30 shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          <div className="bg-[#174EA6] text-white rounded-xl p-5 border border-[#BFDBFE] shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-5">
             <div className="flex items-start sm:items-center gap-4">
               <div className="w-11 h-11 rounded-xl bg-[#D4AF37] text-slate-950 flex items-center justify-center font-bold shrink-0">
                 <FileCheck2 className="w-5 h-5" />
@@ -1336,13 +1336,13 @@ export const OnboardingView: React.FC = () => {
                   <span className="uppercase tracking-wider text-slate-950 bg-[#D4AF37] px-2 py-0.5 rounded">
                     CGCC Standard Operating Procedure
                   </span>
-                  <span className="text-emerald-100/80">· Dated 30 March 2024</span>
+                  <span className="text-blue-100">· Dated 30 March 2024</span>
                   <span className="text-[#D4AF37]">· 3-Month Probation Cycle</span>
                 </div>
                 <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight mt-1">
                   The Citadel Global Community Church — Onboarding Checklist &amp; Schedule
                 </h1>
-                <p className="text-xs text-emerald-100/90 mt-0.5 max-w-2xl font-medium">
+                <p className="text-xs text-blue-100 mt-0.5 max-w-2xl font-medium">
                   Three-month structured induction across Unit Managers, People, Culture &amp; Change (HR), IT, Finance &amp; Accounts, and Onboarding Buddies.
                 </p>
               </div>
@@ -1438,7 +1438,7 @@ export const OnboardingView: React.FC = () => {
                 <span className="text-xs font-mono font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-300">
                   {currentJourney.staffId}
                 </span>
-                <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                <span className="text-xs font-bold text-[#174EA6] bg-[#DBEAFE] px-2.5 py-0.5 rounded-full border border-[#BFDBFE]">
                   {currentJourney.status}
                 </span>
                 <span className="text-[11px] font-bold text-black bg-[#D4AF37]/20 px-2.5 py-0.5 rounded-full border border-[#D4AF37]/40">
@@ -1734,7 +1734,7 @@ export const OnboardingView: React.FC = () => {
                       return (
                       <tr
                         key={task.id}
-                        className={`hover:bg-amber-50/40 transition ${
+                        className={`hover:bg-[#FAF5EB] transition ${
                           task.isCompleted ? 'bg-slate-50/50' : 'bg-white'
                         }`}
                       >
@@ -1753,9 +1753,9 @@ export const OnboardingView: React.FC = () => {
                             }
                           >
                             {task.isCompleted ? (
-                              <CheckCircle2 className="w-5 h-5 text-emerald-600 fill-emerald-100" />
+                              <CheckCircle2 className="w-5 h-5 text-[#174EA6] fill-[#DBEAFE]" />
                             ) : blockingDeps.length > 0 ? (
-                              <Lock className="w-5 h-5 text-amber-500" />
+                              <Lock className="w-5 h-5 text-[#B88A24]" />
                             ) : (
                               <Circle className="w-5 h-5 text-slate-400 hover:text-[#D4AF37]" />
                             )}
@@ -1781,10 +1781,10 @@ export const OnboardingView: React.FC = () => {
 
                             {blockingDeps.length > 0 && !task.isCompleted && (
                               <span
-                                className="text-[10px] font-bold text-rose-800 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full flex items-center gap-1"
+                                className="text-[10px] font-bold text-[#111827] bg-[#F5F7FA] border border-[#111827]/25 px-2 py-0.5 rounded-full flex items-center gap-1"
                                 title={`Requires completion of: ${blockingDeps.map((d) => d.title).join(', ')}`}
                               >
-                                <Lock className="w-3 h-3 text-rose-600" />
+                                <Lock className="w-3 h-3 text-[#111827]" />
                                 <span>Blocked by: {blockingDeps[0].title}</span>
                               </span>
                             )}
@@ -1792,17 +1792,17 @@ export const OnboardingView: React.FC = () => {
                             {/* Conditional Role-Dependent Badge */}
                             {task.isConditional && (
                               <span
-                                className="text-[10px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1"
+                                className="text-[10px] font-bold text-[#B88A24] bg-[#FAF5EB] border border-[#E9D59A] px-2 py-0.5 rounded-full flex items-center gap-1"
                                 title={task.conditionNote || 'Role dependent requirement'}
                               >
-                                <Info className="w-3 h-3 text-amber-700" /> Role Dependent
+                                <Info className="w-3 h-3 text-[#B88A24]" /> Role Dependent
                               </span>
                             )}
 
                             {/* HR Confirmation Flag */}
                             {task.requiresHrConfirmation && (
                               <span
-                                className="text-[10px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1"
+                                className="text-[10px] font-bold text-[#B88A24] bg-[#FAF5EB] border border-[#E9D59A] px-2 py-0.5 rounded-full flex items-center gap-1"
                                 title={task.conditionNote || 'Flagged for HR confirmation'}
                               >
                                 <AlertTriangle className="w-3 h-3 text-[#B8860B]" /> HR Confirmation Required
@@ -1815,7 +1815,7 @@ export const OnboardingView: React.FC = () => {
                           </p>
 
                           {task.conditionNote && (
-                            <div className="mt-1.5 text-[11px] text-amber-800 bg-amber-50/80 p-1.5 rounded border border-amber-200 font-semibold">
+                            <div className="mt-1.5 text-[11px] text-[#B88A24] bg-[#FAF5EB] p-1.5 rounded border border-[#E9D59A] font-semibold">
                               <strong>Note:</strong> {task.conditionNote}
                             </div>
                           )}
@@ -1837,11 +1837,11 @@ export const OnboardingView: React.FC = () => {
                             {task.assignedToName || task.assignedRole}
                           </span>
                           {task.completedAt ? (
-                            <span className="text-[10px] text-emerald-700 font-bold flex items-center gap-1 mt-0.5">
+                            <span className="text-[10px] text-[#174EA6] font-bold flex items-center gap-1 mt-0.5">
                               <Check className="w-3 h-3" /> Done {task.completedAt}
                             </span>
                           ) : (
-                            <span className="text-[10px] text-amber-700 font-semibold block mt-0.5">
+                            <span className="text-[10px] text-[#B88A24] font-semibold block mt-0.5">
                               Pending action
                             </span>
                           )}
@@ -1897,7 +1897,7 @@ export const OnboardingView: React.FC = () => {
                   key={task.id}
                   className={`p-4 rounded-xl border text-xs transition flex items-start gap-3 shadow-2xs ${
                     task.isCompleted
-                      ? 'bg-slate-50/70 border-emerald-300 text-slate-800'
+                      ? 'bg-slate-50/70 border-[#BFDBFE] text-slate-800'
                       : 'bg-white border-slate-200 text-slate-800 hover:border-slate-300'
                   }`}
                 >
@@ -1908,7 +1908,7 @@ export const OnboardingView: React.FC = () => {
                     title={task.isCompleted ? 'Mark as pending' : 'Mark as completed'}
                   >
                     {task.isCompleted ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600 fill-emerald-100" />
+                      <CheckCircle2 className="w-5 h-5 text-[#174EA6] fill-[#DBEAFE]" />
                     ) : (
                       <Circle className="w-5 h-5 text-slate-400 hover:text-[#D4AF37]" />
                     )}
@@ -1936,12 +1936,12 @@ export const OnboardingView: React.FC = () => {
                     {(task.isConditional || task.requiresHrConfirmation) && (
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {task.isConditional && (
-                          <span className="text-[10px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <Info className="w-3 h-3 text-amber-700" /> Role Dependent
+                          <span className="text-[10px] font-bold text-[#B88A24] bg-[#FAF5EB] border border-[#E9D59A] px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Info className="w-3 h-3 text-[#B88A24]" /> Role Dependent
                           </span>
                         )}
                         {task.requiresHrConfirmation && (
-                          <span className="text-[10px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <span className="text-[10px] font-bold text-[#B88A24] bg-[#FAF5EB] border border-[#E9D59A] px-2 py-0.5 rounded-full flex items-center gap-1">
                             <AlertTriangle className="w-3 h-3 text-[#B8860B]" /> HR Confirmation Flag
                           </span>
                         )}
@@ -1949,7 +1949,7 @@ export const OnboardingView: React.FC = () => {
                     )}
 
                     {task.conditionNote && (
-                      <p className="mt-1.5 text-[11px] text-amber-900 bg-amber-50 p-1.5 rounded border border-amber-200 font-semibold">
+                      <p className="mt-1.5 text-[11px] text-[#B88A24] bg-[#FAF5EB] p-1.5 rounded border border-[#E9D59A] font-semibold">
                         {task.conditionNote}
                       </p>
                     )}
@@ -1962,7 +1962,7 @@ export const OnboardingView: React.FC = () => {
 
                       <div className="flex items-center gap-2">
                         {task.completedAt ? (
-                          <span className="text-emerald-700 font-bold flex items-center gap-1">
+                          <span className="text-[#174EA6] font-bold flex items-center gap-1">
                             <Check className="w-3 h-3" /> Done {task.completedAt}
                           </span>
                         ) : (
@@ -2041,13 +2041,13 @@ export const OnboardingView: React.FC = () => {
               </div>
               <ul className="mt-3 space-y-1.5 text-xs text-slate-700 font-medium">
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-600" /> Create official @citadel.ng email address for new hire
+                  <Check className="w-3.5 h-3.5 text-[#174EA6]" /> Create official @citadel.ng email address for new hire
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-600" /> Set up account permissions for all required platforms and software
+                  <Check className="w-3.5 h-3.5 text-[#174EA6]" /> Set up account permissions for all required platforms and software
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-600" /> Prepare computer, phone equipment, and necessary tech accessories
+                  <Check className="w-3.5 h-3.5 text-[#174EA6]" /> Prepare computer, phone equipment, and necessary tech accessories
                 </li>
               </ul>
             </div>
@@ -2067,25 +2067,25 @@ export const OnboardingView: React.FC = () => {
               </div>
               <ul className="mt-3 space-y-1.5 text-xs text-slate-700 font-medium">
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-600" /> Manager sends departmental welcome email introducing new hire
+                  <Check className="w-3.5 h-3.5 text-[#174EA6]" /> Manager sends departmental welcome email introducing new hire
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-600" /> Host welcome meeting to kick off first day and introduce team
+                  <Check className="w-3.5 h-3.5 text-[#174EA6]" /> Host welcome meeting to kick off first day and introduce team
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-600" /> Formally assign and introduce mentor/onboarding buddy
+                  <Check className="w-3.5 h-3.5 text-[#174EA6]" /> Formally assign and introduce mentor/onboarding buddy
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-600" /> Prioritize intro calls with close collaborating colleagues
+                  <Check className="w-3.5 h-3.5 text-[#174EA6]" /> Prioritize intro calls with close collaborating colleagues
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-600" /> Day 2: Ministry introduction, role fit, and performance expectations walk-through
+                  <Check className="w-3.5 h-3.5 text-[#174EA6]" /> Day 2: Ministry introduction, role fit, and performance expectations walk-through
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-600" /> PCCM transmits new hire welcome packet and essential policies (handbook, hours, SOPs)
+                  <Check className="w-3.5 h-3.5 text-[#174EA6]" /> PCCM transmits new hire welcome packet and essential policies (handbook, hours, SOPs)
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-600" /> Buddy gives comprehensive tour of office, parking spots, break room, and chapel
+                  <Check className="w-3.5 h-3.5 text-[#174EA6]" /> Buddy gives comprehensive tour of office, parking spots, break room, and chapel
                 </li>
               </ul>
             </div>
@@ -2105,13 +2105,13 @@ export const OnboardingView: React.FC = () => {
               </div>
               <ul className="mt-3 space-y-1.5 text-xs text-slate-700 font-medium">
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-600" /> Document role and compensation details in Citadel HRIS system
+                  <Check className="w-3.5 h-3.5 text-[#174EA6]" /> Document role and compensation details in Citadel HRIS system
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-600" /> Finance adds new employee to payroll ledger and confirms bank/tax/RSA info
+                  <Check className="w-3.5 h-3.5 text-[#174EA6]" /> Finance adds new employee to payroll ledger and confirms bank/tax/RSA info
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-600" /> Buddy conducts regular daily/weekly check-ins across the first two weeks
+                  <Check className="w-3.5 h-3.5 text-[#174EA6]" /> Buddy conducts regular daily/weekly check-ins across the first two weeks
                 </li>
               </ul>
             </div>
@@ -2143,13 +2143,13 @@ export const OnboardingView: React.FC = () => {
                   </span>
                   <h3 className="text-sm font-black text-black">1st Month (30 Days): Background Checks &amp; 30-Day Milestone Review</h3>
                 </div>
-                <span className="text-[10px] font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded border border-amber-300">
+                <span className="text-[10px] font-bold text-[#B88A24] bg-[#FAF5EB] px-2 py-0.5 rounded border border-[#E9D59A]">
                   Role-Dependent Items
                 </span>
               </div>
               <ul className="mt-3 space-y-1.5 text-xs text-slate-700 font-medium">
                 <li className="flex items-center gap-2">
-                  <Info className="w-3.5 h-3.5 text-amber-700" /> Complete employee background verification (Guarantors, Reference checks, Certificates)
+                  <Info className="w-3.5 h-3.5 text-[#B88A24]" /> Complete employee background verification (Guarantors, Reference checks, Certificates)
                 </li>
                 <li className="flex items-center gap-2">
                   <AlertTriangle className="w-3.5 h-3.5 text-[#B8860B]" />
@@ -2167,7 +2167,7 @@ export const OnboardingView: React.FC = () => {
                   </span>
                   <h3 className="text-sm font-black text-black">2nd Month (60 Days): Mid-Probation Tools &amp; Difficulties Review</h3>
                 </div>
-                <span className="text-[10px] font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded border border-amber-300">
+                <span className="text-[10px] font-bold text-[#B88A24] bg-[#FAF5EB] px-2 py-0.5 rounded border border-[#E9D59A]">
                   ⚠️ Flagged for HR
                 </span>
               </div>
@@ -2177,7 +2177,7 @@ export const OnboardingView: React.FC = () => {
             </div>
 
             {/* Phase 6: Month 3 / 90 Days */}
-            <div className="border-2 border-black rounded-xl p-4 bg-amber-50/40">
+            <div className="border-2 border-black rounded-xl p-4 bg-[#FAF5EB]">
               <div className="flex items-center justify-between gap-2 border-b border-slate-300 pb-2">
                 <div className="flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-black text-[#D4AF37] text-xs font-black flex items-center justify-center">
@@ -2191,10 +2191,10 @@ export const OnboardingView: React.FC = () => {
               </div>
               <ul className="mt-3 space-y-1.5 text-xs text-slate-800 font-medium">
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Formal evaluation with Unit Manager and PCCM for permanent appointment
+                  <CheckCircle2 className="w-4 h-4 text-[#174EA6]" /> Formal evaluation with Unit Manager and PCCM for permanent appointment
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Issuance of official confirmation letter of employment
+                  <CheckCircle2 className="w-4 h-4 text-[#174EA6]" /> Issuance of official confirmation letter of employment
                 </li>
                 <li className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-[#D4AF37]" /> Onboarding team members assessment on execution of induction duties
@@ -2255,7 +2255,7 @@ export const OnboardingView: React.FC = () => {
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-xs font-black text-black">{doc.name}</h3>
                       {doc.isConditional && (
-                        <span className="text-[10px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] font-bold text-[#B88A24] bg-[#FAF5EB] border border-[#E9D59A] px-2 py-0.5 rounded-full">
                           Conditional (Where Relevant)
                         </span>
                       )}
@@ -2272,18 +2272,18 @@ export const OnboardingView: React.FC = () => {
                     onClick={() => handleToggleDocument(doc.id, doc.isSubmitted)}
                     className={`text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 cursor-pointer transition ${
                       doc.isSubmitted
-                        ? 'text-emerald-800 bg-emerald-100 border border-emerald-300'
-                        : 'text-rose-800 bg-rose-100 border border-rose-300 hover:bg-rose-200'
+                        ? 'text-[#174EA6] bg-[#DBEAFE] border border-[#BFDBFE]'
+                        : 'text-[#111827] bg-[#E5E7EB] border border-[#111827]/25 hover:bg-[#111827]/10'
                     }`}
                   >
                     {doc.isSubmitted ? (
                       <>
-                        <Check className="w-3.5 h-3.5 text-emerald-700" />
+                        <Check className="w-3.5 h-3.5 text-[#174EA6]" />
                         <span>Received ({doc.submittedAt || 'Active'})</span>
                       </>
                     ) : (
                       <>
-                        <Clock className="w-3.5 h-3.5 text-rose-700" />
+                        <Clock className="w-3.5 h-3.5 text-[#111827]" />
                         <span>Pending Submission</span>
                       </>
                     )}
@@ -2323,7 +2323,7 @@ export const OnboardingView: React.FC = () => {
                 onClick={() => handleToggleOrientation(item.id, item.isCompleted)}
                 className={`p-4 rounded-xl border text-xs cursor-pointer transition flex items-start gap-3 shadow-2xs ${
                   item.isCompleted
-                    ? 'bg-emerald-50/30 border-emerald-300'
+                    ? 'bg-[#EFF6FF] border-[#BFDBFE]'
                     : 'bg-white border-slate-200 hover:border-slate-300'
                 }`}
               >
@@ -2335,11 +2335,11 @@ export const OnboardingView: React.FC = () => {
                   <div className="mt-2 flex items-center justify-between text-[11px]">
                     <span className="text-slate-600 font-bold">Facility Induction Step</span>
                     {item.isCompleted ? (
-                      <span className="text-emerald-800 font-bold flex items-center gap-1 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full">
-                        <Check className="w-3 h-3 text-emerald-700" /> Completed
+                      <span className="text-[#174EA6] font-bold flex items-center gap-1 bg-[#DBEAFE] border border-[#BFDBFE] px-2 py-0.5 rounded-full">
+                        <Check className="w-3 h-3 text-[#174EA6]" /> Completed
                       </span>
                     ) : (
-                      <span className="text-amber-800 font-bold bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
+                      <span className="text-[#B88A24] font-bold bg-[#FAF5EB] border border-[#E9D59A] px-2 py-0.5 rounded-full">
                         In Progress
                       </span>
                     )}
@@ -2361,7 +2361,7 @@ export const OnboardingView: React.FC = () => {
               <Users className="w-4 h-4 text-[#D4AF37]" />
               <span>Assigned Onboarding Team Roster &amp; Responsibility Assessment</span>
             </h2>
-            <p className="text-xs text-slate-700 mt-1 font-semibold bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+            <p className="text-xs text-slate-700 mt-1 font-semibold bg-[#FAF5EB] p-2.5 rounded-xl border border-[#E9D59A]">
               "Every member of the onboarding team will also be assessed on their responsible task through the onboarding process and period." — The Citadel Global Community Church Onboarding SOP (30 March 2024).
             </p>
           </div>
@@ -2420,8 +2420,8 @@ export const OnboardingView: React.FC = () => {
 
             {/* 4. Finance & Accounts */}
             <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs">
-              <div className="flex items-center gap-2 text-xs font-black text-emerald-900 bg-emerald-50 p-2 rounded-lg border border-emerald-200">
-                <CreditCard className="w-4 h-4 text-emerald-700" />
+              <div className="flex items-center gap-2 text-xs font-black text-[#174EA6] bg-[#EFF6FF] p-2 rounded-lg border border-[#BFDBFE]">
+                <CreditCard className="w-4 h-4 text-[#174EA6]" />
                 <span>Finance &amp; Account Team</span>
               </div>
               <h3 className="text-sm font-black text-black mt-3">
@@ -2437,8 +2437,8 @@ export const OnboardingView: React.FC = () => {
 
             {/* 5. Mentor / Buddy */}
             <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs">
-              <div className="flex items-center gap-2 text-xs font-black text-rose-900 bg-rose-50 p-2 rounded-lg border border-rose-200">
-                <HeartHandshake className="w-4 h-4 text-rose-700" />
+              <div className="flex items-center gap-2 text-xs font-black text-[#111827] bg-[#F5F7FA] p-2 rounded-lg border border-[#111827]/25">
+                <HeartHandshake className="w-4 h-4 text-[#111827]" />
                 <span>Mentor or Onboarding Buddy</span>
               </div>
               <h3 className="text-sm font-black text-black mt-3">
@@ -2546,7 +2546,7 @@ export const OnboardingView: React.FC = () => {
                 <div className="space-y-4 animate-fade-in">
                   <div>
                     <label htmlFor="start-employee-select" className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Choose Employee to Onboard <span className="text-red-500">*</span>
+                      Choose Employee to Onboard <span className="text-[#111827]">*</span>
                     </label>
                     <div className="relative">
                       <select
@@ -2620,12 +2620,12 @@ export const OnboardingView: React.FC = () => {
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <label htmlFor="start-checklist-select" className="text-xs font-bold text-slate-700">
-                        Select Checklist Template <span className="text-red-500">*</span>
+                        Select Checklist Template <span className="text-[#111827]">*</span>
                       </label>
                       <button
                         type="button"
                         onClick={() => setIsAddChecklistModalOpen(true)}
-                        className="text-xs font-bold text-[#0284C7] hover:text-[#0369A1] flex items-center gap-1 cursor-pointer transition"
+                        className="text-xs font-bold text-[#0B1F3A] hover:text-[#0369A1] flex items-center gap-1 cursor-pointer transition"
                       >
                         <Plus className="w-3.5 h-3.5 stroke-[3]" />
                         <span>Add Checklist</span>
@@ -2701,7 +2701,7 @@ export const OnboardingView: React.FC = () => {
                 <div className="space-y-4 animate-fade-in">
                   <div>
                     <label htmlFor="start-date-input" className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Resumption / Start Date <span className="text-red-500">*</span>
+                      Resumption / Start Date <span className="text-[#111827]">*</span>
                     </label>
                     <input
                       id="start-date-input"
@@ -2743,7 +2743,7 @@ export const OnboardingView: React.FC = () => {
 
                   {/* Compliance Documentation Notice */}
                   <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 flex items-start gap-2.5">
-                    <ShieldCheck className="w-4 h-4 text-[#083E34] shrink-0 mt-0.5" />
+                    <ShieldCheck className="w-4 h-4 text-[#174EA6] shrink-0 mt-0.5" />
                     <p className="text-[11px] text-slate-600 font-medium">
                       Standard statutory compliance forms (Bio-Data, Emergency Contacts, NDA, Employee Handbook, SOP Manual) will be queued automatically upon launch.
                     </p>
@@ -2754,12 +2754,12 @@ export const OnboardingView: React.FC = () => {
               {/* STEP 4: FINISH (REVIEW & LAUNCH) */}
               {startOnboardingStep === 4 && (
                 <div className="space-y-4 animate-fade-in">
-                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
-                    <div className="flex items-center gap-2 text-emerald-900 font-black text-xs">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <div className="rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] p-4">
+                    <div className="flex items-center gap-2 text-[#174EA6] font-black text-xs">
+                      <CheckCircle2 className="w-4 h-4 text-[#174EA6]" />
                       <span>Ready to Initiate Onboarding</span>
                     </div>
-                    <p className="text-xs text-emerald-800 font-medium mt-1">
+                    <p className="text-xs text-[#174EA6] font-medium mt-1">
                       Review the onboarding parameters below before launching the official 3-month induction schedule.
                     </p>
                   </div>
@@ -2885,10 +2885,10 @@ export const OnboardingView: React.FC = () => {
 
             <form onSubmit={handleSaveNewChecklist} className="p-6 space-y-4 overflow-y-auto flex-1">
               {/* Quick Load CGCC Standard Template Banner */}
-              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="p-3.5 rounded-xl bg-[#FAF5EB] border border-[#E9D59A] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="space-y-0.5">
-                  <span className="text-xs font-bold text-amber-900 block">Sussan Afuwape SOP Preset (30 March 2024)</span>
-                  <p className="text-[11px] text-amber-800">
+                  <span className="text-xs font-bold text-[#B88A24] block">Sussan Afuwape SOP Preset (30 March 2024)</span>
+                  <p className="text-[11px] text-[#B88A24]">
                     Auto-load the 19 standard tasks across Manager, HR, IT, Finance, and Mentor.
                   </p>
                 </div>
@@ -2902,16 +2902,16 @@ export const OnboardingView: React.FC = () => {
               </div>
 
               {/* Upload HR Custom Checklist File Banner */}
-              <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="p-3.5 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="space-y-0.5">
-                  <span className="text-xs font-bold text-emerald-950 block">
+                  <span className="text-xs font-bold text-[#174EA6] block">
                     Import Custom Checklist File (CSV, TSV, JSON, or TXT)
                   </span>
-                  <p className="text-[11px] text-emerald-900/90">
+                  <p className="text-[11px] text-[#174EA6]/90">
                     Upload your own onboarding checklist document to populate tasks below and save as a reusable template.
                   </p>
                   {uploadedChecklistFileName && (
-                    <p className="text-[11px] font-bold text-[#083E34] mt-1">
+                    <p className="text-[11px] font-bold text-[#174EA6] mt-1">
                       Loaded file: {uploadedChecklistFileName} ({templateCustomTasks.length} tasks)
                     </p>
                   )}
@@ -2920,14 +2920,14 @@ export const OnboardingView: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleDownloadSampleChecklistCsv}
-                    className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-emerald-50 text-emerald-900 border border-emerald-300 font-bold text-[11px] transition flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#EFF6FF] text-[#174EA6] border border-[#BFDBFE] font-bold text-[11px] transition flex items-center gap-1 cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Sample CSV</span>
                   </button>
                   <label
                     data-testid="upload-checklist-modal-label"
-                    className="px-3 py-1.5 rounded-lg bg-[#083E34] hover:bg-[#062C25] text-white font-bold text-[11px] transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    className="px-3 py-1.5 rounded-lg bg-[#174EA6] hover:bg-[#062C25] text-white font-bold text-[11px] transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
                   >
                     <Upload className="w-3.5 h-3.5 text-[#D4AF37]" />
                     <span>Upload File</span>
@@ -2943,14 +2943,14 @@ export const OnboardingView: React.FC = () => {
               </div>
 
               {checklistUploadError && (
-                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                <div className="p-3 rounded-xl bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-[#111827] shrink-0" />
                   <span>{checklistUploadError}</span>
                 </div>
               )}
 
               {checklistUploadWarnings.length > 0 && (
-                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] space-y-0.5">
+                <div className="p-3 rounded-xl bg-[#FAF5EB] border border-[#E9D59A] text-[#B88A24] text-[11px] space-y-0.5">
                   {checklistUploadWarnings.map((warning, i) => (
                     <p key={i} className="font-medium">Note: {warning}</p>
                   ))}
@@ -2959,7 +2959,7 @@ export const OnboardingView: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Checklist Title <span className="text-red-500">*</span>
+                  Checklist Title <span className="text-[#111827]">*</span>
                 </label>
                 <input
                   type="text"
@@ -2974,7 +2974,7 @@ export const OnboardingView: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Category <span className="text-red-500">*</span>
+                    Category <span className="text-[#111827]">*</span>
                   </label>
                   <select
                     value={newChecklistCategory}
@@ -2991,7 +2991,7 @@ export const OnboardingView: React.FC = () => {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Duration <span className="text-red-500">*</span>
+                    Duration <span className="text-[#111827]">*</span>
                   </label>
                   <input
                     type="text"
@@ -3006,7 +3006,7 @@ export const OnboardingView: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Target Audience <span className="text-red-500">*</span>
+                  Target Audience <span className="text-[#111827]">*</span>
                 </label>
                 <input
                   type="text"
@@ -3048,7 +3048,7 @@ export const OnboardingView: React.FC = () => {
                       placeholder="e.g., Conduct 1-on-1 milestone review"
                       value={newTaskInputTitle}
                       onChange={(e) => setNewTaskInputTitle(e.target.value)}
-                      className="sm:col-span-6 px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white font-medium focus:outline-none focus:border-[#083E34]"
+                      className="sm:col-span-6 px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white font-medium focus:outline-none focus:border-[#174EA6]"
                     />
                     <select
                       value={newTaskInputDept}
@@ -3118,7 +3118,7 @@ export const OnboardingView: React.FC = () => {
                           <div className="min-w-0">
                             <span className="font-semibold text-slate-800 block truncate">{t.title}</span>
                             {depNames.length > 0 && (
-                              <span className="text-[10px] text-amber-700 font-semibold block truncate">
+                              <span className="text-[10px] text-[#B88A24] font-semibold block truncate">
                                 Requires: {depNames.join(', ')}
                               </span>
                             )}
@@ -3128,7 +3128,7 @@ export const OnboardingView: React.FC = () => {
                           <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-bold">
                             {t.department}
                           </span>
-                          <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold">
+                          <span className="px-2 py-0.5 rounded bg-[#FAF5EB] text-[#B88A24] border border-[#E9D59A] text-[10px] font-bold">
                             {t.timeline}
                           </span>
                           <button
@@ -3152,7 +3152,7 @@ export const OnboardingView: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleRemoveTaskFromTemplate(idx)}
-                            className="text-rose-500 hover:text-rose-700 p-1 cursor-pointer"
+                            className="text-[#111827] hover:text-[#111827] p-1 cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -3352,7 +3352,7 @@ export const OnboardingView: React.FC = () => {
                                 setNewTaskDependsOnIds(newTaskDependsOnIds.filter((id) => id !== prevTask.id));
                               }
                             }}
-                            className="rounded border-slate-300 text-[#083E34]"
+                            className="rounded border-slate-300 text-[#174EA6]"
                           />
                           <span className="truncate font-medium text-slate-800">{prevTask.title}</span>
                         </label>
@@ -3588,7 +3588,7 @@ export const OnboardingView: React.FC = () => {
               </div>
 
               {/* Document Sign-off Footer */}
-              <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 flex flex-wrap items-center justify-between text-xs gap-2">
+              <div className="p-4 rounded-xl bg-[#FAF5EB] border border-[#E9D59A] flex flex-wrap items-center justify-between text-xs gap-2">
                 <div>
                   <span className="font-bold text-black">Prepared By: </span>
                   <strong className="text-black">Sussan Afuwape</strong>

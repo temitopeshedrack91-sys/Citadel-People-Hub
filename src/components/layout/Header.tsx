@@ -186,7 +186,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={onToggleSidebar}
-              className="lg:hidden p-2 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#083E34]/30"
+              className="lg:hidden p-2 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#174EA6]/30"
               title="Toggle Navigation Menu"
               aria-label="Toggle Navigation Menu"
             >
@@ -197,7 +197,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('dashboard')}
-              className="cursor-pointer hover:opacity-90 transition flex items-center gap-2.5 shrink-0 text-left rounded-lg py-1 pr-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#083E34]/30"
+              className="cursor-pointer hover:opacity-90 transition flex items-center gap-2.5 shrink-0 text-left rounded-lg py-1 pr-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#174EA6]/30"
               title="Citadel People Hub Dashboard"
               aria-label="Go to Citadel People Hub Dashboard"
             >
@@ -231,7 +231,7 @@ export const Header: React.FC<HeaderProps> = ({
               placeholder="Search employees, documents, or records..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-14 py-2 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/90 rounded-lg text-xs text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34] focus:bg-white focus:ring-2 focus:ring-[#083E34]/12 transition"
+              className="w-full pl-9 pr-14 py-2 bg-[#F5F7FA] hover:bg-slate-100/70 border border-[#E5E7EB] rounded-lg text-xs text-[#111827] font-medium placeholder:text-[#64748B] focus:outline-none focus:border-[#174EA6] focus:bg-white focus:ring-2 focus:ring-[#174EA6]/15 transition"
             />
             <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-0.5 text-[10px] font-mono font-semibold text-slate-500 bg-white border border-slate-200/90 px-1.5 py-0.5 rounded pointer-events-none">
               <Command className="w-2.5 h-2.5" />
@@ -255,7 +255,7 @@ export const Header: React.FC<HeaderProps> = ({
                 }}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200/90 hover:border-slate-300 text-xs text-slate-700 font-medium transition cursor-pointer whitespace-nowrap"
               >
-                <Building2 className="w-3.5 h-3.5 text-[#083E34] shrink-0" />
+                <Building2 className="w-3.5 h-3.5 text-[#174EA6] shrink-0" />
                 <span className="truncate max-w-[140px] text-xs font-semibold">{currentEntityName}</span>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               </button>
@@ -263,14 +263,14 @@ export const Header: React.FC<HeaderProps> = ({
               {isEntityMenuOpen && (
                 <div
                   role="menu"
-                  className="absolute right-0 top-full mt-2 w-72 rounded-2xl bg-white shadow-xl border border-slate-200 py-1.5 z-50 animate-fade-in"
+                  className="absolute right-0 top-full mt-2 w-72 rounded-2xl bg-white shadow-xl border border-[#E5E7EB] py-1.5 z-50 animate-fade-in"
                 >
-                  <div className="px-3.5 py-2 border-b border-slate-100 flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  <div className="px-3.5 py-2 border-b border-slate-100 flex items-center justify-between text-[10px] font-bold text-[#64748B] uppercase tracking-wider">
                     <span>Select Citadel Entity Scope</span>
-                    {entitiesLoading && <span className="text-[#083E34] normal-case">Loading...</span>}
+                    {entitiesLoading && <span className="text-[#174EA6] normal-case">Loading...</span>}
                   </div>
                   {entitiesError && (
-                    <div className="px-3.5 py-2.5 bg-rose-50 border-b border-rose-100 text-[11px] text-rose-700 flex items-center justify-between gap-2">
+                    <div className="px-3.5 py-2.5 bg-[#F5F7FA] border-b border-[#E5E7EB] text-[11px] text-[#111827] flex items-center justify-between gap-2">
                       <span className="truncate">{entitiesError}</span>
                       <button
                         type="button"
@@ -298,18 +298,18 @@ export const Header: React.FC<HeaderProps> = ({
                           setSelectedEntityFilter(ent.id);
                           setIsEntityMenuOpen(false);
                         }}
-                        className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition cursor-pointer ${
+                        className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-[#F5F7FA] transition cursor-pointer ${
                           isSelected
-                            ? 'bg-[#EBF5F2] font-bold text-[#083E34]'
-                            : 'text-slate-700 font-medium'
+                            ? 'bg-[#EFF6FF] font-bold text-[#174EA6]'
+                            : 'text-[#111827] font-medium'
                         }`}
                       >
                         <div className="flex flex-col">
                           <span className="font-bold">{ent.name}</span>
-                          <span className="text-[10px] text-slate-500">{ent.shortCode}</span>
+                          <span className="text-[10px] text-[#64748B]">{ent.shortCode}</span>
                         </div>
                         {isSelected && (
-                          <span className="w-2 h-2 rounded-full bg-[#083E34]" />
+                          <span className="w-2 h-2 rounded-full bg-[#174EA6]" />
                         )}
                       </button>
                     );
@@ -378,8 +378,8 @@ export const Header: React.FC<HeaderProps> = ({
                                 : 'notifications'
                             );
                           }}
-                          className={`w-full text-left p-3.5 text-xs hover:bg-slate-50 cursor-pointer transition block ${
-                            !n.isRead ? 'bg-amber-50/35' : ''
+                          className={`w-full text-left p-3.5 text-xs hover:bg-[#F5F7FA] cursor-pointer transition block ${
+                            !n.isRead ? 'bg-[#FAF5EB]/60' : ''
                           }`}
                         >
                           <div className="flex items-center justify-between gap-2">
@@ -399,7 +399,7 @@ export const Header: React.FC<HeaderProps> = ({
                     <button
                       type="button"
                       onClick={() => onNavigate('notifications')}
-                      className="text-xs text-[#083E34] hover:text-[#052C25] hover:underline font-semibold cursor-pointer"
+                      className="text-xs text-[#174EA6] hover:text-[#0B1F3A] hover:underline font-semibold cursor-pointer"
                     >
                       View all notifications
                     </button>
@@ -443,7 +443,7 @@ export const Header: React.FC<HeaderProps> = ({
                       className="w-7 h-7 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-7 h-7 rounded-full bg-[#083E34] text-white font-semibold flex items-center justify-center text-[11px]">
+                    <div className="w-7 h-7 rounded-full bg-[#0B1F3A] text-white font-semibold flex items-center justify-center text-[11px]">
                       {currentUser.name
                         .split(' ')
                         .map((n) => n[0])
@@ -473,7 +473,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <div className="p-3 border-b border-slate-100 mb-1">
                     <p className="text-xs font-semibold text-slate-900 leading-none">{currentUser.name}</p>
                     <p className="text-[11px] text-slate-500 mt-1 truncate font-mono">{currentUser.email}</p>
-                    <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#083E34]">
+                    <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#174EA6]">
                       {currentPersona.badgeLabel}
                     </p>
                   </div>
@@ -482,7 +482,7 @@ export const Header: React.FC<HeaderProps> = ({
                     type="button"
                     role="menuitem"
                     onClick={() => setIsProfileOpen(true)}
-                    className="w-full text-left px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition flex items-center gap-2 cursor-pointer"
+                    className="w-full text-left px-3 py-2 text-xs font-medium text-slate-700 hover:bg-[#F5F7FA] rounded-lg transition flex items-center gap-2 cursor-pointer"
                   >
                     <span>Edit Profile Details</span>
                   </button>
@@ -493,7 +493,7 @@ export const Header: React.FC<HeaderProps> = ({
                     type="button"
                     role="menuitem"
                     onClick={() => logout()}
-                    className="w-full text-left px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                    className="w-full text-left px-3 py-2 text-xs font-semibold text-[#111827] hover:bg-[#F5F7FA] rounded-lg transition cursor-pointer"
                   >
                     <span>Sign Out</span>
                   </button>
@@ -515,10 +515,10 @@ export const Header: React.FC<HeaderProps> = ({
                 }
               }}
               data-testid="header-new-task-btn"
-              className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg bg-[#EBF5F2] hover:bg-[#DCEEE8] text-[#083E34] text-xs font-semibold flex items-center gap-1.5 border border-[#083E34]/20 transition active:scale-[0.98] cursor-pointer shrink-0 whitespace-nowrap min-h-[36px]"
+              className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg bg-[#174EA6] hover:bg-[#0B1F3A] text-white text-xs font-semibold flex items-center gap-1.5 transition active:scale-[0.98] cursor-pointer shrink-0 whitespace-nowrap min-h-[36px]"
               title="Create New Task"
             >
-              <Plus className="w-3.5 h-3.5 text-[#083E34] stroke-[2.25] shrink-0" />
+              <Plus className="w-3.5 h-3.5 text-[#D4AF37] stroke-[2.25] shrink-0" />
               <span className="hidden sm:inline">New task</span>
             </button>
           </div>

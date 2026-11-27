@@ -30,13 +30,13 @@ export const NotificationsView: React.FC = () => {
   const getIcon = (cat: string) => {
     switch (cat) {
       case 'Leave':
-        return <CalendarDays className="w-4 h-4 text-emerald-700" />;
+        return <CalendarDays className="w-4 h-4 text-[#174EA6]" />;
       case 'Onboarding':
         return <UserPlus className="w-4 h-4 text-[#D4AF37]" />;
       case 'Hardware':
-        return <AlertCircle className="w-4 h-4 text-rose-600" />;
+        return <AlertCircle className="w-4 h-4 text-[#111827]" />;
       default:
-        return <Bell className="w-4 h-4 text-[#083E34]" />;
+        return <Bell className="w-4 h-4 text-[#174EA6]" />;
     }
   };
 
@@ -51,7 +51,7 @@ export const NotificationsView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <Bell className="w-5 h-5 text-[#083E34]" />
+            <Bell className="w-5 h-5 text-[#174EA6]" />
             <span>Notifications</span>
           </h2>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -63,7 +63,7 @@ export const NotificationsView: React.FC = () => {
           onClick={handleMarkAll}
           className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 flex items-center gap-1.5 shadow-xs transition cursor-pointer active:scale-95 self-start sm:self-auto"
         >
-          <CheckCheck className="w-4 h-4 text-emerald-600" />
+          <CheckCheck className="w-4 h-4 text-[#174EA6]" />
           <span>Mark All Read</span>
         </button>
       </div>
@@ -96,7 +96,7 @@ export const NotificationsView: React.FC = () => {
             <div
               key={n.id}
               className={`p-4 sm:p-5 flex items-start justify-between gap-3 transition ${
-                n.isRead ? 'bg-white hover:bg-slate-50/50' : 'bg-emerald-50/20 hover:bg-emerald-50/30'
+                n.isRead ? 'bg-white hover:bg-slate-50/50' : 'bg-[#EFF6FF] hover:bg-[#EFF6FF]'
               }`}
             >
               <div className="flex items-start gap-3.5">
@@ -113,7 +113,7 @@ export const NotificationsView: React.FC = () => {
                       {n.title}
                     </h4>
                     {!n.isRead && (
-                      <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
+                      <span className="w-2 h-2 rounded-full bg-[#B88A24] shrink-0"></span>
                     )}
                   </div>
                   <p className="text-xs text-slate-600 mt-1 leading-relaxed">{n.message}</p>
@@ -128,7 +128,7 @@ export const NotificationsView: React.FC = () => {
               {!n.isRead && (
                 <button
                   onClick={() => handleMarkAsRead(n.id)}
-                  className="text-xs font-bold text-[#083E34] hover:underline shrink-0 cursor-pointer pt-0.5"
+                  className="text-xs font-bold text-[#174EA6] hover:underline shrink-0 cursor-pointer pt-0.5"
                 >
                   Mark Read
                 </button>

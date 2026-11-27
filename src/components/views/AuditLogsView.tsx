@@ -47,7 +47,7 @@ export const AuditLogsView: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-          <History className="w-5 h-5 text-[#083E34]" />
+          <History className="w-5 h-5 text-[#174EA6]" />
           <span>Audit Trail</span>
         </h2>
         <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -64,7 +64,7 @@ export const AuditLogsView: React.FC = () => {
             placeholder="Search action, actor, affected employee, or module..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#083E34] text-slate-900 font-medium"
+            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#174EA6] text-slate-900 font-medium"
           />
         </div>
 
@@ -126,7 +126,7 @@ export const AuditLogsView: React.FC = () => {
                       <span className="text-slate-400">Old:</span> {log.previousValue || '—'}
                     </div>
                     <div className="truncate">
-                      <span className="text-emerald-700 font-semibold">New:</span>{' '}
+                      <span className="text-[#174EA6] font-semibold">New:</span>{' '}
                       {log.newValue || '—'}
                     </div>
                   </td>

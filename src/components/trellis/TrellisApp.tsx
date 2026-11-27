@@ -34,7 +34,7 @@ const TrellisContent: React.FC = () => {
   return (
     <div data-testid="trellis-app" className="space-y-4">
       {isLoading && <div role="status" className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-semibold text-slate-600">Loading tasks and employees…</div>}
-      {apiError && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-800 flex items-start justify-between gap-3"><span>{isApiMode ? 'Trellis API request failed. ' : ''}{apiError}</span><button type="button" onClick={clearApiError} className="text-rose-700 underline underline-offset-2">Dismiss</button></div>}
+      {apiError && <div role="alert" className="rounded-xl border border-[#111827]/25 bg-[#F5F7FA] px-4 py-3 text-xs font-semibold text-[#111827] flex items-start justify-between gap-3"><span>{isApiMode ? 'Trellis API request failed. ' : ''}{apiError}</span><button type="button" onClick={clearApiError} className="text-[#111827] underline underline-offset-2">Dismiss</button></div>}
       {/* Project Header Bar with Breadcrumb, Team Avatars, User Switcher, Tabs, and + New task */}
       <TrellisHeader />
 

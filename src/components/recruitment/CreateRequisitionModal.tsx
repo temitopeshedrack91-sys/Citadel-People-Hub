@@ -271,7 +271,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Modal Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-[#083E34] via-[#062C25] to-[#0F5447] text-white flex items-center justify-between border-b border-emerald-950/30">
+        <div className="px-6 py-4 bg-gradient-to-r from-[#174EA6] via-[#062C25] to-[#174EA6] text-white flex items-center justify-between border-b border-[#BFDBFE]">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-white/10 border border-white/20 text-[#D4AF37]">
               <Briefcase className="w-5 h-5" />
@@ -312,8 +312,8 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
         {/* Modal Body */}
         <div className="p-6 overflow-y-auto flex-1 space-y-5">
           {validationError && (
-            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2.5">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+            <div className="p-3.5 rounded-xl bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] text-xs flex items-center gap-2.5">
+              <AlertCircle className="w-4 h-4 shrink-0 text-[#111827]" />
               <span className="font-semibold">{validationError}</span>
             </div>
           )}
@@ -323,7 +323,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
             <div className="space-y-4 animate-fade-in">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                 <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                  <Briefcase className="w-4 h-4 text-[#083E34]" />
+                  <Briefcase className="w-4 h-4 text-[#174EA6]" />
                   <span>Step 1: Role Designation &amp; Organization</span>
                 </h4>
                 <span className="text-[11px] text-slate-400 font-mono">Step 1 of 4</span>
@@ -331,14 +331,14 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Job Position Title <span className="text-rose-500">*</span>
+                  Job Position Title <span className="text-[#111827]">*</span>
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. Senior Broadcast Engineer, Academy Lead, Head of Operations"
                   value={jobTitle}
                   onChange={(e) => setJobTitle(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/10 outline-none transition"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#174EA6] focus:ring-2 focus:ring-[#174EA6]/10 outline-none transition"
                   autoFocus
                 />
                 <p className="text-[11px] text-slate-400 mt-1">
@@ -349,13 +349,13 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Citadel Entity <span className="text-rose-500">*</span>
+                    Citadel Entity <span className="text-[#111827]">*</span>
                   </label>
                   <select
                     value={entityId}
                     onChange={(e) => setEntityId(e.target.value)}
                     disabled={optionsLoading && effectiveEntities.length === 0}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition cursor-pointer disabled:opacity-60"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#174EA6] outline-none transition cursor-pointer disabled:opacity-60"
                   >
                     <option value="">
                       {optionsLoading && effectiveEntities.length === 0
@@ -374,13 +374,13 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Assigned Department <span className="text-rose-500">*</span>
+                    Assigned Department <span className="text-[#111827]">*</span>
                   </label>
                   <select
                     value={departmentId}
                     onChange={(e) => setDepartmentId(e.target.value)}
                     disabled={!entityId || (optionsLoading && filteredDepartments.length === 0)}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition cursor-pointer disabled:opacity-60"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#174EA6] outline-none transition cursor-pointer disabled:opacity-60"
                   >
                     <option value="">
                       {!entityId
@@ -403,12 +403,12 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Employment Type <span className="text-rose-500">*</span>
+                    Employment Type <span className="text-[#111827]">*</span>
                   </label>
                   <select
                     value={employmentType}
                     onChange={(e) => setEmploymentType(e.target.value as any)}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition cursor-pointer"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#174EA6] outline-none transition cursor-pointer"
                   >
                     <option value="Full-Time">Full-Time (Permanent Staff)</option>
                     <option value="Contract">Fixed-Term Contract</option>
@@ -424,7 +424,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                   <select
                     value={workLocation}
                     onChange={(e) => setWorkLocation(e.target.value)}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition cursor-pointer"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#174EA6] outline-none transition cursor-pointer"
                   >
                     <option value="">Select a work arrangement</option>
                     <option value="Physical On-Site (Oregun Campus)">Physical On-Site (Oregun Campus, Ikeja)</option>
@@ -441,7 +441,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
             <div className="space-y-4 animate-fade-in">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                 <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                  <Users className="w-4 h-4 text-[#083E34]" />
+                  <Users className="w-4 h-4 text-[#174EA6]" />
                   <span>Step 2: Headcount, Hiring Lead &amp; Compensation</span>
                 </h4>
                 <span className="text-[11px] text-slate-400 font-mono">Step 2 of 4</span>
@@ -450,7 +450,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Number of Open Positions <span className="text-rose-500">*</span>
+                    Number of Open Positions <span className="text-[#111827]">*</span>
                   </label>
                   <input
                     type="number"
@@ -458,7 +458,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                     max={20}
                     value={openPositions}
                     onChange={(e) => setOpenPositions(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:border-[#174EA6] outline-none transition"
                   />
                   <span className="text-[11px] text-slate-400 mt-1 block">
                     Headcount must align with quarterly manpower budget.
@@ -467,7 +467,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Designated Hiring Manager <span className="text-rose-500">*</span>
+                    Designated Hiring Manager <span className="text-[#111827]">*</span>
                   </label>
                   <input
                     type="text"
@@ -475,7 +475,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                     placeholder="e.g. Dr. Bukola Adeleke, Mrs. Folashade Adeyemo"
                     value={hiringManager}
                     onChange={(e) => setHiringManager(e.target.value)}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#174EA6] outline-none transition"
                   />
                   <datalist id="cgcc-hiring-managers-list">
                     {effectiveEmployees.map((emp) => (
@@ -495,7 +495,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                   value={salaryBand}
                   onChange={(e) => setSalaryBand(e.target.value)}
                   disabled={gradesLoading}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition cursor-pointer disabled:opacity-60"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#174EA6] outline-none transition cursor-pointer disabled:opacity-60"
                 >
                   <option value="">
                     {gradesLoading
@@ -526,7 +526,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                 <select
                   value={justification}
                   onChange={(e) => setJustification(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition cursor-pointer"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#174EA6] outline-none transition cursor-pointer"
                 >
                   <option value="">Select a requisition justification</option>
                   <option value="New Headcount / Strategic Growth">New Headcount / Strategic Growth</option>
@@ -542,7 +542,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
             <div className="space-y-4 animate-fade-in">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                 <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-[#083E34]" />
+                  <Clock className="w-4 h-4 text-[#174EA6]" />
                   <span>Step 3: Timeline &amp; Sheet 8 Protocol</span>
                 </h4>
                 <span className="text-[11px] text-slate-400 font-mono">Step 3 of 4</span>
@@ -551,13 +551,13 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Target Hiring Date <span className="text-rose-500">*</span>
+                    Target Hiring Date <span className="text-[#111827]">*</span>
                   </label>
                   <input
                     type="date"
                     value={targetDate}
                     onChange={(e) => setTargetDate(e.target.value)}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:bg-white focus:border-[#174EA6] outline-none transition"
                   />
                   <span className="text-[11px] text-slate-400 mt-1 block">
                     Calculated standard recruitment SLA: ~28 to 35 calendar days.
@@ -568,8 +568,8 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     Stage 8 Assessment Protocol
                   </label>
-                  <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200 text-xs text-amber-950 font-semibold space-y-1">
-                    <div className="flex items-center gap-1.5 text-[#083E34] font-bold">
+                  <div className="p-2.5 rounded-xl bg-[#FAF5EB] border border-[#E9D59A] text-xs text-[#B88A24] font-semibold space-y-1">
+                    <div className="flex items-center gap-1.5 text-[#174EA6] font-bold">
                       <ShieldCheck className="w-4 h-4" />
                       <span>Sheet 8 Mandated Format:</span>
                     </div>
@@ -588,7 +588,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                 <select
                   value={sourcingChannel}
                   onChange={(e) => setSourcingChannel(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#083E34] outline-none transition cursor-pointer"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#174EA6] outline-none transition cursor-pointer"
                 >
                   <option value="Citadel Community & Careers Portal">Citadel Community &amp; Careers Portal</option>
                   <option value="Internal Succession & Mobility">Internal Succession &amp; Mobility</option>
@@ -606,7 +606,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                   placeholder="Outline key expectations, technical stack or pastoral competencies required for this position..."
                   value={keyRequirements}
                   onChange={(e) => setKeyRequirements(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:border-[#083E34] outline-none transition resize-none"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:border-[#174EA6] outline-none transition resize-none"
                 />
               </div>
             </div>
@@ -617,7 +617,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
             <div className="space-y-4 animate-fade-in">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                 <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <CheckCircle2 className="w-4 h-4 text-[#174EA6]" />
                   <span>Step 4: Verify &amp; Authorization Sign-Off</span>
                 </h4>
                 <span className="text-[11px] text-slate-400 font-mono">Step 4 of 4</span>
@@ -627,15 +627,15 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
               <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100/70 border border-slate-200 shadow-xs space-y-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <span className="px-2.5 py-1 rounded-md bg-[#083E34] text-amber-300 font-mono text-xs font-bold inline-block mb-1.5">
+                    <span className="px-2.5 py-1 rounded-md bg-[#174EA6] text-[#D4AF37] font-mono text-xs font-bold inline-block mb-1.5">
                       Assigned after save
                     </span>
                     <h3 className="text-base font-extrabold text-slate-900">{jobTitle || 'Untitled Position'}</h3>
-                    <p className="text-xs font-semibold text-[#083E34]">
+                    <p className="text-xs font-semibold text-[#174EA6]">
                       {selectedDept?.name || 'Department'} • {selectedEntity?.name || 'Entity'}
                     </p>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold">
+                  <span className="px-2.5 py-1 rounded-full bg-[#DBEAFE] text-[#174EA6] border border-[#BFDBFE] text-xs font-bold">
                     Pending PCCM Approval
                   </span>
                 </div>
@@ -674,9 +674,9 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                   </div>
                 </div>
 
-                <div className="p-3 bg-amber-50/80 rounded-xl border border-amber-200 text-xs flex items-start gap-2.5">
+                <div className="p-3 bg-[#FAF5EB] rounded-xl border border-[#E9D59A] text-xs flex items-start gap-2.5">
                   <Sparkles className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
-                  <p className="text-amber-950 text-[11px] leading-relaxed">
+                  <p className="text-[#B88A24] text-[11px] leading-relaxed">
                     Upon submission, this requisition initiates <strong>Stage 1 (Manpower Request &amp; Headcount Verification)</strong> of the Sheet 8 Sequential Protocol. Notification will be routed to People, Culture &amp; Change Management.
                   </p>
                 </div>

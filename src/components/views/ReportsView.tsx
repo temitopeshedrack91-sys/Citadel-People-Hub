@@ -153,19 +153,19 @@ export const ReportsView: React.FC = () => {
   return (
     <div className="space-y-5">
       {reportError && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+        <div className="p-4 rounded-xl bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] text-xs font-semibold flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 text-[#111827]" />
           <span>{reportError}</span>
         </div>
       )}
 
       {exportNotice && (
-        <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between shadow-xs animate-fade-in">
+        <div className="p-3 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] text-[#174EA6] text-xs flex items-center justify-between shadow-xs animate-fade-in">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-[#174EA6] shrink-0" />
             <span>{exportNotice}</span>
           </div>
-          <button onClick={() => setExportNotice(null)} className="text-emerald-600 hover:text-emerald-800">
+          <button onClick={() => setExportNotice(null)} className="text-[#174EA6] hover:text-[#174EA6]">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -174,7 +174,7 @@ export const ReportsView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-[#083E34]" />
+            <BarChart3 className="w-5 h-5 text-[#174EA6]" />
             <span>Reports &amp; Analytics</span>
           </h2>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -187,7 +187,7 @@ export const ReportsView: React.FC = () => {
             onClick={handleExportCSV}
             className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-1.5 shadow-2xs transition cursor-pointer min-h-[38px]"
           >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-700" />
+            <FileSpreadsheet className="w-4 h-4 text-[#174EA6]" />
             <span>Export CSV</span>
           </button>
           <button
@@ -227,7 +227,7 @@ export const ReportsView: React.FC = () => {
                 <div className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-700 font-medium space-y-1.5 tabular-nums">
                   <div className="flex justify-between">
                     <span>Active Personnel:</span>
-                    <span className="font-bold text-emerald-700">
+                    <span className="font-bold text-[#174EA6]">
                       {entStaff.filter((e) => e.status === 'Active' || e.status === 'Confirmed').length}
                     </span>
                   </div>
@@ -237,7 +237,7 @@ export const ReportsView: React.FC = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Pending Leave Requests:</span>
-                    <span className="font-bold text-[#D97706] bg-[#FAF5EB] border border-[#F2E4B8] px-2 py-0.5 rounded-full text-[11px]">
+                    <span className="font-bold text-[#B88A24] bg-[#FAF5EB] border border-[#F2E4B8] px-2 py-0.5 rounded-full text-[11px]">
                       {entPending.length} pending
                     </span>
                   </div>
@@ -257,7 +257,7 @@ export const ReportsView: React.FC = () => {
         <div className="bg-white rounded-xl border border-slate-200 p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
           <div>
             <span className="text-slate-500 block">Backend Staff Total</span>
-            <span className="text-base font-black text-[#083E34]">
+            <span className="text-base font-black text-[#174EA6]">
               {workforceSummary?.totalEmployees ?? workforceSummary?.totalStaff ?? totalStaff}
             </span>
           </div>
@@ -274,13 +274,13 @@ export const ReportsView: React.FC = () => {
           </div>
           <div>
             <span className="text-slate-500 block">Pending Two-Stage</span>
-            <span className="text-base font-black text-amber-700">
+            <span className="text-base font-black text-[#B88A24]">
               {pendingLeaves.length}
             </span>
           </div>
           <div>
             <span className="text-slate-500 block">Approved Requests</span>
-            <span className="text-base font-black text-emerald-700">
+            <span className="text-base font-black text-[#174EA6]">
               {activeLeaves.length}
             </span>
           </div>
@@ -318,7 +318,7 @@ export const ReportsView: React.FC = () => {
                     <td className="py-3 px-4 text-slate-700 font-medium">{d.entityName}</td>
                     <td className="py-3 px-4 text-slate-800 font-semibold">{d.headOfDepartment || d.headOfDepartmentName || 'To Be Appointed'}</td>
                     <td className="py-3 px-4 text-center font-bold text-slate-900">{count}</td>
-                    <td className="py-3 px-4 text-right font-mono font-bold text-[#083E34]">{pct}%</td>
+                    <td className="py-3 px-4 text-right font-mono font-bold text-[#174EA6]">{pct}%</td>
                   </tr>
                 );
               })}
@@ -331,9 +331,9 @@ export const ReportsView: React.FC = () => {
       {showPrintModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto animate-fade-in print:p-0 print:bg-white">
           <div className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col print:shadow-none print:border-none print:m-0">
-            <div className="bg-[#083E34] text-white p-4 sm:p-6 relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 print:bg-slate-900 border-b border-emerald-900/30">
+            <div className="bg-[#174EA6] text-white p-4 sm:p-6 relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 print:bg-slate-900 border-b border-[#BFDBFE]">
               <div>
-                <span className="text-[10px] font-mono text-amber-300 font-bold uppercase tracking-wider block">
+                <span className="text-[10px] font-mono text-[#D4AF37] font-bold uppercase tracking-wider block">
                   Citadel People Hub • PCCM Executive Dossier
                 </span>
                 <h3 className="text-base sm:text-lg font-bold text-white mt-1">
@@ -347,7 +347,7 @@ export const ReportsView: React.FC = () => {
               <div className="flex items-center gap-2 print:hidden shrink-0">
                 <button
                   onClick={() => window.print()}
-                  className="px-3.5 py-2 bg-amber-400 text-[#083E34] font-bold text-xs rounded-xl hover:bg-amber-300 transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  className="px-3.5 py-2 bg-[#B88A24] text-[#174EA6] font-bold text-xs rounded-xl hover:bg-[#B88A24] transition flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span>Print / Save as PDF</span>
@@ -365,15 +365,15 @@ export const ReportsView: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 border-b pb-5 border-slate-200">
                 <div className="p-3 bg-slate-50 rounded-xl">
                   <span className="text-[10px] uppercase font-bold text-slate-500 block">Total Headcount</span>
-                  <span className="text-2xl font-bold text-[#083E34]">{totalStaff} Personnel</span>
+                  <span className="text-2xl font-bold text-[#174EA6]">{totalStaff} Personnel</span>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-xl">
                   <span className="text-[10px] uppercase font-bold text-slate-500 block">Active Entities</span>
-                  <span className="text-2xl font-bold text-[#083E34]">{entities.length} Group Entities</span>
+                  <span className="text-2xl font-bold text-[#174EA6]">{entities.length} Group Entities</span>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-xl">
                   <span className="text-[10px] uppercase font-bold text-slate-500 block">Active On-Leave</span>
-                  <span className="text-2xl font-bold text-amber-600">{activeLeaves.length} Staff</span>
+                  <span className="text-2xl font-bold text-[#B88A24]">{activeLeaves.length} Staff</span>
                 </div>
               </div>
 
@@ -384,17 +384,17 @@ export const ReportsView: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="border border-slate-200 rounded-lg p-3">
                     <span className="font-semibold text-slate-900 block text-xs">CGCC</span>
-                    <span className="text-sm font-bold text-[#083E34] mt-1 block">{cgccStaff.length} Staff</span>
+                    <span className="text-sm font-bold text-[#174EA6] mt-1 block">{cgccStaff.length} Staff</span>
                     <span className="text-[10px] text-slate-500">Flagship Community & Ministry</span>
                   </div>
                   <div className="border border-slate-200 rounded-lg p-3">
                     <span className="font-semibold text-slate-900 block text-xs">CSOG</span>
-                    <span className="text-sm font-bold text-[#083E34] mt-1 block">{csogStaff.length} Staff</span>
+                    <span className="text-sm font-bold text-[#174EA6] mt-1 block">{csogStaff.length} Staff</span>
                     <span className="text-[10px] text-slate-500">School of Government</span>
                   </div>
                   <div className="border border-slate-200 rounded-lg p-3">
                     <span className="font-semibold text-slate-900 block text-xs">Holdings</span>
-                    <span className="text-sm font-bold text-[#083E34] mt-1 block">{holdingsStaff.length} Staff</span>
+                    <span className="text-sm font-bold text-[#174EA6] mt-1 block">{holdingsStaff.length} Staff</span>
                     <span className="text-[10px] text-slate-500">Commercial & Enterprises</span>
                   </div>
                 </div>

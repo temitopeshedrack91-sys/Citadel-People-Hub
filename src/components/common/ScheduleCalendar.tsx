@@ -156,9 +156,9 @@ const citadelEvents: ScheduleEvent[] = [
     description: 'Q4 marketing campaign performance sync, creative assets signoff, and outreach calendar.',
     meetUrl: 'https://meet.google.com/ctd-mrkt-sync',
     attendees: [
-      { initials: 'SA', bg: 'bg-emerald-600', name: 'Mrs. Sussan Afuwape' },
-      { initials: 'CO', bg: 'bg-amber-600', name: 'Dr. Chinedu Okeke' },
-      { initials: 'BO', bg: 'bg-teal-600', name: 'Blessing Okafor' },
+      { initials: 'SA', bg: 'bg-[#174EA6]', name: 'Mrs. Sussan Afuwape' },
+      { initials: 'CO', bg: 'bg-[#B88A24]', name: 'Dr. Chinedu Okeke' },
+      { initials: 'BO', bg: 'bg-[#0B1F3A]', name: 'Blessing Okafor' },
     ],
   },
   {
@@ -173,8 +173,8 @@ const citadelEvents: ScheduleEvent[] = [
     category: 'Meeting',
     description: 'Deep dive into Citadel People Hub V2 release, attendance tracking logs, and leave approval UI.',
     attendees: [
-      { initials: 'BA', bg: 'bg-[#083E34]', name: 'Dr. Bukola Adeleke' },
-      { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
+      { initials: 'BA', bg: 'bg-[#174EA6]', name: 'Dr. Bukola Adeleke' },
+      { initials: 'FO', bg: 'bg-[#174EA6]', name: 'Engr. Femi Olatunji' },
     ],
   },
   {
@@ -190,7 +190,7 @@ const citadelEvents: ScheduleEvent[] = [
     description: 'Institutional leadership alignment on stewardship, Q4 capital milestones, and administrative protocol.',
     attendees: [
       { initials: 'CI', bg: 'bg-slate-700', name: 'Pastor Christian Ike' },
-      { initials: 'BA', bg: 'bg-teal-700', name: 'Pastor Biola Adeyoola' },
+      { initials: 'BA', bg: 'bg-[#0B1F3A]', name: 'Pastor Biola Adeyoola' },
     ],
   },
 
@@ -206,8 +206,8 @@ const citadelEvents: ScheduleEvent[] = [
     category: 'Meeting',
     description: 'Weekly campus facilities review, maintenance inspection, and logistics dispatch.',
     attendees: [
-      { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
-      { initials: 'SA', bg: 'bg-emerald-600', name: 'Mrs. Sussan Afuwape' },
+      { initials: 'FO', bg: 'bg-[#174EA6]', name: 'Engr. Femi Olatunji' },
+      { initials: 'SA', bg: 'bg-[#174EA6]', name: 'Mrs. Sussan Afuwape' },
     ],
   },
   {
@@ -221,8 +221,8 @@ const citadelEvents: ScheduleEvent[] = [
     category: 'Meeting',
     description: 'Staff HMO renewals, welfare packages calibration, and compassionate leave reviews.',
     attendees: [
-      { initials: 'BA', bg: 'bg-[#083E34]', name: 'Dr. Bukola Adeleke' },
-      { initials: 'BO', bg: 'bg-teal-600', name: 'Blessing Okafor' },
+      { initials: 'BA', bg: 'bg-[#174EA6]', name: 'Dr. Bukola Adeleke' },
+      { initials: 'BO', bg: 'bg-[#0B1F3A]', name: 'Blessing Okafor' },
     ],
   },
 
@@ -239,9 +239,9 @@ const citadelEvents: ScheduleEvent[] = [
     description: 'Q4 marketing campaign performance sync, creative assets signoff, and outreach calendar.',
     meetUrl: 'https://meet.google.com/ctd-mrkt-sync',
     attendees: [
-      { initials: 'SA', bg: 'bg-emerald-600', name: 'Mrs. Sussan Afuwape' },
-      { initials: 'CO', bg: 'bg-amber-600', name: 'Dr. Chinedu Okeke' },
-      { initials: 'BO', bg: 'bg-teal-600', name: 'Blessing Okafor' },
+      { initials: 'SA', bg: 'bg-[#174EA6]', name: 'Mrs. Sussan Afuwape' },
+      { initials: 'CO', bg: 'bg-[#B88A24]', name: 'Dr. Chinedu Okeke' },
+      { initials: 'BO', bg: 'bg-[#0B1F3A]', name: 'Blessing Okafor' },
     ],
   },
   {
@@ -256,8 +256,8 @@ const citadelEvents: ScheduleEvent[] = [
     category: 'Meeting',
     description: 'Deep dive into Citadel People Hub V2 release, attendance tracking logs, and leave approval UI.',
     attendees: [
-      { initials: 'BA', bg: 'bg-[#083E34]', name: 'Dr. Bukola Adeleke' },
-      { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
+      { initials: 'BA', bg: 'bg-[#174EA6]', name: 'Dr. Bukola Adeleke' },
+      { initials: 'FO', bg: 'bg-[#174EA6]', name: 'Engr. Femi Olatunji' },
     ],
   },
   {
@@ -271,8 +271,8 @@ const citadelEvents: ScheduleEvent[] = [
     category: 'Meeting',
     description: 'Cross-entity expenditure reconciliation and capital project budget approvals.',
     attendees: [
-      { initials: 'CO', bg: 'bg-amber-600', name: 'Dr. Chinedu Okeke' },
-      { initials: 'BA', bg: 'bg-[#083E34]', name: 'Dr. Bukola Adeleke' },
+      { initials: 'CO', bg: 'bg-[#B88A24]', name: 'Dr. Chinedu Okeke' },
+      { initials: 'BA', bg: 'bg-[#174EA6]', name: 'Dr. Bukola Adeleke' },
     ],
   },
   {
@@ -287,9 +287,9 @@ const citadelEvents: ScheduleEvent[] = [
     category: 'Events',
     description: 'PCCM Team birthday celebration, thanksgiving communion, and staff fellowship luncheon.',
     attendees: [
-      { initials: 'BO', bg: 'bg-teal-600', name: 'Blessing Okafor' },
+      { initials: 'BO', bg: 'bg-[#0B1F3A]', name: 'Blessing Okafor' },
       { initials: 'CI', bg: 'bg-slate-700', name: 'Pastor Christian Ike' },
-      { initials: 'SA', bg: 'bg-emerald-600', name: 'Mrs. Sussan Afuwape' },
+      { initials: 'SA', bg: 'bg-[#174EA6]', name: 'Mrs. Sussan Afuwape' },
     ],
   },
   {
@@ -304,8 +304,8 @@ const citadelEvents: ScheduleEvent[] = [
     category: 'Meeting',
     description: 'Identity server audit, role-based access tokens expiration, and multi-factor compliance.',
     attendees: [
-      { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
-      { initials: 'BA', bg: 'bg-[#083E34]', name: 'Dr. Bukola Adeleke' },
+      { initials: 'FO', bg: 'bg-[#174EA6]', name: 'Engr. Femi Olatunji' },
+      { initials: 'BA', bg: 'bg-[#174EA6]', name: 'Dr. Bukola Adeleke' },
     ],
   },
 
@@ -321,8 +321,8 @@ const citadelEvents: ScheduleEvent[] = [
     category: 'Events',
     description: 'Citadel culture orientation, governance standards, and systems walkthrough for new hires.',
     attendees: [
-      { initials: 'BA', bg: 'bg-[#083E34]', name: 'Dr. Bukola Adeleke' },
-      { initials: 'SA', bg: 'bg-emerald-600', name: 'Mrs. Sussan Afuwape' },
+      { initials: 'BA', bg: 'bg-[#174EA6]', name: 'Dr. Bukola Adeleke' },
+      { initials: 'SA', bg: 'bg-[#174EA6]', name: 'Mrs. Sussan Afuwape' },
     ],
   },
   {
@@ -337,7 +337,7 @@ const citadelEvents: ScheduleEvent[] = [
     description: 'Review collaborative programs with academic and health affiliates across Nigeria.',
     attendees: [
       { initials: 'CI', bg: 'bg-slate-700', name: 'Pastor Christian Ike' },
-      { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
+      { initials: 'FO', bg: 'bg-[#174EA6]', name: 'Engr. Femi Olatunji' },
     ],
   },
 
@@ -353,7 +353,7 @@ const citadelEvents: ScheduleEvent[] = [
     category: 'Meeting',
     description: 'Executive summary of week deliverables, urgent HR matters, and weekend protocols.',
     attendees: [
-      { initials: 'BA', bg: 'bg-[#083E34]', name: 'Dr. Bukola Adeleke' },
+      { initials: 'BA', bg: 'bg-[#174EA6]', name: 'Dr. Bukola Adeleke' },
       { initials: 'CI', bg: 'bg-slate-700', name: 'Pastor Christian Ike' },
     ],
   },
@@ -368,8 +368,8 @@ const citadelEvents: ScheduleEvent[] = [
     category: 'Events',
     description: 'End of week gratitude service and staff fellowship.',
     attendees: [
-      { initials: 'BA', bg: 'bg-teal-700', name: 'Pastor Biola Adeyoola' },
-      { initials: 'BO', bg: 'bg-teal-600', name: 'Blessing Okafor' },
+      { initials: 'BA', bg: 'bg-[#0B1F3A]', name: 'Pastor Biola Adeyoola' },
+      { initials: 'BO', bg: 'bg-[#0B1F3A]', name: 'Blessing Okafor' },
     ],
   },
 
@@ -385,7 +385,7 @@ const citadelEvents: ScheduleEvent[] = [
     category: 'Holidays',
     description: 'Monthly thanksgiving service and campus-wide administrative recess for all entities.',
     attendees: [
-      { initials: 'ALL', bg: 'bg-[#083E34]', name: 'All Citadel Staff' },
+      { initials: 'ALL', bg: 'bg-[#174EA6]', name: 'All Citadel Staff' },
     ],
   },
 ];
@@ -393,7 +393,7 @@ const citadelEvents: ScheduleEvent[] = [
 /**
  * Reusable ScheduleCalendar component matching Hrivio HR Dashboard:
  * - Dynamic Month navigation (< October 2026 >)
- * - Week strip with current day highlighted in Dark Green (#083E34)
+ * - Week strip with current day highlighted in Dark Green (#174EA6)
  * - Day selection dynamically updates the schedule events list
  * - Category filter pills (All, Meeting, Events, Holidays)
  * - Interactive event cards: click to open full details modal with Google Meet link & Outlook/Apple (.ics) download
@@ -523,7 +523,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
       category: newCategory,
       description: newDesc.trim() || undefined,
       attendees: [
-        { initials: 'ME', bg: 'bg-[#083E34]', name: 'You (Organizer)' },
+        { initials: 'ME', bg: 'bg-[#174EA6]', name: 'You (Organizer)' },
       ],
     };
 
@@ -580,8 +580,8 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
     >
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2 animate-fade-in">
-          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+        <div className="p-2.5 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#174EA6] text-xs font-medium flex items-center gap-2 animate-fade-in">
+          <CheckCircle2 className="w-3.5 h-3.5 text-[#174EA6] shrink-0" />
           <span className="truncate">{toastMessage}</span>
         </div>
       )}
@@ -589,7 +589,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="font-display text-sm font-semibold text-slate-900 tracking-tight flex items-center gap-1.5">
-          <CalendarIcon className="w-4 h-4 text-[#083E34]" />
+          <CalendarIcon className="w-4 h-4 text-[#174EA6]" />
           <span>Schedule</span>
         </h2>
         <div className="flex items-center gap-2">
@@ -599,7 +599,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
             data-testid="schedule-add-event-btn"
             title="Schedule new event"
             aria-label="Schedule new event"
-            className="p-1.5 rounded-lg text-slate-500 hover:text-[#083E34] hover:bg-slate-100 transition cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-500 hover:text-[#174EA6] hover:bg-slate-100 transition cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
           </button>
@@ -608,7 +608,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
               type="button"
               onClick={onViewAll}
               data-testid="schedule-view-all"
-              className="text-xs font-medium text-slate-500 hover:text-[#083E34] transition cursor-pointer"
+              className="text-xs font-medium text-slate-500 hover:text-[#174EA6] transition cursor-pointer"
             >
               View all
             </button>
@@ -631,7 +631,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
           {!isCurrentMonthActive && (
             <button
               onClick={handleJumpToToday}
-              className="text-[10px] text-[#083E34] bg-emerald-50 hover:bg-emerald-100 px-1.5 py-0.5 rounded font-bold transition"
+              className="text-[10px] text-[#174EA6] bg-[#EFF6FF] hover:bg-[#DBEAFE] px-1.5 py-0.5 rounded font-bold transition"
             >
               Today
             </button>
@@ -664,7 +664,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
               onClick={() => handleDayClick(d.num)}
               className={`py-2 px-1 rounded-xl text-center transition-all duration-150 flex flex-col items-center relative cursor-pointer ${
                 isSelected
-                  ? 'bg-[#083E34] text-white shadow-xs font-bold ring-2 ring-[#D4AF37]/40'
+                  ? 'bg-[#174EA6] text-white shadow-xs font-bold ring-2 ring-[#D4AF37]/40'
                   : 'bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold'
               }`}
             >
@@ -692,7 +692,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
             onClick={() => setActiveCategory(cat)}
             className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
               activeCategory === cat
-                ? 'bg-[#083E34] text-white'
+                ? 'bg-[#174EA6] text-white'
                 : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900'
             }`}
           >
@@ -711,7 +711,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
             <button
               type="button"
               onClick={() => setIsAddModalOpen(true)}
-              className="text-xs text-[#083E34] font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer"
+              className="text-xs text-[#174EA6] font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer"
             >
               <Plus className="w-3 h-3" />
               <span>Schedule an event</span>
@@ -731,7 +731,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                   handleCardClick(evt);
                 }
               }}
-              className="py-3 px-2 -mx-2 rounded-lg flex items-center justify-between gap-3 text-xs transition hover:bg-slate-50 cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#083E34]/30"
+              className="py-3 px-2 -mx-2 rounded-lg flex items-center justify-between gap-3 text-xs transition hover:bg-slate-50 cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#174EA6]/30"
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -743,12 +743,12 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                     &middot; {evt.tag}
                   </span>
                 </div>
-                <h4 className="font-semibold text-slate-900 mt-1 text-xs group-hover:text-[#083E34] transition">
+                <h4 className="font-semibold text-slate-900 mt-1 text-xs group-hover:text-[#174EA6] transition">
                   {evt.title}
                 </h4>
                 <p className="text-xs text-slate-500 mt-0.5 truncate flex items-center gap-1">
                   {evt.channel.toLowerCase().includes('meet') || evt.channel.toLowerCase().includes('zoom') ? (
-                    <Video className="w-3 h-3 text-emerald-600 shrink-0" />
+                    <Video className="w-3 h-3 text-[#174EA6] shrink-0" />
                   ) : (
                     <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
                   )}
@@ -784,7 +784,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-5 space-y-4">
             <div className="flex items-start justify-between">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#083E34] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#174EA6] bg-[#EFF6FF] px-2 py-0.5 rounded-full border border-[#BFDBFE]">
                   {selectedEventModal.category}
                 </span>
                 <h3 className="text-base font-bold text-slate-900 mt-1.5">
@@ -847,7 +847,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                   href={selectedEventModal.meetUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition"
+                  className="px-3 py-1.5 rounded-xl bg-[#174EA6] hover:bg-[#174EA6] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition"
                 >
                   <Video className="w-3.5 h-3.5" />
                   <span>Join Meet</span>
@@ -860,7 +860,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                   downloadScheduleIcs(selectedEventModal);
                   showToast(`Downloaded invite for "${selectedEventModal.title}"`);
                 }}
-                className="px-3.5 py-1.5 rounded-lg bg-[#083E34] hover:bg-[#062E27] text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                className="px-3.5 py-1.5 rounded-lg bg-[#174EA6] hover:bg-[#0B1F3A] text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Add to Outlook / Apple (.ics)</span>
@@ -880,7 +880,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-5 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                <CalendarIcon className="w-4 h-4 text-[#083E34]" />
+                <CalendarIcon className="w-4 h-4 text-[#174EA6]" />
                 <span>Schedule Event on {monthLabel} {selectedDay}</span>
               </h3>
               <button
@@ -902,7 +902,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                   placeholder="e.g. Directorate Strategy Review"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#083E34]/30 font-medium text-slate-900"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#174EA6]/30 font-medium text-slate-900"
                 />
               </div>
 
@@ -914,7 +914,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                     value={newTime}
                     onChange={(e) => setNewTime(e.target.value)}
                     placeholder="10:00 - 11:00"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#083E34]/30 font-medium text-slate-900"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#174EA6]/30 font-medium text-slate-900"
                   />
                 </div>
                 <div>
@@ -922,7 +922,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                   <select
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#083E34]/30 font-bold text-slate-900 bg-white"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#174EA6]/30 font-bold text-slate-900 bg-white"
                   >
                     <option value="Meeting">Meeting</option>
                     <option value="Events">Events</option>
@@ -939,7 +939,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                     value={newChannel}
                     onChange={(e) => setNewChannel(e.target.value)}
                     placeholder="Google Meet or Room"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#083E34]/30 font-medium text-slate-900"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#174EA6]/30 font-medium text-slate-900"
                   />
                 </div>
                 <div>
@@ -949,7 +949,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                     value={newTag}
                     onChange={(e) => setNewTag(e.target.value)}
                     placeholder="e.g. Marketing"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#083E34]/30 font-medium text-slate-900"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#174EA6]/30 font-medium text-slate-900"
                   />
                 </div>
               </div>
@@ -961,7 +961,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
                   placeholder="Optional brief description or agenda..."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#083E34]/30 font-medium text-slate-900 resize-none"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#174EA6]/30 font-medium text-slate-900 resize-none"
                 />
               </div>
 
@@ -975,7 +975,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-[#083E34] hover:bg-[#062E27] text-white font-semibold transition cursor-pointer"
+                  className="px-4 py-1.5 rounded-lg bg-[#174EA6] hover:bg-[#0B1F3A] text-white font-semibold transition cursor-pointer"
                 >
                   Save Schedule
                 </button>

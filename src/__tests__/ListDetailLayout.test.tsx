@@ -59,7 +59,7 @@ describe('ListDetailLayout Component (Pillio Pattern)', () => {
     );
 
     const item1 = screen.getByTestId('list-item-doc-1');
-    expect(item1).toHaveClass('border-[#083E34]');
+    expect(item1).toHaveClass('border-[#174EA6]');
   });
 
   it('triggers onSelectItem when an item is clicked', () => {

@@ -244,7 +244,7 @@ export const OffboardingView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <UserRoundX className="w-5 h-5 text-[#083E34]" />
+            <UserRoundX className="w-5 h-5 text-[#174EA6]" />
             <span>Offboarding &amp; Exit Management</span>
           </h2>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -282,7 +282,7 @@ export const OffboardingView: React.FC = () => {
 
           <button
             onClick={() => setIsSubmitModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-[#083E34] hover:bg-[#062c25] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer shrink-0"
+            className="px-3.5 py-2 rounded-xl bg-[#174EA6] hover:bg-[#062c25] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>Submit Resignation</span>
@@ -291,22 +291,22 @@ export const OffboardingView: React.FC = () => {
       </div>
 
       {notification && (
-        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2 animate-fade-in shadow-2xs">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+        <div className="p-3.5 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] text-[#174EA6] text-xs font-medium flex items-center gap-2 animate-fade-in shadow-2xs">
+          <CheckCircle2 className="w-4 h-4 text-[#174EA6] shrink-0" />
           <span>{notification}</span>
         </div>
       )}
 
       {actionError && (
-        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center justify-between gap-2 animate-fade-in shadow-2xs">
+        <div className="p-3.5 rounded-xl bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] text-xs font-semibold flex items-center justify-between gap-2 animate-fade-in shadow-2xs">
           <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <AlertCircle className="w-4 h-4 text-[#111827] shrink-0" />
             <span>{actionError}</span>
           </div>
           <button
             type="button"
             onClick={() => setActionError(null)}
-            className="text-rose-500 hover:text-rose-700"
+            className="text-[#111827] hover:text-[#111827]"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -325,7 +325,7 @@ export const OffboardingView: React.FC = () => {
 
         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
           <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Exit Interviews Scheduled</div>
-          <div className="mt-2 text-2xl font-black text-[#083E34]">{scheduledInterviewsCount}</div>
+          <div className="mt-2 text-2xl font-black text-[#174EA6]">{scheduledInterviewsCount}</div>
           <Badge variant="info" className="mt-3">
             Dashboard Synced
           </Badge>
@@ -356,7 +356,7 @@ export const OffboardingView: React.FC = () => {
           <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-[#083E34]" />
+                <ShieldCheck className="w-4 h-4 text-[#174EA6]" />
                 <span>CGCC 5-Stage Resignation &amp; Offboarding Workflow</span>
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -385,8 +385,8 @@ export const OffboardingView: React.FC = () => {
                       <span
                         className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
                           req.noticeCompliant
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                            : 'bg-amber-50 text-amber-800 border-amber-200'
+                            ? 'bg-[#EFF6FF] text-[#174EA6] border-[#BFDBFE]'
+                            : 'bg-[#FAF5EB] text-[#B88A24] border-[#E9D59A]'
                         }`}
                       >
                         Notice: {req.noticePeriodDays} Days ({req.noticeCompliant ? 'Compliant' : 'Short Notice'})
@@ -394,7 +394,7 @@ export const OffboardingView: React.FC = () => {
                     </div>
                     <p className="text-xs text-slate-500 mt-1">
                       Assigned Manager: <strong className="text-slate-800 font-semibold">{req.managerName}</strong> • Stated Last Day:{' '}
-                      <strong className="text-[#083E34] font-bold">{req.proposedLastDay}</strong>
+                      <strong className="text-[#174EA6] font-bold">{req.proposedLastDay}</strong>
                     </p>
                   </div>
 
@@ -448,41 +448,41 @@ export const OffboardingView: React.FC = () => {
                 {/* 5-Stage Stepper Progress Tracker */}
                 <div className="pt-2 border-t border-slate-100">
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-[10px]">
-                    <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 font-bold flex items-center justify-between">
+                    <div className="p-2 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#174EA6] font-bold flex items-center justify-between">
                       <span>1. Resignation</span>
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <Check className="w-3.5 h-3.5 text-[#174EA6]" />
                     </div>
                     <div
                       className={`p-2 rounded-lg border font-bold flex items-center justify-between ${
-                        req.managerEndorsed ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-slate-50 text-slate-500'
+                        req.managerEndorsed ? 'bg-[#EFF6FF] border-[#BFDBFE] text-[#174EA6]' : 'bg-slate-50 text-slate-500'
                       }`}
                     >
                       <span>2. Manager Review</span>
-                      {req.managerEndorsed ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Clock className="w-3.5 h-3.5 text-slate-400" />}
+                      {req.managerEndorsed ? <Check className="w-3.5 h-3.5 text-[#174EA6]" /> : <Clock className="w-3.5 h-3.5 text-slate-400" />}
                     </div>
                     <div
                       className={`p-2 rounded-lg border font-bold flex items-center justify-between ${
-                        req.hrVerified ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-slate-50 text-slate-500'
+                        req.hrVerified ? 'bg-[#EFF6FF] border-[#BFDBFE] text-[#174EA6]' : 'bg-slate-50 text-slate-500'
                       }`}
                     >
                       <span>3. Contract Check</span>
-                      {req.hrVerified ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Clock className="w-3.5 h-3.5 text-slate-400" />}
+                      {req.hrVerified ? <Check className="w-3.5 h-3.5 text-[#174EA6]" /> : <Clock className="w-3.5 h-3.5 text-slate-400" />}
                     </div>
                     <div
                       className={`p-2 rounded-lg border font-bold flex items-center justify-between ${
-                        req.exitInterview ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-slate-50 text-slate-500'
+                        req.exitInterview ? 'bg-[#EFF6FF] border-[#BFDBFE] text-[#174EA6]' : 'bg-slate-50 text-slate-500'
                       }`}
                     >
                       <span>4. Exit Interview</span>
-                      {req.exitInterview ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Clock className="w-3.5 h-3.5 text-slate-400" />}
+                      {req.exitInterview ? <Check className="w-3.5 h-3.5 text-[#174EA6]" /> : <Clock className="w-3.5 h-3.5 text-slate-400" />}
                     </div>
                     <div
                       className={`p-2 rounded-lg border font-bold flex items-center justify-between ${
-                        req.status === 'OFFBOARDED' ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-slate-50 text-slate-500'
+                        req.status === 'OFFBOARDED' ? 'bg-[#EFF6FF] border-[#BFDBFE] text-[#174EA6]' : 'bg-slate-50 text-slate-500'
                       }`}
                     >
                       <span>5. Final Clearance</span>
-                      {req.status === 'OFFBOARDED' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Clock className="w-3.5 h-3.5 text-slate-400" />}
+                      {req.status === 'OFFBOARDED' ? <Check className="w-3.5 h-3.5 text-[#174EA6]" /> : <Clock className="w-3.5 h-3.5 text-slate-400" />}
                     </div>
                   </div>
                 </div>
@@ -506,7 +506,7 @@ export const OffboardingView: React.FC = () => {
                           setSelectedExitForReview(req);
                           setManagerRemarks('Handover verified and recommended to HR.');
                         }}
-                        className="px-3.5 py-1.5 rounded-lg bg-[#083E34] hover:bg-[#062c25] text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+                        className="px-3.5 py-1.5 rounded-lg bg-[#174EA6] hover:bg-[#062c25] text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
                       >
                         <Check className="w-3.5 h-3.5 text-[#D4AF37]" />
                         <span>Manager Forward to HR</span>
@@ -543,7 +543,7 @@ export const OffboardingView: React.FC = () => {
                       onClick={() => setSelectedExitForClearance(req)}
                       className="px-3.5 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-800 font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs transition"
                     >
-                      <FileCheck2 className="w-3.5 h-3.5 text-[#083E34]" />
+                      <FileCheck2 className="w-3.5 h-3.5 text-[#174EA6]" />
                       <span>Clearance Checklist ({Object.values(req.clearances).filter(Boolean).length}/4)</span>
                     </button>
 
@@ -555,7 +555,7 @@ export const OffboardingView: React.FC = () => {
                       isHrOrAdmin && (
                         <button
                           onClick={() => void handleFinalizeExit(req)}
-                          className="px-3.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+                          className="px-3.5 py-1.5 rounded-lg bg-[#174EA6] hover:bg-[#174EA6] text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           <span>Finalize Offboarding</span>
@@ -575,7 +575,7 @@ export const OffboardingView: React.FC = () => {
           <div className="flex items-center justify-between pb-3 border-b border-slate-200">
             <div>
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <FileCheck2 className="w-4 h-4 text-[#083E34]" />
+                <FileCheck2 className="w-4 h-4 text-[#174EA6]" />
                 <span>Inter-Departmental Asset &amp; Access Clearance Sign-Off</span>
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -606,14 +606,14 @@ export const OffboardingView: React.FC = () => {
                       <span className="block text-[10px] text-slate-500 font-mono">{r.staffId}</span>
                     </td>
                     <td className="p-3">{r.departmentName}</td>
-                    <td className="p-3 font-mono font-bold text-[#083E34]">{r.proposedLastDay}</td>
+                    <td className="p-3 font-mono font-bold text-[#174EA6]">{r.proposedLastDay}</td>
                     <td className="p-3 text-center">
                       <button
                         onClick={() => handleToggleClearance(r.id, 'it')}
                         className={`px-2 py-1 rounded-md text-[10px] font-bold border cursor-pointer transition ${
                           r.clearances.it
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                            : 'bg-rose-50 text-rose-800 border-rose-300'
+                            ? 'bg-[#EFF6FF] text-[#174EA6] border-[#BFDBFE]'
+                            : 'bg-[#F5F7FA] text-[#111827] border-[#111827]/25'
                         }`}
                       >
                         {r.clearances.it ? '✓ Returned' : 'Pending'}
@@ -624,8 +624,8 @@ export const OffboardingView: React.FC = () => {
                         onClick={() => handleToggleClearance(r.id, 'facilities')}
                         className={`px-2 py-1 rounded-md text-[10px] font-bold border cursor-pointer transition ${
                           r.clearances.facilities
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                            : 'bg-rose-50 text-rose-800 border-rose-300'
+                            ? 'bg-[#EFF6FF] text-[#174EA6] border-[#BFDBFE]'
+                            : 'bg-[#F5F7FA] text-[#111827] border-[#111827]/25'
                         }`}
                       >
                         {r.clearances.facilities ? '✓ Returned' : 'Pending'}
@@ -636,8 +636,8 @@ export const OffboardingView: React.FC = () => {
                         onClick={() => handleToggleClearance(r.id, 'finance')}
                         className={`px-2 py-1 rounded-md text-[10px] font-bold border cursor-pointer transition ${
                           r.clearances.finance
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                            : 'bg-rose-50 text-rose-800 border-rose-300'
+                            ? 'bg-[#EFF6FF] text-[#174EA6] border-[#BFDBFE]'
+                            : 'bg-[#F5F7FA] text-[#111827] border-[#111827]/25'
                         }`}
                       >
                         {r.clearances.finance ? '✓ Settled' : 'Pending'}
@@ -648,8 +648,8 @@ export const OffboardingView: React.FC = () => {
                         onClick={() => handleToggleClearance(r.id, 'hr')}
                         className={`px-2 py-1 rounded-md text-[10px] font-bold border cursor-pointer transition ${
                           r.clearances.hr
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                            : 'bg-rose-50 text-rose-800 border-rose-300'
+                            ? 'bg-[#EFF6FF] text-[#174EA6] border-[#BFDBFE]'
+                            : 'bg-[#F5F7FA] text-[#111827] border-[#111827]/25'
                         }`}
                       >
                         {r.clearances.hr ? '✓ Completed' : 'Pending'}
@@ -673,7 +673,7 @@ export const OffboardingView: React.FC = () => {
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
           <div className="px-5 py-3.5 border-b border-slate-200 bg-slate-50/80">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-[#083E34]" />
+              <ShieldCheck className="w-4 h-4 text-[#174EA6]" />
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
                 Citadel Global Community Church — Personnel Lifecycle SOP Charter
               </h3>
@@ -707,10 +707,10 @@ export const OffboardingView: React.FC = () => {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in"
         >
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden">
-            <div className="p-5 bg-[#083E34] text-white flex items-center justify-between border-b border-emerald-950/30">
+            <div className="p-5 bg-[#174EA6] text-white flex items-center justify-between border-b border-[#BFDBFE]">
               <div>
                 <h3 className="text-base font-bold text-white">Submit Employee Resignation</h3>
-                <p className="text-xs text-emerald-100/90">Initiate formal exit notice and route to designated manager.</p>
+                <p className="text-xs text-blue-100">Initiate formal exit notice and route to designated manager.</p>
               </div>
               <button
                 type="button"
@@ -792,7 +792,7 @@ export const OffboardingView: React.FC = () => {
                   value={resignationReason}
                   onChange={(e) => setResignationReason(e.target.value)}
                   placeholder="Outline reasons for leaving and handover commitments..."
-                  className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#083E34]"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-[#174EA6]"
                 />
               </div>
 
@@ -806,7 +806,7 @@ export const OffboardingView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#083E34] hover:bg-[#062c25] text-white font-bold rounded-xl transition shadow-xs flex items-center gap-1.5"
+                  className="px-5 py-2 bg-[#174EA6] hover:bg-[#062c25] text-white font-bold rounded-xl transition shadow-xs flex items-center gap-1.5"
                 >
                   <Check className="w-4 h-4 text-[#D4AF37]" />
                   <span>Submit &amp; Route to Manager</span>
@@ -821,10 +821,10 @@ export const OffboardingView: React.FC = () => {
       {selectedExitForReview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden">
-            <div className="p-5 bg-[#083E34] text-white flex items-center justify-between">
+            <div className="p-5 bg-[#174EA6] text-white flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold text-white">Line Manager Review</h3>
-                <p className="text-xs text-emerald-100">Staff: {selectedExitForReview.employeeName}</p>
+                <p className="text-xs text-blue-100">Staff: {selectedExitForReview.employeeName}</p>
               </div>
               <button onClick={() => setSelectedExitForReview(null)} className="text-slate-300 hover:text-white p-1 rounded-lg">
                 <X className="w-5 h-5" />
@@ -835,7 +835,7 @@ export const OffboardingView: React.FC = () => {
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                 <span className="text-[11px] font-bold text-slate-500 uppercase">Resignation Notice:</span>
                 <p className="text-slate-800 font-semibold">{selectedExitForReview.reason}</p>
-                <span className="text-[10px] text-[#083E34] font-bold block">
+                <span className="text-[10px] text-[#174EA6] font-bold block">
                   Proposed Last Day: {selectedExitForReview.proposedLastDay}
                 </span>
               </div>
@@ -847,7 +847,7 @@ export const OffboardingView: React.FC = () => {
                   value={managerRemarks}
                   onChange={(e) => setManagerRemarks(e.target.value)}
                   placeholder="Note status of ongoing tasks, handover colleague, and team coverage plan..."
-                  className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-800 font-medium focus:outline-none focus:border-[#083E34]"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-800 font-medium focus:outline-none focus:border-[#174EA6]"
                 />
               </div>
 
@@ -885,10 +885,10 @@ export const OffboardingView: React.FC = () => {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in"
         >
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden">
-            <div className="p-5 bg-[#083E34] text-white flex items-center justify-between border-b border-emerald-950/30">
+            <div className="p-5 bg-[#174EA6] text-white flex items-center justify-between border-b border-[#BFDBFE]">
               <div>
                 <h3 className="text-base font-bold text-white">Schedule Exit Interview</h3>
-                <p className="text-xs text-emerald-100/90">
+                <p className="text-xs text-blue-100">
                   Staff: {selectedExitForInterview.employeeName} ({selectedExitForInterview.staffId})
                 </p>
               </div>
@@ -958,7 +958,7 @@ export const OffboardingView: React.FC = () => {
                   value={interviewFeedbackNotes}
                   onChange={(e) => setInterviewFeedbackNotes(e.target.value)}
                   placeholder="Key areas for feedback: team culture, leadership, systems, growth..."
-                  className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-800 font-medium focus:outline-none focus:border-[#083E34]"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-800 font-medium focus:outline-none focus:border-[#174EA6]"
                 />
               </div>
 
@@ -991,10 +991,10 @@ export const OffboardingView: React.FC = () => {
       {selectedExitForClearance && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden">
-            <div className="p-5 bg-[#083E34] text-white flex items-center justify-between">
+            <div className="p-5 bg-[#174EA6] text-white flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold text-white">Department Clearance Sign-off</h3>
-                <p className="text-xs text-emerald-100">{selectedExitForClearance.employeeName} ({selectedExitForClearance.staffId})</p>
+                <p className="text-xs text-blue-100">{selectedExitForClearance.employeeName} ({selectedExitForClearance.staffId})</p>
               </div>
               <button onClick={() => setSelectedExitForClearance(null)} className="text-slate-300 hover:text-white p-1 rounded-lg">
                 <X className="w-5 h-5" />
@@ -1016,7 +1016,7 @@ export const OffboardingView: React.FC = () => {
                     onClick={() => handleToggleClearance(selectedExitForClearance.id, 'it')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold border cursor-pointer transition ${
                       selectedExitForClearance.clearances.it
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                        ? 'bg-[#EFF6FF] text-[#174EA6] border-[#BFDBFE]'
                         : 'bg-slate-100 text-slate-700 border-slate-300'
                     }`}
                   >
@@ -1037,7 +1037,7 @@ export const OffboardingView: React.FC = () => {
                     onClick={() => handleToggleClearance(selectedExitForClearance.id, 'facilities')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold border cursor-pointer transition ${
                       selectedExitForClearance.clearances.facilities
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                        ? 'bg-[#EFF6FF] text-[#174EA6] border-[#BFDBFE]'
                         : 'bg-slate-100 text-slate-700 border-slate-300'
                     }`}
                   >
@@ -1058,7 +1058,7 @@ export const OffboardingView: React.FC = () => {
                     onClick={() => handleToggleClearance(selectedExitForClearance.id, 'finance')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold border cursor-pointer transition ${
                       selectedExitForClearance.clearances.finance
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                        ? 'bg-[#EFF6FF] text-[#174EA6] border-[#BFDBFE]'
                         : 'bg-slate-100 text-slate-700 border-slate-300'
                     }`}
                   >
@@ -1079,7 +1079,7 @@ export const OffboardingView: React.FC = () => {
                     onClick={() => handleToggleClearance(selectedExitForClearance.id, 'hr')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold border cursor-pointer transition ${
                       selectedExitForClearance.clearances.hr
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                        ? 'bg-[#EFF6FF] text-[#174EA6] border-[#BFDBFE]'
                         : 'bg-slate-100 text-slate-700 border-slate-300'
                     }`}
                   >

@@ -95,7 +95,7 @@ export function ListDetailLayout<T = any>({
                 aria-label={searchPlaceholder}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="w-full pl-9 pr-9 py-2 text-xs rounded-lg border border-slate-200/90 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#083E34] focus:bg-white focus:ring-2 focus:ring-[#083E34]/12 transition"
+                className="w-full pl-9 pr-9 py-2 text-xs rounded-lg border border-[#E5E7EB] bg-[#F5F7FA] text-[#111827] placeholder:text-[#64748B] focus:outline-none focus:border-[#174EA6] focus:bg-white focus:ring-2 focus:ring-[#174EA6]/15 transition"
               />
               {query && (
                 <button
@@ -126,8 +126,8 @@ export function ListDetailLayout<T = any>({
                     onClick={() => onFilterTabChange?.(tab.id)}
                     className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap flex items-center gap-1.5 cursor-pointer tabular-nums ${
                       isActive
-                        ? 'bg-[#083E34] text-white'
-                        : 'bg-slate-100/90 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900'
+                        ? 'bg-[#174EA6] text-white'
+                        : 'bg-[#F5F7FA] text-[#64748B] hover:bg-[#E5E7EB]/60 hover:text-[#111827]'
                     }`}
                   >
                     <span>{tab.label}</span>
@@ -135,8 +135,8 @@ export function ListDetailLayout<T = any>({
                       <span
                         className={`text-[10px] font-mono font-semibold tabular-nums ${
                           isActive
-                            ? 'text-emerald-200'
-                            : 'text-slate-500'
+                            ? 'text-blue-100'
+                            : 'text-[#64748B]'
                         }`}
                       >
                         {tab.count}
@@ -174,10 +174,10 @@ export function ListDetailLayout<T = any>({
                       handleSelect(item);
                     }
                   }}
-                  className={`px-4 py-3.5 cursor-pointer transition-colors duration-150 flex items-start gap-3 border-l-[3px] border-t-0 border-r-0 border-b-0 shadow-[inset_0_-1px_0_#EEF2F6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#083E34] ${
+                  className={`px-4 py-3.5 cursor-pointer transition-colors duration-150 flex items-start gap-3 border-l-[3px] border-t-0 border-r-0 border-b-0 shadow-[inset_0_-1px_0_#E5E7EB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#174EA6] ${
                     isSelected
-                      ? 'bg-[#F2F8F6] border-[#083E34]'
-                      : 'bg-white border-transparent hover:bg-slate-50/90'
+                      ? 'bg-[#EFF6FF] border-[#174EA6]'
+                      : 'bg-white border-transparent hover:bg-[#F5F7FA]'
                   }`}
                 >
                   {/* Left Avatar */}
@@ -190,7 +190,7 @@ export function ListDetailLayout<T = any>({
                     <div className="flex items-start justify-between gap-2">
                       <h4
                         className={`text-[13px] font-semibold truncate ${
-                          isSelected ? 'text-[#083E34]' : 'text-slate-900'
+                          isSelected ? 'text-[#174EA6]' : 'text-slate-900'
                         }`}
                       >
                         {item.title}
@@ -231,7 +231,7 @@ export function ListDetailLayout<T = any>({
             type="button"
             onClick={handleBackToList}
             data-testid="list-detail-back-button"
-            className="flex items-center gap-1.5 text-xs font-semibold text-[#083E34] hover:underline cursor-pointer"
+            className="flex items-center gap-1.5 text-xs font-semibold text-[#174EA6] hover:underline cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" />
             <span>Back to list</span>

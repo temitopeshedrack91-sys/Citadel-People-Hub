@@ -17,11 +17,11 @@ describe('StatCard Component', () => {
 
     expect(screen.getByText('Total employees')).toBeInTheDocument();
     expect(screen.getByText('482')).toBeInTheDocument();
-    expect(screen.getByText('+20%')).toHaveClass('text-emerald-600');
-    expect(screen.getByText('• This Month')).toBeInTheDocument();
+    expect(screen.getByText('+20%')).toHaveClass('text-[#174EA6]');
+    expect(screen.getByText('· This Month')).toBeInTheDocument();
   });
 
-  it('renders negative trend with red styling', () => {
+  it('renders negative trend with charcoal black styling', () => {
     render(
       <StatCard
         title="Attendance"
@@ -32,8 +32,8 @@ describe('StatCard Component', () => {
     );
 
     expect(screen.getByText('94.2%')).toBeInTheDocument();
-    expect(screen.getByText('-2%')).toHaveClass('text-rose-500');
-    expect(screen.getByText('• from yesterday')).toBeInTheDocument();
+    expect(screen.getByText('-2%')).toHaveClass('text-[#111827]');
+    expect(screen.getByText('· from yesterday')).toBeInTheDocument();
   });
 
   it('renders custom supportingText correctly (Active Staff Online & New Hires)', () => {

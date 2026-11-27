@@ -2,18 +2,35 @@
 
 :root {
   color-scheme: light;
-  --citadel-ink: #0F172A;
-  --citadel-muted: #475569;
-  --citadel-primary: #083E34;
-  --citadel-primary-hover: #062E27;
-  --citadel-primary-light: #EBF5F2;
+  --brand-white: #FFFFFF;
+  --brand-gold: #D4AF37;
+  --brand-gold-dark: #B88A24;
+  --brand-black: #111827;
+  --brand-blue: #174EA6;
+  --brand-navy: #0B1F3A;
+
+  --background: #FFFFFF;
+  --foreground: #111827;
+  --primary: #174EA6;
+  --secondary: #D4AF37;
+  --accent: #D4AF37;
+
+  --muted: #F5F7FA;
+  --border: #E5E7EB;
+  --surface-dark: #111827;
+
+  --citadel-ink: #111827;
+  --citadel-muted: #64748B;
+  --citadel-primary: #174EA6;
+  --citadel-primary-hover: #0B1F3A;
+  --citadel-primary-light: #EFF6FF;
   --citadel-accent: #D4AF37;
-  --citadel-accent-hover: #B89220;
-  --citadel-canvas: #F6F7F9;
+  --citadel-accent-hover: #B88A24;
+  --citadel-canvas: #F5F7FA;
   --citadel-surface: #FFFFFF;
-  --citadel-border: #E5E9F0;
-  --citadel-border-subtle: #EEF2F6;
-  --citadel-focus: #083E34;
+  --citadel-border: #E5E7EB;
+  --citadel-border-subtle: #F1F5F9;
+  --citadel-focus: #174EA6;
   --citadel-radius-card: 0.875rem;
   --citadel-radius-button: 0.625rem;
   --font-display: "Plus Jakarta Sans", "DM Sans", system-ui, -apple-system, sans-serif;
@@ -133,7 +150,7 @@
   }
 
   #citadel-hub-sidebar {
-    background: #071916;
+    background: var(--surface-dark);
     border-color: rgba(255, 255, 255, 0.08);
   }
 
@@ -174,30 +191,8 @@
   main select:focus-visible,
   main textarea:focus-visible {
     border-color: var(--citadel-primary);
-    box-shadow: 0 0 0 3px rgb(8 62 52 / 12%);
+    box-shadow: 0 0 0 3px rgb(23 78 166 / 14%);
     outline: 0;
-  }
-
-  /* Legacy hex harmonization toward Deep Forest Green primary */
-  .bg-\[\#0A1E3F\] {
-    background-color: var(--citadel-primary) !important;
-  }
-
-  .text-\[\#0A1E3F\] {
-    color: var(--citadel-primary) !important;
-  }
-
-  .border-\[\#0A1E3F\] {
-    border-color: var(--citadel-primary) !important;
-  }
-
-  .hover\:bg-\[\#152B52\]:hover,
-  .hover\:bg-\[\#0A1E3F\]:hover {
-    background-color: var(--citadel-primary-hover) !important;
-  }
-
-  .focus\:border-\[\#0A1E3F\]:focus {
-    border-color: var(--citadel-primary) !important;
   }
 
   .no-scrollbar::-webkit-scrollbar {

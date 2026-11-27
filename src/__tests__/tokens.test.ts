@@ -3,23 +3,23 @@ import { themeTokens } from '../theme/tokens';
 import { CITADEL_BRAND } from '../theme/branding';
 
 describe('Design Tokens System', () => {
-  it('defines the dark forest green primary action color (#083E34)', () => {
-    expect(themeTokens.colors.primary.DEFAULT).toBe('#083E34');
-    expect(CITADEL_BRAND.colors.primary).toBe('#083E34');
+  it('defines the Royal Blue primary action color (#174EA6)', () => {
+    expect(themeTokens.colors.primary.DEFAULT).toBe('#174EA6');
+    expect(CITADEL_BRAND.colors.primary).toBe('#174EA6');
   });
 
-  it('defines restrained semantic status colors matching the reference specifications', () => {
-    // Light green positive/in-progress/confirmed
-    expect(themeTokens.colors.status.success.bg).toBe('#ECFDF5');
-    expect(themeTokens.colors.status.success.text).toBe('#059669');
+  it('defines restrained semantic status colors within the White, Gold, Black, and Blue palette', () => {
+    // Royal Blue positive/in-progress/confirmed
+    expect(themeTokens.colors.status.success.bg).toBe('#EFF6FF');
+    expect(themeTokens.colors.status.success.text).toBe('#174EA6');
 
-    // Yellow/amber pending
-    expect(themeTokens.colors.status.warning.bg).toBe('#FFFBEB');
-    expect(themeTokens.colors.status.warning.text).toBe('#D97706');
+    // Premium Gold pending
+    expect(themeTokens.colors.status.warning.bg).toBe('#FAF5EB');
+    expect(themeTokens.colors.status.warning.text).toBe('#B88A24');
 
-    // Red rejected/negative
-    expect(themeTokens.colors.status.error.bg).toBe('#FEF2F2');
-    expect(themeTokens.colors.status.error.text).toBe('#DC2626');
+    // Charcoal Black rejected/negative
+    expect(themeTokens.colors.status.error.bg).toBe('#F5F7FA');
+    expect(themeTokens.colors.status.error.text).toBe('#111827');
   });
 
   it('defines rounded corner tokens (card: 20px / 1.25rem, button: 12px / 0.75rem, pill: 9999px)', () => {

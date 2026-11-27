@@ -354,7 +354,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500">
-              <span className="uppercase tracking-wider text-[#083E34]">Manager Workspace</span>
+              <span className="uppercase tracking-wider text-[#174EA6]">Manager Workspace</span>
               <span aria-hidden="true">·</span>
               <span>{currentUser.entityName}</span>
               <span aria-hidden="true">·</span>
@@ -364,7 +364,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
               {currentUser.name} — Team &amp; Approval Dashboard
             </h1>
             <p className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
-              <GitBranch className="w-3.5 h-3.5 text-[#083E34]" aria-hidden="true" />
+              <GitBranch className="w-3.5 h-3.5 text-[#174EA6]" aria-hidden="true" />
               <span>
                 {currentUser.jobTitle} · Reports to{' '}
                 <strong className="font-semibold text-slate-800">{supervisorName}</strong>
@@ -394,15 +394,15 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
         </div>
 
         {actionFeedback && (
-          <div role="status" className="mt-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" aria-hidden="true" />
+          <div role="status" className="mt-4 p-3 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] text-[#174EA6] text-xs font-medium flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-[#174EA6] shrink-0" aria-hidden="true" />
             <span>{actionFeedback}</span>
           </div>
         )}
 
         {actionError && (
-          <div role="alert" className="mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" aria-hidden="true" />
+          <div role="alert" className="mt-4 p-3 rounded-xl bg-[#F5F7FA] border border-[#111827]/25 text-[#111827] text-xs font-medium flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-[#111827] shrink-0" aria-hidden="true" />
             <span>{actionError}</span>
           </div>
         )}
@@ -413,7 +413,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
         <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-slate-600">Direct Reports</span>
-            <div className="w-8 h-8 rounded-lg bg-[#EBF5F2] text-[#083E34] flex items-center justify-center border border-[#A3D4C7]/50">
+            <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] text-[#174EA6] flex items-center justify-center border border-[#BFDBFE]/50">
               <Users className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
@@ -426,12 +426,12 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
         <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-slate-600">Pending Approvals</span>
-            <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-700 flex items-center justify-center border border-rose-200">
+            <div className="w-8 h-8 rounded-lg bg-[#F5F7FA] text-[#111827] flex items-center justify-center border border-[#111827]/25">
               <CalendarDays className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5 tabular-nums">
-            <span className={`text-2xl font-bold ${pendingQueue.length > 0 ? 'text-rose-700' : 'text-slate-900'}`}>
+            <span className={`text-2xl font-bold ${pendingQueue.length > 0 ? 'text-[#111827]' : 'text-slate-900'}`}>
               {pendingQueue.length}
             </span>
             <span className="text-xs text-slate-500 font-medium">awaiting Stage 1</span>
@@ -441,7 +441,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
         <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-slate-600">Team Calendar</span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200">
+            <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] text-[#174EA6] flex items-center justify-center border border-[#BFDBFE]">
               <CalendarDays className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
@@ -474,7 +474,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
         <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
           <div>
             <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-              <CalendarDays className="w-4 h-4 text-[#083E34]" aria-hidden="true" />
+              <CalendarDays className="w-4 h-4 text-[#174EA6]" aria-hidden="true" />
               <span>Stage 1 Team Leave Approval Queue ({pendingQueue.length})</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -511,7 +511,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
                       setReviewComments((prev) => ({ ...prev, [req.id]: e.target.value }))
                     }
                     placeholder="Optional comment for employee & HR..."
-                    className="mt-1 w-full max-w-md px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/15"
+                    className="mt-1 w-full max-w-md px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#174EA6] focus:ring-2 focus:ring-[#174EA6]/15"
                   />
                 </div>
 
@@ -520,7 +520,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
                     type="button"
                     onClick={() => handleManagerReject(req)}
                     disabled={processingId === req.id}
-                    className="px-3.5 py-2 rounded-xl border border-rose-200 text-rose-700 hover:bg-rose-50 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                    className="px-3.5 py-2 rounded-xl border border-[#111827]/25 text-[#111827] hover:bg-[#F5F7FA] font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
                   >
                     <X className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Reject</span>
@@ -540,7 +540,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
           </div>
         ) : (
           <div className="p-6 text-center space-y-1.5">
-            <CheckCircle2 className="w-6 h-6 text-emerald-600 mx-auto" aria-hidden="true" />
+            <CheckCircle2 className="w-6 h-6 text-[#174EA6] mx-auto" aria-hidden="true" />
             <h3 className="text-xs font-semibold text-slate-900">No Pending Team Leave Approvals</h3>
             <p className="text-xs text-slate-500">
               All leave requests submitted by your direct reports have been processed.
@@ -553,12 +553,12 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
       {teamExits.filter((ex) => ex.status === 'SUBMITTED').length > 0 && (
         <div
           data-testid="manager-pending-resignations"
-          className="bg-white rounded-xl border border-amber-200/90 shadow-[0_1px_2px_rgba(15,23,42,0.03)] overflow-hidden"
+          className="bg-white rounded-xl border border-[#E9D59A] shadow-[0_1px_2px_rgba(15,23,42,0.03)] overflow-hidden"
         >
-          <div className="px-5 py-4 border-b border-amber-100 bg-amber-50/40 flex items-center justify-between gap-3">
+          <div className="px-5 py-4 border-b border-[#E9D59A] bg-[#FAF5EB] flex items-center justify-between gap-3">
             <div>
               <h3 className="font-display text-sm font-bold text-slate-900 flex items-center gap-2">
-                <LogOut className="w-4 h-4 text-amber-700" />
+                <LogOut className="w-4 h-4 text-[#B88A24]" />
                 <span>
                   Team Resignations Awaiting Manager Endorsement (
                   {teamExits.filter((ex) => ex.status === 'SUBMITTED').length})
@@ -570,7 +570,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
             </div>
             <button
               onClick={() => onNavigate('offboarding')}
-              className="text-xs font-semibold text-[#083E34] hover:text-[#062E27] flex items-center gap-1 cursor-pointer shrink-0"
+              className="text-xs font-semibold text-[#174EA6] hover:text-[#0B1F3A] flex items-center gap-1 cursor-pointer shrink-0"
             >
               <span>All Offboarding</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
@@ -589,7 +589,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-semibold text-slate-900">{exitReq.employeeName}</span>
                       <span className="text-xs font-mono text-slate-500">{exitReq.staffId}</span>
-                      <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200/70">
+                      <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#FAF5EB] text-[#B88A24] border border-[#E9D59A]">
                         Last Day: {exitReq.proposedLastDay} ({exitReq.noticePeriodDays}d notice)
                       </span>
                     </div>
@@ -603,14 +603,14 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
                         setExitComments((prev) => ({ ...prev, [exitReq.id]: e.target.value }))
                       }
                       placeholder="Manager handover notes for HR..."
-                      className="mt-1 w-full max-w-md px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#083E34]"
+                      className="mt-1 w-full max-w-md px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#174EA6]"
                     />
                   </div>
                   <button
                     onClick={() => handleForwardResignationToHr(exitReq)}
                     disabled={processingId === exitReq.id}
                     data-testid={`manager-forward-exit-btn-${exitReq.id}`}
-                    className="px-4 py-2 rounded-lg bg-[#083E34] text-white hover:bg-[#062E27] font-semibold text-xs shadow-2xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50 shrink-0"
+                    className="px-4 py-2 rounded-lg bg-[#174EA6] text-white hover:bg-[#0B1F3A] font-semibold text-xs shadow-2xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50 shrink-0"
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>Forward Resignation to HR</span>
@@ -627,7 +627,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
           <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
             <div>
               <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                <CalendarDays className="w-4 h-4 text-[#083E34]" aria-hidden="true" />
+                <CalendarDays className="w-4 h-4 text-[#174EA6]" aria-hidden="true" />
                 <span>Team Leave Calendar</span>
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -637,7 +637,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
             <button
               type="button"
               onClick={() => onNavigate('calendar')}
-              className="text-xs font-semibold text-[#083E34] hover:underline flex items-center gap-1 cursor-pointer"
+              className="text-xs font-semibold text-[#174EA6] hover:underline flex items-center gap-1 cursor-pointer"
             >
               <span>Full Calendar</span>
               <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -676,7 +676,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
           <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
             <div>
               <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                <Users className="w-4 h-4 text-[#083E34]" aria-hidden="true" />
+                <Users className="w-4 h-4 text-[#174EA6]" aria-hidden="true" />
                 <span>Direct Reports ({directReports.length})</span>
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -686,7 +686,7 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
             <button
               type="button"
               onClick={() => onNavigate('directory')}
-              className="text-xs font-semibold text-[#083E34] hover:underline flex items-center gap-1 cursor-pointer"
+              className="text-xs font-semibold text-[#174EA6] hover:underline flex items-center gap-1 cursor-pointer"
             >
               <span>Directory</span>
               <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />

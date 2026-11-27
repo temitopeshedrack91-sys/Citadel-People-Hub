@@ -4,28 +4,28 @@ import { render, screen } from '@testing-library/react';
 import { StatusPill } from '../components/common/StatusPill';
 
 describe('StatusPill Component', () => {
-  it('renders Pending status pill with yellow/amber styling and explicit text', () => {
+  it('renders Pending status pill with gold styling and explicit text', () => {
     render(<StatusPill status="pending" label="Pending" />);
     const pill = screen.getByText('Pending');
     expect(pill).toBeInTheDocument();
-    expect(pill.parentElement).toHaveClass('bg-[#FFFBEB]');
-    expect(pill.parentElement).toHaveClass('text-[#D97706]');
+    expect(pill.parentElement).toHaveClass('bg-[#FAF5EB]');
+    expect(pill.parentElement).toHaveClass('text-[#B88A24]');
   });
 
-  it('renders Confirmed status pill with light green styling and explicit text', () => {
+  it('renders Confirmed status pill with royal blue styling and explicit text', () => {
     render(<StatusPill status="confirmed" label="Confirmed" />);
     const pill = screen.getByText('Confirmed');
     expect(pill).toBeInTheDocument();
-    expect(pill.parentElement).toHaveClass('bg-[#ECFDF5]');
-    expect(pill.parentElement).toHaveClass('text-[#059669]');
+    expect(pill.parentElement).toHaveClass('bg-[#EFF6FF]');
+    expect(pill.parentElement).toHaveClass('text-[#174EA6]');
   });
 
-  it('renders Rejected status pill with red styling and explicit text', () => {
+  it('renders Rejected status pill with charcoal black styling and explicit text', () => {
     render(<StatusPill status="rejected" label="Rejected" />);
     const pill = screen.getByText('Rejected');
     expect(pill).toBeInTheDocument();
-    expect(pill.parentElement).toHaveClass('bg-[#FEF2F2]');
-    expect(pill.parentElement).toHaveClass('text-[#DC2626]');
+    expect(pill.parentElement).toHaveClass('bg-[#F5F7FA]');
+    expect(pill.parentElement).toHaveClass('text-[#111827]');
   });
 
   it('renders status dot when showDot is true', () => {

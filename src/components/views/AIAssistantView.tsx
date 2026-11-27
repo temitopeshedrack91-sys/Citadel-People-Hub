@@ -16,7 +16,7 @@ export const AIAssistantView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <Bot className="w-5 h-5 text-[#083E34]" />
+            <Bot className="w-5 h-5 text-[#174EA6]" />
             <span>Help &amp; Assistant</span>
           </h2>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -29,7 +29,7 @@ export const AIAssistantView: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs">
           <div className="flex items-center gap-2">
-            <BrainCircuit className="w-4 h-4 text-[#083E34]" />
+            <BrainCircuit className="w-4 h-4 text-[#174EA6]" />
             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700">Approved use cases</h3>
           </div>
           <div className="mt-3 text-2xl font-bold text-slate-900 tabular-nums">06</div>
@@ -38,7 +38,7 @@ export const AIAssistantView: React.FC = () => {
 
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-700" />
+            <ShieldCheck className="w-4 h-4 text-[#174EA6]" />
             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700">Policy guardrails</h3>
           </div>
           <div className="mt-3 text-2xl font-bold text-slate-900 tabular-nums">100%</div>
@@ -58,7 +58,7 @@ export const AIAssistantView: React.FC = () => {
       <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
         <div className="px-5 py-3.5 border-b border-slate-200 bg-slate-50/80">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#083E34]" />
+            <ShieldCheck className="w-4 h-4 text-[#174EA6]" />
             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-800">AI capability matrix</h3>
           </div>
         </div>
@@ -80,7 +80,7 @@ export const AIAssistantView: React.FC = () => {
               <div className="md:w-48 shrink-0">
                 <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-700">
                   {useCase.humanApprovalRequired ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <CheckCircle2 className="w-4 h-4 text-[#174EA6]" />
                   ) : (
                     <ShieldCheck className="w-4 h-4 text-[#B45309]" />
                   )}
@@ -92,7 +92,7 @@ export const AIAssistantView: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-[#083E34] rounded-xl border border-emerald-950/30 p-6 shadow-2xs text-white">
+      <div className="bg-[#174EA6] rounded-xl border border-[#BFDBFE] p-6 shadow-2xs text-white">
         <div className="flex items-center gap-2 mb-3">
           <Lock className="w-4 h-4 text-[#D4AF37]" />
           <h3 className="text-xs font-semibold uppercase tracking-wider text-[#D4AF37]">Safe operating requirements</h3>
@@ -100,7 +100,7 @@ export const AIAssistantView: React.FC = () => {
         <ul className="space-y-2 text-xs text-slate-200 leading-relaxed">
           {safetyControls.map((item) => (
             <li key={item} className="flex gap-2.5 items-start">
-              <span className="mt-0.5 text-amber-400 font-bold">•</span>
+              <span className="mt-0.5 text-[#D4AF37] font-bold">•</span>
               <span>{item}</span>
             </li>
           ))}

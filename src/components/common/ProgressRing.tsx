@@ -6,8 +6,8 @@ export interface ProgressRingProps {
   label?: string; // custom centered label, default `${value}%`
   subtext?: string; // e.g. "13 out of 20"
   type?: 'semicircle' | 'circle';
-  strokeColor?: string; // default dark green #083E34
-  trackColor?: string;  // default soft grey #EAEFF5
+  strokeColor?: string; // default Royal Blue #174EA6
+  trackColor?: string;  // default soft border #E5E7EB
   strokeWidth?: number; // default 13
   className?: string;
   dataTestId?: string;
@@ -16,7 +16,7 @@ export interface ProgressRingProps {
 /**
  * Reusable ProgressRing / Semicircular Gauge matching the Leave Balance component:
  * - Clean SVG arc with rounded end caps
- * - Primary action Dark Green stroke (#083E34)
+ * - Primary action Royal Blue stroke (#174EA6)
  * - Large bold percentage value centered inside
  * - Supporting ratio text underneath (e.g. "13 out of 20")
  */
@@ -26,8 +26,8 @@ export const ProgressRing: React.FC<ProgressRingProps> = ({
   label,
   subtext,
   type = 'semicircle',
-  strokeColor = '#083E34',
-  trackColor = '#EAEFF5',
+  strokeColor = '#174EA6',
+  trackColor = '#E5E7EB',
   strokeWidth = 13,
   className = '',
   dataTestId,

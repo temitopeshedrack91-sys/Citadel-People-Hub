@@ -4,12 +4,12 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ScheduleCalendar } from '../components/common/ScheduleCalendar';
 
 describe('ScheduleCalendar Component', () => {
-  it('renders month navigator and highlights Wednesday 16 in dark green accent', () => {
+  it('renders month navigator and highlights Wednesday 16 in royal blue accent', () => {
     render(<ScheduleCalendar initialMonth="January 2026" selectedDay={16} />);
 
     expect(screen.getByTestId('schedule-month-label')).toHaveTextContent('January 2026');
     const day16Btn = screen.getByTestId('schedule-day-16');
-    expect(day16Btn).toHaveClass('bg-[#083E34]');
+    expect(day16Btn).toHaveClass('bg-[#174EA6]');
     expect(day16Btn).toHaveClass('text-white');
   });
 
