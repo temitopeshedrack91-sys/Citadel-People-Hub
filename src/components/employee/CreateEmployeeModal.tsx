@@ -121,10 +121,10 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
     if (!entityId) return [];
 
     return departments.filter((d) => {
-      if (!d.isActive && String(d.id) !== String(departmentId)) return false;
+      if (d.isActive === false && String(d.id) !== String(departmentId)) return false;
       if (String(d.entityId) === String(entityId)) return true;
-      const entLower = entityId.toLowerCase();
-      const dEntLower = (d.entityId || '').toLowerCase();
+      const entLower = String(entityId).toLowerCase();
+      const dEntLower = String(d.entityId || '').toLowerCase();
       if (entLower.includes('cgcc') && dEntLower.includes('cgcc')) return true;
       if (entLower.includes('csog') && dEntLower.includes('csog')) return true;
       if (entLower.includes('holding') && dEntLower.includes('holding')) return true;

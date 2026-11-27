@@ -237,6 +237,57 @@ export const INITIAL_DEPARTMENTS: CitadelDepartment[] = [
 
 export const INITIAL_EMPLOYEES: Employee[] = [
   {
+    id: 'emp-0',
+    staffId: 'CGCC/000',
+    fullName: 'Pastor Tunde Bakare',
+    firstName: 'Tunde',
+    lastName: 'Bakare',
+    dateOfBirth: '1954-11-11',
+    gender: 'Male',
+    phone: '+234 803 000 0001',
+    email: 'pastor.bakare@citadel.ng',
+    address: 'Citadel Global Community Church Campus, Oregun, Ikeja, Lagos',
+    emergencyContact: {
+      name: 'Mrs. Olayide Bakare',
+      relationship: 'Spouse',
+      phone: '+234 803 000 0002',
+    },
+    nextOfKin: {
+      name: 'Mrs. Olayide Bakare',
+      relationship: 'Spouse',
+      phone: '+234 803 000 0002',
+      address: 'Citadel Global Community Church Campus, Oregun, Ikeja, Lagos',
+    },
+    entityId: 'entity-cgcc',
+    entityName: 'Citadel Global Community Church (CGCC)',
+    departmentId: 'dept-cgcc-so',
+    departmentName: "S.O.'s Office / Admin",
+    jobTitle: 'President & General Overseer',
+    gradeLevel: 'Executive Council (GEC)',
+    employmentType: 'Full-Time',
+    employmentDate: '2010-01-01',
+    confirmationDate: '2010-01-01',
+    contractStatus: 'Permanent',
+    yearsOfService: 16,
+    qualifications: [],
+    certifications: [],
+    bankPayroll: {
+      bankName: 'GTBank',
+      accountNumber: '0123456000',
+      accountName: 'Tunde Bakare',
+      salaryGrade: 'GEC-1',
+      currency: 'NGN',
+    },
+    pensionHmo: {
+      pfaName: 'Stanbic IBTC Pension Managers',
+      rsaPin: 'PEN100000001',
+      hmoProvider: 'Reliance HMO',
+      hmoPlan: 'Executive Platinum Plus',
+      hmoIdNumber: 'REL-CGCC-001',
+    },
+    status: 'Active',
+  },
+  {
     id: 'emp-1',
     staffId: 'CGCC/004',
     fullName: 'Dr. Bukola Adeleke',
@@ -269,6 +320,8 @@ export const INITIAL_EMPLOYEES: Employee[] = [
     confirmationDate: '2019-08-01',
     contractStatus: 'Permanent',
     yearsOfService: 7,
+    managerId: 'emp-0',
+    managerName: 'Pastor Tunde Bakare',
     qualifications: [
       {
         id: 'q-1',
@@ -497,6 +550,8 @@ export const INITIAL_EMPLOYEES: Employee[] = [
     employmentDate: '2021-01-10',
     confirmationDate: '2021-07-10',
     contractStatus: 'Permanent',
+    managerId: 'emp-2',
+    managerName: 'Femi Olatunji',
     yearsOfService: 5,
     qualifications: [
       {

@@ -9,17 +9,28 @@ import {
   ShieldCheck,
   AlertCircle,
   GitBranch,
+  Award,
+  LogOut,
+  Send,
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useRealtimeTable } from '../../../hooks/useRealtimeTable';
 import { NavModule } from '../../layout/Sidebar';
-import { leaveRepository, employeeRepository, auditRepository } from '../../../services';
+import {
+  leaveRepository,
+  employeeRepository,
+  auditRepository,
+  offboardingRepository,
+  performanceRepository,
+} from '../../../services';
 import {
   LeaveRequest,
   LeaveBalanceRecord,
   TeamCalendarLeaveEvent,
   EmployeeHierarchy,
   Employee,
+  ExitRequest,
+  PerformanceReview,
 } from '../../../types';
 
 interface DepartmentHeadDashboardProps {
@@ -42,9 +53,12 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
   const [directReports, setDirectReports] = useState<Employee[]>([]);
   const [hierarchy, setHierarchy] = useState<EmployeeHierarchy | null>(null);
   const [teamLeaves, setTeamLeaves] = useState<LeaveRequest[]>([]);
+  const [teamExits, setTeamExits] = useState<ExitRequest[]>([]);
+  const [teamReviews, setTeamReviews] = useState<PerformanceReview[]>([]);
   const [myBalances, setMyBalances] = useState<LeaveBalanceRecord[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<TeamCalendarLeaveEvent[]>([]);
   const [reviewComments, setReviewComments] = useState<Record<string, string>>({});
+  const [exitComments, setExitComments] = useState<Record<string, string>>({});
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -53,15 +67,18 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
 
   const loadData = useCallback(async () => {
     try {
-      const [hierData, allEmps, allLeaves, balData, calData] = await Promise.all([
-        actorEmployeeId
-          ? employeeRepository.getHierarchy(actorEmployeeId).catch(() => null)
-          : Promise.resolve(null),
-        employeeRepository.getAll().catch(() => [] as Employee[]),
-        leaveRepository.getAll().catch(() => [] as LeaveRequest[]),
-        leaveRepository.getBalances().catch(() => [] as LeaveBalanceRecord[]),
-        leaveRepository.getTeamCalendar().catch(() => [] as TeamCalendarLeaveEvent[]),
-      ]);
+      const [hierData, allEmps, allLeaves, balData, calData, allExits, allReviews] =
+        await Promise.all([
+          actorEmployeeId
+            ? employeeRepository.getHierarchy(actorEmployeeId).catch(() => null)
+            : Promise.resolve(null),
+          employeeRepository.getAll().catch(() => [] as Employee[]),
+          leaveRepository.getAll().catch(() => [] as LeaveRequest[]),
+          leaveRepository.getBalances(actorEmployeeId || undefined).catch(() => [] as LeaveBalanceRecord[]),
+          leaveRepository.getTeamCalendar().catch(() => [] as TeamCalendarLeaveEvent[]),
+          offboardingRepository.getAll().catch(() => [] as ExitRequest[]),
+          performanceRepository.getReviews().catch(() => [] as PerformanceReview[]),
+        ]);
 
       setHierarchy(hierData);
 
@@ -136,15 +153,36 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
 
       const reportIdSet = new Set(reports.map((r) => String(r.id)));
       const reportStaffSet = new Set(reports.map((r) => r.staffId));
+      const userNameLower = (currentUser.name || '').toLowerCase();
+
       const filteredLeaves = allLeaves.filter((l) => {
         if (actorEmployeeId && String(l.employeeId) === actorEmployeeId) return false;
         return (
           reportIdSet.has(String(l.employeeId)) ||
           (l.employeeStaffId && reportStaffSet.has(l.employeeStaffId)) ||
-          (actorEmployeeId && String(l.managerId || '') === actorEmployeeId)
+          (actorEmployeeId && String(l.managerId || '') === actorEmployeeId) ||
+          (userNameLower && (l.managerName || '').toLowerCase().includes(userNameLower))
         );
       });
       setTeamLeaves(filteredLeaves);
+
+      const filteredExits = allExits.filter((ex) => {
+        if (actorEmployeeId && String(ex.employeeId) === actorEmployeeId) return false;
+        return (
+          reportIdSet.has(String(ex.employeeId)) ||
+          (ex.staffId && reportStaffSet.has(ex.staffId)) ||
+          (actorEmployeeId && String(ex.managerId || '') === actorEmployeeId) ||
+          (userNameLower && (ex.managerName || '').toLowerCase().includes(userNameLower))
+        );
+      });
+      setTeamExits(filteredExits);
+      setTeamReviews(
+        allReviews.filter(
+          (rev) =>
+            reportIdSet.has(String(rev.employeeId)) ||
+            (actorEmployeeId && String(rev.reviewerId || '') === actorEmployeeId)
+        )
+      );
     } catch (err: any) {
       setActionError(err?.message || 'Unable to load manager workspace.');
     }
@@ -165,6 +203,50 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
   useRealtimeTable('employees', () => {
     void loadData();
   });
+
+  useRealtimeTable('offboarding_requests', () => {
+    void loadData();
+  });
+
+  useRealtimeTable('performance_reviews', () => {
+    void loadData();
+  });
+
+  const handleForwardResignationToHr = async (exitReq: ExitRequest) => {
+    setActionError(null);
+    setProcessingId(exitReq.id);
+    try {
+      const comment =
+        (exitComments[exitReq.id] || '').trim() ||
+        `Reviewed and endorsed by line manager (${currentUser.name}). Forwarded to HR for contract & notice verification.`;
+      await offboardingRepository.endorseByManager(exitReq.id, {
+        comments: comment,
+        version: exitReq.version,
+      });
+      await auditRepository.logAction({
+        userId: currentUser.id,
+        userName: currentUser.name,
+        userRole: currentRole,
+        module: 'Offboarding',
+        action: 'Manager Forwarded Resignation to HR',
+        recordAffectedId: exitReq.id,
+        recordAffectedTitle: `Resignation of ${exitReq.employeeName}`,
+        previousValue: 'SUBMITTED',
+        newValue: 'MANAGER_REVIEWED',
+        severity: 'Info',
+      });
+      setExitComments((prev) => ({ ...prev, [exitReq.id]: '' }));
+      setActionFeedback(
+        `Forwarded ${exitReq.employeeName}'s resignation to HR for contract verification and exit interview scheduling.`
+      );
+      setTimeout(() => setActionFeedback(null), 5000);
+      await loadData();
+    } catch (err: any) {
+      setActionError(err?.message || 'Unable to forward resignation to HR.');
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
   const handleManagerApprove = async (leave: LeaveRequest) => {
     setActionError(null);
@@ -452,6 +534,78 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
         )}
       </div>
 
+      {/* 3b. Team Resignations Awaiting Manager Forward to HR */}
+      {teamExits.filter((ex) => ex.status === 'SUBMITTED').length > 0 && (
+        <div
+          data-testid="manager-pending-resignations"
+          className="bg-white rounded-xl border border-amber-200/90 shadow-[0_1px_2px_rgba(15,23,42,0.03)] overflow-hidden"
+        >
+          <div className="px-5 py-4 border-b border-amber-100 bg-amber-50/40 flex items-center justify-between gap-3">
+            <div>
+              <h3 className="font-display text-sm font-bold text-slate-900 flex items-center gap-2">
+                <LogOut className="w-4 h-4 text-amber-700" />
+                <span>
+                  Team Resignations Awaiting Manager Endorsement (
+                  {teamExits.filter((ex) => ex.status === 'SUBMITTED').length})
+                </span>
+              </h3>
+              <p className="text-xs text-slate-600 mt-0.5">
+                Review handover plans and forward direct reports&apos; resignations to HR for notice verification and exit interview scheduling.
+              </p>
+            </div>
+            <button
+              onClick={() => onNavigate('offboarding')}
+              className="text-xs font-semibold text-[#083E34] hover:text-[#062E27] flex items-center gap-1 cursor-pointer shrink-0"
+            >
+              <span>All Offboarding</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {teamExits
+              .filter((ex) => ex.status === 'SUBMITTED')
+              .map((exitReq) => (
+                <div
+                  key={exitReq.id}
+                  data-testid={`manager-pending-exit-${exitReq.id}`}
+                  className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-slate-50/70 transition"
+                >
+                  <div className="space-y-1.5 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-semibold text-slate-900">{exitReq.employeeName}</span>
+                      <span className="text-xs font-mono text-slate-500">{exitReq.staffId}</span>
+                      <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200/70">
+                        Last Day: {exitReq.proposedLastDay} ({exitReq.noticePeriodDays}d notice)
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600">
+                      <strong className="font-semibold text-slate-800">Reason:</strong> {exitReq.reason}
+                    </p>
+                    <input
+                      type="text"
+                      value={exitComments[exitReq.id] || ''}
+                      onChange={(e) =>
+                        setExitComments((prev) => ({ ...prev, [exitReq.id]: e.target.value }))
+                      }
+                      placeholder="Manager handover notes for HR..."
+                      className="mt-1 w-full max-w-md px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#083E34]"
+                    />
+                  </div>
+                  <button
+                    onClick={() => handleForwardResignationToHr(exitReq)}
+                    disabled={processingId === exitReq.id}
+                    data-testid={`manager-forward-exit-btn-${exitReq.id}`}
+                    className="px-4 py-2 rounded-lg bg-[#083E34] text-white hover:bg-[#062E27] font-semibold text-xs shadow-2xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50 shrink-0"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Forward Resignation to HR</span>
+                  </button>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
       {/* 4. Team Leave Calendar & Direct Reports */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Team Calendar */}
@@ -509,41 +663,76 @@ export const DepartmentHeadDashboard: React.FC<DepartmentHeadDashboardProps> = (
 
         {/* Direct Reports Table */}
         <div className="bg-white rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.03)] overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-2">
             <div>
               <h3 className="font-display text-sm font-bold text-slate-900 flex items-center gap-2">
                 <Users className="w-4 h-4 text-[#083E34]" />
-                <span>Direct Reports ({directReports.length})</span>
+                <span>Direct Reports &amp; Team Activities ({directReports.length})</span>
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Employees reporting directly to you in the hierarchy.
+                Employees reporting directly to you — review info, set KPI goals, or conduct appraisals.
               </p>
             </div>
-            <button
-              onClick={() => onNavigate('directory')}
-              className="text-xs font-semibold text-[#083E34] hover:text-[#062E27] flex items-center gap-1 cursor-pointer"
-            >
-              <span>Directory</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => onNavigate('performance')}
+                data-testid="manager-team-performance-btn"
+                className="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-[#083E34] hover:bg-emerald-100 border border-emerald-200/70 text-[11px] font-semibold flex items-center gap-1 cursor-pointer transition"
+              >
+                <Award className="w-3.5 h-3.5" />
+                <span>Goals &amp; Appraisals</span>
+              </button>
+              <button
+                onClick={() => onNavigate('directory')}
+                className="text-xs font-semibold text-[#083E34] hover:text-[#062E27] flex items-center gap-1 cursor-pointer"
+              >
+                <span>Directory</span>
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
           <div className="divide-y divide-slate-100">
             {directReports.length > 0 ? (
-              directReports.map((member) => (
-                <div
-                  key={member.id}
-                  className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/70 transition text-xs"
-                >
-                  <div className="min-w-0">
-                    <span className="font-semibold text-slate-900 block truncate">{member.fullName}</span>
-                    <span className="text-[11px] text-slate-500 truncate block">
-                      {member.jobTitle} · {member.departmentName}
-                    </span>
+              directReports.map((member) => {
+                const latestReview = teamReviews.find(
+                  (r) => String(r.employeeId) === String(member.id)
+                );
+                return (
+                  <div
+                    key={member.id}
+                    className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/70 transition text-xs"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-slate-900 truncate">{member.fullName}</span>
+                        <span className="font-mono text-[10px] text-slate-500">{member.staffId}</span>
+                      </div>
+                      <span className="text-[11px] text-slate-500 truncate block">
+                        {member.jobTitle} · {member.departmentName}
+                      </span>
+                      {member.email && (
+                        <span className="text-[10px] text-slate-400 truncate block">
+                          {member.email} {member.phone ? `· ${member.phone}` : ''}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {latestReview?.finalRating ? (
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/70">
+                          KPI: {Number(latestReview.finalRating).toFixed(2)}/5
+                        </span>
+                      ) : null}
+                      <button
+                        onClick={() => onNavigate('performance')}
+                        className="px-2.5 py-1 rounded-lg border border-slate-200 text-[11px] font-semibold text-slate-700 hover:border-[#083E34] hover:text-[#083E34] cursor-pointer transition"
+                      >
+                        Appraise
+                      </button>
+                    </div>
                   </div>
-                  <span className="font-mono text-[11px] text-slate-500 shrink-0">{member.staffId}</span>
-                </div>
-              ))
+                );
+              })
             ) : (
               <p className="text-xs text-slate-500 p-6 text-center">
                 No direct reports assigned yet.

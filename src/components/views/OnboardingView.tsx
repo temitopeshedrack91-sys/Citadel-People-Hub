@@ -45,6 +45,8 @@ import {
   Edit2,
   Lock,
   RefreshCw,
+  Upload,
+  Download,
 } from 'lucide-react';
 import {
   OnboardingJourney,
@@ -58,6 +60,7 @@ import { talentRepository, employeeRepository, auditRepository } from '../../ser
 import { useAuth } from '../../context/AuthContext';
 import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import { ChevronStepper } from '../common/ChevronStepper';
+import { parseOnboardingChecklistFile, generateSampleOnboardingCsv } from '../../utils/checklistParser';
 
 interface TemplateDraftTask {
   id: string;
@@ -118,6 +121,9 @@ export const OnboardingView: React.FC = () => {
   const [newTaskInputTitle, setNewTaskInputTitle] = useState('');
   const [newTaskInputDept, setNewTaskInputDept] = useState<OnboardingDepartment>('PCCM');
   const [newTaskInputTimeline, setNewTaskInputTimeline] = useState<OnboardingTimeline>('Day 1');
+  const [checklistUploadError, setChecklistUploadError] = useState<string | null>(null);
+  const [checklistUploadWarnings, setChecklistUploadWarnings] = useState<string[]>([]);
+  const [uploadedChecklistFileName, setUploadedChecklistFileName] = useState<string | null>(null);
   const [newTaskInputDepId, setNewTaskInputDepId] = useState<string>('');
 
   const [departmentFilter, setDepartmentFilter] = useState<'All' | OnboardingDepartment>('All');
@@ -400,8 +406,8 @@ export const OnboardingView: React.FC = () => {
       showToast('Select an onboarding start date.', true);
       return;
     }
-    const employee = employeesList.find((item) => item.id === startEmployeeId);
-    const template = checklistTemplates.find((item) => item.id === startChecklistId);
+    const employee = employeesList.find((item) => String(item.id) === String(startEmployeeId));
+    const template = checklistTemplates.find((item) => String(item.id) === String(startChecklistId));
     if (!employee || !template) {
       showToast('Please select both a valid employee and checklist template.');
       return;
@@ -511,7 +517,102 @@ export const OnboardingView: React.FC = () => {
     setNewChecklistDesc('');
     setTemplateCustomTasks([]);
     setNewTaskInputDepId('');
+    setChecklistUploadError(null);
+    setChecklistUploadWarnings([]);
+    setUploadedChecklistFileName(null);
     setIsAddChecklistModalOpen(true);
+  };
+
+  const handleDownloadSampleChecklistCsv = () => {
+    try {
+      const csv = generateSampleOnboardingCsv();
+      if (typeof window !== 'undefined' && typeof window.Blob !== 'undefined' && typeof window.URL?.createObjectURL === 'function') {
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'CGCC_Onboarding_Checklist_Sample.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+      showToast('Sample onboarding checklist CSV downloaded.');
+    } catch (error) {
+      showToast(`Could not download sample CSV: ${errorMessage(error)}`, true);
+    }
+  };
+
+  const handleChecklistFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+    openModalAfterParse = false
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    setChecklistUploadError(null);
+    setChecklistUploadWarnings([]);
+
+    try {
+      const text = await file.text();
+      const parsed = parseOnboardingChecklistFile(text, file.name, file.size);
+
+      if (openModalAfterParse) {
+        setEditingTemplateId(null);
+        setEditingTemplateVersion(undefined);
+        setNewTaskInputDepId('');
+      }
+
+      if (parsed.title && (openModalAfterParse || !newChecklistTitle.trim())) {
+        setNewChecklistTitle(parsed.title);
+      }
+      if (parsed.category) {
+        setNewChecklistCategory(parsed.category);
+      }
+      if (parsed.targetAudience && (openModalAfterParse || !newChecklistTarget.trim())) {
+        setNewChecklistTarget(parsed.targetAudience);
+      } else if (openModalAfterParse && !newChecklistTarget.trim()) {
+        setNewChecklistTarget('All New Hires');
+      }
+      if (parsed.duration && (openModalAfterParse || !newChecklistDuration.trim())) {
+        setNewChecklistDuration(parsed.duration);
+      } else if (openModalAfterParse && !newChecklistDuration.trim()) {
+        setNewChecklistDuration('3 Months');
+      }
+      if (parsed.description && (openModalAfterParse || !newChecklistDesc.trim())) {
+        setNewChecklistDesc(parsed.description);
+      } else if (openModalAfterParse && !newChecklistDesc.trim()) {
+        setNewChecklistDesc(`Imported from ${file.name} (${parsed.tasks.length} onboarding tasks).`);
+      }
+
+      const mappedDraftTasks: TemplateDraftTask[] = parsed.tasks.map((task, idx) => {
+        const dept = task.department === 'Human Resources' ? 'PCCM' : task.department;
+        return {
+          id: task.id || `upload-task-${Date.now()}-${idx + 1}`,
+          title: task.title,
+          department: dept,
+          timeline: task.timeline,
+          assignedRole: task.assignedRole || DEFAULT_ROLE_FOR_DEPT[dept] || 'PCCM / HR Coordinator',
+          dueDate: task.dueDate || task.timeline,
+          dependsOnTaskIds: task.dependsOnTaskIds ? [...task.dependsOnTaskIds] : [],
+          requiredDocument: task.requiredDocument,
+        };
+      });
+
+      setTemplateCustomTasks(mappedDraftTasks);
+      setUploadedChecklistFileName(file.name);
+      setChecklistUploadWarnings(parsed.warnings || []);
+
+      if (openModalAfterParse) {
+        setIsAddChecklistModalOpen(true);
+      }
+      showToast(`Imported ${mappedDraftTasks.length} tasks from "${file.name}". Review and save as a reusable template.`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unable to parse the uploaded checklist file.';
+      setChecklistUploadError(msg);
+      showToast(msg, true);
+    }
   };
 
   const handleOpenEditChecklist = (tpl: OnboardingChecklistTemplate) => {
@@ -535,6 +636,9 @@ export const OnboardingView: React.FC = () => {
       }))
     );
     setNewTaskInputDepId('');
+    setChecklistUploadError(null);
+    setChecklistUploadWarnings([]);
+    setUploadedChecklistFileName(null);
     setIsAddChecklistModalOpen(true);
   };
 
@@ -1070,13 +1174,38 @@ export const OnboardingView: React.FC = () => {
               </div>
             </div>
 
-            <button
-              onClick={handleOpenCreateChecklist}
-              className="px-4 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-[#DFC15D] text-black font-black text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
-            >
-              <Plus className="w-4 h-4 stroke-[3]" />
-              <span>Add Checklist Template</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleDownloadSampleChecklistCsv}
+                className="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>Sample CSV</span>
+              </button>
+              <label
+                data-testid="upload-checklist-header-label"
+                className="px-3.5 py-2.5 rounded-xl bg-[#083E34] hover:bg-[#062C25] text-white border border-[#D4AF37]/40 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <Upload className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>Upload Checklist File</span>
+                <input
+                  type="file"
+                  data-testid="upload-checklist-header-input"
+                  accept=".csv,.tsv,.json,.txt,.md"
+                  onChange={(e) => void handleChecklistFileUpload(e, true)}
+                  className="hidden"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={handleOpenCreateChecklist}
+                className="px-4 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-[#DFC15D] text-black font-black text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
+              >
+                <Plus className="w-4 h-4 stroke-[3]" />
+                <span>Add Checklist Template</span>
+              </button>
+            </div>
           </div>
 
           {/* Category Filter Pills */}
@@ -2444,7 +2573,7 @@ export const OnboardingView: React.FC = () => {
 
                   {/* Selected Employee Preview Card */}
                   {(() => {
-                    const selectedEmp = employeesList.find((e) => e.id === startEmployeeId);
+                    const selectedEmp = employeesList.find((e) => String(e.id) === String(startEmployeeId));
                     if (!selectedEmp) {
                       return (
                         <div className="rounded-xl border border-dashed border-slate-300 p-5 text-center bg-slate-50 text-slate-500">
@@ -2527,7 +2656,7 @@ export const OnboardingView: React.FC = () => {
 
                   {/* Selected Checklist Template Preview */}
                   {(() => {
-                    const selectedTpl = checklistTemplates.find((t) => t.id === startChecklistId);
+                    const selectedTpl = checklistTemplates.find((t) => String(t.id) === String(startChecklistId));
                     if (!selectedTpl) {
                       return (
                         <div className="rounded-xl border border-dashed border-slate-300 p-5 text-center bg-slate-50 text-slate-500">
@@ -2597,7 +2726,7 @@ export const OnboardingView: React.FC = () => {
                       <div className="p-3 rounded-lg border border-slate-200 bg-white">
                         <span className="text-[10px] uppercase font-bold text-slate-400 block">Unit Manager</span>
                         <span className="font-bold text-slate-900 block mt-0.5">
-                          {employeesList.find((e) => e.id === startEmployeeId)?.managerName || 'Not assigned'}
+                          {employeesList.find((e) => String(e.id) === String(startEmployeeId))?.managerName || 'Not assigned'}
                         </span>
                       </div>
                       <div className="p-3 rounded-lg border border-slate-200 bg-white">
@@ -2639,8 +2768,8 @@ export const OnboardingView: React.FC = () => {
                   </div>
 
                   {(() => {
-                    const emp = employeesList.find((e) => e.id === startEmployeeId);
-                    const tpl = checklistTemplates.find((t) => t.id === startChecklistId);
+                    const emp = employeesList.find((e) => String(e.id) === String(startEmployeeId));
+                    const tpl = checklistTemplates.find((t) => String(t.id) === String(startChecklistId));
                     return (
                       <div className="border border-slate-200 rounded-xl bg-white p-4 space-y-3 text-xs">
                         <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
@@ -2774,6 +2903,62 @@ export const OnboardingView: React.FC = () => {
                   Load CGCC SOP Preset
                 </button>
               </div>
+
+              {/* Upload HR Custom Checklist File Banner */}
+              <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <span className="text-xs font-bold text-emerald-950 block">
+                    Import Custom Checklist File (CSV, TSV, JSON, or TXT)
+                  </span>
+                  <p className="text-[11px] text-emerald-900/90">
+                    Upload your own onboarding checklist document to populate tasks below and save as a reusable template.
+                  </p>
+                  {uploadedChecklistFileName && (
+                    <p className="text-[11px] font-bold text-[#083E34] mt-1">
+                      Loaded file: {uploadedChecklistFileName} ({templateCustomTasks.length} tasks)
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleDownloadSampleChecklistCsv}
+                    className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-emerald-50 text-emerald-900 border border-emerald-300 font-bold text-[11px] transition flex items-center gap-1 cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Sample CSV</span>
+                  </button>
+                  <label
+                    data-testid="upload-checklist-modal-label"
+                    className="px-3 py-1.5 rounded-lg bg-[#083E34] hover:bg-[#062C25] text-white font-bold text-[11px] transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-[#D4AF37]" />
+                    <span>Upload File</span>
+                    <input
+                      type="file"
+                      data-testid="upload-checklist-modal-input"
+                      accept=".csv,.tsv,.json,.txt,.md"
+                      onChange={(e) => void handleChecklistFileUpload(e, false)}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {checklistUploadError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>{checklistUploadError}</span>
+                </div>
+              )}
+
+              {checklistUploadWarnings.length > 0 && (
+                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] space-y-0.5">
+                  {checklistUploadWarnings.map((warning, i) => (
+                    <p key={i} className="font-medium">Note: {warning}</p>
+                  ))}
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">

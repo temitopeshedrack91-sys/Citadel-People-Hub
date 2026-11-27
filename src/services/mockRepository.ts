@@ -130,10 +130,50 @@ const loadStorage = <T>(key: string, fallback: T): T => {
   }
 };
 
+const STORAGE_KEY_TO_REALTIME_TABLE: Record<string, string> = {
+  employees: 'employees',
+  departments: 'departments',
+  entities: 'entities',
+  leaves: 'leave_requests',
+  onboarding: 'onboarding_journeys',
+  checklist_templates: 'onboarding_checklist_templates',
+  exit_requests: 'offboarding_requests',
+  performance_kpis: 'kpis',
+  performance_reviews: 'performance_reviews',
+  documents: 'documents',
+  notifications: 'notifications',
+  audit_logs: 'audit_logs',
+};
+
+const emitStorageRealtimeSync = (key: string): void => {
+  if (typeof window === 'undefined') return;
+  const table = STORAGE_KEY_TO_REALTIME_TABLE[key];
+  if (!table) return;
+  try {
+    window.dispatchEvent(
+      new CustomEvent('citadel:local-mutation', {
+        detail: { table, eventType: 'UPDATE', payload: {} },
+      })
+    );
+  } catch {
+    // ignore dispatch errors in non-DOM test environments
+  }
+  try {
+    if ('BroadcastChannel' in window) {
+      const ch = new BroadcastChannel('citadel_realtime');
+      ch.postMessage({ table, eventType: 'UPDATE', payload: {} });
+      ch.close();
+    }
+  } catch {
+    // ignore BroadcastChannel errors
+  }
+};
+
 const saveStorage = <T>(key: string, value: T): void => {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(`citadel_hub_${key}`, JSON.stringify(value));
+    emitStorageRealtimeSync(key);
   } catch (err) {
     console.warn(`[Citadel Storage] Failed to persist ${key}:`, err);
   }
@@ -179,12 +219,13 @@ const sleep = (ms = 60) => new Promise((resolve) => setTimeout(resolve, ms));
 export class MockEmployeeRepository implements IEmployeeRepository {
   async getAll(filter?: { entityId?: string; departmentId?: string; search?: string }): Promise<Employee[]> {
     await sleep();
+    employees = loadStorage('employees', employees);
     let result = [...employees];
     if (filter?.entityId) {
-      result = result.filter((e) => e.entityId === filter.entityId);
+      result = result.filter((e) => String(e.entityId) === String(filter.entityId));
     }
     if (filter?.departmentId) {
-      result = result.filter((e) => e.departmentId === filter.departmentId);
+      result = result.filter((e) => String(e.departmentId) === String(filter.departmentId));
     }
     if (filter?.search) {
       const q = filter.search.toLowerCase();
@@ -201,7 +242,8 @@ export class MockEmployeeRepository implements IEmployeeRepository {
 
   async getById(id: string): Promise<Employee | null> {
     await sleep();
-    return employees.find((e) => e.id === id) || null;
+    employees = loadStorage('employees', employees);
+    return employees.find((e) => String(e.id) === String(id)) || null;
   }
 
   async getHierarchy(id: string): Promise<EmployeeHierarchy | null> {
@@ -305,13 +347,15 @@ export class MockEmployeeRepository implements IEmployeeRepository {
 export class MockOrganizationRepository implements IOrganizationRepository {
   async getEntities(): Promise<CitadelEntity[]> {
     await sleep();
+    entities = loadStorage('entities', entities);
     return [...entities];
   }
 
   async getDepartments(entityId?: string): Promise<CitadelDepartment[]> {
     await sleep();
+    departments = loadStorage('departments', departments);
     if (entityId) {
-      return departments.filter((d) => d.entityId === entityId);
+      return departments.filter((d) => String(d.entityId) === String(entityId));
     }
     return [...departments];
   }
@@ -353,14 +397,19 @@ export class MockOrganizationRepository implements IOrganizationRepository {
 }
 
 export class MockLeaveRepository implements ILeaveRepository {
+  private refreshFromStorage(): LeaveRequest[] {
+    leaveRequests = loadStorage('leaves', leaveRequests);
+    return leaveRequests;
+  }
+
   async getAll(): Promise<LeaveRequest[]> {
     await sleep();
-    return [...leaveRequests];
+    return [...this.refreshFromStorage()];
   }
 
   async getByEmployee(employeeId: string): Promise<LeaveRequest[]> {
     await sleep();
-    return leaveRequests.filter((l) => l.employeeId === employeeId);
+    return this.refreshFromStorage().filter((l) => String(l.employeeId) === String(employeeId));
   }
 
   async getCategories(): Promise<LeaveCategoryRecord[]> {
@@ -377,16 +426,38 @@ export class MockLeaveRepository implements ILeaveRepository {
   async getBalances(employeeId?: string): Promise<LeaveBalanceRecord[]> {
     await sleep();
     const targetId = employeeId || 'emp-1';
+    const empLeaves = this.refreshFromStorage().filter((l) => String(l.employeeId) === String(targetId));
+
+    const calc = (typeKeyword: string, totalDays: number, baseUsed = 0) => {
+      const matching = empLeaves.filter((l) => (l.leaveType || '').toLowerCase().includes(typeKeyword));
+      const approved = matching
+        .filter((l) => l.status === 'Approved')
+        .reduce((sum, l) => sum + Number(l.totalDays || l.daysRequested || 0), 0);
+      const pending = matching
+        .filter((l) => l.status === 'Submitted' || l.status === 'Pending Review')
+        .reduce((sum, l) => sum + Number(l.totalDays || l.daysRequested || 0), 0);
+      const used = baseUsed + approved;
+      return {
+        used_days: used,
+        pending_days: pending,
+        remaining_days: Math.max(0, totalDays - used - pending),
+      };
+    };
+
+    const annual = calc('annual', 24, 0);
+    const casual = calc('casual', 7, 0);
+    const sick = calc('sick', 12, 0);
+
     return [
-      { id: 1, employee_id: targetId, leave_category_id: 1, year: 2026, total_days: 24, used_days: 4, pending_days: 2, remaining_days: 18, category: { id: 1, name: 'Annual Leave', code: 'AL', is_paid: true } },
-      { id: 2, employee_id: targetId, leave_category_id: 2, year: 2026, total_days: 7, used_days: 2, pending_days: 0, remaining_days: 5, category: { id: 2, name: 'Casual Leave', code: 'CL', is_paid: true } },
-      { id: 3, employee_id: targetId, leave_category_id: 3, year: 2026, total_days: 12, used_days: 0, pending_days: 0, remaining_days: 12, category: { id: 3, name: 'Sick Leave', code: 'SL', is_paid: true } },
+      { id: 1, employee_id: targetId, leave_category_id: 1, year: 2026, total_days: 24, ...annual, category: { id: 1, name: 'Annual Leave', code: 'AL', is_paid: true } },
+      { id: 2, employee_id: targetId, leave_category_id: 2, year: 2026, total_days: 7, ...casual, category: { id: 2, name: 'Casual Leave', code: 'CL', is_paid: true } },
+      { id: 3, employee_id: targetId, leave_category_id: 3, year: 2026, total_days: 12, ...sick, category: { id: 3, name: 'Sick Leave', code: 'SL', is_paid: true } },
     ];
   }
 
   async getTeamCalendar(): Promise<TeamCalendarLeaveEvent[]> {
     await sleep();
-    return leaveRequests
+    return this.refreshFromStorage()
       .filter((l) => l.status !== 'Rejected' && l.status !== 'Cancelled')
       .map((l) => ({
         id: l.id,
@@ -406,6 +477,7 @@ export class MockLeaveRepository implements ILeaveRepository {
 
   async submitRequest(request: Omit<LeaveRequest, 'id' | 'appliedDate' | 'status'>): Promise<LeaveRequest> {
     await sleep();
+    this.refreshFromStorage();
     if (!request.startDate || !request.endDate || request.endDate < request.startDate) {
       throw new Error('The end date must be on or after the start date.');
     }
@@ -453,6 +525,7 @@ export class MockLeaveRepository implements ILeaveRepository {
     comments?: string
   ): Promise<LeaveRequest> {
     await sleep();
+    this.refreshFromStorage();
     const index = leaveRequests.findIndex((l) => l.id === requestId);
     if (index === -1) throw new Error('Leave request not found');
 
@@ -1802,45 +1875,71 @@ export class MockTimesheetRepository implements ITimesheetRepository {
   }
 }
 
+const DEFAULT_PERFORMANCE_KPIS: Kpi[] = [
+  { id: 1, indicator: 'Quarterly Sprint Delivery & Reliability', jobTitleId: 1, jobTitleName: 'Head of Technology', minRating: 1, maxRating: 5, weight: 40, isActive: true, version: 1 },
+  { id: 2, indicator: 'Architecture Integrity & Code Review Coverage', jobTitleId: 1, jobTitleName: 'Head of Technology', minRating: 1, maxRating: 5, weight: 30, isActive: true, version: 1 },
+  { id: 3, indicator: 'Mentorship & Engineering Governance', jobTitleId: undefined, jobTitleName: 'All Roles / General', minRating: 1, maxRating: 5, weight: 30, isActive: true, version: 1 },
+];
+
+const DEFAULT_PERFORMANCE_REVIEWS: PerformanceReview[] = [
+  {
+    id: 1,
+    employeeId: 'emp-2' as any,
+    employeeName: 'Femi Olatunji',
+    employeeStaffId: 'CGCC/015',
+    reviewerId: 'emp-1' as any,
+    reviewerName: 'Dr. Bukola Adeleke',
+    reviewPeriodStart: '2026-01-01',
+    reviewPeriodEnd: '2026-06-30',
+    dueDate: '2026-07-15',
+    status: 'EVALUATED',
+    finalRating: 4.91,
+    reviewerComments: 'Exceeded strategic milestone commitments consistently.',
+    version: 1,
+    ratings: [
+      { kpiId: 1, kpiTitle: 'Quarterly Sprint Delivery & Reliability', rating: 5, weight: 40, comment: 'Flawless execution' },
+      { kpiId: 2, kpiTitle: 'Architecture Integrity & Code Review Coverage', rating: 4.8, weight: 30, comment: 'High quality standards' },
+      { kpiId: 3, kpiTitle: 'Mentorship & Engineering Governance', rating: 4.9, weight: 30, comment: 'Strong team mentoring' },
+    ],
+  },
+];
+
 export class MockPerformanceRepository implements IPerformanceRepository {
-  private kpis: Kpi[] = [
-    { id: 1, indicator: 'Quarterly Sprint Delivery & Reliability', minRating: 1, maxRating: 5, weight: 40, isActive: true, version: 1 },
-    { id: 2, indicator: 'Architecture Integrity & Code Review Coverage', minRating: 1, maxRating: 5, weight: 30, isActive: true, version: 1 },
-    { id: 3, indicator: 'Mentorship & Engineering Governance', minRating: 1, maxRating: 5, weight: 30, isActive: true, version: 1 },
-  ];
+  private kpis: Kpi[] = loadStorage('performance_kpis', [...DEFAULT_PERFORMANCE_KPIS]);
+  private reviews: PerformanceReview[] = loadStorage('performance_reviews', [...DEFAULT_PERFORMANCE_REVIEWS]);
 
-  private reviews: PerformanceReview[] = [
-    {
-      id: 1,
-      employeeId: 1,
-      employeeName: 'Engr. Femi Olatunji',
-      reviewerId: 2,
-      reviewerName: 'Dr. Stella Adeleke',
-      reviewPeriodStart: '2026-01-01',
-      reviewPeriodEnd: '2026-06-30',
-      dueDate: '2026-07-15',
-      status: 'EVALUATED',
-      finalRating: 4.91,
-      reviewerComments: 'Exceeded strategic milestone commitments consistently.',
-      version: 1,
-      ratings: [
-        { kpiId: 1, kpiTitle: 'Quarterly Sprint Delivery & Reliability', rating: 5, weight: 40, comment: 'Flawless execution' },
-        { kpiId: 2, kpiTitle: 'Architecture Integrity & Code Review Coverage', rating: 4.8, weight: 30, comment: 'High quality standards' },
-        { kpiId: 3, kpiTitle: 'Mentorship & Engineering Governance', rating: 4.9, weight: 30, comment: 'Strong team mentoring' },
-      ],
-    },
-  ];
+  private refreshKpis(): Kpi[] {
+    this.kpis = loadStorage('performance_kpis', this.kpis);
+    return this.kpis;
+  }
 
-  async getKpis(): Promise<Kpi[]> {
+  private refreshReviews(): PerformanceReview[] {
+    this.reviews = loadStorage('performance_reviews', this.reviews);
+    return this.reviews;
+  }
+
+  async getKpis(filter?: number | { jobTitleId?: number; activeOnly?: boolean }): Promise<Kpi[]> {
     await sleep();
-    return [...this.kpis];
+    let list = [...this.refreshKpis()];
+    const jobTitleId = typeof filter === 'number' ? filter : filter?.jobTitleId;
+    const activeOnly = typeof filter === 'object' ? filter?.activeOnly : undefined;
+    if (jobTitleId) {
+      list = list.filter((k) => !k.jobTitleId || Number(k.jobTitleId) === Number(jobTitleId));
+    }
+    if (activeOnly) {
+      list = list.filter((k) => k.isActive !== false);
+    }
+    return list;
   }
 
   async createKpi(kpi: Partial<Kpi>): Promise<Kpi> {
     await sleep();
+    this.refreshKpis();
     const newKpi: Kpi = {
       id: Date.now(),
       indicator: kpi.indicator || 'Untitled KPI',
+      jobTitleId: kpi.jobTitleId ?? undefined,
+      jobTitleName: kpi.jobTitleName || (kpi.jobTitleId ? undefined : 'All Roles / General'),
       minRating: kpi.minRating ?? 1,
       maxRating: kpi.maxRating ?? 5,
       weight: kpi.weight ?? 100,
@@ -1848,39 +1947,53 @@ export class MockPerformanceRepository implements IPerformanceRepository {
       version: 1,
     };
     this.kpis.push(newKpi);
+    saveStorage('performance_kpis', this.kpis);
     return newKpi;
   }
 
   async updateKpi(id: number, kpi: Partial<Kpi>): Promise<Kpi> {
     await sleep();
+    this.refreshKpis();
     const existing = this.kpis.find((k) => k.id === id);
     if (!existing) throw new Error('KPI not found');
     if (kpi.version !== undefined && (existing.version ?? 1) !== kpi.version) {
       throw new Error('Conflict (409): This KPI was modified by another user. Please refresh.');
     }
     Object.assign(existing, kpi, { version: (existing.version ?? 1) + 1 });
+    saveStorage('performance_kpis', this.kpis);
     return { ...existing };
   }
 
   async deleteKpi(id: number): Promise<void> {
     await sleep();
+    this.refreshKpis();
     this.kpis = this.kpis.filter((k) => k.id !== id);
+    saveStorage('performance_kpis', this.kpis);
   }
 
-  async getReviews(): Promise<PerformanceReview[]> {
+  async getReviews(filter?: { employeeId?: number | string; status?: string }): Promise<PerformanceReview[]> {
     await sleep();
-    return [...this.reviews];
+    let list = [...this.refreshReviews()];
+    if (filter?.employeeId !== undefined && filter.employeeId !== null && filter.employeeId !== '') {
+      list = list.filter((r) => String(r.employeeId) === String(filter.employeeId));
+    }
+    if (filter?.status) {
+      list = list.filter((r) => r.status === filter.status);
+    }
+    return list;
   }
 
   async getReview(id: number): Promise<PerformanceReview> {
     await sleep();
-    const rev = this.reviews.find((r) => r.id === id);
+    const rev = this.refreshReviews().find((r) => r.id === id);
     if (!rev) throw new Error('Review not found');
     return { ...rev };
   }
 
   async createReview(data: Partial<PerformanceReview> & { kpis?: Array<{ kpiId: number; title?: string; weight?: number }> }): Promise<PerformanceReview> {
     await sleep();
+    this.refreshKpis();
+    this.refreshReviews();
     const rawRatings: ReviewRating[] =
       data.ratings && data.ratings.length > 0
         ? data.ratings
@@ -1899,13 +2012,15 @@ export class MockPerformanceRepository implements IPerformanceRepository {
         throw new Error(`Assigned KPI weights must total exactly 100% (currently ${sum.toFixed(2)}%).`);
       }
     }
-    const emp = employees.find((e) => Number(e.id) === Number(data.employeeId));
-    const rev = employees.find((e) => Number(e.id) === Number(data.reviewerId));
+    const allEmps = loadStorage('employees', employees);
+    const emp = allEmps.find((e) => String(e.id) === String(data.employeeId));
+    const rev = allEmps.find((e) => String(e.id) === String(data.reviewerId));
     const newRev: PerformanceReview = {
       id: Date.now(),
-      employeeId: data.employeeId || 1,
+      employeeId: (data.employeeId ?? emp?.id ?? 'emp-1') as any,
       employeeName: data.employeeName || (emp ? `${emp.firstName} ${emp.lastName}` : undefined),
-      reviewerId: data.reviewerId || 2,
+      employeeStaffId: data.employeeStaffId || emp?.staffId,
+      reviewerId: (data.reviewerId ?? rev?.id ?? 'emp-0') as any,
       reviewerName: data.reviewerName || (rev ? `${rev.firstName} ${rev.lastName}` : undefined),
       reviewPeriodStart: data.reviewPeriodStart || '2026-01-01',
       reviewPeriodEnd: data.reviewPeriodEnd || '2026-06-30',
@@ -1915,6 +2030,7 @@ export class MockPerformanceRepository implements IPerformanceRepository {
       version: 1,
     };
     this.reviews.unshift(newRev);
+    saveStorage('performance_reviews', this.reviews);
     return newRev;
   }
 
@@ -1923,6 +2039,8 @@ export class MockPerformanceRepository implements IPerformanceRepository {
     data: { ratings: ReviewRating[]; reviewerComments?: string; employeeComments?: string; version?: number }
   ): Promise<PerformanceReview> {
     await sleep();
+    this.refreshKpis();
+    this.refreshReviews();
     const rev = this.reviews.find((r) => r.id === id);
     if (!rev) throw new Error('Review not found');
     if (data.version !== undefined && (rev.version ?? 1) !== data.version) {
@@ -1949,20 +2067,25 @@ export class MockPerformanceRepository implements IPerformanceRepository {
     let totalWeighted = 0;
     const normalizedRatings: ReviewRating[] = data.ratings.map((r) => {
       const linkedKpi = r.kpiId ? this.kpis.find((k) => k.id === r.kpiId) : undefined;
+      const existingRating = (rev.ratings || []).find(
+        (er) =>
+          (r.kpiId !== undefined && er.kpiId === r.kpiId) ||
+          (r.kpiTitle !== undefined && er.kpiTitle === r.kpiTitle)
+      );
       const minR = Number(linkedKpi?.minRating ?? 1);
       const maxR = Number(linkedKpi?.maxRating ?? 5);
       if (r.rating < minR || r.rating > maxR) {
-        throw new Error(`Score for "${linkedKpi?.indicator || r.kpiTitle}" must be between ${minR} and ${maxR}.`);
+        throw new Error(`Score for "${linkedKpi?.indicator || existingRating?.kpiTitle || r.kpiTitle}" must be between ${minR} and ${maxR}.`);
       }
-      const w = Number(r.weight ?? linkedKpi?.weight ?? 0);
+      const w = Number(r.weight ?? existingRating?.weight ?? linkedKpi?.weight ?? 0);
       if (w <= 0) {
-        throw new Error(`KPI "${linkedKpi?.indicator || r.kpiTitle}" must have a weight greater than 0%.`);
+        throw new Error(`KPI "${linkedKpi?.indicator || existingRating?.kpiTitle || r.kpiTitle}" must have a weight greater than 0%.`);
       }
       totalWeight += w;
       totalWeighted += r.rating * w;
       return {
         ...r,
-        kpiTitle: linkedKpi?.indicator || r.kpiTitle,
+        kpiTitle: linkedKpi?.indicator || existingRating?.kpiTitle || r.kpiTitle,
         weight: w,
       };
     });
@@ -1977,11 +2100,13 @@ export class MockPerformanceRepository implements IPerformanceRepository {
     rev.finalRating = Number((totalWeighted / 100).toFixed(2));
     rev.status = 'EVALUATED';
     rev.version = (rev.version ?? 1) + 1;
+    saveStorage('performance_reviews', this.reviews);
     return { ...rev };
   }
 
   async approveReview(id: number, version?: number): Promise<PerformanceReview> {
     await sleep();
+    this.refreshReviews();
     const rev = this.reviews.find((r) => r.id === id);
     if (!rev) throw new Error('Review not found');
     if (version !== undefined && (rev.version ?? 1) !== version) {
@@ -1993,6 +2118,7 @@ export class MockPerformanceRepository implements IPerformanceRepository {
     rev.status = 'APPROVED';
     rev.completedAt = new Date().toISOString();
     rev.version = (rev.version ?? 1) + 1;
+    saveStorage('performance_reviews', this.reviews);
     return { ...rev };
   }
 }
@@ -2677,6 +2803,7 @@ export class MockOffboardingRepository implements IOffboardingRepository {
   }
 
   private findOrThrow(id: string, version?: number): number {
+    this.refreshExitRequests();
     const idx = exitRequestsStore.findIndex((r) => r.id === id);
     if (idx < 0) throw new Error('Offboarding request not found.');
     if (version !== undefined && (exitRequestsStore[idx].version ?? 1) !== version) {
@@ -2685,9 +2812,14 @@ export class MockOffboardingRepository implements IOffboardingRepository {
     return idx;
   }
 
+  private refreshExitRequests(): ExitRequest[] {
+    exitRequestsStore = loadStorage('exit_requests', exitRequestsStore);
+    return exitRequestsStore;
+  }
+
   async getAll(): Promise<ExitRequest[]> {
     await sleep();
-    return exitRequestsStore.map((r) => this.enrich(r));
+    return this.refreshExitRequests().map((r) => this.enrich(r));
   }
 
   async create(payload: {
@@ -2698,9 +2830,11 @@ export class MockOffboardingRepository implements IOffboardingRepository {
     managerId?: string;
   }): Promise<ExitRequest> {
     await sleep();
-    const emp = employees.find((e) => String(e.id) === String(payload.employeeId));
+    this.refreshExitRequests();
+    const allEmps = loadStorage('employees', employees);
+    const emp = allEmps.find((e) => String(e.id) === String(payload.employeeId));
     if (!emp) throw new Error('Employee not found.');
-    const existingActive = exitRequestsStore.find((r) => r.employeeId === emp.id && r.status !== 'OFFBOARDED');
+    const existingActive = exitRequestsStore.find((r) => String(r.employeeId) === String(emp.id) && r.status !== 'OFFBOARDED');
     if (existingActive) throw new Error(`${emp.firstName} ${emp.lastName} already has an active offboarding workflow.`);
     const resDate = new Date(payload.resignationDate);
     const lastDate = new Date(payload.proposedLastDay);

@@ -31,12 +31,27 @@ import {
   Users,
   GitBranch,
 } from 'lucide-react';
-import { Employee, EmployeeHierarchy, DocumentCategory, HubDocument, PerformanceReview, UserRole } from '../../types';
+import {
+  Employee,
+  EmployeeHierarchy,
+  DocumentCategory,
+  HubDocument,
+  PerformanceReview,
+  LeaveBalanceRecord,
+  LeaveRequest,
+  UserRole,
+} from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import { SensitiveField } from '../common/SensitiveField';
 import { Badge } from '../common/Badge';
-import { documentRepository, auditRepository, employeeRepository, performanceRepository } from '../../services';
+import {
+  documentRepository,
+  auditRepository,
+  employeeRepository,
+  performanceRepository,
+  leaveRepository,
+} from '../../services';
 import { EmployeeDocumentInput } from '../../types/documents';
 
 interface EmployeeProfileModalProps {
@@ -170,24 +185,55 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
     };
   }, [employee?.id]);
 
+  const [empLeaveBalances, setEmpLeaveBalances] = useState<LeaveBalanceRecord[]>([]);
+  const [empLeaveHistory, setEmpLeaveHistory] = useState<LeaveRequest[]>([]);
+  const [leaveLoading, setLeaveLoading] = useState(false);
+
   const loadEmployeePerformance = useCallback(async () => {
     if (!employee?.id) {
       setEmpReviews([]);
       return;
     }
-    const numericId = Number(employee.id);
-    if (!numericId) {
-      setEmpReviews([]);
-      return;
-    }
     setReviewsLoading(true);
     try {
-      const list = await performanceRepository.getReviews({ employeeId: numericId });
-      setEmpReviews(list.filter((r) => String(r.employeeId) === String(employee.id)));
+      const numericId = Number(employee.id);
+      const list = await performanceRepository.getReviews(
+        Number.isFinite(numericId) && numericId > 0 ? { employeeId: numericId } : undefined
+      );
+      setEmpReviews(
+        list.filter(
+          (r) =>
+            String(r.employeeId) === String(employee.id) ||
+            (employee.staffId && r.employeeStaffId === employee.staffId) ||
+            (r.employeeName && r.employeeName.toLowerCase() === employee.fullName.toLowerCase())
+        )
+      );
     } catch {
       setEmpReviews([]);
     } finally {
       setReviewsLoading(false);
+    }
+  }, [employee?.id, employee?.staffId, employee?.fullName]);
+
+  const loadEmployeeLeave = useCallback(async () => {
+    if (!employee?.id) {
+      setEmpLeaveBalances([]);
+      setEmpLeaveHistory([]);
+      return;
+    }
+    setLeaveLoading(true);
+    try {
+      const [balData, reqData] = await Promise.all([
+        leaveRepository.getBalances(String(employee.id)).catch(() => [] as LeaveBalanceRecord[]),
+        leaveRepository.getByEmployee(String(employee.id)).catch(() => [] as LeaveRequest[]),
+      ]);
+      setEmpLeaveBalances(balData);
+      setEmpLeaveHistory(reqData);
+    } catch {
+      setEmpLeaveBalances([]);
+      setEmpLeaveHistory([]);
+    } finally {
+      setLeaveLoading(false);
     }
   }, [employee?.id]);
 
@@ -195,11 +241,20 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
     if (activeTab === 'performance' && employee?.id) {
       void loadEmployeePerformance();
     }
-  }, [activeTab, employee?.id, loadEmployeePerformance]);
+    if (activeTab === 'leave' && employee?.id) {
+      void loadEmployeeLeave();
+    }
+  }, [activeTab, employee?.id, loadEmployeePerformance, loadEmployeeLeave]);
 
   useRealtimeTable('performance_reviews', () => {
     if (employee?.id) {
       void loadEmployeePerformance();
+    }
+  });
+
+  useRealtimeTable('leave_requests', () => {
+    if (employee?.id) {
+      void loadEmployeeLeave();
     }
   });
 
@@ -1174,45 +1229,77 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
           {/* TAB 7: LEAVE */}
           {activeTab === 'leave' && (
             <div className="space-y-6 animate-fade-in">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 tabular-nums">
-                <div className="p-3.5 rounded-xl bg-[#EBF5F2] border border-[#A3D4C7]/60 text-center">
-                  <span className="text-[11px] text-[#083E34] font-bold block">Annual Leave</span>
-                  <div className="text-xl font-bold text-[#052C25] mt-1">18 / 21</div>
-                  <span className="text-[11px] text-[#083E34]/80">Days Remaining</span>
-                </div>
-                <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-center">
-                  <span className="text-[11px] text-emerald-700 font-bold block">Casual Leave</span>
-                  <div className="text-xl font-bold text-emerald-900 mt-1">3 / 5</div>
-                  <span className="text-[11px] text-emerald-700">Days Remaining</span>
-                </div>
-                <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200/80 text-center">
-                  <span className="text-[11px] text-amber-800 font-bold block">Sick Leave</span>
-                  <div className="text-xl font-bold text-amber-900 mt-1">10 / 12</div>
-                  <span className="text-[11px] text-amber-700">Days Remaining</span>
-                </div>
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-center">
-                  <span className="text-[11px] text-slate-700 font-bold block">Compassionate</span>
-                  <div className="text-xl font-bold text-slate-900 mt-1">3 / 3</div>
-                  <span className="text-[10px] text-purple-600">Days Remaining</span>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="font-bold text-slate-900 uppercase tracking-wider text-xs pb-1.5 border-b border-slate-200">
-                  Recent Leave Applications
-                </h4>
-                <div className="space-y-2 mt-3">
-                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-slate-800">Annual Leave (10 Days)</p>
-                      <p className="text-[10px] text-slate-500 font-mono">10 Aug 2026 - 20 Aug 2026</p>
-                    </div>
-                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                      Approved & Completed
-                    </span>
+              {leaveLoading ? (
+                <div className="p-8 text-center text-xs text-slate-500">Loading leave balances &amp; history...</div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 tabular-nums">
+                    {empLeaveBalances.length > 0 ? (
+                      empLeaveBalances.map((bal) => (
+                        <div
+                          key={String(bal.id)}
+                          className="p-3.5 rounded-xl bg-[#EBF5F2] border border-[#A3D4C7]/60 text-center"
+                        >
+                          <span className="text-[11px] text-[#083E34] font-bold block">
+                            {bal.category?.name || 'Leave Quota'}
+                          </span>
+                          <div className="text-xl font-bold text-[#052C25] mt-1">
+                            {Number(bal.remaining_days)} / {Number(bal.total_days)}
+                          </div>
+                          <span className="text-[11px] text-[#083E34]/80">
+                            Days Remaining ({Number(bal.used_days)} used · {Number(bal.pending_days)} pending)
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="sm:col-span-3 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-500 text-center">
+                        No leave balance records provisioned yet for {employee.fullName}.
+                      </div>
+                    )}
                   </div>
-                </div>
-              </div>
+
+                  <div>
+                    <h4 className="font-bold text-slate-900 uppercase tracking-wider text-xs pb-1.5 border-b border-slate-200">
+                      Leave Applications ({empLeaveHistory.length})
+                    </h4>
+                    <div className="space-y-2 mt-3">
+                      {empLeaveHistory.length > 0 ? (
+                        empLeaveHistory.map((lv) => (
+                          <div
+                            key={lv.id}
+                            className="p-3 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-between gap-3"
+                          >
+                            <div>
+                              <p className="font-semibold text-slate-800">
+                                {lv.leaveType} ({lv.totalDays || lv.daysRequested} Days)
+                              </p>
+                              <p className="text-[10px] text-slate-500 font-mono">
+                                {lv.startDate} → {lv.endDate}
+                              </p>
+                              {lv.reason && <p className="text-[11px] text-slate-600 mt-0.5">{lv.reason}</p>}
+                            </div>
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded border shrink-0 ${
+                                lv.status === 'Approved'
+                                  ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                                  : lv.status === 'Rejected'
+                                  ? 'text-rose-700 bg-rose-50 border-rose-200'
+                                  : 'text-amber-700 bg-amber-50 border-amber-200'
+                              }`}
+                            >
+                              {lv.status}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-xs text-slate-500 py-3">
+                          No leave requests recorded for {employee.fullName}.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
 
               {onNavigateLeave && (
                 <button

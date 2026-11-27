@@ -70,15 +70,22 @@ class LeaveRepository
     }
 
     /** @return Collection<int, LeaveRequest> */
-    public function listScopedRequests(?array $allowedEmployeeIds, int $limit = 500): Collection
+    public function listScopedRequests(?array $allowedEmployeeIds, int $limit = 500, ?int $viewerEmployeeId = null): Collection
     {
         $query = LeaveRequest::query()->with(['employee.supervisor']);
 
         if ($allowedEmployeeIds !== null) {
-            if ($allowedEmployeeIds === []) {
+            if ($allowedEmployeeIds === [] && $viewerEmployeeId === null) {
                 $query->whereRaw('1 = 0');
             } else {
-                $query->whereIn('employee_id', $allowedEmployeeIds);
+                $query->where(function ($sub) use ($allowedEmployeeIds, $viewerEmployeeId) {
+                    if ($allowedEmployeeIds !== []) {
+                        $sub->whereIn('employee_id', $allowedEmployeeIds);
+                    }
+                    if ($viewerEmployeeId !== null) {
+                        $sub->orWhere('manager_id', (string) $viewerEmployeeId);
+                    }
+                });
             }
         }
 

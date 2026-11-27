@@ -101,6 +101,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
   const [daysRequested, setDaysRequested] = useState(5);
   const [reason, setReason] = useState('');
   const [handoverColleague, setHandoverColleague] = useState('');
+  const [selectedManagerId, setSelectedManagerId] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -128,7 +129,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
     try {
       const [reqData, balData, catData, empData] = await Promise.all([
         leaveRepository.getAll(),
-        leaveRepository.getBalances().catch(() => [] as LeaveBalanceRecord[]),
+        leaveRepository.getBalances(currentActorId || undefined).catch(() => [] as LeaveBalanceRecord[]),
         leaveRepository.getCategories().catch(() => [] as LeaveCategoryRecord[]),
         employeeRepository.getAll().catch(() => [] as Employee[]),
       ]);
@@ -177,6 +178,36 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
 
   const directSupervisorId = selfEmployee?.managerId || currentUser.managerId || '';
   const directSupervisorName = selfEmployee?.managerName || currentUser.managerName || '';
+
+  const availableManagers = useMemo(
+    () =>
+      employees.filter(
+        (e) =>
+          String(e.id) !== String(currentActorId) &&
+          (!currentUser.staffId || e.staffId !== currentUser.staffId)
+      ),
+    [employees, currentActorId, currentUser.staffId]
+  );
+
+  // Sync default selected manager to direct supervisor when modal opens
+  useEffect(() => {
+    if (showApplyModal && !selectedManagerId && directSupervisorId) {
+      setSelectedManagerId(String(directSupervisorId));
+    }
+  }, [showApplyModal, directSupervisorId, selectedManagerId]);
+
+  const effectiveManager = useMemo(() => {
+    if (selectedManagerId) {
+      return availableManagers.find((m) => String(m.id) === String(selectedManagerId)) || null;
+    }
+    return null;
+  }, [selectedManagerId, availableManagers]);
+
+  const effectiveManagerId = selectedManagerId || directSupervisorId || '';
+  const effectiveManagerName =
+    effectiveManager?.fullName ||
+    (selectedManagerId === String(directSupervisorId) ? directSupervisorName : '') ||
+    (!selectedManagerId ? directSupervisorName : '');
 
   const personalBalances = useMemo(() => {
     const own = balances.filter(
@@ -232,8 +263,8 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
         endDate,
         totalDays: daysRequested,
         daysRequested,
-        managerId: directSupervisorId || undefined,
-        managerName: directSupervisorName || undefined,
+        managerId: effectiveManagerId || undefined,
+        managerName: effectiveManagerName || undefined,
         reason: reason.trim(),
         handoverColleague: handoverColleague.trim() || undefined,
       });
@@ -257,7 +288,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
       setHandoverColleague('');
       await loadData();
       setSelectedRequestId(created.id);
-      const routedTarget = created.managerName || directSupervisorName || 'HR Final Review';
+      const routedTarget = created.managerName || effectiveManagerName || 'HR Final Review';
       showToast(`Leave request submitted and routed to ${routedTarget}.`);
     } catch (err: any) {
       const msg = err?.message || 'Unable to submit leave request.';
@@ -1068,15 +1099,38 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                 </div>
               </div>
 
+              <div>
+                <label className="block text-slate-800 font-semibold mb-1.5">
+                  Select Reviewing Manager (Stage 1 Approver)
+                </label>
+                <select
+                  value={selectedManagerId}
+                  onChange={(e) => setSelectedManagerId(e.target.value)}
+                  data-testid="leave-manager-select"
+                  className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 font-medium focus:outline-none focus:border-[#083E34] focus:ring-2 focus:ring-[#083E34]/15"
+                >
+                  <option value="">
+                    {directSupervisorName
+                      ? `Default Line Manager (${directSupervisorName})`
+                      : 'Route directly to HR Final Review'}
+                  </option>
+                  {availableManagers.map((mgr) => (
+                    <option key={mgr.id} value={String(mgr.id)}>
+                      {mgr.fullName} — {mgr.jobTitle} ({mgr.departmentName})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="p-3 rounded-lg bg-emerald-50/60 border border-emerald-200/80 space-y-1">
                 <span className="font-semibold text-[#083E34] flex items-center gap-1.5">
                   <GitBranch className="w-3.5 h-3.5" />
-                  Approval Route (Reporting Hierarchy)
+                  Approval Route (Two-Stage Workflow)
                 </span>
                 <p className="text-[11px] text-slate-700">
-                  {directSupervisorName
-                    ? `Stage 1: ${directSupervisorName} (Direct Supervisor) → Stage 2: HR Final Approval`
-                    : 'No direct supervisor assigned — routes directly to HR Final Approval.'}
+                  {effectiveManagerName
+                    ? `Stage 1: ${effectiveManagerName} (Manager Review) → Stage 2: HR Final Approval`
+                    : 'No line manager selected — routes directly to HR Final Approval.'}
                 </p>
               </div>
 

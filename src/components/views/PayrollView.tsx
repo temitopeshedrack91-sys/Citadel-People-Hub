@@ -76,6 +76,12 @@ export const PayrollView: React.FC = () => {
   const [isLoanModalOpen, setIsLoanModalOpen] = useState(false);
   const [selectedPayslip, setSelectedPayslip] = useState<PayrollItem | null>(null);
   const [actionSuccessMessage, setActionSuccessMessage] = useState<string | null>(null);
+  const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(null);
+
+  const showError = (msg: string) => {
+    setActionErrorMessage(msg);
+    setTimeout(() => setActionErrorMessage(null), 6000);
+  };
 
   // Stepper state for Pay Run Generation Wizard
   const [wizardStep, setWizardStep] = useState(1);
@@ -253,7 +259,7 @@ export const PayrollView: React.FC = () => {
       showNotification(`Pay run ${created.run_number} draft successfully created!`);
       loadData();
     } catch (err: any) {
-      alert(`Failed to generate pay run: ${err.message || 'Unknown error'}`);
+      showError(`Failed to generate pay run: ${err?.message || 'Unknown error'}`);
     }
   };
 
@@ -274,7 +280,7 @@ export const PayrollView: React.FC = () => {
       showNotification(`Pay run ${finalized.run_number} has been finalized and approved!`);
       loadData();
     } catch (err: any) {
-      alert(`Could not finalize run: ${err.message}`);
+      showError(`Could not finalize run: ${err?.message || 'Unknown error'}`);
     }
   };
 
@@ -295,7 +301,7 @@ export const PayrollView: React.FC = () => {
       showNotification(`Loan ${approved.loan_number} approved and activated.`);
       loadData();
     } catch (err: any) {
-      alert(`Error approving loan: ${err.message}`);
+      showError(`Error approving loan: ${err?.message || 'Unknown error'}`);
     }
   };
 
@@ -303,7 +309,7 @@ export const PayrollView: React.FC = () => {
   const handleCreateStructure = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!structureForm.name) {
-      alert('Please enter a structure name');
+      showError('Please enter a structure name');
       return;
     }
     try {
@@ -329,7 +335,7 @@ export const PayrollView: React.FC = () => {
       showNotification(`Salary structure "${created.name}" created successfully.`);
       loadData();
     } catch (err: any) {
-      alert(`Failed to save template: ${err.message}`);
+      showError(`Failed to save template: ${err?.message || 'Unknown error'}`);
     }
   };
 
@@ -337,7 +343,7 @@ export const PayrollView: React.FC = () => {
   const handleAssignStructure = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!assignmentForm.employee_id || !assignmentForm.salary_template_id) {
-      alert('Please select both an employee and a salary structure');
+      showError('Please select both an employee and a salary structure');
       return;
     }
     try {
@@ -364,7 +370,7 @@ export const PayrollView: React.FC = () => {
       showNotification('Employee salary structure assigned successfully.');
       loadData();
     } catch (err: any) {
-      alert(`Failed to assign template: ${err.message}`);
+      showError(`Failed to assign template: ${err?.message || 'Unknown error'}`);
     }
   };
 
@@ -372,7 +378,7 @@ export const PayrollView: React.FC = () => {
   const handleCreateLoan = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loanForm.employee_id) {
-      alert('Please select an employee');
+      showError('Please select an employee');
       return;
     }
     try {
@@ -400,7 +406,7 @@ export const PayrollView: React.FC = () => {
       showNotification(`Loan application ${res.loan_number} created.`);
       loadData();
     } catch (err: any) {
-      alert(`Failed to create loan: ${err.message}`);
+      showError(`Failed to create loan: ${err?.message || 'Unknown error'}`);
     }
   };
 
@@ -412,7 +418,7 @@ export const PayrollView: React.FC = () => {
       showNotification(`Payslip for ${item.employee?.name || 'Employee'} marked as PAID.`);
       loadData();
     } catch (err: any) {
-      alert(`Could not mark paid: ${err.message}`);
+      showError(`Could not mark paid: ${err?.message || 'Unknown error'}`);
     }
   };
 
@@ -491,7 +497,7 @@ export const PayrollView: React.FC = () => {
       }
       showNotification('CGCC Payroll template generated successfully.');
     } catch (e: any) {
-      alert(`Could not download template: ${e.message}`);
+      showError(`Could not download template: ${e?.message || 'Unknown error'}`);
     }
   };
 
@@ -557,7 +563,7 @@ export const PayrollView: React.FC = () => {
         const text = event.target?.result as string;
         const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
         if (lines.length <= 1) {
-          alert('Uploaded CSV has no data rows.');
+          showError('Uploaded CSV has no data rows.');
           return;
         }
 
@@ -607,7 +613,7 @@ export const PayrollView: React.FC = () => {
         setWorksheetData(dataRows);
         showNotification(`Parsed ${dataRows.length} rows from ${file.name}`);
       } catch (err: any) {
-        alert(`Failed to parse worksheet: ${err.message}`);
+        showError(`Failed to parse worksheet: ${err?.message || 'Unknown error'}`);
       }
     };
     reader.readAsText(file);
@@ -616,7 +622,7 @@ export const PayrollView: React.FC = () => {
   // Commit verified worksheet into a formal Pay Run
   const handleCommitWorksheet = async () => {
     if (worksheetData.length === 0) {
-      alert('No worksheet data to commit. Please load or upload worksheet rows first.');
+      showError('No worksheet data to commit. Please load or upload worksheet rows first.');
       return;
     }
     setIsCommittingWorksheet(true);
@@ -651,7 +657,7 @@ export const PayrollView: React.FC = () => {
       setActiveTab('runs');
       loadData();
     } catch (err: any) {
-      alert(`Failed to commit worksheet: ${err.message}`);
+      showError(`Failed to commit worksheet: ${err?.message || 'Unknown error'}`);
     } finally {
       setIsCommittingWorksheet(false);
     }
@@ -667,6 +673,24 @@ export const PayrollView: React.FC = () => {
           <button
             onClick={() => setActionSuccessMessage(null)}
             className="text-white/60 hover:text-white ml-2"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Error Toast Notification */}
+      {actionErrorMessage && (
+        <div
+          role="alert"
+          className="fixed top-20 right-5 z-50 flex items-center gap-3 bg-rose-950 text-white px-5 py-3 rounded-xl shadow-xl border border-rose-400/50 animate-slide-in"
+        >
+          <AlertCircle className="w-5 h-5 text-rose-300 shrink-0" />
+          <span className="text-sm font-semibold">{actionErrorMessage}</span>
+          <button
+            type="button"
+            onClick={() => setActionErrorMessage(null)}
+            className="text-white/70 hover:text-white ml-2"
           >
             <X className="w-4 h-4" />
           </button>

@@ -41,7 +41,10 @@ class LeaveController extends Controller
         abort_unless(RoleAuthorization::canonical($user->role) !== 'VIEWER', 403, 'You are not authorized to access leave requests.');
 
         $allowedEmployeeIds = RoleAuthorization::visibleLeaveEmployeeIds($user);
-        $records = $this->leaves->listScopedRequests($allowedEmployeeIds);
+        $viewerEmployeeId = $user->staff_id
+            ? $this->employees->findByStaffId($user->staff_id)?->id
+            : null;
+        $records = $this->leaves->listScopedRequests($allowedEmployeeIds, 500, $viewerEmployeeId ? (int) $viewerEmployeeId : null);
 
         return response()->json([
             'data' => $records->map(fn (LeaveRecord $record) => $this->present($record)),
@@ -113,6 +116,8 @@ class LeaveController extends Controller
             'relievingStaffId' => ['nullable', 'string', 'max:50'],
             'relievingStaffName' => ['nullable', 'string', 'max:180'],
             'handoverColleague' => ['nullable', 'string', 'max:180'],
+            'managerId' => ['nullable', 'exists:employees,id'],
+            'managerName' => ['nullable', 'string', 'max:180'],
         ]);
 
         if (! isset($data['totalDays'])) {

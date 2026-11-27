@@ -126,7 +126,7 @@ export const ROLE_MODULE_PERMISSIONS: Record<CanonicalRole, NavModule[]> = {
     'ai-assistant',
   ],
 
-  // Managers see team approvals & team calendar, NOT HR reports or HR master controls
+  // Managers see team approvals, team performance, team offboarding, & team calendar
   MANAGER: [
     'dashboard',
     'directory',
@@ -136,6 +136,8 @@ export const ROLE_MODULE_PERMISSIONS: Record<CanonicalRole, NavModule[]> = {
     'claims',
     'calendar',
     'team-notes',
+    'offboarding',
+    'performance',
     'documents',
     'notifications',
     'ai-assistant',
@@ -295,7 +297,7 @@ export function getRolePermissions(role?: string | null): RolePermissions {
         canManageLeavePolicies: false,
         canViewAuditLogs: false,
         canManageOnboarding: false,
-        canManagePerformance: false,
+        canManagePerformance: true,
         canManageDocuments: false,
         canConfigureIntegrations: false,
         canExportReports: false,
@@ -409,7 +411,17 @@ export function canPerformAction(
   }
 
   if (canonical === 'MANAGER') {
-    if (['approve_leave', 'apply_leave', 'clock_in_out', 'create_task', 'edit_task'].includes(action)) {
+    if (
+      [
+        'approve_leave',
+        'apply_leave',
+        'clock_in_out',
+        'create_task',
+        'edit_task',
+        'manage_performance',
+        'manage_offboarding',
+      ].includes(action)
+    ) {
       return { allowed: true, status: 200 };
     }
     return {

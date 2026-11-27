@@ -145,12 +145,13 @@ export const RecruitmentView: React.FC = () => {
   // Handle Candidate Stage Transition
   const handleCandidateStatusTransition = async (candidate: Candidate, newStatus: string) => {
     try {
+      setActionError(null);
       const updated = await recruitmentPipelineRepository.updateCandidateStatus(candidate.id, newStatus);
       setCandidates((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
       setSuccessBanner(`Candidate ${candidate.fullName} transitioned to "${newStatus}".`);
       setTimeout(() => setSuccessBanner(null), 5000);
     } catch (err: any) {
-      alert(`Status update failed: ${err.message}`);
+      setActionError(`Status update failed: ${err?.message || 'Unexpected error.'}`);
     }
   };
 
@@ -158,10 +159,11 @@ export const RecruitmentView: React.FC = () => {
   const handleAddCandidateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!candidateForm.firstName || !candidateForm.lastName || !candidateForm.email) {
-      alert('Please provide first name, last name, and email address.');
+      setActionError('Please provide first name, last name, and email address.');
       return;
     }
     try {
+      setActionError(null);
       const created = await recruitmentPipelineRepository.createCandidate({
         firstName: candidateForm.firstName,
         lastName: candidateForm.lastName,
@@ -186,7 +188,7 @@ export const RecruitmentView: React.FC = () => {
       setSuccessBanner(`Applicant ${created.fullName} successfully registered in ATS pipeline.`);
       setTimeout(() => setSuccessBanner(null), 5000);
     } catch (err: any) {
-      alert(`Could not register candidate: ${err.message}`);
+      setActionError(`Could not register candidate: ${err?.message || 'Unexpected error.'}`);
     }
   };
 
@@ -195,6 +197,7 @@ export const RecruitmentView: React.FC = () => {
     e.preventDefault();
     if (!selectedCandidate) return;
     try {
+      setActionError(null);
       const scheduled = await recruitmentPipelineRepository.scheduleInterview(selectedCandidate.id, {
         title: interviewForm.title,
         interviewerName: interviewForm.interviewerName,
@@ -210,7 +213,7 @@ export const RecruitmentView: React.FC = () => {
       setSuccessBanner(`Interview scheduled for ${selectedCandidate.fullName} on ${scheduled.scheduledDate}.`);
       setTimeout(() => setSuccessBanner(null), 5000);
     } catch (err: any) {
-      alert(`Scheduling failed: ${err.message}`);
+      setActionError(`Scheduling failed: ${err?.message || 'Unexpected error.'}`);
     }
   };
 
@@ -219,6 +222,7 @@ export const RecruitmentView: React.FC = () => {
     e.preventDefault();
     if (!selectedInterview) return;
     try {
+      setActionError(null);
       await recruitmentPipelineRepository.updateInterviewResult(
         selectedInterview.id,
         resultForm.result,
@@ -230,7 +234,7 @@ export const RecruitmentView: React.FC = () => {
       setSuccessBanner(`Interview result marked as "${resultForm.result}" for candidate.`);
       setTimeout(() => setSuccessBanner(null), 5000);
     } catch (err: any) {
-      alert(`Failed to save interview result: ${err.message}`);
+      setActionError(`Failed to save interview result: ${err?.message || 'Unexpected error.'}`);
     }
   };
 
