@@ -35,10 +35,7 @@ interface DemoAccount {
   password: string;
 }
 
-const DEMO_ACCOUNTS: DemoAccount[] =
-  import.meta.env.VITE_ENABLE_DEMO_PERSONA_LOGIN === 'false'
-    ? []
-    : [
+const DEMO_ACCOUNTS: DemoAccount[] = [
   {
     label: 'System Admin',
     name: 'Engr. Tunde Afolabi',
@@ -121,9 +118,7 @@ export const AuthPage: React.FC = () => {
     import.meta.env.VITE_ENABLE_LOCAL_DEMO_AUTH === 'true'
   );
 
-  const showDevSeededAccounts =
-    localDemoAuthenticationEnabled ||
-    (import.meta.env.VITE_ENABLE_DEMO_PERSONA_LOGIN !== 'false' && DEMO_ACCOUNTS.length > 0);
+  const showDevSeededAccounts = DEMO_ACCOUNTS.length > 0;
 
   const [activeTab, setActiveTab] = useState<'signin' | 'register'>('signin');
   const [email, setEmail] = useState(localDemoAuthenticationEnabled ? 'dr.adeleke@citadel.ng' : '');
@@ -630,11 +625,7 @@ export const AuthPage: React.FC = () => {
               >
                 <div className="flex items-center gap-2 text-xs font-semibold text-slate-800">
                   <Fingerprint className="w-4 h-4 text-[#174EA6]" />
-                  <span>
-                    {localDemoAuthenticationEnabled
-                      ? 'Demo Credentials (1-Click Fill)'
-                      : 'Demo Accounts (1-Click Fill · Live API Auth)'}
-                  </span>
+                  <span>Demo Credentials (1-Click Fill)</span>
                 </div>
                 {isDemoAccordionOpen ? (
                   <ChevronUp className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition" />
