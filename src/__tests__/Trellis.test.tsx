@@ -227,4 +227,73 @@ describe('Citadel People Hub (Project Management Module)', () => {
       expect(screen.queryByTestId('trellis-delete-confirm-modal')).not.toBeInTheDocument();
     });
   });
+
+  it('renders color-coded priority badges (Low, Medium, High, Urgent) on card views', () => {
+    render(<TrellisApp />);
+
+    // Urgent badge (PAS-219: rose color-coded badge)
+    const urgentBadge = screen.getByTestId('trellis-priority-badge-PAS-219');
+    expect(urgentBadge).toHaveTextContent('Urgent');
+    expect(urgentBadge).toHaveAttribute('data-priority', 'Urgent');
+    expect(urgentBadge).toHaveClass('bg-rose-50', 'text-rose-700');
+
+    // High badge (PAS-218: amber color-coded badge)
+    const highBadge = screen.getByTestId('trellis-priority-badge-PAS-218');
+    expect(highBadge).toHaveTextContent('High');
+    expect(highBadge).toHaveAttribute('data-priority', 'High');
+    expect(highBadge).toHaveClass('bg-amber-50', 'text-amber-800');
+
+    // Medium badge (PAS-227: blue color-coded badge)
+    const mediumBadge = screen.getByTestId('trellis-priority-badge-PAS-227');
+    expect(mediumBadge).toHaveTextContent('Medium');
+    expect(mediumBadge).toHaveAttribute('data-priority', 'Medium');
+    expect(mediumBadge).toHaveClass('bg-blue-50', 'text-[#174EA6]');
+
+    // Low badge (PAS-220: slate color-coded badge)
+    const lowBadge = screen.getByTestId('trellis-priority-badge-PAS-220');
+    expect(lowBadge).toHaveTextContent('Low');
+    expect(lowBadge).toHaveAttribute('data-priority', 'Low');
+    expect(lowBadge).toHaveClass('bg-slate-100', 'text-slate-600');
+  });
+
+  it('supports selecting priority when creating a task, updating priority in detail drawer, and filtering by priority', async () => {
+    render(<TrellisApp />);
+
+    // 1. Create a new task with Urgent priority
+    fireEvent.click(screen.getByTestId('trellis-new-task-btn'));
+    fireEvent.change(screen.getByTestId('trellis-input-title'), {
+      target: { value: 'Fix Production Payroll Webhook' },
+    });
+    fireEvent.click(screen.getByTestId('trellis-priority-option-Urgent'));
+    fireEvent.click(screen.getByTestId('trellis-submit-new-task'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Fix Production Payroll Webhook')).toBeInTheDocument();
+    });
+
+    // 2. Open task detail and change priority via detail selector
+    fireEvent.click(screen.getByText('Empty states for the Orders tab'));
+    const detailPrioritySelect = screen.getByTestId('trellis-detail-priority-select');
+    expect(detailPrioritySelect).toHaveValue('Low');
+    fireEvent.change(detailPrioritySelect, { target: { value: 'Urgent' } });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('trellis-priority-badge-PAS-220')).toHaveTextContent('Urgent');
+    });
+
+    // Close detail drawer
+    fireEvent.click(screen.getByTestId('trellis-close-detail-btn'));
+
+    // 3. Filter board cards by Urgent priority
+    const priorityFilter = screen.getByTestId('trellis-filter-priority');
+    fireEvent.change(priorityFilter, { target: { value: 'Urgent' } });
+
+    expect(
+      screen.getByText('Camera crashes on Android 12 when scanning a receipt')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Fix Production Payroll Webhook')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Let users skip the location permission step')
+    ).not.toBeInTheDocument();
+  });
 });

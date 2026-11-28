@@ -31,6 +31,8 @@ export const TrellisHeader: React.FC = () => {
     setSelectedAssigneeFilter,
     selectedLabelFilter,
     setSelectedLabelFilter,
+    selectedPriorityFilter,
+    setSelectedPriorityFilter,
     teamMembers,
     currentUser,
     switchUser,
@@ -305,6 +307,23 @@ export const TrellisHeader: React.FC = () => {
                   {m.name}
                 </option>
               ))}
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+
+          {/* Priority Filter */}
+          <div className="relative w-full sm:w-auto">
+            <select
+              value={selectedPriorityFilter}
+              onChange={(e) => setSelectedPriorityFilter(e.target.value)}
+              data-testid="trellis-filter-priority"
+              className="w-full sm:w-auto min-h-[44px] px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-semibold focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 pr-8 appearance-none cursor-pointer"
+            >
+              <option value="All">Priority: All</option>
+              <option value="Urgent">Urgent</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
             </select>
             <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>

@@ -1,5 +1,47 @@
 export type TaskStatus = 'To do' | 'In progress' | 'In review' | 'Done';
 
+export type TaskPriority = 'Low' | 'Medium' | 'High' | 'Urgent';
+
+export const ALL_PRIORITIES: TaskPriority[] = ['Low', 'Medium', 'High', 'Urgent'];
+
+export const PRIORITY_BADGE_STYLES: Record<
+  TaskPriority,
+  { badgeClass: string; dotClass: string; activeBtnClass: string }
+> = {
+  Low: {
+    badgeClass: 'bg-slate-100 text-slate-600 border-slate-200',
+    dotClass: 'bg-slate-400',
+    activeBtnClass: 'bg-slate-700 text-white border-slate-700',
+  },
+  Medium: {
+    badgeClass: 'bg-blue-50 text-[#174EA6] border-blue-200',
+    dotClass: 'bg-[#174EA6]',
+    activeBtnClass: 'bg-[#174EA6] text-white border-[#174EA6]',
+  },
+  High: {
+    badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
+    dotClass: 'bg-amber-500',
+    activeBtnClass: 'bg-amber-600 text-white border-amber-600',
+  },
+  Urgent: {
+    badgeClass: 'bg-rose-50 text-rose-700 border-rose-200',
+    dotClass: 'bg-rose-600',
+    activeBtnClass: 'bg-rose-600 text-white border-rose-600',
+  },
+};
+
+export function resolveTaskPriority(
+  task: Pick<TrellisTask, 'priority' | 'labels'>
+): TaskPriority {
+  if (task.priority && ALL_PRIORITIES.includes(task.priority)) {
+    return task.priority;
+  }
+  if (task.labels?.includes('High')) {
+    return 'High';
+  }
+  return 'Medium';
+}
+
 export type TaskLabel =
   | 'Feature'
   | 'Bug'
@@ -49,6 +91,7 @@ export interface TrellisTask {
   title: string;
   description: string;
   status: TaskStatus;
+  priority?: TaskPriority;
   labels: TaskLabel[];
   dueDate: string; // e.g. 'Tue, Oct 20'
   dueTag?: 'Today' | 'Tomorrow' | string;

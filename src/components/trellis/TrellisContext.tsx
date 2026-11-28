@@ -4,6 +4,7 @@ import {
   TeamMember,
   TrellisNotification,
   TaskStatus,
+  TaskPriority,
   AssignmentStatus,
   ActivityHistoryItem,
   ViewTab,
@@ -31,6 +32,7 @@ interface CreateTaskInput {
   description: string;
   dueDate: string;
   status: TaskStatus;
+  priority?: TaskPriority;
   labels: TaskLabel[];
   assigneeId: string;
   hours?: number;
@@ -83,6 +85,8 @@ interface TrellisContextType {
   setSelectedAssigneeFilter: (val: string) => void;
   selectedLabelFilter: string; // 'All' or label
   setSelectedLabelFilter: (val: string) => void;
+  selectedPriorityFilter: string; // 'All' or TaskPriority
+  setSelectedPriorityFilter: (val: string) => void;
   selectedGroupFilter: 'Status' | 'Assignee' | 'Priority';
   setSelectedGroupFilter: (val: 'Status' | 'Assignee' | 'Priority') => void;
 }
@@ -200,6 +204,7 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAssigneeFilter, setSelectedAssigneeFilter] = useState('All');
   const [selectedLabelFilter, setSelectedLabelFilter] = useState('All');
+  const [selectedPriorityFilter, setSelectedPriorityFilter] = useState('All');
   const [selectedGroupFilter, setSelectedGroupFilter] = useState<'Status' | 'Assignee' | 'Priority'>('Status');
 
   const findMember = useCallback(
@@ -267,11 +272,14 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const newId = `PAS-${tasks.length + 219}`;
     const isSelfAssignment = input.assigneeId === currentUser.id;
+    const resolvedPriority: TaskPriority =
+      input.priority || (input.labels?.includes('High') ? 'High' : 'Medium');
     const createdTask: TrellisTask = {
       id: newId,
       title: input.title,
       description: input.description,
       status: input.status || 'To do',
+      priority: resolvedPriority,
       labels: input.labels || ['Feature'],
       dueDate: input.dueDate || '',
       assigneeId: input.assigneeId,
@@ -507,6 +515,8 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setSelectedAssigneeFilter,
         selectedLabelFilter,
         setSelectedLabelFilter,
+        selectedPriorityFilter,
+        setSelectedPriorityFilter,
         selectedGroupFilter,
         setSelectedGroupFilter,
       }}

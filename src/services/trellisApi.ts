@@ -1,6 +1,14 @@
 import { Employee, User } from '../types';
 import { requestLaravel, requestLaravelData } from './laravelClient';
-import { AssignmentStatus, TaskComment, TaskLabel, TaskStatus, TeamMember, TrellisTask } from '../components/trellis/types';
+import {
+  AssignmentStatus,
+  TaskComment,
+  TaskLabel,
+  TaskPriority,
+  TaskStatus,
+  TeamMember,
+  TrellisTask,
+} from '../components/trellis/types';
 
 type LaravelComment = {
   id: number | string;
@@ -48,7 +56,23 @@ const apiStatusFromTask: Record<TaskStatus, LaravelTask['status']> = {
   Done: 'completed',
 };
 
+const priorityFromApi: Record<LaravelTask['priority'], TaskPriority> = {
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High',
+  urgent: 'Urgent',
+};
+
+const apiPriorityFromTask: Record<TaskPriority, LaravelTask['priority']> = {
+  Low: 'low',
+  Medium: 'medium',
+  High: 'high',
+  Urgent: 'urgent',
+};
+
 export const taskStatusToApi = (status: TaskStatus): LaravelTask['status'] => apiStatusFromTask[status];
+export const taskPriorityToApi = (priority: TaskPriority): LaravelTask['priority'] =>
+  apiPriorityFromTask[priority] || 'medium';
 
 const allowedLabels: TaskLabel[] = [
   'Feature', 'Bug', 'Design', 'Tech', 'Onboarding', 'Marketing', 'Android', 'Data', 'Content', 'Design system', 'High',
@@ -107,12 +131,17 @@ function mapComment(comment: LaravelComment): TaskComment {
 export function mapLaravelTask(task: LaravelTask): TrellisTask {
   const assignerName = task.creator?.full_name;
   const createdAt = task.created_at ? new Date(task.created_at).toLocaleDateString() : '';
+  const labels = (task.labels || []).filter((label): label is TaskLabel => allowedLabels.includes(label as TaskLabel));
+  const priority =
+    (task.priority && priorityFromApi[task.priority]) ||
+    (labels.includes('High') ? 'High' : 'Medium');
   return {
     id: String(task.id),
     title: task.title,
     description: task.description || '',
     status: statusFromApi[task.status],
-    labels: (task.labels || []).filter((label): label is TaskLabel => allowedLabels.includes(label as TaskLabel)),
+    priority,
+    labels,
     dueDate: task.due_date || '',
     assigneeId: task.assigned_to_employee_id === null || task.assigned_to_employee_id === undefined ? '' : String(task.assigned_to_employee_id),
     assignerId: task.created_by_employee_id === null || task.created_by_employee_id === undefined ? '' : String(task.created_by_employee_id),
@@ -143,6 +172,7 @@ export async function createLaravelTask(input: {
   title: string;
   description: string;
   status: TaskStatus;
+  priority?: TaskPriority;
   labels: TaskLabel[];
   dueDate: string;
   assigneeId?: string;
@@ -152,13 +182,18 @@ export async function createLaravelTask(input: {
   prTag?: string;
 }): Promise<TrellisTask> {
   const assignedTo = input.assigneeId && /^\d+$/.test(input.assigneeId) ? Number(input.assigneeId) : null;
+  const resolvedPriority = input.priority
+    ? taskPriorityToApi(input.priority)
+    : input.labels.includes('High')
+    ? 'high'
+    : 'medium';
   const task = await requestLaravelData<LaravelTask>('/tasks', {
     method: 'POST',
     body: JSON.stringify({
       title: input.title,
       description: input.description,
       status: taskStatusToApi(input.status),
-      priority: input.labels.includes('High') ? 'high' : 'medium',
+      priority: resolvedPriority,
       due_date: input.dueDate || null,
       assigned_to_employee_id: assignedTo,
       department_id: assignedTo === null && input.departmentId && /^\d+$/.test(input.departmentId) ? Number(input.departmentId) : null,
@@ -178,7 +213,12 @@ export async function updateLaravelTask(task: TrellisTask, updates: Partial<Trel
   if (updates.status !== undefined) body.status = taskStatusToApi(updates.status);
   if (updates.labels !== undefined) {
     body.labels = updates.labels;
-    body.priority = updates.labels.includes('High') ? 'high' : 'medium';
+    if (updates.priority === undefined) {
+      body.priority = updates.labels.includes('High') ? 'high' : 'medium';
+    }
+  }
+  if (updates.priority !== undefined) {
+    body.priority = taskPriorityToApi(updates.priority);
   }
   if (updates.dueDate !== undefined) body.due_date = updates.dueDate || null;
   if (updates.assigneeId !== undefined) body.assigned_to_employee_id = updates.assigneeId && /^\d+$/.test(updates.assigneeId) ? Number(updates.assigneeId) : null;

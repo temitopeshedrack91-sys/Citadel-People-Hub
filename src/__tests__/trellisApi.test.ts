@@ -41,26 +41,28 @@ const apiTask: LaravelTask = {
 describe('Trellis Laravel API integration', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('maps Laravel task IDs, statuses, assignment and persisted comments', () => {
+  it('maps Laravel task IDs, statuses, priorities, assignment and persisted comments', () => {
     const task = mapLaravelTask(apiTask);
 
     expect(task).toMatchObject({
-      id: '42', title: 'Prepare Q4 rollout', status: 'In progress', assigneeId: '14',
+      id: '42', title: 'Prepare Q4 rollout', status: 'In progress', priority: 'High', assigneeId: '14',
       assignmentStatus: 'pending', hours: 3.5, comments: [{ id: '77', text: 'Please review the estimate' }],
     });
     expect(taskStatusToApi('Done')).toBe('completed');
+    expect(mapLaravelTask({ ...apiTask, priority: 'urgent', labels: ['Bug'] }).priority).toBe('Urgent');
+    expect(mapLaravelTask({ ...apiTask, priority: 'low', labels: ['Design'] }).priority).toBe('Low');
   });
 
   it('creates and reloads tasks through the Laravel API and propagates failures', async () => {
     requestLaravelData.mockResolvedValueOnce(apiTask);
     const created = await createLaravelTask({
       title: 'Prepare Q4 rollout', description: 'Coordinate launch tasks', status: 'To do',
-      labels: ['Feature'], dueDate: '2026-11-15', assigneeId: '14', departmentId: '3', hours: 3.5,
+      priority: 'Urgent', labels: ['Feature'], dueDate: '2026-11-15', assigneeId: '14', departmentId: '3', hours: 3.5,
     });
 
     expect(requestLaravelData).toHaveBeenCalledWith('/tasks', expect.objectContaining({ method: 'POST' }));
     expect(JSON.parse(requestLaravelData.mock.calls[0][1].body)).toMatchObject({
-      title: 'Prepare Q4 rollout', status: 'todo', assigned_to_employee_id: 14,
+      title: 'Prepare Q4 rollout', status: 'todo', priority: 'urgent', assigned_to_employee_id: 14,
       department_id: null, estimated_hours: 3.5,
     });
     expect(created.id).toBe('42');

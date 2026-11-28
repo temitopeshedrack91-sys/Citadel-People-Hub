@@ -1,7 +1,11 @@
 import React from 'react';
 import { useTrellis } from './TrellisContext';
 import { Calendar, User, Clock, CheckCircle2, Pencil, Trash2 } from 'lucide-react';
-import { TaskStatus } from './types';
+import {
+  TaskStatus,
+  PRIORITY_BADGE_STYLES,
+  resolveTaskPriority,
+} from './types';
 
 export const TrellisList: React.FC = () => {
   const {
@@ -12,6 +16,7 @@ export const TrellisList: React.FC = () => {
     myTasksMode,
     selectedAssigneeFilter,
     selectedLabelFilter,
+    selectedPriorityFilter,
     searchQuery,
     setSelectedTaskId,
     deleteTask,
@@ -28,6 +33,7 @@ export const TrellisList: React.FC = () => {
       if (!targetMember || !taskMember || targetMember.id !== taskMember.id) return false;
     }
     if (selectedLabelFilter !== 'All' && !t.labels.includes(selectedLabelFilter as any)) return false;
+    if (selectedPriorityFilter !== 'All' && resolveTaskPriority(t) !== selectedPriorityFilter) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       return (
@@ -61,6 +67,8 @@ export const TrellisList: React.FC = () => {
             <div className="divide-y divide-slate-100">
               {groupTasks.map((task) => {
                 const assignee = findMember(task.assigneeId) || teamMembers.find((m) => m.id === task.assigneeId);
+                const priority = resolveTaskPriority(task);
+                const priorityStyle = PRIORITY_BADGE_STYLES[priority];
 
                 return (
                   <div
@@ -72,18 +80,29 @@ export const TrellisList: React.FC = () => {
                       <span className="font-mono text-[11px] font-medium text-slate-400 shrink-0">
                         {task.id}
                       </span>
+                      <span
+                        data-testid={`trellis-list-priority-badge-${task.id}`}
+                        data-priority={priority}
+                        className={`inline-flex items-center gap-1 text-[9px] font-extrabold px-2 py-0.5 rounded-md border shrink-0 ${priorityStyle.badgeClass}`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${priorityStyle.dotClass}`} />
+                        <span>{priority}</span>
+                      </span>
                       <h4 className="font-bold text-slate-900 group-hover:text-[#B88A24] truncate">
                         {task.title}
                       </h4>
                       <div className="flex items-center gap-1 shrink-0">
-                        {task.labels.slice(0, 2).map((l) => (
-                          <span
-                            key={l}
-                            className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600"
-                          >
-                            {l}
-                          </span>
-                        ))}
+                        {task.labels
+                          .filter((l) => !(l === 'High' && priority === 'High'))
+                          .slice(0, 2)
+                          .map((l) => (
+                            <span
+                              key={l}
+                              className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600"
+                            >
+                              {l}
+                            </span>
+                          ))}
                       </div>
                     </div>
 

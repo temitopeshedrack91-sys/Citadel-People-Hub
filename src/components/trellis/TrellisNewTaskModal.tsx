@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Calendar, User, Tag, Clock, CheckCircle2 } from 'lucide-react';
+import { X, Plus, Calendar, User, Tag, Clock, CheckCircle2, Flag } from 'lucide-react';
 import { useTrellis } from './TrellisContext';
-import { TaskStatus, TaskLabel } from './types';
+import {
+  TaskStatus,
+  TaskLabel,
+  TaskPriority,
+  ALL_PRIORITIES,
+  PRIORITY_BADGE_STYLES,
+} from './types';
 
 const availableLabels: TaskLabel[] = [
   'Feature',
@@ -14,7 +20,6 @@ const availableLabels: TaskLabel[] = [
   'Data',
   'Content',
   'Design system',
-  'High',
 ];
 
 export const TrellisNewTaskModal: React.FC = () => {
@@ -24,6 +29,7 @@ export const TrellisNewTaskModal: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<TaskStatus>('To do');
+  const [priority, setPriority] = useState<TaskPriority>('Medium');
   const [assigneeId, setAssigneeId] = useState<string>(currentUser.id);
   const [dueDate, setDueDate] = useState('');
   const [selectedLabels, setSelectedLabels] = useState<TaskLabel[]>(['Feature']);
@@ -64,6 +70,7 @@ export const TrellisNewTaskModal: React.FC = () => {
       title: title.trim(),
       description: description.trim(),
       status,
+      priority,
       labels: selectedLabels,
       dueDate,
       assigneeId,
@@ -76,6 +83,7 @@ export const TrellisNewTaskModal: React.FC = () => {
     setTitle('');
     setDescription('');
     setDueDate('');
+    setPriority('Medium');
     setSelectedLabels(['Feature']);
   };
 
@@ -166,6 +174,34 @@ export const TrellisNewTaskModal: React.FC = () => {
                 <option value="In review">In review</option>
                 <option value="Done">Done</option>
               </select>
+            </div>
+          </div>
+
+          {/* Priority Selector */}
+          <div>
+            <label className="block text-slate-800 font-bold mb-1.5">Priority</label>
+            <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Task Priority">
+              {ALL_PRIORITIES.map((p) => {
+                const isSelected = priority === p;
+                const style = PRIORITY_BADGE_STYLES[p];
+                return (
+                  <button
+                    type="button"
+                    key={p}
+                    data-testid={`trellis-priority-option-${p}`}
+                    aria-pressed={isSelected}
+                    onClick={() => setPriority(p)}
+                    className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold border transition cursor-pointer ${
+                      isSelected
+                        ? `${style.badgeClass} ring-2 ring-slate-900/15`
+                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${style.dotClass}`} />
+                    <span>{p}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

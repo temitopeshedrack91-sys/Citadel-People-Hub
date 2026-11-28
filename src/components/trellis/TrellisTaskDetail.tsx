@@ -17,9 +17,17 @@ import {
   ThumbsDown,
   Pencil,
   Trash2,
+  Flag,
 } from 'lucide-react';
 import { useTrellis } from './TrellisContext';
-import { TaskStatus, TaskLabel } from './types';
+import {
+  TaskStatus,
+  TaskLabel,
+  TaskPriority,
+  ALL_PRIORITIES,
+  PRIORITY_BADGE_STYLES,
+  resolveTaskPriority,
+} from './types';
 
 const ALL_LABELS: TaskLabel[] = [
   'Feature',
@@ -32,7 +40,6 @@ const ALL_LABELS: TaskLabel[] = [
   'Data',
   'Content',
   'Design system',
-  'High',
 ];
 
 export const TrellisTaskDetail: React.FC = () => {
@@ -65,6 +72,9 @@ export const TrellisTaskDetail: React.FC = () => {
   const [editTitle, setEditTitle] = useState(task?.title || '');
   const [editDescription, setEditDescription] = useState(task?.description || '');
   const [editStatus, setEditStatus] = useState<TaskStatus>(task?.status || 'To do');
+  const [editPriority, setEditPriority] = useState<TaskPriority>(
+    task ? resolveTaskPriority(task) : 'Medium'
+  );
   const [editAssigneeId, setEditAssigneeId] = useState(task?.assigneeId || '');
   const [editDueDate, setEditDueDate] = useState(task?.dueDate || '');
   const [editHours, setEditHours] = useState(task?.hours || 8);
@@ -77,6 +87,7 @@ export const TrellisTaskDetail: React.FC = () => {
       setEditTitle(task.title);
       setEditDescription(task.description);
       setEditStatus(task.status);
+      setEditPriority(resolveTaskPriority(task));
       setEditAssigneeId(task.assigneeId);
       setEditDueDate(task.dueDate);
       setEditHours(task.hours);
@@ -107,6 +118,9 @@ export const TrellisTaskDetail: React.FC = () => {
 
   if (!task) return null;
 
+  const taskPriority = resolveTaskPriority(task);
+  const taskPriorityStyle = PRIORITY_BADGE_STYLES[taskPriority];
+
   const assignee = findMember(task.assigneeId) || teamMembers.find((m) => m.id === task.assigneeId);
   const assigner = findMember(task.assignerId) || teamMembers.find((m) => m.id === task.assignerId);
   const reviewer = findMember(task.reviewerId) || teamMembers.find((m) => m.id === task.reviewerId);
@@ -121,6 +135,7 @@ export const TrellisTaskDetail: React.FC = () => {
       title: editTitle.trim(),
       description: editDescription.trim(),
       status: editStatus,
+      priority: editPriority,
       assigneeId: editAssigneeId,
       dueDate: editDueDate.trim() || task.dueDate,
       hours: Number(editHours) || 8,
@@ -298,6 +313,34 @@ export const TrellisTaskDetail: React.FC = () => {
             </div>
           </div>
 
+          {/* Priority Selector */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-700">Priority</label>
+            <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Edit Task Priority">
+              {ALL_PRIORITIES.map((p) => {
+                const isSelected = editPriority === p;
+                const style = PRIORITY_BADGE_STYLES[p];
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    data-testid={`trellis-edit-priority-${p}`}
+                    aria-pressed={isSelected}
+                    onClick={() => setEditPriority(p)}
+                    className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold border transition cursor-pointer ${
+                      isSelected
+                        ? `${style.badgeClass} ring-2 ring-slate-900/15`
+                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${style.dotClass}`} />
+                    <span>{p}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Due Date & Hours Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
@@ -415,6 +458,28 @@ export const TrellisTaskDetail: React.FC = () => {
                 <option value="In progress">• In progress</option>
                 <option value="In review">• In review</option>
                 <option value="Done">• Done</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Priority Row */}
+          <div className="flex items-center gap-4">
+            <span className="w-20 text-slate-400 font-semibold flex items-center gap-1.5">
+              <Flag className="w-3.5 h-3.5" />
+              <span>Priority</span>
+            </span>
+            <div className="flex items-center gap-2">
+              <select
+                value={taskPriority}
+                onChange={(e) => updateTask(task.id, { priority: e.target.value as TaskPriority })}
+                data-testid="trellis-detail-priority-select"
+                className={`px-3 py-1 rounded-lg text-xs font-extrabold border focus:outline-none cursor-pointer ${taskPriorityStyle.badgeClass}`}
+              >
+                {ALL_PRIORITIES.map((p) => (
+                  <option key={p} value={p}>
+                    • {p}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

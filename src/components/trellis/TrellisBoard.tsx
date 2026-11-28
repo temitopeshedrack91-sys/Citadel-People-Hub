@@ -10,9 +10,16 @@ import {
   ChevronRight,
   Pencil,
   Trash2,
+  Flag,
 } from 'lucide-react';
 import { useTrellis } from './TrellisContext';
-import { TrellisTask, TaskStatus, TaskLabel } from './types';
+import {
+  TrellisTask,
+  TaskStatus,
+  TaskLabel,
+  PRIORITY_BADGE_STYLES,
+  resolveTaskPriority,
+} from './types';
 
 const labelColors: Record<TaskLabel, string> = {
   Bug: 'bg-[#E5E7EB] text-[#111827] border-[#111827]/25',
@@ -48,6 +55,7 @@ export const TrellisBoard: React.FC = () => {
     myTasksMode,
     selectedAssigneeFilter,
     selectedLabelFilter,
+    selectedPriorityFilter,
     searchQuery,
     setSelectedTaskId,
     moveTaskStatus,
@@ -57,7 +65,7 @@ export const TrellisBoard: React.FC = () => {
     canManageTasks,
   } = useTrellis();
 
-  // Filter tasks based on search, assignee, label, and myTasksMode
+  // Filter tasks based on search, assignee, label, priority, and myTasksMode
   const filteredTasks = tasks.filter((t) => {
     if (myTasksMode && t.assigneeId !== currentUser.id)
       return false;
@@ -67,6 +75,7 @@ export const TrellisBoard: React.FC = () => {
       if (!targetMember || !taskMember || targetMember.id !== taskMember.id) return false;
     }
     if (selectedLabelFilter !== 'All' && !t.labels.includes(selectedLabelFilter as any)) return false;
+    if (selectedPriorityFilter !== 'All' && resolveTaskPriority(t) !== selectedPriorityFilter) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       return (
@@ -140,6 +149,8 @@ export const TrellisBoard: React.FC = () => {
                 ) : (
                   colTasks.map((task) => {
                     const assignee = findMember(task.assigneeId) || teamMembers.find((m) => m.id === task.assigneeId);
+                    const priority = resolveTaskPriority(task);
+                    const priorityStyle = PRIORITY_BADGE_STYLES[priority];
 
                     return (
                       <div
@@ -156,19 +167,29 @@ export const TrellisBoard: React.FC = () => {
                         }}
                         className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-[0_2px_8px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_22px_rgba(15,23,42,0.06)] hover:border-slate-300 transition-all duration-150 cursor-pointer space-y-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#174EA6] focus-visible:ring-offset-2 select-none"
                       >
-                        {/* Top row: Labels & Quick Actions */}
+                        {/* Top row: Priority Badge, Labels & Quick Actions */}
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            {task.labels.map((lbl) => (
-                              <span
-                                key={lbl}
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
-                                  labelColors[lbl] || 'bg-slate-100 text-slate-700'
-                                }`}
-                              >
-                                {lbl}
-                              </span>
-                            ))}
+                            <span
+                              data-testid={`trellis-priority-badge-${task.id}`}
+                              data-priority={priority}
+                              className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-md border ${priorityStyle.badgeClass}`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full ${priorityStyle.dotClass}`} />
+                              <span>{priority}</span>
+                            </span>
+                            {task.labels
+                              .filter((lbl) => !(lbl === 'High' && priority === 'High'))
+                              .map((lbl) => (
+                                <span
+                                  key={lbl}
+                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                                    labelColors[lbl] || 'bg-slate-100 text-slate-700'
+                                  }`}
+                                >
+                                  {lbl}
+                                </span>
+                              ))}
                             {task.assignmentStatus === 'pending' && (
                               <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-[#FAF5EB] text-[#B88A24] border border-[#E9D59A]">
                                 Pending
