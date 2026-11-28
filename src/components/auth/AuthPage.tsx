@@ -290,6 +290,83 @@ export const AuthPage: React.FC = () => {
 
       {/* Right Sign-In Column */}
       <div className="lg:col-span-7 relative overflow-hidden bg-[#F5F7FA] flex flex-col justify-center items-center px-4 py-8 sm:p-8 lg:p-12">
+        {/* Subtle Network Constellation Grid Background */}
+        <svg
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 h-full w-full select-none"
+          viewBox="0 0 1000 900"
+          preserveAspectRatio="xMidYMid slice"
+          fill="none"
+        >
+          <g stroke="#94A3B8" strokeOpacity="0.26" strokeWidth="1">
+            <line x1="60" y1="90" x2="240" y2="170" />
+            <line x1="240" y1="170" x2="430" y2="95" />
+            <line x1="430" y1="95" x2="650" y2="185" />
+            <line x1="650" y1="185" x2="880" y2="110" />
+            <line x1="880" y1="110" x2="960" y2="270" />
+            <line x1="240" y1="170" x2="175" y2="365" />
+            <line x1="175" y1="365" x2="40" y2="495" />
+            <line x1="175" y1="365" x2="365" y2="435" />
+            <line x1="430" y1="95" x2="365" y2="435" />
+            <line x1="650" y1="185" x2="575" y2="395" />
+            <line x1="650" y1="185" x2="845" y2="355" />
+            <line x1="845" y1="355" x2="960" y2="270" />
+            <line x1="845" y1="355" x2="915" y2="560" />
+            <line x1="575" y1="395" x2="845" y2="355" />
+            <line x1="575" y1="395" x2="735" y2="625" />
+            <line x1="735" y1="625" x2="915" y2="560" />
+            <line x1="365" y1="435" x2="575" y2="395" />
+            <line x1="365" y1="435" x2="210" y2="655" />
+            <line x1="175" y1="365" x2="210" y2="655" />
+            <line x1="40" y1="495" x2="210" y2="655" />
+            <line x1="210" y1="655" x2="105" y2="835" />
+            <line x1="210" y1="655" x2="455" y2="795" />
+            <line x1="455" y1="795" x2="735" y2="625" />
+            <line x1="735" y1="625" x2="865" y2="830" />
+            <line x1="455" y1="795" x2="865" y2="830" />
+          </g>
+          <g>
+            {[
+              [60, 90, false],
+              [240, 170, true],
+              [430, 95, false],
+              [650, 185, true],
+              [880, 110, false],
+              [960, 270, false],
+              [175, 365, true],
+              [40, 495, false],
+              [365, 435, false],
+              [575, 395, false],
+              [845, 355, true],
+              [915, 560, false],
+              [735, 625, true],
+              [210, 655, true],
+              [105, 835, false],
+              [455, 795, false],
+              [865, 830, true],
+            ].map(([cx, cy, ringed], idx) => (
+              <g key={idx}>
+                {ringed && (
+                  <circle
+                    cx={Number(cx)}
+                    cy={Number(cy)}
+                    r={10}
+                    stroke="#94A3B8"
+                    strokeOpacity="0.24"
+                    strokeWidth="1"
+                  />
+                )}
+                <circle
+                  cx={Number(cx)}
+                  cy={Number(cy)}
+                  r={ringed ? 3.2 : 2.5}
+                  fill="#64748B"
+                  fillOpacity="0.34"
+                />
+              </g>
+            ))}
+          </g>
+        </svg>
         <div className="relative z-10 w-full max-w-[440px] space-y-5">
           {/* Mobile Brand Header */}
           <div className="flex lg:hidden items-center gap-3 px-1">
