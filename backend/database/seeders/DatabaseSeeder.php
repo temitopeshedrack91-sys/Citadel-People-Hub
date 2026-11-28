@@ -2,10 +2,22 @@
 
 namespace Database\Seeders;
 
+use App\Models\AttendanceRecord;
+use App\Models\Candidate;
+use App\Models\ClaimEvent;
+use App\Models\ClaimExpense;
+use App\Models\ClaimRequest;
 use App\Models\Department;
 use App\Models\Employee;
+use App\Models\EmployeeDeduction;
 use App\Models\EmployeeLeaveBalance;
+use App\Models\EmployeeLoan;
+use App\Models\EmployeeProvidentFund;
+use App\Models\EmployeeSalaryTemplate;
 use App\Models\Entity;
+use App\Models\ExpenseType;
+use App\Models\HubDocument;
+use App\Models\JobVacancy;
 use App\Models\Kpi;
 use App\Models\LeaveCategory;
 use App\Models\LeavePolicy;
@@ -13,8 +25,14 @@ use App\Models\LeaveRequest;
 use App\Models\OffboardingRequest;
 use App\Models\OnboardingChecklistTemplate;
 use App\Models\OnboardingJourney;
+use App\Models\PayrollItem;
+use App\Models\PayrollRun;
 use App\Models\PerformanceReview;
+use App\Models\Project;
+use App\Models\RecruitmentRequisition;
 use App\Models\ReviewRating;
+use App\Models\SalaryTemplate;
+use App\Models\Task;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -441,6 +459,7 @@ class DatabaseSeeder extends Seeder
         $hrUser = User::where('email', 'dr.adeleke@citadel.ng')->first()
             ?? User::where('email', 'sysadmin@citadel.ng')->firstOrFail();
         $this->seedPhase3TalentAndPerformance($seededEmployees, $hrUser);
+        $this->seedEnterpriseModules($seededEmployees, $deptByCode, $hrUser);
     }
 
     private function seedPhase3TalentAndPerformance(array $seededEmployees, User $hrUser): void
@@ -612,6 +631,368 @@ class DatabaseSeeder extends Seeder
                 'created_by_user_id' => $hrUser->id,
                 'version' => 1,
             ]);
+        }
+    }
+
+    private function seedEnterpriseModules(array $seededEmployees, array $deptByCode, User $hrUser): void
+    {
+        $femi = $seededEmployees['CGCC-002'] ?? null;
+        $nadia = $seededEmployees['CGCC-003'] ?? null;
+        $bayu = $seededEmployees['CGCC-004'] ?? null;
+        $jonathan = $seededEmployees['CGCC-005'] ?? null;
+        $bukola = $seededEmployees['CGCC-001'] ?? null;
+        $sussan = $seededEmployees['CGCC-007'] ?? null;
+
+        // 1. Projects & Trellis Tasks
+        if (Project::count() === 0) {
+            $ictDept = $deptByCode['CGCC-ICT'] ?? null;
+            $pccmDept = $deptByCode['CGCC-PCCM'] ?? null;
+
+            $projHub = Project::create([
+                'title' => 'Citadel People Hub',
+                'code' => 'CPH-2026',
+                'description' => 'Core HRIS, Payroll, Leave & Attendance platform rollout across CGCC, CSOG, and Holdings.',
+                'department_id' => $ictDept?->id,
+                'status' => 'active',
+                'priority' => 'high',
+                'start_date' => now()->subDays(30)->toDateString(),
+                'end_date' => now()->addDays(60)->toDateString(),
+                'budget' => 4500000,
+                'created_by' => $hrUser->id,
+            ]);
+
+            $projPayroll = Project::create([
+                'title' => 'Payroll & Biometric Sync',
+                'code' => 'PAY-2026',
+                'description' => 'Automated monthly payroll cycles, PAYE/Pension compliance, and biometric punch import.',
+                'department_id' => $pccmDept?->id,
+                'status' => 'active',
+                'priority' => 'high',
+                'start_date' => now()->subDays(20)->toDateString(),
+                'end_date' => now()->addDays(45)->toDateString(),
+                'budget' => 2800000,
+                'created_by' => $hrUser->id,
+            ]);
+
+            $tasks = [
+                ['project_id' => $projHub->id, 'department_id' => $ictDept?->id, 'title' => 'Verify biometric punch CSV import', 'description' => 'Validate device timestamp parsing and unmatched staff alerts.', 'priority' => 'high', 'status' => 'todo', 'due_date' => now()->addDays(3)->toDateString(), 'assigned_to_employee_id' => $bayu?->id, 'created_by_employee_id' => $femi?->id, 'labels' => ['Tech', 'High'], 'estimated_hours' => 6, 'assignment_status' => 'accepted'],
+                ['project_id' => $projHub->id, 'department_id' => $ictDept?->id, 'title' => 'Configure M365 SSO directory sync', 'description' => 'Map Entra ID groups to Citadel RBAC roles.', 'priority' => 'medium', 'status' => 'todo', 'due_date' => now()->addDays(7)->toDateString(), 'assigned_to_employee_id' => $jonathan?->id, 'created_by_employee_id' => $femi?->id, 'labels' => ['Feature', 'Tech'], 'estimated_hours' => 8, 'assignment_status' => 'accepted'],
+                ['project_id' => $projHub->id, 'department_id' => $ictDept?->id, 'title' => 'Live SSE realtime notification stream', 'description' => 'Ensure instant updates across Leave, Payroll, and Claims.', 'priority' => 'urgent', 'status' => 'in_progress', 'due_date' => now()->addDays(2)->toDateString(), 'assigned_to_employee_id' => $femi?->id, 'created_by_employee_id' => $bukola?->id, 'labels' => ['Feature', 'High'], 'estimated_hours' => 10, 'assignment_status' => 'accepted'],
+                ['project_id' => $projPayroll->id, 'department_id' => $pccmDept?->id, 'title' => 'Finalize Q4 CGCC payroll worksheet', 'description' => 'Reconcile staff allowances, loans, and statutory pension deductions.', 'priority' => 'high', 'status' => 'in_progress', 'due_date' => now()->addDays(4)->toDateString(), 'assigned_to_employee_id' => $sussan?->id, 'created_by_employee_id' => $bukola?->id, 'labels' => ['High'], 'estimated_hours' => 5, 'assignment_status' => 'accepted'],
+                ['project_id' => $projHub->id, 'department_id' => $pccmDept?->id, 'title' => 'Audit 2-stage leave approval logs', 'description' => 'Review manager and HR stage audit trail for compliance.', 'priority' => 'medium', 'status' => 'in_review', 'due_date' => now()->addDays(5)->toDateString(), 'assigned_to_employee_id' => $nadia?->id, 'created_by_employee_id' => $bukola?->id, 'labels' => ['UI'], 'estimated_hours' => 4, 'assignment_status' => 'accepted'],
+                ['project_id' => $projPayroll->id, 'department_id' => $pccmDept?->id, 'title' => 'Publish November payslips & payment batch', 'description' => 'Issue official payslips and record bank disbursement references.', 'priority' => 'low', 'status' => 'done', 'due_date' => now()->subDays(1)->toDateString(), 'assigned_to_employee_id' => $sussan?->id, 'created_by_employee_id' => $bukola?->id, 'labels' => ['Feature'], 'estimated_hours' => 4, 'assignment_status' => 'accepted'],
+            ];
+            foreach ($tasks as $taskData) {
+                Task::create($taskData);
+            }
+        }
+
+        // 2. Payroll: Salary Templates, Assignments, Runs, Loans, Deductions, Provident Funds
+        if (SalaryTemplate::count() === 0) {
+            $execTpl = SalaryTemplate::create([
+                'name' => 'Executive & Management Grade',
+                'code' => 'TPL-EXEC-01',
+                'pay_frequency' => 'monthly',
+                'basic_salary' => 550000,
+                'house_rent' => 150000,
+                'medical_allowance' => 60000,
+                'conveyance_allowance' => 50000,
+                'other_allowance' => 40000,
+                'provident_fund_percent' => 8,
+                'tax_percent' => 10,
+                'notes' => 'Standard executive monthly compensation package.',
+                'is_active' => true,
+            ]);
+            $midTpl = SalaryTemplate::create([
+                'name' => 'Mid-Level Specialist Grade',
+                'code' => 'TPL-MID-02',
+                'pay_frequency' => 'monthly',
+                'basic_salary' => 320000,
+                'house_rent' => 90000,
+                'medical_allowance' => 40000,
+                'conveyance_allowance' => 35000,
+                'other_allowance' => 25000,
+                'provident_fund_percent' => 8,
+                'tax_percent' => 7.5,
+                'notes' => 'Standard officer and specialist monthly structure.',
+                'is_active' => true,
+            ]);
+            $jrTpl = SalaryTemplate::create([
+                'name' => 'Support & Junior Staff Grade',
+                'code' => 'TPL-JNR-03',
+                'pay_frequency' => 'monthly',
+                'basic_salary' => 180000,
+                'house_rent' => 50000,
+                'medical_allowance' => 25000,
+                'conveyance_allowance' => 20000,
+                'other_allowance' => 15000,
+                'provident_fund_percent' => 8,
+                'tax_percent' => 5,
+                'notes' => 'Entry and support staff compensation package.',
+                'is_active' => true,
+            ]);
+
+            $assignMap = [
+                'CGCC-001' => $execTpl,
+                'CGCC-002' => $execTpl,
+                'CGCC-007' => $execTpl,
+                'CGCC-003' => $midTpl,
+                'CGCC-004' => $midTpl,
+                'CGCC-005' => $jrTpl,
+                'CSOG-001' => $execTpl,
+                'HOLD-001' => $execTpl,
+            ];
+
+            $grossSum = 0;
+            $dedSum = 0;
+            $netSum = 0;
+            $itemRows = [];
+            foreach ($assignMap as $staffId => $tpl) {
+                $emp = $seededEmployees[$staffId] ?? null;
+                if (! $emp) {
+                    continue;
+                }
+                $gross = (float) $tpl->basic_salary + (float) $tpl->house_rent + (float) $tpl->medical_allowance + (float) $tpl->conveyance_allowance + (float) $tpl->other_allowance;
+                $pf = round($gross * ((float) $tpl->provident_fund_percent / 100), 2);
+                $tax = round($gross * ((float) $tpl->tax_percent / 100), 2);
+                $net = round($gross - $pf - $tax, 2);
+
+                EmployeeSalaryTemplate::create([
+                    'employee_id' => $emp->id,
+                    'salary_template_id' => $tpl->id,
+                    'pay_frequency' => 'monthly',
+                    'basic_salary' => $tpl->basic_salary,
+                    'house_rent' => $tpl->house_rent,
+                    'medical_allowance' => $tpl->medical_allowance,
+                    'conveyance_allowance' => $tpl->conveyance_allowance,
+                    'other_allowance' => $tpl->other_allowance,
+                    'gross_salary' => $gross,
+                    'provident_fund_percent' => $tpl->provident_fund_percent,
+                    'tax_percent' => $tpl->tax_percent,
+                    'ctc_amount' => $gross * 12,
+                    'effective_from' => now()->startOfYear()->toDateString(),
+                ]);
+
+                EmployeeProvidentFund::create([
+                    'employee_id' => $emp->id,
+                    'employee_contribution_percent' => 8,
+                    'employer_contribution_percent' => 10,
+                    'opening_balance' => $pf * 6,
+                    'effective_from' => now()->startOfYear()->toDateString(),
+                ]);
+
+                $grossSum += $gross;
+                $dedSum += ($pf + $tax);
+                $netSum += $net;
+                $itemRows[] = ['emp' => $emp, 'tpl' => $tpl, 'gross' => $gross, 'pf' => $pf, 'tax' => $tax, 'net' => $net];
+            }
+
+            $run = PayrollRun::create([
+                'pay_frequency' => 'monthly',
+                'payroll_year' => (int) date('Y'),
+                'payroll_month' => (int) date('n'),
+                'period_label' => date('F Y').' Monthly Consolidated Payroll',
+                'period_start' => now()->startOfMonth()->toDateString(),
+                'period_end' => now()->endOfMonth()->toDateString(),
+                'pay_date' => now()->endOfMonth()->toDateString(),
+                'status' => 'processed',
+                'gross_total' => $grossSum,
+                'deduction_total' => $dedSum,
+                'net_total' => $netSum,
+                'processed_by' => $hrUser->id,
+                'processed_at' => now(),
+            ]);
+
+            foreach ($itemRows as $row) {
+                PayrollItem::create([
+                    'payroll_run_id' => $run->id,
+                    'employee_id' => $row['emp']->id,
+                    'pay_frequency' => 'monthly',
+                    'basic_salary' => $row['tpl']->basic_salary,
+                    'allowance_total' => $row['gross'] - (float) $row['tpl']->basic_salary,
+                    'bonus_total' => 0,
+                    'loan_deduction' => 0,
+                    'other_deduction' => 0,
+                    'provident_fund_deduction' => $row['pf'],
+                    'employer_pf_contribution' => round($row['gross'] * 0.10, 2),
+                    'tax_deduction' => $row['tax'],
+                    'total_deduction' => $row['pf'] + $row['tax'],
+                    'net_payable' => $row['net'],
+                    'payment_status' => 'paid',
+                    'payment_reference' => 'GTB-BATCH-'.date('Ym').'-'.$row['emp']->id,
+                ]);
+            }
+
+            if ($bayu) {
+                EmployeeLoan::create([
+                    'employee_id' => $bayu->id,
+                    'loan_reference' => 'LN-'.date('Y').'-001',
+                    'principal_amount' => 240000,
+                    'interest_rate_percent' => 0,
+                    'installment_count' => 6,
+                    'installment_amount' => 40000,
+                    'issued_date' => now()->subMonths(1)->toDateString(),
+                    'first_installment_date' => now()->startOfMonth()->toDateString(),
+                    'status' => 'active',
+                    'applied_by' => $hrUser->id,
+                    'supervisor_approved_by' => $hrUser->id,
+                    'supervisor_approved_at' => now()->subDays(20),
+                    'final_approved_by' => $hrUser->id,
+                    'final_approved_at' => now()->subDays(18),
+                    'remarks' => 'Staff laptop & housing support facility.',
+                ]);
+
+                EmployeeDeduction::create([
+                    'employee_id' => $bayu->id,
+                    'deduction_type' => 'Welfare Cooperative',
+                    'calculation_type' => 'fixed',
+                    'amount' => 10000,
+                    'effective_from' => now()->startOfMonth()->toDateString(),
+                    'frequency' => 'monthly',
+                    'reason' => 'Monthly Citadel Staff Cooperative savings',
+                    'is_active' => true,
+                ]);
+            }
+        }
+
+        // 3. Claims & Expense Reimbursements
+        if (ClaimEvent::count() === 0) {
+            $evOutreach = ClaimEvent::create(['name' => 'Ministry & Outreach Logistics', 'code' => 'CLM-OUT', 'description' => 'Field outreach, transport, and community logistics', 'status' => 'ACTIVE', 'is_active' => true]);
+            $evFacility = ClaimEvent::create(['name' => 'Facilities & Technical Maintenance', 'code' => 'CLM-FAC', 'description' => 'Emergency ICT and facility equipment repairs', 'status' => 'ACTIVE', 'is_active' => true]);
+            $evTraining = ClaimEvent::create(['name' => 'Staff Training & Certifications', 'code' => 'CLM-TRN', 'description' => 'Approved professional development expenses', 'status' => 'ACTIVE', 'is_active' => true]);
+
+            $expTransport = ExpenseType::create(['name' => 'Transport & Fuel', 'code' => 'EXP-TRN', 'description' => 'Official transit, ride-share, and fuel', 'status' => 'ACTIVE', 'is_active' => true]);
+            $expEquip = ExpenseType::create(['name' => 'ICT & Equipment Parts', 'code' => 'EXP-EQP', 'description' => 'Cables, switches, and emergency spares', 'status' => 'ACTIVE', 'is_active' => true]);
+            $expMeals = ExpenseType::create(['name' => 'Outreach & Duty Meals', 'code' => 'EXP-MEL', 'description' => 'Approved team duty meals', 'status' => 'ACTIVE', 'is_active' => true]);
+
+            if ($bayu) {
+                $c1 = ClaimRequest::create([
+                    'claim_number' => 'CLM-'.date('Y').'-0001',
+                    'employee_id' => $bayu->id,
+                    'claim_event_id' => $evFacility->id,
+                    'currency' => 'NGN',
+                    'description' => 'Emergency replacement of Cisco PoE network switch for Annex',
+                    'status' => 'APPROVED',
+                    'total_amount' => 145000,
+                    'submitted_at' => now()->subDays(3),
+                    'approved_by' => $hrUser->id,
+                    'approved_at' => now()->subDay(),
+                ]);
+                ClaimExpense::create(['claim_request_id' => $c1->id, 'expense_type_id' => $expEquip->id, 'expense_date' => now()->subDays(4)->toDateString(), 'amount' => 145000, 'currency' => 'NGN', 'note' => '8-Port Gigabit PoE Switch']);
+            }
+            if ($nadia) {
+                $c2 = ClaimRequest::create([
+                    'claim_number' => 'CLM-'.date('Y').'-0002',
+                    'employee_id' => $nadia->id,
+                    'claim_event_id' => $evOutreach->id,
+                    'currency' => 'NGN',
+                    'description' => 'Community outreach transport and team welfare',
+                    'status' => 'SUBMITTED',
+                    'total_amount' => 85000,
+                    'submitted_at' => now()->subDay(),
+                ]);
+                ClaimExpense::create(['claim_request_id' => $c2->id, 'expense_type_id' => $expTransport->id, 'expense_date' => now()->subDays(2)->toDateString(), 'amount' => 55000, 'currency' => 'NGN', 'note' => 'Shuttle hire']);
+                ClaimExpense::create(['claim_request_id' => $c2->id, 'expense_type_id' => $expMeals->id, 'expense_date' => now()->subDays(2)->toDateString(), 'amount' => 30000, 'currency' => 'NGN', 'note' => 'Volunteer lunch packs']);
+            }
+            if ($femi) {
+                $c3 = ClaimRequest::create([
+                    'claim_number' => 'CLM-'.date('Y').'-0003',
+                    'employee_id' => $femi->id,
+                    'claim_event_id' => $evTraining->id,
+                    'currency' => 'NGN',
+                    'description' => 'Cloud Security & Infrastructure Certification Fee',
+                    'status' => 'PAID',
+                    'total_amount' => 280000,
+                    'submitted_at' => now()->subDays(10),
+                    'approved_by' => $hrUser->id,
+                    'approved_at' => now()->subDays(8),
+                    'paid_by' => $hrUser->id,
+                    'paid_at' => now()->subDays(6),
+                ]);
+                ClaimExpense::create(['claim_request_id' => $c3->id, 'expense_type_id' => $expEquip->id, 'expense_date' => now()->subDays(11)->toDateString(), 'amount' => 280000, 'currency' => 'NGN', 'note' => 'Exam voucher & study lab']);
+            }
+        }
+
+        // 4. Documents
+        if (HubDocument::count() === 0) {
+            $docs = [
+                ['title' => 'Citadel People Handbook & Code of Conduct', 'description' => 'Official employee handbook, leave rules, and workplace ethics across CGCC, CSOG, and Holdings.', 'file_name' => 'Citadel-Employee-Handbook-2026.pdf', 'storage_path' => 'documents/Citadel-Employee-Handbook-2026.pdf', 'file_size' => 2516582, 'file_type' => 'PDF', 'category' => 'Company Policy', 'access_level' => 'All Staff', 'entity_scope' => 'All Entities', 'uploaded_by' => $hrUser->id, 'version' => 'v2.1', 'version_number' => 2, 'issue_date' => now()->startOfYear()->toDateString(), 'is_sensitive' => false],
+                ['title' => 'PCCM Leave Policy & Two-Stage Approval Guide', 'description' => 'Line manager Stage 1 and PCCM HR Stage 2 leave workflow policy.', 'file_name' => 'PCCM-Leave-Workflow-Policy.pdf', 'storage_path' => 'documents/PCCM-Leave-Workflow-Policy.pdf', 'file_size' => 1153433, 'file_type' => 'PDF', 'category' => 'PCCM Form / Template', 'access_level' => 'All Staff', 'entity_scope' => 'All Entities', 'uploaded_by' => $hrUser->id, 'version' => 'v1.4', 'version_number' => 1, 'issue_date' => now()->subMonths(2)->toDateString(), 'is_sensitive' => false],
+                ['title' => 'ICT Information Security & Biometric SOP', 'description' => 'Data protection, Sanctum access, and biometric attendance device sync procedures.', 'file_name' => 'ICT-Security-Biometric-SOP.pdf', 'storage_path' => 'documents/ICT-Security-Biometric-SOP.pdf', 'file_size' => 1887436, 'file_type' => 'PDF', 'category' => 'Company Policy', 'access_level' => 'Department Only', 'entity_scope' => 'Citadel Global Community Church (CGCC)', 'department_scope' => 'ICT', 'uploaded_by' => $hrUser->id, 'version' => 'v1.0', 'version_number' => 1, 'issue_date' => now()->subMonths(1)->toDateString(), 'is_sensitive' => false],
+            ];
+            foreach ($docs as $doc) {
+                HubDocument::create($doc);
+            }
+        }
+
+        // 5. Attendance Records
+        if (AttendanceRecord::count() === 0) {
+            $today = now()->toDateString();
+            $attStaff = array_filter([$bukola, $sussan, $femi, $nadia, $bayu, $jonathan]);
+            foreach ($attStaff as $idx => $emp) {
+                $late = $idx === 4;
+                $inHour = $late ? '08:32:00' : '07:54:00';
+                AttendanceRecord::create([
+                    'employee_id' => $emp->id,
+                    'employee_staff_id' => $emp->staff_id,
+                    'employee_name' => $emp->full_name,
+                    'entity_name' => $emp->entity?->name ?? 'Citadel Global Community Church (CGCC)',
+                    'department_name' => $emp->department?->name ?? 'ICT',
+                    'date' => $today,
+                    'clock_in_time' => "{$today} {$inHour}",
+                    'clock_out_time' => "{$today} 17:05:00",
+                    'duration_hours' => $late ? 8.55 : 9.18,
+                    'status' => $late ? 'Late' : 'Present',
+                    'verification_source' => 'Biometric Device',
+                    'device_id' => 'ZK-HQ-01',
+                ]);
+            }
+        }
+
+        // 6. Recruitment Pipeline
+        if (RecruitmentRequisition::count() === 0) {
+            $ictDept = $deptByCode['CGCC-ICT'] ?? null;
+            $pccmDept = $deptByCode['CGCC-PCCM'] ?? null;
+
+            $req1 = RecruitmentRequisition::create([
+                'requisition_code' => 'REQ-2026-01',
+                'job_title' => 'Systems & Network Engineer',
+                'entity_id' => $ictDept?->entity_id,
+                'department_id' => $ictDept?->id,
+                'requisition_data' => [
+                    'title' => 'Systems & Network Engineer',
+                    'department' => 'ICT',
+                    'entity' => 'Citadel Global Community Church (CGCC)',
+                    'employmentType' => 'Full-Time',
+                    'openings' => 1,
+                    'status' => 'Open',
+                    'hiringManager' => 'Engr. Femi Olatunji',
+                    'priority' => 'High',
+                ],
+            ]);
+
+            $vac1 = JobVacancy::create([
+                'requisition_id' => $req1->id,
+                'title' => 'Systems & Network Engineer',
+                'department_id' => $ictDept?->id,
+                'hiring_manager_id' => $femi?->id,
+                'positions_count' => 1,
+                'description' => 'Manage campus network infrastructure, audio-visual broadcast links, and biometric devices.',
+                'status' => 'ACTIVE',
+            ]);
+
+            $vac2 = JobVacancy::create([
+                'title' => 'People & Culture Associate',
+                'department_id' => $pccmDept?->id,
+                'hiring_manager_id' => $bukola?->id,
+                'positions_count' => 1,
+                'description' => 'Support onboarding journeys, employee records, and payroll administration.',
+                'status' => 'ACTIVE',
+            ]);
+
+            Candidate::create(['vacancy_id' => $vac1->id, 'first_name' => 'Chinedu', 'last_name' => 'Okonkwo', 'email' => 'chinedu.okonkwo@example.com', 'phone' => '+234 803 555 0142', 'status' => 'INTERVIEW_SCHEDULED', 'notes' => 'Strong Cisco & Mikrotik experience.', 'applied_date' => now()->subDays(5)->toDateString()]);
+            Candidate::create(['vacancy_id' => $vac1->id, 'first_name' => 'Amina', 'last_name' => 'Bello', 'email' => 'amina.bello@example.com', 'phone' => '+234 805 555 0198', 'status' => 'SHORTLISTED', 'notes' => '5 years enterprise sysadmin.', 'applied_date' => now()->subDays(3)->toDateString()]);
+            Candidate::create(['vacancy_id' => $vac2->id, 'first_name' => 'Toluwalope', 'last_name' => 'Adeyemi', 'email' => 'tolu.adeyemi@example.com', 'phone' => '+234 809 555 0114', 'status' => 'APPLICATION_INITIATED', 'notes' => 'CIPM certified HR generalist.', 'applied_date' => now()->subDays(2)->toDateString()]);
         }
     }
 }
