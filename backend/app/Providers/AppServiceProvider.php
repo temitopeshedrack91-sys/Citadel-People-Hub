@@ -49,17 +49,20 @@ class AppServiceProvider extends ServiceProvider
             return;
         }
 
-        if (config('filesystems.default') !== 's3') {
-            throw new RuntimeException('Production document storage must use the private S3 disk.');
+        $defaultDisk = config('filesystems.default');
+        if (! in_array($defaultDisk, ['local', 's3'], true)) {
+            throw new RuntimeException('Production document storage must use a private disk (local or s3).');
         }
 
-        $disk = config('filesystems.disks.s3');
-        if (blank($disk['bucket'] ?? null) || blank($disk['region'] ?? null)) {
-            throw new RuntimeException('Production S3 storage requires AWS_BUCKET and AWS_DEFAULT_REGION.');
-        }
+        if ($defaultDisk === 's3') {
+            $disk = config('filesystems.disks.s3');
+            if (blank($disk['bucket'] ?? null) || blank($disk['region'] ?? null)) {
+                throw new RuntimeException('Production S3 storage requires AWS_BUCKET and AWS_DEFAULT_REGION.');
+            }
 
-        if (filled($disk['key'] ?? null) !== filled($disk['secret'] ?? null)) {
-            throw new RuntimeException('Production S3 credentials must include both AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, or neither when using workload identity.');
+            if (filled($disk['key'] ?? null) !== filled($disk['secret'] ?? null)) {
+                throw new RuntimeException('Production S3 credentials must include both AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, or neither when using workload identity.');
+            }
         }
     }
 }
