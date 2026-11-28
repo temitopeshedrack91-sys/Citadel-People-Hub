@@ -296,4 +296,79 @@ describe('Citadel People Hub (Project Management Module)', () => {
       screen.queryByText('Let users skip the location permission step')
     ).not.toBeInTheDocument();
   });
+
+  it('displays dependency badges on cards and prevents starting a blocked task until prerequisites are Done', async () => {
+    render(<TrellisApp />);
+
+    // PAS-222 depends on PAS-224 (which is 'In progress'), so PAS-222 is Blocked
+    const blockedBadge = screen.getByTestId('trellis-dependency-badge-PAS-222');
+    expect(blockedBadge).toHaveAttribute('data-blocked', 'true');
+    expect(blockedBadge).toHaveTextContent('Blocked by PAS-224');
+
+    // PAS-224 blocks PAS-222 and depends on PAS-229 (which is 'Done')
+    const readyBadge = screen.getByTestId('trellis-dependency-badge-PAS-224');
+    expect(readyBadge).toHaveAttribute('data-blocked', 'false');
+    expect(readyBadge).toHaveTextContent('Deps 1/1');
+    expect(screen.getByTestId('trellis-blocks-badge-PAS-224')).toHaveTextContent('Blocks PAS-222');
+
+    // Attempt to advance PAS-222 from 'To do' while PAS-224 is still 'In progress'
+    fireEvent.click(screen.getByTestId('trellis-card-advance-PAS-222'));
+
+    // Dependency alert banner appears and PAS-222 stays in 'To do'
+    const alertBanner = screen.getByTestId('trellis-dependency-alert');
+    expect(alertBanner).toHaveTextContent('Cannot start or advance "Track checkout drop-off by step" (PAS-222)');
+    expect(alertBanner).toHaveTextContent('PAS-224');
+    expect(screen.getByTestId('trellis-column-to-do')).toHaveTextContent('Track checkout drop-off by step');
+
+    // Complete prerequisite PAS-224 by moving it to 'Done'
+    fireEvent.click(screen.getByText('Checkout: save address for next time'));
+    fireEvent.change(screen.getByTestId('trellis-detail-status-select'), {
+      target: { value: 'Done' },
+    });
+    fireEvent.click(screen.getByTestId('trellis-close-detail-btn'));
+
+    // Now PAS-222 dependency badge shows Deps 1/1 (unblocked) and can start
+    await waitFor(() => {
+      expect(screen.getByTestId('trellis-dependency-badge-PAS-222')).toHaveAttribute('data-blocked', 'false');
+      expect(screen.getByTestId('trellis-dependency-badge-PAS-222')).toHaveTextContent('Deps 1/1');
+    });
+
+    fireEvent.click(screen.getByTestId('trellis-card-advance-PAS-222'));
+    await waitFor(() => {
+      expect(screen.getByTestId('trellis-column-in-progress')).toHaveTextContent(
+        'Track checkout drop-off by step'
+      );
+    });
+  });
+
+  it('allows linking and unlinking prerequisite task dependencies from the detail drawer', async () => {
+    render(<TrellisApp />);
+
+    // Open PAS-220 ('To do', initially no dependencies)
+    fireEvent.click(screen.getByText('Empty states for the Orders tab'));
+
+    const depSection = screen.getByTestId('trellis-detail-dependencies-section');
+    expect(depSection).toHaveTextContent('No prerequisite tasks linked');
+
+    // Link PAS-219 ('To do') as a prerequisite for PAS-220
+    const depSelect = screen.getByTestId('trellis-add-dependency-select');
+    fireEvent.change(depSelect, { target: { value: 'PAS-219' } });
+    fireEvent.click(screen.getByTestId('trellis-add-dependency-btn'));
+
+    // PAS-220 is now blocked by PAS-219
+    await waitFor(() => {
+      expect(screen.getByTestId('trellis-prereq-item-PAS-219')).toBeInTheDocument();
+      expect(screen.getByTestId('trellis-dependency-badge-PAS-220')).toHaveTextContent(
+        'Blocked by PAS-219'
+      );
+    });
+
+    // Unlink PAS-219 from PAS-220
+    fireEvent.click(screen.getByTestId('trellis-remove-dependency-PAS-219'));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('trellis-prereq-item-PAS-219')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('trellis-dependency-badge-PAS-220')).not.toBeInTheDocument();
+    });
+  });
 });

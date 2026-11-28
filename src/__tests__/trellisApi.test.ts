@@ -51,6 +51,7 @@ describe('Trellis Laravel API integration', () => {
     expect(taskStatusToApi('Done')).toBe('completed');
     expect(mapLaravelTask({ ...apiTask, priority: 'urgent', labels: ['Bug'] }).priority).toBe('Urgent');
     expect(mapLaravelTask({ ...apiTask, priority: 'low', labels: ['Design'] }).priority).toBe('Low');
+    expect(mapLaravelTask({ ...apiTask, depends_on: [12, '18'] }).dependsOn).toEqual(['12', '18']);
   });
 
   it('creates and reloads tasks through the Laravel API and propagates failures', async () => {
@@ -58,12 +59,13 @@ describe('Trellis Laravel API integration', () => {
     const created = await createLaravelTask({
       title: 'Prepare Q4 rollout', description: 'Coordinate launch tasks', status: 'To do',
       priority: 'Urgent', labels: ['Feature'], dueDate: '2026-11-15', assigneeId: '14', departmentId: '3', hours: 3.5,
+      dependsOn: ['12'],
     });
 
     expect(requestLaravelData).toHaveBeenCalledWith('/tasks', expect.objectContaining({ method: 'POST' }));
     expect(JSON.parse(requestLaravelData.mock.calls[0][1].body)).toMatchObject({
       title: 'Prepare Q4 rollout', status: 'todo', priority: 'urgent', assigned_to_employee_id: 14,
-      department_id: null, estimated_hours: 3.5,
+      department_id: null, estimated_hours: 3.5, depends_on: ['12'],
     });
     expect(created.id).toBe('42');
 

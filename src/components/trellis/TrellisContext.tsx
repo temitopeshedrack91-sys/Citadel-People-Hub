@@ -9,6 +9,8 @@ import {
   ActivityHistoryItem,
   ViewTab,
   TaskLabel,
+  getIncompletePrerequisites,
+  wouldCreateDependencyCycle,
 } from './types';
 import { initialTeamMembers, initialTasks } from './mockData';
 import { AuthContext } from '../../context/AuthContext';
@@ -38,6 +40,7 @@ interface CreateTaskInput {
   hours?: number;
   reviewerId?: string;
   prTag?: string;
+  dependsOn?: string[];
 }
 
 interface TrellisContextType {
@@ -53,6 +56,10 @@ interface TrellisContextType {
   createTask: (input: CreateTaskInput) => Promise<TrellisTask | null>;
   updateTask: (taskId: string, updates: Partial<TrellisTask>) => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;
+  addTaskDependency: (taskId: string, prerequisiteTaskId: string) => Promise<{ ok: boolean; error?: string }>;
+  removeTaskDependency: (taskId: string, prerequisiteTaskId: string) => Promise<void>;
+  dependencyAlert: string | null;
+  clearDependencyAlert: () => void;
   isApiMode: boolean;
   isLoading: boolean;
   apiError: string | null;
@@ -118,6 +125,7 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [authenticatedUser, employeeRecords, isApiMode, selectedUserId, teamMembers]);
   const [isLoading, setIsLoading] = useState(isApiMode);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [dependencyAlert, setDependencyAlert] = useState<string | null>(null);
   const [canUndo, setCanUndo] = useState(false);
   const [notifications, setNotifications] = useState<TrellisNotification[]>(isApiMode ? [] : [
     {
@@ -232,6 +240,7 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
   );
   const unreadNotificationCount = useMemo(() => userNotifications.filter((item) => !item.read).length, [userNotifications]);
   const clearApiError = useCallback(() => setApiError(null), []);
+  const clearDependencyAlert = useCallback(() => setDependencyAlert(null), []);
   const reportApiError = useCallback((error: unknown) => {
     setApiError(error instanceof Error ? error.message : 'The task operation failed.');
   }, []);
@@ -255,10 +264,23 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [tasks, teamMembers, findMember]);
 
   const createTask = useCallback(async (input: CreateTaskInput): Promise<TrellisTask | null> => {
+    const uniqueDependsOn = Array.from(new Set(input.dependsOn || [])).filter(Boolean);
+    if ((input.status && input.status !== 'To do') && uniqueDependsOn.length > 0) {
+      const incomplete = getIncompletePrerequisites({ dependsOn: uniqueDependsOn }, tasks);
+      if (incomplete.length > 0) {
+        const blockerList = incomplete.map((p) => `${p.id} ("${p.title}")`).join(', ');
+        setDependencyAlert(
+          `Cannot create "${input.title}" in "${input.status}" while prerequisite task(s) are incomplete: ${blockerList}.`
+        );
+        return null;
+      }
+    }
+
     if (isApiMode) {
       try {
         const created = await createLaravelTask({
           ...input,
+          dependsOn: uniqueDependsOn,
           departmentId: authenticatedUser?.departmentId,
         });
         setTasks((previous) => [created, ...previous]);
@@ -290,9 +312,11 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
       checklist: [],
       comments: [],
       prTag: input.prTag,
+      ...(uniqueDependsOn.length > 0 ? { dependsOn: uniqueDependsOn } : {}),
       createdAt: `Just now by ${currentUser.name.split(' ')[0]}`,
     };
     setTasks((previous) => [createdTask, ...previous]);
+    setDependencyAlert(null);
     if (!isSelfAssignment) {
       setNotifications((previous) => [{
         id: `notif-${Date.now()}`, recipientId: input.assigneeId, senderId: currentUser.id,
@@ -301,11 +325,28 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }, ...previous]);
     }
     return createdTask;
-  }, [authenticatedUser?.departmentId, currentUser, isApiMode, reportApiError, tasks.length]);
+  }, [authenticatedUser?.departmentId, currentUser, isApiMode, reportApiError, tasks]);
 
   const updateTask = useCallback(async (taskId: string, updates: Partial<TrellisTask>): Promise<void> => {
     const task = tasks.find((item) => item.id === taskId);
     if (!task) return;
+
+    const nextStatus = updates.status ?? task.status;
+    const nextDependsOn = updates.dependsOn ?? task.dependsOn;
+
+    // Enforce dependency rule when transitioning out of 'To do'
+    if (updates.status && updates.status !== 'To do' && updates.status !== task.status) {
+      const incomplete = getIncompletePrerequisites({ dependsOn: nextDependsOn }, tasks);
+      if (incomplete.length > 0) {
+        const blockerList = incomplete.map((p) => `${p.id} ("${p.title}")`).join(', ');
+        setDependencyAlert(
+          `Cannot move "${task.title}" (${task.id}) to "${nextStatus}" until prerequisite task(s) are completed: ${blockerList}.`
+        );
+        return;
+      }
+    }
+
+    setDependencyAlert(null);
     if (isApiMode) {
       try {
         const updated = await updateLaravelTask(task, updates);
@@ -318,6 +359,39 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
     setTasks((previous) => previous.map((item) => item.id === taskId ? { ...item, ...updates } : item));
   }, [isApiMode, reportApiError, tasks]);
+
+  const addTaskDependency = useCallback(async (
+    taskId: string,
+    prerequisiteTaskId: string
+  ): Promise<{ ok: boolean; error?: string }> => {
+    const task = tasks.find((item) => item.id === taskId);
+    const prereq = tasks.find((item) => item.id === prerequisiteTaskId);
+    if (!task || !prereq) {
+      return { ok: false, error: 'Selected task does not exist.' };
+    }
+    if (wouldCreateDependencyCycle(taskId, prerequisiteTaskId, tasks)) {
+      const cycleError = `Cannot link ${prereq.id} as a prerequisite for ${task.id} because it would create a circular dependency.`;
+      setDependencyAlert(cycleError);
+      return { ok: false, error: cycleError };
+    }
+    const existing = task.dependsOn || [];
+    if (existing.includes(prerequisiteTaskId)) {
+      return { ok: true };
+    }
+    const nextDependsOn = [...existing, prerequisiteTaskId];
+    await updateTask(taskId, { dependsOn: nextDependsOn });
+    return { ok: true };
+  }, [tasks, updateTask]);
+
+  const removeTaskDependency = useCallback(async (
+    taskId: string,
+    prerequisiteTaskId: string
+  ): Promise<void> => {
+    const task = tasks.find((item) => item.id === taskId);
+    if (!task) return;
+    const nextDependsOn = (task.dependsOn || []).filter((id) => id !== prerequisiteTaskId);
+    await updateTask(taskId, { dependsOn: nextDependsOn });
+  }, [tasks, updateTask]);
 
   const deleteTask = useCallback(async (taskId: string): Promise<void> => {
     const task = tasks.find((item) => item.id === taskId);
@@ -410,6 +484,20 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const moveTaskStatus = useCallback(async (taskId: string, newStatus: TaskStatus) => {
     const task = tasks.find((item) => item.id === taskId);
     if (!task || task.status === newStatus) return;
+
+    // Enforce dependency rule: cannot move a task to 'In progress', 'In review', or 'Done' if any prerequisite is not 'Done'
+    if (newStatus !== 'To do') {
+      const incomplete = getIncompletePrerequisites(task, tasks);
+      if (incomplete.length > 0) {
+        const blockerList = incomplete.map((p) => `${p.id} ("${p.title}")`).join(', ');
+        setDependencyAlert(
+          `Cannot start or advance "${task.title}" (${task.id}) to "${newStatus}" until prerequisite task(s) are completed: ${blockerList}.`
+        );
+        return;
+      }
+    }
+
+    setDependencyAlert(null);
     const previousStatus = task.status;
     let updated = { ...task, status: newStatus };
     if (isApiMode) {
@@ -483,6 +571,10 @@ export const TrellisProvider: React.FC<{ children: React.ReactNode }> = ({ child
         createTask,
         updateTask,
         deleteTask,
+        addTaskDependency,
+        removeTaskDependency,
+        dependencyAlert,
+        clearDependencyAlert,
         isApiMode,
         isLoading,
         apiError,

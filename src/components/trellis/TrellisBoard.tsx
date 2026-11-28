@@ -11,6 +11,9 @@ import {
   Pencil,
   Trash2,
   Flag,
+  Lock,
+  Link2,
+  X,
 } from 'lucide-react';
 import { useTrellis } from './TrellisContext';
 import {
@@ -19,6 +22,10 @@ import {
   TaskLabel,
   PRIORITY_BADGE_STYLES,
   resolveTaskPriority,
+  getTaskPrerequisites,
+  getIncompletePrerequisites,
+  isTaskBlocked,
+  getDependentTasks,
 } from './types';
 
 const labelColors: Record<TaskLabel, string> = {
@@ -63,6 +70,8 @@ export const TrellisBoard: React.FC = () => {
     deleteTask,
     setIsEditMode,
     canManageTasks,
+    dependencyAlert,
+    clearDependencyAlert,
   } = useTrellis();
 
   // Filter tasks based on search, assignee, label, priority, and myTasksMode
@@ -88,7 +97,30 @@ export const TrellisBoard: React.FC = () => {
   });
 
   return (
-    <div className="flex-1 overflow-x-auto p-4 sm:p-6 bg-slate-50/50">
+    <div className="flex-1 overflow-x-auto p-4 sm:p-6 bg-slate-50/50 space-y-4">
+      {/* Dependency Alert Banner */}
+      {dependencyAlert && (
+        <div
+          data-testid="trellis-dependency-alert"
+          role="alert"
+          className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold shadow-2xs"
+        >
+          <div className="flex items-center gap-2">
+            <Lock className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>{dependencyAlert}</span>
+          </div>
+          <button
+            type="button"
+            onClick={clearDependencyAlert}
+            data-testid="trellis-dismiss-dependency-alert"
+            className="p-1 rounded-lg hover:bg-rose-100 text-rose-600 transition cursor-pointer"
+            title="Dismiss alert"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* Mobile column quick-jump links */}
       <div className="flex md:hidden items-center gap-1.5 overflow-x-auto pb-3 custom-scrollbar">
         {columnConfigs.map((col) => {
@@ -151,6 +183,11 @@ export const TrellisBoard: React.FC = () => {
                     const assignee = findMember(task.assigneeId) || teamMembers.find((m) => m.id === task.assigneeId);
                     const priority = resolveTaskPriority(task);
                     const priorityStyle = PRIORITY_BADGE_STYLES[priority];
+                    const prerequisites = getTaskPrerequisites(task, tasks);
+                    const incompletePrerequisites = getIncompletePrerequisites(task, tasks);
+                    const blocked = isTaskBlocked(task, tasks);
+                    const dependentTasks = getDependentTasks(task.id, tasks);
+                    const completedPrereqCount = prerequisites.length - incompletePrerequisites.length;
 
                     return (
                       <div
@@ -165,7 +202,11 @@ export const TrellisBoard: React.FC = () => {
                             setSelectedTaskId(task.id);
                           }
                         }}
-                        className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-[0_2px_8px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_22px_rgba(15,23,42,0.06)] hover:border-slate-300 transition-all duration-150 cursor-pointer space-y-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#174EA6] focus-visible:ring-offset-2 select-none"
+                        className={`bg-white rounded-2xl p-4 border shadow-[0_2px_8px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_22px_rgba(15,23,42,0.06)] transition-all duration-150 cursor-pointer space-y-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#174EA6] focus-visible:ring-offset-2 select-none ${
+                          blocked
+                            ? 'border-rose-200/90 hover:border-rose-300'
+                            : 'border-slate-200/80 hover:border-slate-300'
+                        }`}
                       >
                         {/* Top row: Priority Badge, Labels & Quick Actions */}
                         <div className="flex items-start justify-between gap-2">
@@ -236,6 +277,54 @@ export const TrellisBoard: React.FC = () => {
                           {task.title}
                         </h4>
 
+                        {/* Dependency Tracking Pills (Prerequisites & Downstream Dependents) */}
+                        {(prerequisites.length > 0 || dependentTasks.length > 0) && (
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {prerequisites.length > 0 && (
+                              <span
+                                data-testid={`trellis-dependency-badge-${task.id}`}
+                                data-blocked={blocked ? 'true' : 'false'}
+                                title={
+                                  blocked
+                                    ? `Blocked until completed: ${incompletePrerequisites.map((p) => `${p.id} (${p.title})`).join(', ')}`
+                                    : `All prerequisites completed: ${prerequisites.map((p) => p.id).join(', ')}`
+                                }
+                                className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                                  blocked
+                                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                }`}
+                              >
+                                {blocked ? (
+                                  <>
+                                    <Lock className="w-2.5 h-2.5 shrink-0" />
+                                    <span>
+                                      Blocked by {incompletePrerequisites.map((p) => p.id).join(', ')}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <CheckCircle2 className="w-2.5 h-2.5 shrink-0" />
+                                    <span>
+                                      Deps {completedPrereqCount}/{prerequisites.length}
+                                    </span>
+                                  </>
+                                )}
+                              </span>
+                            )}
+                            {dependentTasks.length > 0 && (
+                              <span
+                                data-testid={`trellis-blocks-badge-${task.id}`}
+                                title={`Must complete before: ${dependentTasks.map((d) => `${d.id} (${d.title})`).join(', ')}`}
+                                className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md border bg-slate-100 text-slate-600 border-slate-200"
+                              >
+                                <Link2 className="w-2.5 h-2.5 shrink-0" />
+                                <span>Blocks {dependentTasks.map((d) => d.id).join(', ')}</span>
+                              </span>
+                            )}
+                          </div>
+                        )}
+
                         {/* PR / Sub-task Tag */}
                         {task.prTag && (
                           <div className="bg-slate-50 border border-slate-100 rounded px-2 py-1 text-[10px] font-mono font-medium text-slate-600 truncate">
@@ -294,6 +383,7 @@ export const TrellisBoard: React.FC = () => {
                           <div className="flex items-center gap-1.5">
                             {/* Quick move dropdown icon */}
                             <div
+                              data-testid={`trellis-card-advance-${task.id}`}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 const nextCol: Record<TaskStatus, TaskStatus> = {
@@ -304,10 +394,22 @@ export const TrellisBoard: React.FC = () => {
                                 };
                                 moveTaskStatus(task.id, nextCol[task.status]);
                               }}
-                              title={`Advance to next status`}
-                              className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition"
+                              title={
+                                blocked
+                                  ? `Blocked by ${incompletePrerequisites.map((p) => p.id).join(', ')}`
+                                  : 'Advance to next status'
+                              }
+                              className={`p-1 rounded transition ${
+                                blocked
+                                  ? 'text-rose-400 hover:bg-rose-50 hover:text-rose-600'
+                                  : 'hover:bg-slate-100 text-slate-400 hover:text-slate-700'
+                              }`}
                             >
-                              <ChevronRight className="w-3 h-3" />
+                              {blocked ? (
+                                <Lock className="w-3 h-3" />
+                              ) : (
+                                <ChevronRight className="w-3 h-3" />
+                              )}
                             </div>
 
                             {/* Assignee Avatar */}

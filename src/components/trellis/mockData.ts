@@ -220,6 +220,7 @@ export const initialTasks: TrellisTask[] = [
     hours: 8,
     checklist: [],
     comments: [],
+    dependsOn: ['PAS-232'],
     createdAt: 'Oct 17 by Nadia',
   },
   {
@@ -236,6 +237,7 @@ export const initialTasks: TrellisTask[] = [
     hours: 8,
     checklist: [],
     comments: [],
+    dependsOn: ['PAS-224'],
     createdAt: 'Oct 18 by Raka',
   },
   {
@@ -277,6 +279,7 @@ export const initialTasks: TrellisTask[] = [
       { id: 'c-5', text: 'Unit tests', done: false },
     ],
     comments: [],
+    dependsOn: ['PAS-229'],
     createdAt: 'Oct 14 by Bayu',
   },
   {

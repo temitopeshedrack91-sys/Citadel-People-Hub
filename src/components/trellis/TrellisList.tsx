@@ -1,10 +1,13 @@
 import React from 'react';
 import { useTrellis } from './TrellisContext';
-import { Calendar, User, Clock, CheckCircle2, Pencil, Trash2 } from 'lucide-react';
+import { Calendar, User, Clock, CheckCircle2, Pencil, Trash2, Lock } from 'lucide-react';
 import {
   TaskStatus,
   PRIORITY_BADGE_STYLES,
   resolveTaskPriority,
+  getTaskPrerequisites,
+  getIncompletePrerequisites,
+  isTaskBlocked,
 } from './types';
 
 export const TrellisList: React.FC = () => {
@@ -69,6 +72,9 @@ export const TrellisList: React.FC = () => {
                 const assignee = findMember(task.assigneeId) || teamMembers.find((m) => m.id === task.assigneeId);
                 const priority = resolveTaskPriority(task);
                 const priorityStyle = PRIORITY_BADGE_STYLES[priority];
+                const prerequisites = getTaskPrerequisites(task, tasks);
+                const incompletePrerequisites = getIncompletePrerequisites(task, tasks);
+                const blocked = isTaskBlocked(task, tasks);
 
                 return (
                   <div
@@ -88,6 +94,29 @@ export const TrellisList: React.FC = () => {
                         <span className={`w-1.5 h-1.5 rounded-full ${priorityStyle.dotClass}`} />
                         <span>{priority}</span>
                       </span>
+                      {prerequisites.length > 0 && (
+                        <span
+                          data-testid={`trellis-list-dependency-badge-${task.id}`}
+                          data-blocked={blocked ? 'true' : 'false'}
+                          className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-md border shrink-0 ${
+                            blocked
+                              ? 'bg-rose-50 text-rose-700 border-rose-200'
+                              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          }`}
+                        >
+                          {blocked ? (
+                            <>
+                              <Lock className="w-2.5 h-2.5" />
+                              <span>Blocked by {incompletePrerequisites.map((p) => p.id).join(', ')}</span>
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle2 className="w-2.5 h-2.5" />
+                              <span>Deps {prerequisites.length}/{prerequisites.length}</span>
+                            </>
+                          )}
+                        </span>
+                      )}
                       <h4 className="font-bold text-slate-900 group-hover:text-[#B88A24] truncate">
                         {task.title}
                       </h4>

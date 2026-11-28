@@ -107,7 +107,84 @@ export interface TrellisTask {
   attachmentsCount?: number;
   imageUrl?: string; // image preview for marketing cards
   progressFraction?: string; // e.g. '3/5', '2/8'
+  dependsOn?: string[]; // IDs of prerequisite tasks that must be 'Done' before this task can start
   createdAt: string;
+}
+
+/**
+ * Returns all resolved prerequisite tasks for a given task.
+ */
+export function getTaskPrerequisites(
+  task: Pick<TrellisTask, 'dependsOn'>,
+  allTasks: TrellisTask[]
+): TrellisTask[] {
+  if (!task.dependsOn || task.dependsOn.length === 0) return [];
+  const taskMap = new Map(allTasks.map((t) => [t.id, t]));
+  return task.dependsOn
+    .map((id) => taskMap.get(id))
+    .filter((t): t is TrellisTask => Boolean(t));
+}
+
+/**
+ * Returns prerequisite tasks that have NOT yet reached 'Done' status.
+ */
+export function getIncompletePrerequisites(
+  task: Pick<TrellisTask, 'dependsOn'>,
+  allTasks: TrellisTask[]
+): TrellisTask[] {
+  return getTaskPrerequisites(task, allTasks).filter((prereq) => prereq.status !== 'Done');
+}
+
+/**
+ * Returns true if the task has at least one incomplete prerequisite and is not already Done.
+ */
+export function isTaskBlocked(
+  task: Pick<TrellisTask, 'dependsOn' | 'status'>,
+  allTasks: TrellisTask[]
+): boolean {
+  if (task.status === 'Done') return false;
+  return getIncompletePrerequisites(task, allTasks).length > 0;
+}
+
+/**
+ * Returns downstream tasks that depend on `taskId` (tasks that `taskId` blocks).
+ */
+export function getDependentTasks(
+  taskId: string,
+  allTasks: TrellisTask[]
+): TrellisTask[] {
+  return allTasks.filter((t) => t.dependsOn?.includes(taskId));
+}
+
+/**
+ * Checks if making `sourceTaskId` depend on `candidatePrerequisiteId` would create a cycle.
+ */
+export function wouldCreateDependencyCycle(
+  sourceTaskId: string,
+  candidatePrerequisiteId: string,
+  allTasks: TrellisTask[]
+): boolean {
+  if (sourceTaskId === candidatePrerequisiteId) return true;
+  const taskMap = new Map(allTasks.map((t) => [t.id, t]));
+  const visited = new Set<string>();
+  const stack: string[] = [candidatePrerequisiteId];
+
+  while (stack.length > 0) {
+    const currentId = stack.pop()!;
+    if (currentId === sourceTaskId) return true;
+    if (visited.has(currentId)) continue;
+    visited.add(currentId);
+
+    const currentTask = taskMap.get(currentId);
+    if (currentTask?.dependsOn) {
+      for (const nextId of currentTask.dependsOn) {
+        if (!visited.has(nextId)) {
+          stack.push(nextId);
+        }
+      }
+    }
+  }
+  return false;
 }
 
 export interface TrellisNotification {

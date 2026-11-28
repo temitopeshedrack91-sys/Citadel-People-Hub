@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Calendar, User, Tag, Clock, CheckCircle2, Flag } from 'lucide-react';
+import { X, Plus, Calendar, User, Tag, Clock, CheckCircle2, Flag, Link2 } from 'lucide-react';
 import { useTrellis } from './TrellisContext';
 import {
   TaskStatus,
@@ -23,8 +23,15 @@ const availableLabels: TaskLabel[] = [
 ];
 
 export const TrellisNewTaskModal: React.FC = () => {
-  const { isNewTaskModalOpen, setIsNewTaskModalOpen, teamMembers, currentUser, createTask, isApiMode } =
-    useTrellis();
+  const {
+    isNewTaskModalOpen,
+    setIsNewTaskModalOpen,
+    tasks,
+    teamMembers,
+    currentUser,
+    createTask,
+    isApiMode,
+  } = useTrellis();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -35,12 +42,16 @@ export const TrellisNewTaskModal: React.FC = () => {
   const [selectedLabels, setSelectedLabels] = useState<TaskLabel[]>(['Feature']);
   const [hours, setHours] = useState<number>(8);
   const [reviewerId, setReviewerId] = useState<string>('');
+  const [dependsOn, setDependsOn] = useState<string[]>([]);
+  const [selectedPrereqId, setSelectedPrereqId] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!isNewTaskModalOpen) return;
     setAssigneeId(currentUser.id);
     setReviewerId('');
+    setDependsOn([]);
+    setSelectedPrereqId('');
   }, [currentUser.id, isNewTaskModalOpen]);
 
   useEffect(() => {
@@ -76,6 +87,7 @@ export const TrellisNewTaskModal: React.FC = () => {
       assigneeId,
       hours: Number(hours),
       reviewerId: reviewerId || undefined,
+      dependsOn: dependsOn.length > 0 ? dependsOn : undefined,
     });
     setIsSaving(false);
     if (!created) return;
@@ -85,7 +97,11 @@ export const TrellisNewTaskModal: React.FC = () => {
     setDueDate('');
     setPriority('Medium');
     setSelectedLabels(['Feature']);
+    setDependsOn([]);
+    setSelectedPrereqId('');
   };
+
+  const availablePrerequisiteTasks = tasks.filter((t) => !dependsOn.includes(t.id));
 
   return (
     <div
@@ -96,7 +112,7 @@ export const TrellisNewTaskModal: React.FC = () => {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-2xl border border-slate-200/90 shadow-2xl max-w-lg w-full p-6 space-y-4"
+        className="bg-white rounded-2xl border border-slate-200/90 shadow-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto"
       >
         {/* Header */}
         <div className="flex items-center justify-between pb-2 border-b border-slate-100">
@@ -254,6 +270,70 @@ export const TrellisNewTaskModal: React.FC = () => {
                   </button>
                 );
               })}
+            </div>
+          </div>
+
+          {/* Prerequisite Task Dependencies Selector */}
+          <div>
+            <label className="block text-slate-800 font-bold mb-1.5 flex items-center gap-1.5">
+              <Link2 className="w-3.5 h-3.5 text-slate-500" />
+              <span>Prerequisite Tasks (Must complete before this task starts)</span>
+            </label>
+            {dependsOn.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {dependsOn.map((depId) => {
+                  const depTask = tasks.find((t) => t.id === depId);
+                  return (
+                    <span
+                      key={depId}
+                      data-testid={`trellis-new-task-dep-pill-${depId}`}
+                      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-700"
+                    >
+                      <span className="font-mono text-slate-500">{depId}</span>
+                      <span className="truncate max-w-[160px]">{depTask?.title || depId}</span>
+                      <button
+                        type="button"
+                        data-testid={`trellis-new-task-remove-dependency-${depId}`}
+                        onClick={() => setDependsOn(dependsOn.filter((id) => id !== depId))}
+                        className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                        title={`Remove ${depId}`}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <select
+                data-testid="trellis-new-task-dependency-select"
+                value={selectedPrereqId}
+                onChange={(e) => setSelectedPrereqId(e.target.value)}
+                className="flex-1 px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 text-xs font-semibold text-slate-800 bg-white cursor-pointer"
+              >
+                <option value="">Select prerequisite task...</option>
+                {availablePrerequisiteTasks.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.id} — {t.title} ({t.status})
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                data-testid="trellis-new-task-add-dependency-btn"
+                disabled={!selectedPrereqId}
+                onClick={() => {
+                  if (!selectedPrereqId) return;
+                  if (!dependsOn.includes(selectedPrereqId)) {
+                    setDependsOn([...dependsOn, selectedPrereqId]);
+                  }
+                  setSelectedPrereqId('');
+                }}
+                className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-40 text-white text-xs font-bold transition cursor-pointer"
+              >
+                Link
+              </button>
             </div>
           </div>
 

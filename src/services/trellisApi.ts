@@ -33,6 +33,7 @@ export type LaravelTask = {
   estimated_hours?: number | string | null;
   checklist?: { id: string; text: string; done: boolean }[] | null;
   pr_tag?: string | null;
+  depends_on?: (number | string)[] | null;
   created_at?: string;
   project?: { id?: number | string; title?: string | null; code?: string | null } | null;
   department?: { id?: number | string; name?: string | null } | null;
@@ -135,6 +136,9 @@ export function mapLaravelTask(task: LaravelTask): TrellisTask {
   const priority =
     (task.priority && priorityFromApi[task.priority]) ||
     (labels.includes('High') ? 'High' : 'Medium');
+  const dependsOn = Array.isArray(task.depends_on)
+    ? task.depends_on.map((depId) => String(depId)).filter(Boolean)
+    : undefined;
   return {
     id: String(task.id),
     title: task.title,
@@ -152,6 +156,7 @@ export function mapLaravelTask(task: LaravelTask): TrellisTask {
     checklist: (task.checklist || []).map((item) => ({ ...item })),
     comments: (task.comments || []).map(mapComment),
     prTag: task.pr_tag || undefined,
+    ...(dependsOn && dependsOn.length > 0 ? { dependsOn } : {}),
     createdAt: [createdAt, assignerName ? `by ${assignerName}` : ''].filter(Boolean).join(' '),
   };
 }
@@ -180,6 +185,7 @@ export async function createLaravelTask(input: {
   reviewerId?: string;
   hours?: number;
   prTag?: string;
+  dependsOn?: string[];
 }): Promise<TrellisTask> {
   const assignedTo = input.assigneeId && /^\d+$/.test(input.assigneeId) ? Number(input.assigneeId) : null;
   const resolvedPriority = input.priority
@@ -201,6 +207,7 @@ export async function createLaravelTask(input: {
       labels: input.labels,
       estimated_hours: input.hours ?? null,
       pr_tag: input.prTag || null,
+      ...(input.dependsOn && input.dependsOn.length > 0 ? { depends_on: input.dependsOn } : {}),
     }),
   });
   return mapLaravelTask(task);
@@ -226,6 +233,7 @@ export async function updateLaravelTask(task: TrellisTask, updates: Partial<Trel
   if (updates.hours !== undefined) body.estimated_hours = updates.hours;
   if (updates.checklist !== undefined) body.checklist = updates.checklist;
   if (updates.prTag !== undefined) body.pr_tag = updates.prTag || null;
+  if (updates.dependsOn !== undefined) body.depends_on = updates.dependsOn;
 
   let changed = false;
   if (Object.keys(body).length > 0) {
