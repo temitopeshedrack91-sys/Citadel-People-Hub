@@ -11,7 +11,7 @@ export const CITADEL_BRAND = {
   primaryHrFunction: 'People, Culture & Change Management (PCCM)',
   officialHrRole: 'People, Culture & Change Manager (PCCM)',
   
-  // Color Palette Tokens (Strictly White, Gold, Black, and Blue)
+  // Color Palette Tokens (Restrained Dark Navy, Royal Blue, and Neutral Slate)
   colors: {
     // Primary Action: Royal Blue (#174EA6) & Deep Navy (#0B1F3A)
     primary: '#174EA6',
@@ -19,16 +19,16 @@ export const CITADEL_BRAND = {
     primaryDark: '#0B1F3A',
     primarySubtle: '#EFF6FF',
 
-    // Accent: Premium Gold (#D4AF37 / #B88A24)
-    accent: '#D4AF37',
-    accentLight: '#FAF5EB',
-    accentDark: '#B88A24',
-    gold: '#D4AF37',
-    goldLight: '#FAF5EB',
-    goldHover: '#B88A24',
-    goldDark: '#B88A24',
-    goldBorder: '#E9D59A',
-    citadelGold: '#D4AF37',
+    // Accent: Restrained Royal Blue & Slate
+    accent: '#174EA6',
+    accentLight: '#EFF6FF',
+    accentDark: '#0B1F3A',
+    gold: '#174EA6',
+    goldLight: '#EFF6FF',
+    goldHover: '#0B1F3A',
+    goldDark: '#0B1F3A',
+    goldBorder: '#BFDBFE',
+    citadelGold: '#174EA6',
 
     // Supporting Neutrals
     slate900: '#111827',
@@ -41,12 +41,12 @@ export const CITADEL_BRAND = {
     slate50: '#F5F7FA',
     pureWhite: '#FFFFFF',
 
-    // Semantic Status Colors (White, Gold, Black, Blue + labels)
+    // Semantic Status Colors
     status: {
       success: '#174EA6',
       successBg: '#EFF6FF',
-      warning: '#B88A24',
-      warningBg: '#FAF5EB',
+      warning: '#475569',
+      warningBg: '#F8FAFC',
       danger: '#111827',
       dangerBg: '#F5F7FA',
       info: '#0B1F3A',

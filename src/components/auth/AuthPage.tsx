@@ -235,22 +235,7 @@ export const AuthPage: React.FC = () => {
   return (
     <div className="min-h-screen w-full bg-[#F5F7FA] grid grid-cols-1 lg:grid-cols-12 font-sans antialiased text-slate-900">
       {/* Left Architectural Brand Column (Desktop) */}
-      <aside className="hidden lg:flex lg:col-span-5 bg-black text-white flex-col justify-between p-12 xl:p-16 relative overflow-hidden border-r border-white/10">
-        {/* Subtle architectural hairline grid */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage:
-              'linear-gradient(to right, rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.6) 1px, transparent 1px)',
-            backgroundSize: '64px 64px',
-          }}
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -bottom-32 -left-24 w-96 h-96 rounded-full bg-[#D4AF37]/10 blur-3xl"
-        />
-
+      <aside className="hidden lg:flex lg:col-span-5 bg-[#0B1F3A] text-white flex-col justify-between p-12 xl:p-16 relative overflow-hidden border-r border-slate-800">
         {/* Top Emblem & Identity */}
         <div className="relative z-10 flex items-center gap-3.5">
           <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center p-2 shrink-0">
@@ -269,7 +254,7 @@ export const AuthPage: React.FC = () => {
         {/* Center Editorial Copy */}
         <div className="relative z-10 space-y-8 max-w-md">
           <div className="space-y-4">
-            <p className="text-xs font-semibold tracking-wide text-[#D4AF37]">
+            <p className="text-xs font-semibold tracking-wide text-slate-300">
               People, Culture &amp; Change Management
             </p>
             <h2 className="font-display text-3xl xl:text-4xl font-bold tracking-tight text-white leading-[1.15]">
@@ -304,83 +289,7 @@ export const AuthPage: React.FC = () => {
       </aside>
 
       {/* Right Sign-In Column */}
-      <div className="lg:col-span-7 relative overflow-hidden bg-[#FFFFFF] flex flex-col justify-center items-center px-4 py-8 sm:p-8 lg:p-12">
-        {/* Subtle Network Mesh / Constellation Grid Background */}
-        <svg
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 h-full w-full select-none"
-          viewBox="0 0 900 800"
-          preserveAspectRatio="xMidYMid slice"
-          fill="none"
-        >
-          <g stroke="#64748B" strokeOpacity="0.14" strokeWidth="1">
-            {/* Upper constellation */}
-            <line x1="60" y1="90" x2="210" y2="55" />
-            <line x1="210" y1="55" x2="360" y2="140" />
-            <line x1="210" y1="55" x2="180" y2="210" />
-            <line x1="60" y1="90" x2="180" y2="210" />
-            <line x1="360" y1="140" x2="540" y2="75" />
-            <line x1="540" y1="75" x2="720" y2="135" />
-            <line x1="720" y1="135" x2="860" y2="70" />
-            <line x1="540" y1="75" x2="610" y2="240" />
-            <line x1="720" y1="135" x2="610" y2="240" />
-            <line x1="720" y1="135" x2="830" y2="290" />
-
-            {/* Mid-left & mid-right network */}
-            <line x1="180" y1="210" x2="90" y2="370" />
-            <line x1="180" y1="210" x2="310" y2="320" />
-            <line x1="360" y1="140" x2="310" y2="320" />
-            <line x1="90" y1="370" x2="170" y2="520" />
-            <line x1="90" y1="370" x2="40" y2="590" />
-            <line x1="610" y1="240" x2="830" y2="290" />
-            <line x1="830" y1="290" x2="760" y2="460" />
-            <line x1="610" y1="240" x2="760" y2="460" />
-
-            {/* Lower constellation */}
-            <line x1="170" y1="520" x2="40" y2="590" />
-            <line x1="170" y1="520" x2="260" y2="690" />
-            <line x1="40" y1="590" x2="120" y2="750" />
-            <line x1="260" y1="690" x2="120" y2="750" />
-            <line x1="260" y1="690" x2="470" y2="740" />
-            <line x1="470" y1="740" x2="650" y2="660" />
-            <line x1="650" y1="660" x2="760" y2="460" />
-            <line x1="650" y1="660" x2="840" y2="610" />
-            <line x1="760" y1="460" x2="840" y2="610" />
-            <line x1="650" y1="660" x2="770" y2="765" />
-            <line x1="840" y1="610" x2="770" y2="765" />
-          </g>
-
-          {/* Network Nodes */}
-          <g fill="#64748B" fillOpacity="0.22">
-            <circle cx="60" cy="90" r="2.5" />
-            <circle cx="210" cy="55" r="3" />
-            <circle cx="360" cy="140" r="2.5" />
-            <circle cx="180" cy="210" r="3" />
-            <circle cx="540" cy="75" r="2.5" />
-            <circle cx="720" cy="135" r="3" />
-            <circle cx="860" cy="70" r="2.5" />
-            <circle cx="610" cy="240" r="2.5" />
-            <circle cx="830" cy="290" r="3" />
-            <circle cx="90" cy="370" r="3" />
-            <circle cx="310" cy="320" r="2.5" />
-            <circle cx="170" cy="520" r="2.5" />
-            <circle cx="40" cy="590" r="2.5" />
-            <circle cx="760" cy="460" r="3" />
-            <circle cx="260" cy="690" r="3" />
-            <circle cx="120" cy="750" r="2.5" />
-            <circle cx="470" cy="740" r="2.5" />
-            <circle cx="650" cy="660" r="3" />
-            <circle cx="840" cy="610" r="2.5" />
-            <circle cx="770" cy="765" r="2.5" />
-          </g>
-
-          {/* Subtle Brand Accent Nodes (Royal Blue & Gold) */}
-          <circle cx="210" cy="55" r="7" stroke="#174EA6" strokeOpacity="0.14" strokeWidth="1" />
-          <circle cx="720" cy="135" r="7" stroke="#D4AF37" strokeOpacity="0.28" strokeWidth="1" />
-          <circle cx="650" cy="660" r="7" stroke="#174EA6" strokeOpacity="0.14" strokeWidth="1" />
-          <circle cx="170" cy="520" r="7" stroke="#D4AF37" strokeOpacity="0.24" strokeWidth="1" />
-        </svg>
-
+      <div className="lg:col-span-7 relative overflow-hidden bg-[#F5F7FA] flex flex-col justify-center items-center px-4 py-8 sm:p-8 lg:p-12">
         <div className="relative z-10 w-full max-w-[440px] space-y-5">
           {/* Mobile Brand Header */}
           <div className="flex lg:hidden items-center gap-3 px-1">
@@ -610,7 +519,7 @@ export const AuthPage: React.FC = () => {
                     ? 'Sign In to Workspace'
                     : 'Create Workspace Account'}
                 </span>
-                <ArrowRight className="w-4 h-4 text-[#E5C76B]" />
+                <ArrowRight className="w-4 h-4 text-white" />
               </button>
             </form>
           </div>

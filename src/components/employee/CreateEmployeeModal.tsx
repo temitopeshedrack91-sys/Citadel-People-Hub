@@ -547,7 +547,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
     >
       <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-6 flex flex-col max-h-[90vh]">
         {/* Modal Header */}
-        <div className="bg-[#174EA6] text-white p-5 sm:p-6 relative shrink-0 border-b border-[#BFDBFE]">
+        <div className="bg-[#0B1F3A] text-white p-5 sm:p-6 relative shrink-0 border-b border-slate-800">
           <button
             type="button"
             onClick={onClose}
@@ -561,11 +561,11 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
             <h2 className="text-lg font-bold text-white">
               {isEditing ? `Edit Employee Record — ${editingEmployee?.fullName}` : 'Create Employee Master Record'}
             </h2>
-            <span className="px-2 py-0.5 rounded bg-[#B88A24] text-[#D4AF37] font-mono text-[10px] font-bold border border-[#E9D59A]">
+            <span className="px-2 py-0.5 rounded bg-white/15 text-slate-200 font-mono text-[10px] font-bold border border-white/15">
               {isEditing ? 'Update Placement & Hierarchy' : 'PCCM Enrollment'}
             </span>
           </div>
-          <p className="text-xs text-blue-100 mt-1">
+          <p className="text-xs text-slate-300 mt-1">
             Sectioned personnel onboarding wizard with automatic credential indexing.
           </p>
 
@@ -719,7 +719,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                   />
                 ) : (
                   <div className="w-12 h-12 rounded-xl bg-[#174EA6] text-white font-bold flex items-center justify-center text-sm shrink-0">
-                    <Camera className="w-5 h-5 text-[#D4AF37]" />
+                    <Camera className="w-5 h-5 text-white" />
                   </div>
                 )}
                 <div className="flex-1 space-y-1.5">
@@ -1121,8 +1121,8 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                 5. Benefits, Banking & Payroll Configuration
               </h3>
 
-              <div className="p-3.5 rounded-xl bg-[#B88A24] border border-[#E9D59A] text-xs text-slate-700 flex items-start gap-2">
-                <Shield className="w-4 h-4 text-[#C59B27] shrink-0 mt-0.5" />
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 flex items-start gap-2">
+                <Shield className="w-4 h-4 text-[#174EA6] shrink-0 mt-0.5" />
                 <span>
                   These credentials will be masked and guarded by role-based permissions in accordance with the Citadel PCCM Governance Charter.
                 </span>
@@ -1242,7 +1242,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                   type="submit"
                   disabled={isSubmitting}
                   data-testid="employee-save-changes-btn"
-                  className="px-5 py-2 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+                  className="px-5 py-2 bg-[#174EA6] hover:bg-[#0B1F3A] text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer"
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   <span>{isSubmitting ? 'Saving Changes...' : 'Save Changes'}</span>
@@ -1251,7 +1251,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="px-4 py-2 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs active:scale-95"
+                  className="px-4 py-2 bg-[#174EA6] hover:bg-[#0B1F3A] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs active:scale-95"
                 >
                   <span>Continue</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -1260,7 +1260,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition"
+                  className="px-5 py-2 bg-[#174EA6] hover:bg-[#0B1F3A] text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition"
                 >
                   {isSubmitting ? (
                     'Enrolling Record...'

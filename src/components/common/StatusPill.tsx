@@ -30,10 +30,10 @@ const variantStyles: Record<
   { bg: string; text: string; border: string; dot: string; defaultLabel: string }
 > = {
   pending: {
-    bg: 'bg-[#FAF5EB]',
-    text: 'text-[#B88A24]',
-    border: 'border-[#E9D59A]',
-    dot: 'bg-[#D4AF37]',
+    bg: 'bg-amber-50',
+    text: 'text-amber-800',
+    border: 'border-amber-200',
+    dot: 'bg-amber-600',
     defaultLabel: 'Pending',
   },
   confirmed: {
@@ -72,10 +72,10 @@ const variantStyles: Record<
     defaultLabel: 'Ongoing',
   },
   'in-progress': {
-    bg: 'bg-[#FAF5EB]',
-    text: 'text-[#B88A24]',
-    border: 'border-[#E9D59A]',
-    dot: 'bg-[#D4AF37]',
+    bg: 'bg-amber-50',
+    text: 'text-amber-800',
+    border: 'border-amber-200',
+    dot: 'bg-amber-600',
     defaultLabel: 'In Progress',
   },
   online: {
@@ -86,10 +86,10 @@ const variantStyles: Record<
     defaultLabel: 'Online',
   },
   away: {
-    bg: 'bg-[#FAF5EB]',
-    text: 'text-[#B88A24]',
-    border: 'border-[#E9D59A]',
-    dot: 'bg-[#D4AF37]',
+    bg: 'bg-amber-50',
+    text: 'text-amber-800',
+    border: 'border-amber-200',
+    dot: 'bg-amber-600',
     defaultLabel: 'Away',
   },
   'on-leave': {
@@ -107,17 +107,17 @@ const variantStyles: Record<
     defaultLabel: 'Neutral',
   },
   high: {
-    bg: 'bg-[#111827]',
+    bg: 'bg-[#0B1F3A]',
     text: 'text-[#FFFFFF]',
-    border: 'border-[#111827]',
-    dot: 'bg-[#D4AF37]',
+    border: 'border-[#0B1F3A]',
+    dot: 'bg-[#174EA6]',
     defaultLabel: 'High',
   },
   medium: {
-    bg: 'bg-[#FAF5EB]',
-    text: 'text-[#B88A24]',
-    border: 'border-[#E9D59A]',
-    dot: 'bg-[#D4AF37]',
+    bg: 'bg-amber-50',
+    text: 'text-amber-800',
+    border: 'border-amber-200',
+    dot: 'bg-amber-600',
     defaultLabel: 'Medium',
   },
   low: {

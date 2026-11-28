@@ -21,13 +21,13 @@ export const themeTokens = {
       border: '#BFDBFE',
     },
 
-    // Secondary / Action Accent: Premium Gold (#D4AF37 / #B88A24)
+    // Secondary / Action Accent: Restrained Royal Blue (#174EA6 / #0B1F3A)
     accent: {
-      DEFAULT: '#D4AF37',
-      hover: '#B88A24',
-      light: '#FAF5EB',
-      subtle: '#FAF5EB',
-      gold: '#D4AF37',
+      DEFAULT: '#174EA6',
+      hover: '#0B1F3A',
+      light: '#EFF6FF',
+      subtle: '#EFF6FF',
+      gold: '#174EA6',
     },
 
     // Canvas & Surfaces
@@ -36,7 +36,7 @@ export const themeTokens = {
       subtle: '#F5F7FA',
       card: '#FFFFFF',       // Pure white surface
       elevated: '#FFFFFF',
-      sidebar: '#111827',    // Charcoal black navigation rail
+      sidebar: '#0B1F3A',    // Deep navy navigation rail
       hover: '#F5F7FA',
     },
 
@@ -59,7 +59,7 @@ export const themeTokens = {
       activeSubtle: '#BFDBFE',
     },
 
-    // Semantic Status Colors (Using White, Gold, Black, and Blue + labels/icons)
+    // Semantic Status Colors
     status: {
       // Royal Blue for positive / in-progress / confirmed / online
       success: {
@@ -68,12 +68,12 @@ export const themeTokens = {
         border: '#BFDBFE',
         dot: '#174EA6',
       },
-      // Premium Gold for pending / away / review
+      // Muted Amber/Slate for pending / away / review
       warning: {
-        text: '#B88A24',
-        bg: '#FAF5EB',
-        border: '#E9D59A',
-        dot: '#D4AF37',
+        text: '#92400E',
+        bg: '#FEF3C7',
+        border: '#FDE68A',
+        dot: '#D97706',
       },
       // Charcoal Black / Deep Navy for rejected / high priority / negative change
       error: {

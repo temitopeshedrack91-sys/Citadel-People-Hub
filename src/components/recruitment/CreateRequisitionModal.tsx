@@ -271,19 +271,19 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Modal Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-[#174EA6] via-[#0B1F3A] to-[#174EA6] text-white flex items-center justify-between border-b border-[#BFDBFE]">
+        <div className="px-6 py-4 bg-[#0B1F3A] text-white flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-white/10 border border-white/20 text-[#D4AF37]">
+            <div className="p-2.5 rounded-xl bg-white/10 border border-white/15 text-white">
               <Briefcase className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-bold text-white tracking-tight">New Recruitment Requisition</h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#D4AF37] text-slate-950 font-mono">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/15 text-slate-200 font-mono">
                   Sheet 8 Mandate
                 </span>
               </div>
-              <p className="text-xs text-white/80 mt-0.5">
+              <p className="text-xs text-slate-300 mt-0.5">
                 Headcount authorization &amp; 10-stage sequential talent pipeline request
               </p>
             </div>
@@ -624,10 +624,10 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
               </div>
 
               {/* Requisition Card Summary */}
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100/70 border border-slate-200 shadow-xs space-y-4">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 shadow-xs space-y-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <span className="px-2.5 py-1 rounded-md bg-[#174EA6] text-[#D4AF37] font-mono text-xs font-bold inline-block mb-1.5">
+                    <span className="px-2.5 py-1 rounded-md bg-[#174EA6] text-white font-mono text-xs font-bold inline-block mb-1.5">
                       Assigned after save
                     </span>
                     <h3 className="text-base font-extrabold text-slate-900">{jobTitle || 'Untitled Position'}</h3>
@@ -635,7 +635,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                       {selectedDept?.name || 'Department'} • {selectedEntity?.name || 'Entity'}
                     </p>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full bg-[#DBEAFE] text-[#174EA6] border border-[#BFDBFE] text-xs font-bold">
+                  <span className="px-2.5 py-1 rounded-full bg-[#EFF6FF] text-[#174EA6] border border-[#BFDBFE] text-xs font-bold">
                     Pending PCCM Approval
                   </span>
                 </div>
@@ -674,9 +674,9 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                   </div>
                 </div>
 
-                <div className="p-3 bg-[#FAF5EB] rounded-xl border border-[#E9D59A] text-xs flex items-start gap-2.5">
-                  <Sparkles className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
-                  <p className="text-[#B88A24] text-[11px] leading-relaxed">
+                <div className="p-3 bg-white rounded-xl border border-slate-200 text-xs flex items-start gap-2.5">
+                  <ShieldCheck className="w-4 h-4 text-[#174EA6] shrink-0 mt-0.5" />
+                  <p className="text-slate-600 text-[11px] leading-relaxed">
                     Upon submission, this requisition initiates <strong>Stage 1 (Manpower Request &amp; Headcount Verification)</strong> of the Sheet 8 Sequential Protocol. Notification will be routed to People, Culture &amp; Change Management.
                   </p>
                 </div>
@@ -701,7 +701,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
               <button
                 type="button"
                 onClick={handleNext}
-                className="px-4 py-2 rounded-xl bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] border border-[#C59B27] text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer active:scale-95"
+                className="px-4 py-2 rounded-xl bg-[#174EA6] text-white hover:bg-[#0B1F3A] text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer active:scale-95"
               >
                 <span>Continue</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -711,7 +711,7 @@ export const CreateRequisitionModal: React.FC<CreateRequisitionModalProps> = ({
                 type="button"
                 disabled={isSubmitting}
                 onClick={handleSubmit}
-                className="px-4 py-2 rounded-xl bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] text-xs font-extrabold flex items-center gap-1.5 shadow-sm border border-[#C59B27] transition cursor-pointer active:scale-95 disabled:opacity-50"
+                className="px-4 py-2 rounded-xl bg-[#174EA6] text-white hover:bg-[#0B1F3A] text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer active:scale-95 disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <span>Submitting Requisition...</span>

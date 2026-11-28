@@ -32,7 +32,7 @@ export const NotificationsView: React.FC = () => {
       case 'Leave':
         return <CalendarDays className="w-4 h-4 text-[#174EA6]" />;
       case 'Onboarding':
-        return <UserPlus className="w-4 h-4 text-[#D4AF37]" />;
+        return <UserPlus className="w-4 h-4 text-[#174EA6]" />;
       case 'Hardware':
         return <AlertCircle className="w-4 h-4 text-[#111827]" />;
       default:
@@ -76,13 +76,13 @@ export const NotificationsView: React.FC = () => {
             onClick={() => setFilter(tab)}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
               filter === tab
-                ? 'bg-[#D4AF37] text-slate-950 font-bold border border-[#C59B27] shadow-xs'
+                ? 'bg-[#174EA6] text-white font-bold border border-[#174EA6] shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             {tab}
             {tab === 'Unread' && (
-              <span className="ml-1.5 px-1.5 py-0.2 rounded-full bg-[#D4AF37] text-black text-[10px] font-black">
+              <span className="ml-1.5 px-1.5 py-0.2 rounded-full bg-[#0B1F3A] text-white text-[10px] font-black">
                 {notifications.filter((n) => !n.isRead).length}
               </span>
             )}

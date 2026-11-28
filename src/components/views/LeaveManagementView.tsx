@@ -1009,8 +1009,8 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
   return (
     <div className="space-y-5 animate-fade-in font-sans">
       {toastMessage && (
-        <div role="status" className="fixed bottom-6 right-6 z-50 bg-[#174EA6] text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-semibold animate-slide-up border border-[#BFDBFE]">
-          <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />
+        <div role="status" className="fixed bottom-6 right-6 z-50 bg-[#0B1F3A] text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-semibold animate-slide-up border border-slate-800">
+          <CheckCircle2 className="w-4 h-4 text-white" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -1107,7 +1107,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in"
         >
           <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
-            <div className="bg-[#174EA6] text-white p-5 relative border-b border-[#BFDBFE] shrink-0">
+            <div className="bg-[#0B1F3A] text-white p-5 relative border-b border-slate-800 shrink-0">
               <button
                 type="button"
                 aria-label="Close leave modal"
@@ -1120,10 +1120,10 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                 <X className="w-4 h-4" />
               </button>
               <h3 className="font-display text-base font-bold text-white flex items-center gap-2">
-                <CalendarDays className="w-4 h-4 text-[#D4AF37]" />
+                <CalendarDays className="w-4 h-4 text-white" />
                 <span>Submit Leave Application</span>
               </h3>
-              <p className="text-xs text-blue-100 mt-0.5">
+              <p className="text-xs text-slate-300 mt-0.5">
                 Staff: {currentUser.name} ({currentUser.staffId}) · {currentUser.departmentName}
               </p>
             </div>

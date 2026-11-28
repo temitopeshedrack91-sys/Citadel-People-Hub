@@ -3,8 +3,8 @@
 :root {
   color-scheme: light;
   --brand-white: #FFFFFF;
-  --brand-gold: #D4AF37;
-  --brand-gold-dark: #B88A24;
+  --brand-gold: #174EA6;
+  --brand-gold-dark: #0B1F3A;
   --brand-black: #111827;
   --brand-blue: #174EA6;
   --brand-navy: #0B1F3A;
@@ -12,8 +12,8 @@
   --background: #FFFFFF;
   --foreground: #111827;
   --primary: #174EA6;
-  --secondary: #D4AF37;
-  --accent: #D4AF37;
+  --secondary: #174EA6;
+  --accent: #174EA6;
 
   --muted: #F5F7FA;
   --border: #E5E7EB;
@@ -24,8 +24,8 @@
   --citadel-primary: #174EA6;
   --citadel-primary-hover: #0B1F3A;
   --citadel-primary-light: #EFF6FF;
-  --citadel-accent: #D4AF37;
-  --citadel-accent-hover: #B88A24;
+  --citadel-accent: #174EA6;
+  --citadel-accent-hover: #0B1F3A;
   --citadel-canvas: #F5F7FA;
   --citadel-surface: #FFFFFF;
   --citadel-border: #E5E7EB;
@@ -161,7 +161,7 @@
 
   #citadel-hub-sidebar button.bg-zinc-900 {
     background-color: rgba(255, 255, 255, 0.09);
-    border-color: rgba(212, 175, 55, 0.38);
+    border-color: rgba(255, 255, 255, 0.16);
   }
 
   main {

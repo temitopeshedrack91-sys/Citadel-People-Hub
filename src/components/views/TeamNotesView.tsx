@@ -237,9 +237,9 @@ export const TeamNotesView: React.FC = () => {
         <button
           type="button"
           onClick={() => setIsModalOpen(true)}
-          className="px-3.5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#C59B27] transition active:scale-95 cursor-pointer min-h-[38px] shrink-0"
+          className="px-3.5 py-2 rounded-xl bg-[#174EA6] hover:bg-[#0B1F3A] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#174EA6] transition active:scale-95 cursor-pointer min-h-[38px] shrink-0"
         >
-          <Plus className="w-4 h-4 text-slate-950 stroke-[2.5]" />
+          <Plus className="w-4 h-4 text-white stroke-[2.5]" />
           <span className="font-bold">New note</span>
         </button>
       </div>
@@ -261,16 +261,16 @@ export const TeamNotesView: React.FC = () => {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
-            <div className="bg-[#174EA6] text-white p-5 relative border-b border-[#BFDBFE] shrink-0">
+            <div className="bg-[#0B1F3A] text-white p-5 relative border-b border-slate-800 shrink-0">
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="absolute top-4 right-4 text-blue-100 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
+                className="absolute top-4 right-4 text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
               <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <StickyNote className="w-4 h-4 text-[#D4AF37]" />
+                <StickyNote className="w-4 h-4 text-blue-300" />
                 <span>Add Team Note</span>
               </h3>
             </div>
@@ -334,7 +334,7 @@ export const TeamNotesView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold rounded-xl transition shadow-xs cursor-pointer"
+                  className="px-5 py-2 bg-[#174EA6] hover:bg-[#0B1F3A] text-white font-bold rounded-xl transition shadow-xs cursor-pointer"
                 >
                   Save Note
                 </button>

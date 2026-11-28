@@ -72,7 +72,7 @@ const InitialsAvatar: React.FC<{
   name: string;
   bgClass?: string;
   sizeClass?: string;
-}> = ({ initials, name, bgClass = 'bg-[#083E34]', sizeClass = 'w-6 h-6 text-[10px]' }) => (
+}> = ({ initials, name, bgClass = 'bg-[#0B1F3A]', sizeClass = 'w-6 h-6 text-[10px]' }) => (
   <div
     title={name}
     className={`${sizeClass} rounded-full flex items-center justify-center font-bold text-white ring-2 ring-white select-none ${bgClass} shrink-0`}
@@ -243,9 +243,9 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
       commentsCount: 4,
       attachmentsCount: 2,
       assignees: [
-        { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
-        { initials: 'SA', bg: 'bg-emerald-600', name: 'Mrs. Sussan Afuwape' },
-        { initials: 'CO', bg: 'bg-amber-600', name: 'Dr. Chinedu Okeke' },
+        { initials: 'FO', bg: 'bg-[#0B1F3A]', name: 'Engr. Femi Olatunji' },
+        { initials: 'SA', bg: 'bg-[#174EA6]', name: 'Mrs. Sussan Afuwape' },
+        { initials: 'CO', bg: 'bg-slate-700', name: 'Dr. Chinedu Okeke' },
       ],
     },
     {
@@ -257,8 +257,8 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
       commentsCount: 6,
       attachmentsCount: 3,
       assignees: [
-        { initials: 'BO', bg: 'bg-teal-700', name: 'Blessing Okafor' },
-        { initials: 'BA', bg: 'bg-[#083E34]', name: 'Dr. Bukola Adeleke' },
+        { initials: 'BO', bg: 'bg-slate-600', name: 'Blessing Okafor' },
+        { initials: 'BA', bg: 'bg-[#0B1F3A]', name: 'Dr. Bukola Adeleke' },
       ],
     },
     {
@@ -270,8 +270,8 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
       commentsCount: 5,
       attachmentsCount: 4,
       assignees: [
-        { initials: 'SA', bg: 'bg-emerald-700', name: 'Mrs. Sussan Afuwape' },
-        { initials: 'FO', bg: 'bg-[#083E34]', name: 'Engr. Femi Olatunji' },
+        { initials: 'SA', bg: 'bg-[#174EA6]', name: 'Mrs. Sussan Afuwape' },
+        { initials: 'FO', bg: 'bg-[#0B1F3A]', name: 'Engr. Femi Olatunji' },
         { initials: 'BO', bg: 'bg-slate-700', name: 'Blessing Okafor' },
       ],
     },
@@ -279,7 +279,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
 
   // Live Team Presence derived from real Citadel employees & approved/active leave requests
   const { onLeavePresence, activeTeamPresence } = useMemo(() => {
-    const palette = ['bg-[#083E34]', 'bg-emerald-700', 'bg-amber-600', 'bg-teal-700', 'bg-slate-700'];
+    const palette = ['bg-[#0B1F3A]', 'bg-[#174EA6]', 'bg-slate-700', 'bg-slate-600', 'bg-slate-800'];
     const getInitials = (name: string) => {
       const parts = name
         .replace(/^(Dr\.|Mrs\.|Mr\.|Ms\.|Engr\.|Pastor|Prof\.)\s+/i, '')
@@ -447,8 +447,8 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
       <div className="space-y-6 pb-12 font-sans antialiased text-slate-900" data-testid="dashboard-view">
         {/* Toast Notification */}
         {toastMessage && (
-          <div role="status" className="fixed bottom-6 right-6 z-50 bg-[#083E34] text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-bold animate-slide-up border border-emerald-900/40">
-            <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />
+          <div role="status" className="fixed bottom-6 right-6 z-50 bg-[#0B1F3A] text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-bold animate-slide-up border border-slate-700">
+            <CheckCircle2 className="w-4 h-4 text-white" />
             <span>{toastMessage}</span>
           </div>
         )}
@@ -526,7 +526,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                   type="button"
                   onClick={() => onNavigate('projects')}
                   data-testid="projects-view-all"
-                  className="text-xs font-medium text-slate-500 hover:text-[#083E34] transition cursor-pointer"
+                  className="text-xs font-medium text-slate-500 hover:text-[#174EA6] transition cursor-pointer"
                 >
                   View all
                 </button>
@@ -546,14 +546,14 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                         onNavigate('projects');
                       }
                     }}
-                    className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] flex flex-col justify-between transition-all duration-150 hover:shadow-[0_4px_12px_rgba(15,23,42,0.05)] hover:border-[#083E34]/35 cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#083E34]/30 select-none"
+                    className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] flex flex-col justify-between transition-all duration-150 hover:shadow-[0_4px_12px_rgba(15,23,42,0.05)] hover:border-[#174EA6]/35 cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#174EA6]/30 select-none"
                   >
                     <div>
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="text-[13px] font-semibold text-slate-900 group-hover:text-[#083E34] transition">
+                        <h3 className="text-[13px] font-semibold text-slate-900 group-hover:text-[#174EA6] transition">
                           {proj.title}
                         </h3>
-                        <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#083E34] transition shrink-0" aria-hidden="true" />
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#174EA6] transition shrink-0" aria-hidden="true" />
                       </div>
                       <p className="text-xs text-slate-500 mt-1.5 leading-relaxed line-clamp-2">
                         {proj.subtitle}
@@ -614,7 +614,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                   <button
                     type="button"
                     onClick={() => onNavigate('attendance')}
-                    className="text-xs font-medium text-slate-500 hover:text-[#083E34] transition cursor-pointer"
+                    className="text-xs font-medium text-slate-500 hover:text-[#174EA6] transition cursor-pointer"
                   >
                     View all
                   </button>
@@ -699,7 +699,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                       type="button"
                       onClick={() => setIsAddNoteModalOpen(true)}
                       data-testid="add-note-btn"
-                      className="text-xs font-semibold text-[#083E34] hover:underline flex items-center gap-1 transition cursor-pointer"
+                      className="text-xs font-semibold text-[#174EA6] hover:underline flex items-center gap-1 transition cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add Note</span>
@@ -757,7 +757,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
                 <div>
                   <div className="flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-[#083E34]" />
+                    <Activity className="w-4 h-4 text-[#174EA6]" />
                     <h3 className="font-display text-sm font-semibold text-slate-900">
                       Biometric Attendance Weekly Trends
                     </h3>
@@ -771,7 +771,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                   <button
                     type="button"
                     onClick={() => onNavigate('attendance')}
-                    className="text-xs font-medium text-slate-500 hover:text-[#083E34] flex items-center gap-0.5 cursor-pointer"
+                    className="text-xs font-medium text-slate-500 hover:text-[#174EA6] flex items-center gap-0.5 cursor-pointer"
                   >
                     <span>Details</span>
                     <ChevronRight className="w-3.5 h-3.5" />
@@ -800,17 +800,17 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                         <div
                           style={{ height: `${d.rate}%` }}
                           className={`w-full rounded-md transition-all duration-500 ${
-                            d.isToday ? 'bg-[#083E34]' : 'bg-emerald-700/65'
+                            d.isToday ? 'bg-[#174EA6]' : 'bg-slate-400'
                           }`}
                         />
                       </div>
 
                       <div className="mt-2 text-center">
-                        <span className={`text-xs block ${d.isToday ? 'font-bold text-[#083E34]' : 'font-medium text-slate-600'}`}>
+                        <span className={`text-xs block ${d.isToday ? 'font-bold text-[#174EA6]' : 'font-medium text-slate-600'}`}>
                           {d.day}
                         </span>
                         {d.isToday && (
-                          <span className="block mt-0.5 text-[10px] font-semibold text-[#083E34]">
+                          <span className="block mt-0.5 text-[10px] font-semibold text-[#174EA6]">
                             Today
                           </span>
                         )}
@@ -826,7 +826,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div>
                   <h3 className="font-display text-sm font-semibold text-slate-900 flex items-center gap-2">
-                    <Building2 className="w-4 h-4 text-[#083E34]" />
+                    <Building2 className="w-4 h-4 text-[#174EA6]" />
                     <span>Citadel Workforce Distribution</span>
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
@@ -850,7 +850,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                       liveEmployees.length > 0
                         ? Math.round((count / liveEmployees.length) * 1000) / 10
                         : 0;
-                    const barColors = ['bg-[#083E34]', 'bg-[#D4AF37]', 'bg-emerald-600'];
+                    const barColors = ['bg-[#0B1F3A]', 'bg-[#174EA6]', 'bg-slate-500'];
                     return (
                       <div key={ent.id}>
                         <div className="flex justify-between text-xs mb-1 font-semibold">
@@ -880,7 +880,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                         <span className="font-mono font-bold text-slate-900 tabular-nums">82 Staff (57.0%)</span>
                       </div>
                       <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#083E34] rounded-full" style={{ width: '57%' }} />
+                        <div className="h-full bg-[#0B1F3A] rounded-full" style={{ width: '57%' }} />
                       </div>
                     </div>
 
@@ -890,7 +890,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                         <span className="font-mono font-bold text-slate-900 tabular-nums">28 Staff (19.4%)</span>
                       </div>
                       <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#D4AF37] rounded-full" style={{ width: '19.4%' }} />
+                        <div className="h-full bg-[#174EA6] rounded-full" style={{ width: '19.4%' }} />
                       </div>
                     </div>
 
@@ -900,7 +900,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                         <span className="font-mono font-bold text-slate-900 tabular-nums">34 Staff (23.6%)</span>
                       </div>
                       <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-600 rounded-full" style={{ width: '23.6%' }} />
+                        <div className="h-full bg-slate-500 rounded-full" style={{ width: '23.6%' }} />
                       </div>
                     </div>
                   </>
@@ -929,9 +929,9 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                 type="button"
                 onClick={() => setIsQuickActionsOpen(true)}
                 data-testid="quick-actions-btn"
-                className="px-4 py-2 rounded-lg bg-[#083E34] hover:bg-[#062E27] text-white text-xs font-semibold flex items-center gap-1.5 transition active:scale-[0.98] cursor-pointer"
+                className="px-4 py-2 rounded-lg bg-[#174EA6] hover:bg-[#0B1F3A] text-white text-xs font-semibold flex items-center gap-1.5 transition active:scale-[0.98] cursor-pointer"
               >
-                <Zap className="w-3.5 h-3.5 text-[#E5C76B]" />
+                <Zap className="w-3.5 h-3.5 text-white" />
                 <span>Quick Actions</span>
               </button>
             </div>
@@ -942,7 +942,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
               className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] space-y-4"
             >
               <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-[#083E34]" />
+                <FileText className="w-4 h-4 text-[#174EA6]" />
                 <h3 className="font-display text-sm font-semibold text-slate-900">Personal Leave Balance</h3>
               </div>
 
@@ -969,7 +969,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                       label={`${pct}%`}
                       subtext={`${rem} out of ${total}`}
                       type="semicircle"
-                      strokeColor="#083E34"
+                      strokeColor="#174EA6"
                     />
                   );
                 })()}
@@ -992,7 +992,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                             onNavigate('leave');
                           }
                         }}
-                        className="flex items-center justify-between cursor-pointer hover:bg-slate-50 py-2 px-1.5 -mx-1.5 rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#083E34]/30"
+                        className="flex items-center justify-between cursor-pointer hover:bg-slate-50 py-2 px-1.5 -mx-1.5 rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#174EA6]/30"
                       >
                         <span className="text-xs font-medium text-slate-700">
                           {lv.startDate ? new Date(lv.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Oct 28'} &middot; {lv.leaveType}
@@ -1063,7 +1063,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
             <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] space-y-3">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
-                  <Cake className="w-4 h-4 text-[#B45309]" />
+                  <Cake className="w-4 h-4 text-[#174EA6]" />
                   <h3 className="font-display text-sm font-semibold text-slate-900">Upcoming Birthdays</h3>
                 </div>
                 <span className="text-[11px] font-medium text-slate-400 tabular-nums">
@@ -1080,7 +1080,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                       className="py-2.5 first:pt-1 last:pb-0 flex items-center justify-between gap-2 text-xs"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-7 h-7 rounded-full bg-[#FAF5EB] text-[#B45309] font-semibold flex items-center justify-center text-[10px] shrink-0 border border-[#F2E4B8]">
+                        <div className="w-7 h-7 rounded-full bg-slate-100 text-slate-700 font-semibold flex items-center justify-center text-[10px] shrink-0 border border-slate-200">
                           {b.initials}
                         </div>
                         <div className="min-w-0">
@@ -1098,7 +1098,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                         className={`px-2.5 py-1 rounded-md text-[11px] font-semibold flex items-center gap-1 transition shrink-0 cursor-pointer ${
                           isWished
                             ? 'bg-emerald-50 text-emerald-700'
-                            : 'bg-slate-50 hover:bg-[#EBF5F2] text-[#083E34] border border-slate-200/90'
+                            : 'bg-slate-50 hover:bg-[#EFF6FF] text-[#174EA6] border border-slate-200/90'
                         }`}
                       >
                         {isWished ? 'Wished' : 'Send Wish'}
@@ -1128,12 +1128,12 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                     <>
                       <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                         <div className="flex items-center gap-2">
-                          <ShieldCheck className="w-4 h-4 text-[#083E34]" />
+                          <ShieldCheck className="w-4 h-4 text-[#174EA6]" />
                           <h3 className="font-display text-sm font-semibold text-slate-900">
                             Stage 2 HR Approvals
                           </h3>
                         </div>
-                        <span className="text-xs font-mono font-semibold text-[#B45309] tabular-nums">
+                        <span className="text-xs font-mono font-semibold text-[#174EA6] tabular-nums">
                           {hrQueue.length} ready
                         </span>
                       </div>
@@ -1190,7 +1190,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                                       showToast(err?.message || 'Unable to approve leave request.');
                                     }
                                   }}
-                                  className="px-2.5 py-1 rounded-md bg-[#083E34] hover:bg-[#062E27] text-white text-[11px] font-semibold cursor-pointer transition"
+                                  className="px-2.5 py-1 rounded-md bg-[#174EA6] hover:bg-[#0B1F3A] text-white text-[11px] font-semibold cursor-pointer transition"
                                 >
                                   Approve
                                 </button>
@@ -1214,12 +1214,12 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                   <>
                     <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                       <div className="flex items-center gap-2">
-                        <ShieldCheck className="w-4 h-4 text-[#083E34]" />
+                        <ShieldCheck className="w-4 h-4 text-[#174EA6]" />
                         <h3 className="font-display text-sm font-semibold text-slate-900">
                           Pending Approvals Queue
                         </h3>
                       </div>
-                      <span className="text-xs font-mono font-semibold text-[#B45309] tabular-nums">
+                      <span className="text-xs font-mono font-semibold text-[#174EA6] tabular-nums">
                         {pendingActions.filter((a) => !resolvedActions[a.id]).length} pending
                       </span>
                     </div>
@@ -1252,7 +1252,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                                 className={`px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer ${
                                   isResolved
                                     ? 'bg-emerald-50 text-emerald-700'
-                                    : 'bg-[#083E34] text-white hover:bg-[#062E27]'
+                                    : 'bg-[#174EA6] text-white hover:bg-[#0B1F3A]'
                                 }`}
                               >
                                 {isResolved ? 'Resolved' : 'Approve'}
@@ -1282,7 +1282,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
             className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in"
           >
             <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
-              <div className="bg-[#083E34] text-white p-5 relative border-b border-emerald-950/30 shrink-0">
+              <div className="bg-[#0B1F3A] text-white p-5 relative border-b border-slate-800 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsQuickActionsOpen(false)}
@@ -1292,10 +1292,10 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                   <X className="w-5 h-5" />
                 </button>
                 <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-[#D4AF37] fill-[#D4AF37]" />
+                  <Zap className="w-4 h-4 text-white" />
                   <span>Citadel People Hub — Quick Actions</span>
                 </h3>
-                <p className="text-xs text-emerald-100/90 mt-0.5">
+                <p className="text-xs text-slate-300 mt-0.5">
                   Frequently executed People, Culture &amp; Operations administrative workflows.
                 </p>
               </div>
@@ -1306,9 +1306,9 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                     setIsQuickActionsOpen(false);
                     onOpenLeaveModal();
                   }}
-                  className="p-3.5 rounded-xl border border-slate-200 hover:border-[#083E34] hover:bg-slate-50 transition text-left space-y-1 group"
+                  className="p-3.5 rounded-xl border border-slate-200 hover:border-[#174EA6] hover:bg-slate-50 transition text-left space-y-1 group"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-800 flex items-center justify-center border border-emerald-200 group-hover:bg-[#083E34] group-hover:text-white transition">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 text-[#0B1F3A] flex items-center justify-center border border-slate-200 group-hover:bg-[#174EA6] group-hover:text-white transition">
                     <CalendarDays className="w-4 h-4" />
                   </div>
                   <h4 className="font-bold text-slate-900">Apply for Leave</h4>
@@ -1320,9 +1320,9 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                     setIsQuickActionsOpen(false);
                     onOpenAddEmployee();
                   }}
-                  className="p-3.5 rounded-xl border border-slate-200 hover:border-[#083E34] hover:bg-slate-50 transition text-left space-y-1 group"
+                  className="p-3.5 rounded-xl border border-slate-200 hover:border-[#174EA6] hover:bg-slate-50 transition text-left space-y-1 group"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-800 flex items-center justify-center border border-emerald-200 group-hover:bg-[#083E34] group-hover:text-white transition">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 text-[#0B1F3A] flex items-center justify-center border border-slate-200 group-hover:bg-[#174EA6] group-hover:text-white transition">
                     <Users className="w-4 h-4" />
                   </div>
                   <h4 className="font-bold text-slate-900">Add New Employee</h4>
@@ -1334,9 +1334,9 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                     setIsQuickActionsOpen(false);
                     onNavigate('attendance');
                   }}
-                  className="p-3.5 rounded-xl border border-slate-200 hover:border-[#083E34] hover:bg-slate-50 transition text-left space-y-1 group"
+                  className="p-3.5 rounded-xl border border-slate-200 hover:border-[#174EA6] hover:bg-slate-50 transition text-left space-y-1 group"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-800 flex items-center justify-center border border-sky-200 group-hover:bg-[#083E34] group-hover:text-white transition">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 text-[#0B1F3A] flex items-center justify-center border border-slate-200 group-hover:bg-[#174EA6] group-hover:text-white transition">
                     <Clock className="w-4 h-4" />
                   </div>
                   <h4 className="font-bold text-slate-900">Attendance Telemetry</h4>
@@ -1348,9 +1348,9 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                     setIsQuickActionsOpen(false);
                     onNavigate('documents');
                   }}
-                  className="p-3.5 rounded-xl border border-slate-200 hover:border-[#083E34] hover:bg-slate-50 transition text-left space-y-1 group"
+                  className="p-3.5 rounded-xl border border-slate-200 hover:border-[#174EA6] hover:bg-slate-50 transition text-left space-y-1 group"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-800 flex items-center justify-center border border-amber-200 group-hover:bg-[#083E34] group-hover:text-white transition">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 text-[#0B1F3A] flex items-center justify-center border border-slate-200 group-hover:bg-[#174EA6] group-hover:text-white transition">
                     <Download className="w-4 h-4" />
                   </div>
                   <h4 className="font-bold text-slate-900">Upload Policy</h4>
@@ -1362,9 +1362,9 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                     setIsQuickActionsOpen(false);
                     setIsAddNoteModalOpen(true);
                   }}
-                  className="p-3.5 rounded-xl border border-slate-200 hover:border-[#083E34] hover:bg-slate-50 transition text-left space-y-1 group"
+                  className="p-3.5 rounded-xl border border-slate-200 hover:border-[#174EA6] hover:bg-slate-50 transition text-left space-y-1 group"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-[#FAF5EB] text-[#B45309] flex items-center justify-center border border-[#F2E4B8] group-hover:bg-[#083E34] group-hover:text-white transition">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 text-[#0B1F3A] flex items-center justify-center border border-slate-200 group-hover:bg-[#174EA6] group-hover:text-white transition">
                     <StickyNote className="w-4 h-4" />
                   </div>
                   <h4 className="font-bold text-slate-900">Add Team Note</h4>
@@ -1376,9 +1376,9 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                     setIsQuickActionsOpen(false);
                     onNavigate('reports');
                   }}
-                  className="p-3.5 rounded-xl border border-slate-200 hover:border-[#083E34] hover:bg-slate-50 transition text-left space-y-1 group"
+                  className="p-3.5 rounded-xl border border-slate-200 hover:border-[#174EA6] hover:bg-slate-50 transition text-left space-y-1 group"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-800 flex items-center justify-center border border-emerald-200 group-hover:bg-[#083E34] group-hover:text-white transition">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 text-[#0B1F3A] flex items-center justify-center border border-slate-200 group-hover:bg-[#174EA6] group-hover:text-white transition">
                     <FileSpreadsheet className="w-4 h-4" />
                   </div>
                   <h4 className="font-bold text-slate-900">Workforce Census</h4>
@@ -1402,7 +1402,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
             className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in"
           >
             <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
-              <div className="bg-[#083E34] text-white p-5 relative border-b border-emerald-950/30 shrink-0">
+              <div className="bg-[#0B1F3A] text-white p-5 relative border-b border-slate-800 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsAddNoteModalOpen(false)}
@@ -1412,10 +1412,10 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                   <X className="w-5 h-5" />
                 </button>
                 <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <StickyNote className="w-4 h-4 text-[#D4AF37]" />
+                  <StickyNote className="w-4 h-4 text-white" />
                   <span>Add Team Note</span>
                 </h3>
-                <p className="text-xs text-emerald-100/90 mt-0.5">
+                <p className="text-xs text-slate-300 mt-0.5">
                   Share an operational update or handover task with the team.
                 </p>
               </div>
@@ -1429,7 +1429,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                     placeholder="e.g. Employee Onboarding"
                     value={newNoteTitle}
                     onChange={(e) => setNewNoteTitle(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34]"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#174EA6]"
                   />
                 </div>
 
@@ -1438,7 +1438,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                   <select
                     value={newNoteCategory}
                     onChange={(e) => setNewNoteCategory(e.target.value as any)}
-                    className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-bold focus:outline-none focus:border-[#083E34] bg-white"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-bold focus:outline-none focus:border-[#174EA6] bg-white"
                   >
                     <option value="Incoming">Incoming</option>
                     <option value="Ongoing">Ongoing</option>
@@ -1454,7 +1454,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                     placeholder="Describe the operational action item..."
                     value={newNoteDesc}
                     onChange={(e) => setNewNoteDesc(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34]"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#174EA6]"
                   />
                 </div>
 
@@ -1465,7 +1465,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                     placeholder="e.g. Mia, Harper"
                     value={newNoteCollab}
                     onChange={(e) => setNewNoteCollab(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#083E34]"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#174EA6]"
                   />
                 </div>
 
@@ -1479,7 +1479,7 @@ const HrAdminDashboardContent: React.FC<DashboardViewProps> = ({
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 bg-[#083E34] hover:bg-[#062E27] text-white font-semibold rounded-lg transition cursor-pointer"
+                    className="px-5 py-2 bg-[#174EA6] hover:bg-[#0B1F3A] text-white font-semibold rounded-lg transition cursor-pointer"
                   >
                     Save Note
                   </button>

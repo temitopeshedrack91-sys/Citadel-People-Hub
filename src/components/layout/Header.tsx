@@ -345,7 +345,7 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Bell className="w-4 h-4 text-slate-600" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#B45309] ring-2 ring-white" />
+                  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#174EA6] ring-2 ring-white" />
                 )}
               </button>
 
@@ -357,7 +357,7 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <div className="px-4 py-3 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between">
                     <span className="text-xs font-semibold text-slate-900">Notifications</span>
-                    <span className="text-[11px] font-semibold text-[#B45309] tabular-nums">
+                    <span className="text-[11px] font-semibold text-[#174EA6] tabular-nums">
                       {unreadCount} unread
                     </span>
                   </div>
@@ -379,7 +379,7 @@ export const Header: React.FC<HeaderProps> = ({
                             );
                           }}
                           className={`w-full text-left p-3.5 text-xs hover:bg-[#F5F7FA] cursor-pointer transition block ${
-                            !n.isRead ? 'bg-[#FAF5EB]/60' : ''
+                            !n.isRead ? 'bg-[#EFF6FF]/60' : ''
                           }`}
                         >
                           <div className="flex items-center justify-between gap-2">
@@ -518,7 +518,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg bg-[#174EA6] hover:bg-[#0B1F3A] text-white text-xs font-semibold flex items-center gap-1.5 transition active:scale-[0.98] cursor-pointer shrink-0 whitespace-nowrap min-h-[36px]"
               title="Create New Task"
             >
-              <Plus className="w-3.5 h-3.5 text-[#D4AF37] stroke-[2.25] shrink-0" />
+              <Plus className="w-3.5 h-3.5 text-white stroke-[2.25] shrink-0" />
               <span className="hidden sm:inline">New task</span>
             </button>
           </div>

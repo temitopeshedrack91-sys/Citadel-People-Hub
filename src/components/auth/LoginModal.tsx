@@ -49,7 +49,7 @@ const DEMO_CREDENTIALS: {
     jobTitle: 'Chief People Officer',
     department: 'People & Culture',
     password: 'Password123!',
-    color: 'bg-[#174EA6] text-[#D4AF37]',
+    color: 'bg-[#0B1F3A] text-white',
     permissions: [
       'Full cross-entity administration',
       'Confidential salary & sensitive records',
@@ -82,7 +82,7 @@ const DEMO_CREDENTIALS: {
     jobTitle: 'President & General Overseer',
     department: 'Pastoral & Ministry Operations',
     password: 'Password123!',
-    color: 'bg-[#B88A24] text-white',
+    color: 'bg-slate-800 text-white',
     permissions: [
       'Group Executive Council oversight',
       'Executive performance & board reviews',
@@ -98,7 +98,7 @@ const DEMO_CREDENTIALS: {
     jobTitle: 'Lead Product Designer',
     department: 'Technology & Systems',
     password: 'Password123!',
-    color: 'bg-[#B88A24] text-slate-900',
+    color: 'bg-slate-200 text-slate-800',
     permissions: [
       'Employee self-service portal',
       'Projects Kanban board collaboration',
@@ -162,7 +162,7 @@ const DEMO_CREDENTIALS: {
     jobTitle: 'Data & Growth Analyst',
     department: 'People & Culture',
     password: 'Password123!',
-    color: 'bg-[#D4AF37] text-slate-950 font-bold',
+    color: 'bg-slate-100 text-slate-800 font-bold',
     permissions: [
       'Employee self-service portal',
       'People analytics & census reports',
@@ -318,7 +318,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     >
       <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-4 sm:my-6 flex flex-col max-h-[92vh]">
         {/* Modal Branded Header */}
-        <div className="bg-[#174EA6] text-white p-5 sm:p-6 relative border-b border-[#BFDBFE] shrink-0">
+        <div className="bg-[#0B1F3A] text-white p-5 sm:p-6 relative border-b border-slate-800 shrink-0">
           {!required && (
             <button
               type="button"
@@ -340,13 +340,13 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             <h2 className="text-base sm:text-lg font-bold text-white tracking-wide">
               Citadel People Hub
             </h2>
-            <p className="text-xs text-[#D4AF37] mt-0.5 font-medium">
+            <p className="text-xs text-slate-300 mt-0.5 font-medium">
               {backendEnabled ? 'Citadel API Authentication' : 'Employee Access & Role-Based Permissions'}
             </p>
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex items-center justify-center gap-1.5 mt-4 bg-[#0B1F3A] p-1 rounded-xl">
+          <div className="flex items-center justify-center gap-1.5 mt-4 bg-white/10 p-1 rounded-xl">
             <button
               type="button"
               onClick={() => {
@@ -357,7 +357,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               data-testid="auth-tab-signin"
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 tab === 'signin'
-                  ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
+                  ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-300 hover:text-white'
               }`}
             >
@@ -374,7 +374,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               data-testid="auth-tab-register"
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 tab === 'register'
-                  ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
+                  ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-300 hover:text-white'
               }`}
             >
@@ -391,7 +391,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               data-testid="auth-tab-personas"
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 tab === 'personas'
-                  ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
+                  ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-300 hover:text-white'
               }`}
             >
@@ -487,7 +487,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                       key={cred.email}
                       type="button"
                       onClick={() => handleQuickFill(cred)}
-                      className="p-2.5 rounded-xl border border-slate-200 hover:border-[#D4AF37] hover:bg-[#FAF5EB]/40 text-left transition flex items-center gap-2.5 group cursor-pointer"
+                      className="p-2.5 rounded-xl border border-slate-200 hover:border-[#174EA6] hover:bg-[#EFF6FF]/40 text-left transition flex items-center gap-2.5 group cursor-pointer"
                     >
                       <div
                         className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-[10px] shrink-0 ${cred.color}`}
@@ -530,7 +530,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   placeholder="e.g. Pastor David Adeleke"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#174EA6] focus:ring-2 focus:ring-[#174EA6]/15 focus:outline-none"
                 />
               </div>
 
@@ -542,7 +542,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   placeholder="e.g. david.adeleke@citadel.ng"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#174EA6] focus:ring-2 focus:ring-[#174EA6]/15 focus:outline-none"
                 />
               </div>
 
@@ -555,7 +555,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   placeholder="At least 6 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#174EA6] focus:ring-2 focus:ring-[#174EA6]/15 focus:outline-none"
                 />
               </div>
 
@@ -588,7 +588,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                     Pre-provisioned in Supabase PostgreSQL &bull; Click to sign in or copy credentials.
                   </p>
                 </div>
-                <span className="text-[10px] font-mono font-bold bg-[#FAF5EB] text-[#B88A24] border border-[#F2E4B8] px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-full">
                   Password: Password123!
                 </span>
               </div>
@@ -601,7 +601,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                       key={cred.email}
                       className={`p-3.5 rounded-2xl border transition space-y-2.5 ${
                         isCurrent
-                          ? 'border-[#D4AF37] bg-[#FAF5EB]/50 ring-1 ring-[#D4AF37]/30'
+                          ? 'border-[#174EA6] bg-[#EFF6FF]/50 ring-1 ring-[#174EA6]/25'
                           : 'border-slate-200 bg-white hover:border-slate-300'
                       }`}
                     >
@@ -645,7 +645,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                           className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 self-start sm:self-auto cursor-pointer shadow-2xs ${
                             isCurrent
                               ? 'bg-[#174EA6] text-white'
-                              : 'bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold border border-[#C59B27]'
+                              : 'bg-white hover:bg-slate-50 text-slate-800 font-bold border border-slate-200'
                           }`}
                         >
                           <LogIn className="w-3.5 h-3.5" />

@@ -48,9 +48,9 @@ const columnConfigs: {
   dotColor: string;
 }[] = [
   { status: 'To do', label: 'To do', dotColor: 'bg-slate-400' },
-  { status: 'In progress', label: 'In progress', dotColor: 'bg-[#D4AF37]' },
-  { status: 'In review', label: 'In review', dotColor: 'bg-[#174EA6]' },
-  { status: 'Done', label: 'Done', dotColor: 'bg-[#174EA6]' },
+  { status: 'In progress', label: 'In progress', dotColor: 'bg-[#174EA6]' },
+  { status: 'In review', label: 'In review', dotColor: 'bg-[#0B1F3A]' },
+  { status: 'Done', label: 'Done', dotColor: 'bg-emerald-600' },
 ];
 
 export const TrellisBoard: React.FC = () => {

@@ -83,8 +83,8 @@ export const TrellisTimeline: React.FC = () => {
       barLabel: 'Token audit',
       startDay: 20,
       endDay: 26,
-      color: 'bg-[#FAF5EB] text-[#B88A24] border-[#E9D59A]',
-      dotColor: 'bg-[#B88A24]',
+      color: 'bg-[#EFF6FF] text-[#174EA6] border-blue-200',
+      dotColor: 'bg-[#174EA6]',
     },
     {
       id: 'PAS-226',
@@ -92,8 +92,8 @@ export const TrellisTimeline: React.FC = () => {
       barLabel: 'Screens',
       startDay: 23,
       endDay: 28,
-      color: 'bg-[#FAF5EB] text-[#B88A24] border-[#E9D59A]',
-      dotColor: 'bg-[#D4AF37]',
+      color: 'bg-slate-100 text-slate-700 border-slate-200',
+      dotColor: 'bg-[#0B1F3A]',
     },
   ];
 
@@ -120,7 +120,7 @@ export const TrellisTimeline: React.FC = () => {
                   <span
                     className={`mt-0.5 ${
                       d.isCurrent
-                        ? 'bg-[#B88A24] text-slate-950 w-5 h-5 rounded-full flex items-center justify-center font-black shadow-2xs'
+                        ? 'bg-[#174EA6] text-white w-5 h-5 rounded-full flex items-center justify-center font-black shadow-2xs'
                         : ''
                     }`}
                   >
@@ -178,7 +178,7 @@ export const TrellisTimeline: React.FC = () => {
                   <span>Code freeze</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-xs bg-[#B88A24]" />
+                  <span className="w-2.5 h-2.5 rounded-xs bg-[#174EA6]" />
                   <span>Release</span>
                 </span>
               </div>
@@ -290,7 +290,7 @@ export const TrellisTimeline: React.FC = () => {
                 strokeLinecap="round"
               />
               {/* Current day indicator */}
-              <circle cx="140" cy="45" r="4.5" fill="#D4AF37" stroke="#FFFFFF" strokeWidth="2" />
+              <circle cx="140" cy="45" r="4.5" fill="#174EA6" stroke="#FFFFFF" strokeWidth="2" />
             </svg>
 
             <div className="flex justify-between text-[9px] text-slate-400 pt-1 font-medium">

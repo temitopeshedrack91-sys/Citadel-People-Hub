@@ -36,7 +36,7 @@ export const CitadelLogo: React.FC<CitadelLogoProps> = ({
   const isDark = colorMode === 'dark';
   const textColor = isDark ? '#FFFFFF' : '#111827';
   const towerColor = isDark ? '#FFFFFF' : '#000000';
-  const goldColor = '#D4AF37'; // Official Citadel Classic Gold
+  const accentColor = isDark ? '#CBD5E1' : '#174EA6';
 
   // Direct bitmap image option
   if (useImage) {
@@ -60,16 +60,16 @@ export const CitadelLogo: React.FC<CitadelLogoProps> = ({
       style={variant === 'mark' && height ? { height: `${height}px`, width: 'auto' } : undefined}
       aria-label="Citadel Official Emblem"
     >
-      {/* Outer Gold Frame with precise diagonal right cutout and bottom gap */}
+      {/* Outer Frame with precise diagonal right cutout and bottom gap */}
       <path
         d="M 0,0 L 136,0 L 136,71.5 L 123,63 L 123,13 L 13,13 L 13,123 L 60,123 L 60,136 L 0,136 Z"
-        fill={goldColor}
+        fill={accentColor}
       />
 
-      {/* 5-pointed Gold Star in top-left quadrant */}
+      {/* 5-pointed Star in top-left quadrant */}
       <polygon
         points="37.5,23.5 41.5,33.5 51.5,34.5 43,39.5 46.5,50.5 37.5,43.5 28.5,50.5 32,39.5 23.5,34.5 33.5,33.5"
-        fill={goldColor}
+        fill={accentColor}
       />
 
       {/* Shorter Tower (Left, width 26, roof slopes upward from 88 to 78) */}
@@ -116,8 +116,8 @@ export const CitadelLogo: React.FC<CitadelLogoProps> = ({
             <span
               className="text-[10px] font-extrabold px-1.5 py-0.5 rounded tracking-widest uppercase font-mono"
               style={{
-                backgroundColor: isDark ? 'rgba(212, 175, 55, 0.2)' : 'rgba(212, 175, 55, 0.25)',
-                color: goldColor,
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#F1F5F9',
+                color: isDark ? '#E2E8F0' : '#334155',
               }}
             >
               PEOPLE HUB

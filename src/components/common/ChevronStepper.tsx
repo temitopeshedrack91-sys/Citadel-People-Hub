@@ -61,14 +61,14 @@ export const ChevronStepper: React.FC<ChevronStepperProps> = ({
           let subtitleColor = 'text-slate-400';
 
           if (isActive) {
-            stepBg = 'bg-[#D4AF37] text-slate-950 shadow-sm';
-            circleBg = 'bg-slate-950 text-[#D4AF37] font-black border border-slate-950';
-            titleColor = 'text-slate-950 font-black';
-            subtitleColor = 'text-slate-900 font-semibold';
+            stepBg = 'bg-[#174EA6] text-white shadow-sm';
+            circleBg = 'bg-white text-[#174EA6] font-black border border-white';
+            titleColor = 'text-white font-black';
+            subtitleColor = 'text-blue-100 font-semibold';
           } else if (isCompleted) {
-            stepBg = 'bg-[#D4AF37]/15 hover:bg-[#D4AF37]/25 text-slate-900';
-            circleBg = 'bg-[#D4AF37] text-slate-950 font-bold border border-[#C59B27]';
-            titleColor = 'text-slate-900 font-bold';
+            stepBg = 'bg-[#EFF6FF] hover:bg-blue-100/70 text-[#0B1F3A]';
+            circleBg = 'bg-[#174EA6] text-white font-bold border border-[#174EA6]';
+            titleColor = 'text-[#0B1F3A] font-bold';
             subtitleColor = 'text-slate-600';
           }
 

@@ -215,9 +215,9 @@ export const SettingsView: React.FC = () => {
           <button
             type="button"
             onClick={openCreateDepartmentModal}
-            className="px-3.5 py-2 rounded-xl bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#C59B27] transition active:scale-95 cursor-pointer"
+            className="px-3.5 py-2 rounded-xl bg-[#174EA6] text-white hover:bg-[#0B1F3A] text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#174EA6] transition active:scale-95 cursor-pointer"
           >
-            <Plus className="w-4 h-4 text-slate-950 stroke-[2.5]" />
+            <Plus className="w-4 h-4 text-white stroke-[2.5]" />
             <span className="font-bold">Add Department</span>
           </button>
         )}
@@ -229,7 +229,7 @@ export const SettingsView: React.FC = () => {
           onClick={() => setActiveTab('entities_depts')}
           className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
             activeTab === 'entities_depts'
-              ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
+              ? 'bg-[#174EA6] text-white shadow-xs'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
           }`}
         >
@@ -241,11 +241,11 @@ export const SettingsView: React.FC = () => {
           onClick={() => setActiveTab('gec_roster')}
           className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
             activeTab === 'gec_roster'
-              ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
+              ? 'bg-[#174EA6] text-white shadow-xs'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
           }`}
         >
-          <Users className={`w-3.5 h-3.5 ${activeTab === 'gec_roster' ? 'text-slate-950' : 'text-[#D4AF37]'}`} />
+          <Users className={`w-3.5 h-3.5 ${activeTab === 'gec_roster' ? 'text-white' : 'text-[#174EA6]'}`} />
           <span>Group Executive Council (GEC) &amp; Shared Services (Sheet 3)</span>
         </button>
 
@@ -253,11 +253,11 @@ export const SettingsView: React.FC = () => {
           onClick={() => setActiveTab('roles_matrix')}
           className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
             activeTab === 'roles_matrix'
-              ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
+              ? 'bg-[#174EA6] text-white shadow-xs'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
           }`}
         >
-          <ShieldCheck className={`w-3.5 h-3.5 ${activeTab === 'roles_matrix' ? 'text-slate-950' : 'text-[#174EA6]'}`} />
+          <ShieldCheck className={`w-3.5 h-3.5 ${activeTab === 'roles_matrix' ? 'text-white' : 'text-[#174EA6]'}`} />
           <span>Roles &amp; Permissions Governance Matrix (Sheet 4)</span>
         </button>
 
@@ -265,11 +265,11 @@ export const SettingsView: React.FC = () => {
           onClick={() => setActiveTab('requirements_form')}
           className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
             activeTab === 'requirements_form'
-              ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
+              ? 'bg-[#174EA6] text-white shadow-xs'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
           }`}
         >
-          <CheckCircle2 className={`w-3.5 h-3.5 ${activeTab === 'requirements_form' ? 'text-slate-950' : 'text-[#D4AF37]'}`} />
+          <CheckCircle2 className={`w-3.5 h-3.5 ${activeTab === 'requirements_form' ? 'text-white' : 'text-[#174EA6]'}`} />
           <span>V1 Requirements</span>
         </button>
       </div>
@@ -539,7 +539,7 @@ export const SettingsView: React.FC = () => {
                       <div className="flex items-center gap-1.5">
                         <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
                           member.roleType === 'Business Head'
-                            ? 'bg-[#174EA6] text-[#D4AF37]'
+                            ? 'bg-[#0B1F3A] text-white'
                             : 'bg-[#DBEAFE] text-[#174EA6] border border-[#BFDBFE]'
                         }`}>
                           {member.roleType}
@@ -614,7 +614,7 @@ export const SettingsView: React.FC = () => {
                 </h3>
                 <p className="text-[11px] text-slate-500 font-medium">Cross-cutting permission rules from Super Admin to Self-Service Employee</p>
               </div>
-              <span className="text-xs font-bold px-2.5 py-1 bg-[#174EA6] text-[#D4AF37] rounded-lg shadow-xs">
+              <span className="text-xs font-bold px-2.5 py-1 bg-[#0B1F3A] text-white rounded-lg shadow-xs">
                 5 Standard Tiers
               </span>
             </div>
@@ -679,13 +679,13 @@ export const SettingsView: React.FC = () => {
 
       {activeTab === 'requirements_form' && (
         <div className="space-y-5">
-          <div className="p-5 bg-[#174EA6] border border-[#0B1F3A] rounded-2xl flex items-start gap-3 text-white shadow-xs">
-            <Info className="w-5 h-5 text-[#D4AF37] shrink-0 mt-0.5" />
+          <div className="p-5 bg-[#0B1F3A] border border-slate-800 rounded-2xl flex items-start gap-3 text-white shadow-xs">
+            <Info className="w-5 h-5 text-blue-300 shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-xs font-black uppercase tracking-wider text-[#D4AF37]">
+              <h3 className="text-xs font-black uppercase tracking-wider text-white">
                 V1 Requirement Capture &amp; Operational Workflow Summary
               </h3>
-              <p className="text-xs text-slate-200 mt-1 leading-relaxed font-medium">
+              <p className="text-xs text-slate-300 mt-1 leading-relaxed font-medium">
                 This summary translates the onboarding and governance responses captured in the requirements form into the Citadel People Hub operating model.
               </p>
             </div>
@@ -796,7 +796,7 @@ export const SettingsView: React.FC = () => {
                 <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">V1 feature priority mapping</h3>
                 <p className="text-[11px] text-slate-500 font-medium">Must-have, can-late, and future-phase requirement cycle</p>
               </div>
-              <span className="text-[10px] font-black px-2.5 py-1 bg-[#174EA6] text-[#D4AF37] rounded-lg shadow-xs">V1 Release Priority</span>
+              <span className="text-[10px] font-black px-2.5 py-1 bg-[#0B1F3A] text-white rounded-lg shadow-xs">V1 Release Priority</span>
             </div>
 
             <div className="overflow-x-auto custom-scrollbar">
@@ -836,12 +836,12 @@ export const SettingsView: React.FC = () => {
       {showDeptModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-fade-in">
           <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200/90 overflow-hidden my-auto max-h-[90vh] flex flex-col">
-            <div className="bg-[#174EA6] text-white p-5 flex items-center justify-between shrink-0">
+            <div className="bg-[#0B1F3A] text-white p-5 flex items-center justify-between shrink-0">
               <div>
                 <h3 className="text-base font-bold text-white">
                   {editingDept ? 'Edit Department & Governance' : 'Create Department'}
                 </h3>
-                <p className="text-xs text-[#D4AF37] font-medium">PCCM Organizational Structure (Sheet 3)</p>
+                <p className="text-xs text-slate-300 font-medium">PCCM Organizational Structure (Sheet 3)</p>
               </div>
               <button
                 type="button"
@@ -995,7 +995,7 @@ export const SettingsView: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 bg-[#D4AF37] text-slate-950 rounded-xl hover:bg-[#C59B27] font-bold shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2 bg-[#174EA6] text-white rounded-xl hover:bg-[#0B1F3A] font-bold shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-50"
                 >
                   {isSubmitting ? 'Saving...' : editingDept ? 'Save Changes' : 'Add Department'}
                 </button>

@@ -22,7 +22,7 @@ export const TrellisActivityToast: React.FC = () => {
       {canUndo && <button
         onClick={undoLastAction}
         data-testid="trellis-undo-btn"
-        className="text-[#D4AF37] hover:text-[#D4AF37] font-bold underline underline-offset-2 transition ml-1 cursor-pointer"
+        className="text-blue-300 hover:text-white font-bold underline underline-offset-2 transition ml-1 cursor-pointer"
       >
         Undo
       </button>}

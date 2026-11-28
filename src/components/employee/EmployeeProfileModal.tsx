@@ -609,7 +609,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs focus:ring-1 focus:ring-[#083E34] focus:border-[#083E34] outline-none transition"
+        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs focus:ring-1 focus:ring-[#174EA6] focus:border-[#174EA6] outline-none transition"
         required={required}
       />
     </div>
@@ -650,7 +650,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
     >
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-6 flex flex-col max-h-[90vh]">
         {/* Modal Top Header */}
-        <div className="bg-[#083E34] text-white p-5 sm:p-6 relative border-b border-emerald-950/30 shrink-0">
+        <div className="bg-[#0B1F3A] text-white p-5 sm:p-6 relative border-b border-slate-800 shrink-0">
           <button
             type="button"
             onClick={onClose}
@@ -671,7 +671,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                   className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover shadow-lg border-2 border-white/25 shrink-0"
                 />
               ) : (
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-amber-600 text-white font-black text-2xl flex items-center justify-center shadow-lg border-2 border-white/20 shrink-0">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[#174EA6] text-white font-black text-2xl flex items-center justify-center shadow-lg border-2 border-white/20 shrink-0">
                   {employee.firstName[0]}
                   {employee.lastName[0]}
                 </div>
@@ -682,7 +682,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                   <h2 className="text-lg sm:text-xl font-bold text-white tracking-wide">
                     {employee!.fullName}
                   </h2>
-                  <span className="px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 font-mono text-[11px] font-bold border border-amber-400/30">
+                  <span className="px-2 py-0.5 rounded bg-white/15 text-slate-200 font-mono text-[11px] font-bold border border-white/20">
                     {employee.staffId}
                   </span>
                   <Badge
@@ -700,13 +700,13 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                   </Badge>
                 </div>
 
-                <p className="text-xs sm:text-sm text-amber-200/90 font-medium mt-1">
+                <p className="text-xs sm:text-sm text-slate-300 font-medium mt-1">
                   {employee.jobTitle} • {employee.gradeLevel}
                 </p>
 
                 <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-slate-300">
                   <span className="flex items-center gap-1">
-                    <Building2 className="w-3.5 h-3.5 text-amber-400" />
+                    <Building2 className="w-3.5 h-3.5 text-slate-300" />
                     <span>{employee.entityName}</span>
                   </span>
                   <span>•</span>
@@ -726,7 +726,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                       setActiveTab('personal');
                       setSelfEditOpen(true);
                     }}
-                    className="px-3 py-1.5 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold border border-[#C59B27] transition flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                    className="px-3 py-1.5 rounded-xl bg-[#174EA6] hover:bg-blue-700 text-white text-xs font-bold border border-white/15 transition flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
                   >
                     <Shield className="w-3.5 h-3.5" />
                     <span>{isEntityBusinessHead ? 'Propose Change (HR)' : 'Request Info Update'}</span>
@@ -737,7 +737,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                   onClick={handleCopyContact}
                   className="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-slate-100 text-xs font-semibold border border-white/20 transition flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
                 >
-                  <Share2 className="w-3.5 h-3.5 text-amber-300" />
+                  <Share2 className="w-3.5 h-3.5 text-slate-200" />
                   <span>{isCopied ? 'Copied Contact!' : 'Share Contact'}</span>
                 </button>
               </div>
@@ -760,11 +760,11 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                 onClick={() => setActiveTab(tab.id)}
                 className={`py-3 px-3.5 text-xs font-bold whitespace-nowrap flex items-center gap-2 border-b-2 transition cursor-pointer ${
                   isActive
-                    ? 'border-[#083E34] text-[#083E34] bg-white rounded-t-xl shadow-2xs'
+                    ? 'border-[#174EA6] text-[#174EA6] bg-white rounded-t-xl shadow-2xs'
                     : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-amber-600' : 'text-slate-400'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-[#174EA6]' : 'text-slate-400'}`} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -779,7 +779,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
               {/* Placement & Service */}
               <div>
                 <h3 className="font-bold text-slate-900 uppercase tracking-wider text-xs pb-1.5 border-b border-slate-200 flex items-center gap-2">
-                  <Briefcase className="w-4 h-4 text-[#C59B27]" />
+                  <Briefcase className="w-4 h-4 text-[#174EA6]" />
                   <span>Citadel Placement & Organizational Assignment</span>
                 </h3>
 
@@ -826,13 +826,13 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
               {/* Phase 1: Reporting Hierarchy (Upward Chain & Direct Reports) */}
               <div>
                 <h3 className="font-bold text-slate-900 uppercase tracking-wider text-xs pb-1.5 border-b border-slate-200 flex items-center gap-2">
-                  <GitBranch className="w-4 h-4 text-[#083E34]" />
+                  <GitBranch className="w-4 h-4 text-[#174EA6]" />
                   <span>Reporting Hierarchy</span>
                 </h3>
 
                 {hierarchyLoading ? (
                   <div className="mt-3 p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-500 flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-[#083E34]" />
+                    <Loader2 className="w-4 h-4 animate-spin text-[#174EA6]" />
                     <span>Loading reporting chain and direct reports...</span>
                   </div>
                 ) : (
@@ -852,7 +852,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                                 <span className="font-semibold text-slate-900">{sup.fullName}</span>
                                 <span className="text-[10px] text-slate-500 block">{sup.jobTitle}</span>
                               </div>
-                              <span className="text-[10px] font-mono text-[#083E34] font-semibold">
+                              <span className="text-[10px] font-mono text-[#174EA6] font-semibold">
                                 L{idx + 1}
                               </span>
                             </div>
@@ -867,7 +867,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
 
                     <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5 text-[#083E34]" />
+                        <Users className="w-3.5 h-3.5 text-[#174EA6]" />
                         Direct Reports ({hierarchy?.directReports?.length ?? employee.directReportsCount ?? 0})
                       </span>
                       {hierarchy?.directReports && hierarchy.directReports.length > 0 ? (
@@ -898,20 +898,20 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
               {/* Quick Contact Overview */}
               <div>
                 <h3 className="font-bold text-slate-900 uppercase tracking-wider text-xs pb-1.5 border-b border-slate-200 flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-[#C59B27]" />
+                  <Phone className="w-4 h-4 text-[#174EA6]" />
                   <span>Direct Communication Channels</span>
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+                    <div className="p-2 rounded-lg bg-blue-50 text-[#174EA6]">
                       <Mail className="w-4 h-4" />
                     </div>
                     <div>
                       <span className="text-[10px] text-slate-400 block">Official Citadel Email</span>
                       <a
                         href={`mailto:${employee.email}`}
-                        className="font-bold text-[#083E34] hover:underline"
+                        className="font-bold text-[#174EA6] hover:underline"
                       >
                         {employee.email}
                       </a>
@@ -919,14 +919,14 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                   </div>
 
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
+                    <div className="p-2 rounded-lg bg-blue-50 text-[#174EA6]">
                       <Phone className="w-4 h-4" />
                     </div>
                     <div>
                       <span className="text-[10px] text-slate-400 block">Official Phone</span>
                       <a
                         href={`tel:${employee.phone}`}
-                        className="font-bold text-[#083E34] hover:underline font-mono"
+                        className="font-bold text-[#174EA6] hover:underline font-mono"
                       >
                         {employee.phone}
                       </a>
@@ -940,11 +940,11 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
           {/* TAB 2: PERSONAL INFORMATION */}
           {activeTab === 'personal' && (
             <div className="space-y-6 animate-fade-in">
-              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-2.5">
-                  <Shield className="w-4 h-4 text-[#C59B27] shrink-0 mt-0.5" />
+                  <Shield className="w-4 h-4 text-[#174EA6] shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold block">Privacy & Data Governance Notice:</span>
+                    <span className="font-bold block text-slate-900">Privacy & Data Governance Notice:</span>
                     Personal identifying fields including residential address and date of birth are protected by the PCCM Privacy Charter. Unmasking actions are recorded in the Citadel audit trail.
                   </div>
                 </div>
@@ -953,7 +953,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                     type="button"
                     data-testid="dossier-request-profile-update-btn"
                     onClick={() => setSelfEditOpen((prev) => !prev)}
-                    className="px-3 py-1.5 rounded-lg bg-[#083E34] text-white hover:bg-[#062E27] text-xs font-semibold shrink-0 transition cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg bg-[#174EA6] text-white hover:bg-[#0B1F3A] text-xs font-semibold shrink-0 transition cursor-pointer"
                   >
                     {selfEditOpen
                       ? 'Close Update Form'
@@ -1007,7 +1007,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="tel"
                         value={selfPhone}
                         onChange={(e) => setSelfPhone(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
                       />
                     </div>
                     <div>
@@ -1016,7 +1016,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="email"
                         value={selfEmail}
                         onChange={(e) => setSelfEmail(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
                       />
                     </div>
                     <div>
@@ -1025,7 +1025,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="date"
                         value={selfDob}
                         onChange={(e) => setSelfDob(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
                       />
                     </div>
                     <div>
@@ -1033,7 +1033,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                       <select
                         value={selfGender}
                         onChange={(e) => setSelfGender(e.target.value as 'Male' | 'Female')}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
                       >
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
@@ -1045,7 +1045,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="text"
                         value={selfAddress}
                         onChange={(e) => setSelfAddress(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
                       />
                     </div>
                     <div className="sm:col-span-2">
@@ -1055,7 +1055,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         value={selfPhoto}
                         onChange={(e) => setSelfPhoto(e.target.value)}
                         placeholder="https://example.org/photo.jpg"
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
                       />
                     </div>
                   </div>
@@ -1067,7 +1067,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="text"
                         value={selfEcName}
                         onChange={(e) => setSelfEcName(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
                       />
                     </div>
                     <div>
@@ -1076,7 +1076,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="text"
                         value={selfEcRel}
                         onChange={(e) => setSelfEcRel(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
                       />
                     </div>
                     <div>
@@ -1085,7 +1085,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="tel"
                         value={selfEcPhone}
                         onChange={(e) => setSelfEcPhone(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
                       />
                     </div>
                   </div>
@@ -1097,7 +1097,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="text"
                         value={selfNokName}
                         onChange={(e) => setSelfNokName(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
                       />
                     </div>
                     <div>
@@ -1106,7 +1106,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="text"
                         value={selfNokRel}
                         onChange={(e) => setSelfNokRel(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
                       />
                     </div>
                     <div>
@@ -1115,7 +1115,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="tel"
                         value={selfNokPhone}
                         onChange={(e) => setSelfNokPhone(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
                       />
                     </div>
                     <div>
@@ -1124,7 +1124,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="text"
                         value={selfNokAddr}
                         onChange={(e) => setSelfNokAddr(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
                       />
                     </div>
                   </div>
@@ -1137,7 +1137,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                       value={selfReason}
                       onChange={(e) => setSelfReason(e.target.value)}
                       placeholder="e.g. Relocated residential address / updated phone number"
-                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#083E34]"
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#174EA6]"
                     />
                   </div>
 
@@ -1152,7 +1152,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                     <button
                       type="submit"
                       disabled={selfSubmitting}
-                      className="px-4 py-1.5 rounded-lg bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] text-xs font-bold cursor-pointer disabled:opacity-50"
+                      className="px-4 py-1.5 rounded-lg bg-[#174EA6] text-white hover:bg-[#0B1F3A] text-xs font-bold cursor-pointer disabled:opacity-50"
                     >
                       {selfSubmitting ? 'Submitting...' : 'Submit for HR Approval'}
                     </button>
@@ -1202,8 +1202,8 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* Emergency Contact */}
                 <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-200 text-[#083E34] font-bold">
-                    <HeartPulse className="w-4 h-4 text-amber-600" />
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-200 text-slate-900 font-bold">
+                    <HeartPulse className="w-4 h-4 text-[#174EA6]" />
                     <span>Primary Emergency Contact</span>
                   </div>
 
@@ -1229,8 +1229,8 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
 
                 {/* Next of Kin */}
                 <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-200 text-[#083E34] font-bold">
-                    <Shield className="w-4 h-4 text-amber-600" />
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-200 text-slate-900 font-bold">
+                    <Shield className="w-4 h-4 text-[#174EA6]" />
                     <span>Next of Kin (Confidential)</span>
                   </div>
 
@@ -1339,9 +1339,9 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
           {/* TAB 5: BENEFITS & PAYROLL (ROLE-RESTRICTED) */}
           {activeTab === 'payroll' && (
             <div className="space-y-6 animate-fade-in">
-              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-400/40 flex items-start justify-between">
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-start justify-between">
                 <div className="flex items-start gap-3">
-                  <CreditCard className="w-5 h-5 text-[#C59B27] shrink-0 mt-0.5" />
+                  <CreditCard className="w-5 h-5 text-[#174EA6] shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold text-slate-900 text-xs sm:text-sm block">
                       Restricted Payroll & Pension Dossier
@@ -1351,7 +1351,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                     </p>
                   </div>
                 </div>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200 shrink-0">
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
                   PCCM PROTECTED
                 </span>
               </div>
@@ -1467,7 +1467,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                 {canManageEmployeeDocs && (
                   <button
                     onClick={() => setUploadModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#083E34] text-white text-xs font-bold hover:bg-[#04241e] transition shadow-sm"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#174EA6] text-white text-xs font-bold hover:bg-[#0B1F3A] transition shadow-sm"
                   >
                     <Upload className="w-3.5 h-3.5" /> Upload Document
                   </button>
@@ -1500,7 +1500,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 animate-fade-in"
                       >
                         <div className="flex items-center gap-3 w-full sm:w-auto">
-                          <div className="p-1.5 rounded-lg bg-amber-50 text-amber-600 shrink-0">
+                          <div className="p-1.5 rounded-lg bg-slate-100 text-slate-600 shrink-0">
                             <FileText className="w-5 h-5" />
                           </div>
                           <div className="min-w-0 flex-1">
@@ -1542,7 +1542,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                           <button
                             disabled={downloadingDocId === doc.id}
                             onClick={() => handleDownload(doc)}
-                            className="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50/50 rounded transition disabled:opacity-60"
+                            className="p-1.5 text-slate-500 hover:text-[#174EA6] hover:bg-blue-50/50 rounded transition disabled:opacity-60"
                             title="Download document"
                           >
                             <Download className="w-4 h-4" />
@@ -1554,7 +1554,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                                 setReplaceDocId(doc.id);
                                 if (replaceFileRef.current) replaceFileRef.current.click();
                               }}
-                              className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50/50 rounded transition disabled:opacity-60"
+                              className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 rounded transition disabled:opacity-60"
                               title="Replace document"
                             >
                               <RefreshCw className="w-4 h-4" />
@@ -1606,15 +1606,13 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
 
               {/* Upload Form */}
               <div
-                className={`rounded-xl border p-3.5 animate-fade-in ${
-                  uploadModalOpen ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'
-                }`}
+                className="rounded-xl border p-3.5 animate-fade-in bg-slate-50 border-slate-200"
               >
                 <div className="flex items-center justify-between mb-2.5 cursor-pointer" onClick={() => setUploadModalOpen((o) => !o)}>
                   <span className="font-bold text-slate-900 text-xs uppercase tracking-wider">
                     {uploadModalOpen ? 'Close' : 'Add New Employee Document'}
                   </span>
-                  <span className={`text-[10px] ${uploadModalOpen ? 'text-[#083E34]' : 'text-slate-500'}`}>
+                  <span className={`text-[10px] ${uploadModalOpen ? 'text-[#174EA6]' : 'text-slate-500'}`}>
                     {uploadModalOpen ? 'Hide form' : 'Upload a new personnel document'}
                   </span>
                 </div>
@@ -1632,7 +1630,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         <select
                           value={uploadForm.category}
                           onChange={(e) => setUploadForm({ ...uploadForm, category: e.target.value as DocumentCategory })}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs focus:ring-1 focus:ring-[#083E34] focus:border-[#083E34] outline-none transition"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs focus:ring-1 focus:ring-[#174EA6] focus:border-[#174EA6] outline-none transition"
                         >
                           {EMPLOYEE_DOCUMENT_CATEGORIES.map((cat) => (
                             <option key={cat} value={cat}>
@@ -1680,7 +1678,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                         type="file"
                         accept=".pdf,.jpg,.jpeg,.png"
                         onChange={(e) => setUploadForm({ ...uploadForm, file: e.target.files?.[0] })}
-                        className="w-full block text-xs text-slate-600 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-[#083E34] file:text-white hover:file:bg-[#04241e] cursor-pointer"
+                        className="w-full block text-xs text-slate-600 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-[#174EA6] file:text-white hover:file:bg-[#0B1F3A] cursor-pointer"
                       />
                     </div>
                     <div className="flex items-center justify-between gap-2 pt-1.5">
@@ -1697,7 +1695,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                       <button
                         type="submit"
                         disabled={uploading || !uploadForm.title.trim() || !uploadForm.file}
-                        className={`px-3 py-1.5 rounded-xl ${uploading || (!uploadForm.title.trim() && !uploadForm.file) ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-[#C59B27] text-white hover:bg-[#a0801f]'} text-xs font-bold transition disabled:opacity-60`}
+                        className={`px-3 py-1.5 rounded-xl ${uploading || (!uploadForm.title.trim() && !uploadForm.file) ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-[#174EA6] text-white hover:bg-[#0B1F3A]'} text-xs font-bold transition disabled:opacity-60`}
                       >
                         {uploading ? <Loader2 className="w-3 h-3 mr-1.5 animate-spin" /> : ''} Upload Document
                       </button>
@@ -1733,15 +1731,15 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                       empLeaveBalances.map((bal) => (
                         <div
                           key={String(bal.id)}
-                          className="p-3.5 rounded-xl bg-[#EBF5F2] border border-[#A3D4C7]/60 text-center"
+                          className="p-3.5 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] text-center"
                         >
-                          <span className="text-[11px] text-[#083E34] font-bold block">
+                          <span className="text-[11px] text-[#174EA6] font-bold block">
                             {bal.category?.name || 'Leave Quota'}
                           </span>
-                          <div className="text-xl font-bold text-[#052C25] mt-1">
+                          <div className="text-xl font-bold text-[#0B1F3A] mt-1">
                             {Number(bal.remaining_days)} / {Number(bal.total_days)}
                           </div>
-                          <span className="text-[11px] text-[#083E34]/80">
+                          <span className="text-[11px] text-slate-600">
                             Days Remaining ({Number(bal.used_days)} used · {Number(bal.pending_days)} pending)
                           </span>
                         </div>
@@ -1799,7 +1797,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
               {onNavigateLeave && (
                 <button
                   onClick={onNavigateLeave}
-                  className="w-full py-2.5 rounded-xl bg-[#083E34] text-amber-300 font-bold text-xs hover:bg-[#062f28] transition text-center cursor-pointer shadow-xs active:scale-95"
+                  className="w-full py-2.5 rounded-xl bg-[#174EA6] text-white font-bold text-xs hover:bg-[#0B1F3A] transition text-center cursor-pointer shadow-xs active:scale-95"
                 >
                   Manage Leave Requests in Leave Module →
                 </button>
@@ -1928,9 +1926,9 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
 
                 return (
                   <>
-                    <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 flex items-center justify-between">
+                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
                       <div>
-                        <span className="text-[10px] text-amber-800 font-bold uppercase tracking-wider block">
+                        <span className="text-[10px] text-slate-600 font-bold uppercase tracking-wider block">
                           Latest PCCM Performance Calibration
                         </span>
                         {reviewsLoading ? (
@@ -1939,7 +1937,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                           <div className="text-2xl font-black text-slate-900 mt-1 flex items-center gap-2 flex-wrap">
                             <span>{scoreVal !== null ? scoreVal.toFixed(2) : '—'}</span>
                             <span className="text-xs font-semibold text-slate-500">/ 5.0</span>
-                            <span className="text-xs px-2 py-0.5 rounded bg-amber-400 text-slate-950 font-bold">
+                            <span className="text-xs px-2 py-0.5 rounded bg-[#EFF6FF] text-[#174EA6] border border-[#BFDBFE] font-bold">
                               {bandLabel}
                             </span>
                             {latestScored && (
@@ -1950,7 +1948,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                           </div>
                         )}
                       </div>
-                      <Award className="w-10 h-10 text-amber-600 shrink-0" />
+                      <Award className="w-10 h-10 text-[#174EA6] shrink-0" />
                     </div>
 
                     <div className="space-y-3">
@@ -1967,12 +1965,12 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                                 <span className="font-semibold text-slate-800">
                                   {idx + 1}. {rating.kpiTitle} ({Number(rating.weight ?? 0)}%)
                                 </span>
-                                <span className="font-mono font-bold text-emerald-700 shrink-0">
+                                <span className="font-mono font-bold text-[#174EA6] shrink-0">
                                   {rVal > 0 ? `${rVal.toFixed(1)} / 5.0` : 'Pending'}
                                 </span>
                               </div>
                               <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                                <div className="h-full bg-emerald-600 rounded-full" style={{ width: `${pct}%` }} />
+                                <div className="h-full bg-[#174EA6] rounded-full" style={{ width: `${pct}%` }} />
                               </div>
                               {rating.comment && (
                                 <p className="text-[11px] text-slate-600 italic">"{rating.comment}"</p>
@@ -2007,7 +2005,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                   setActiveTab('personal');
                   setSelfEditOpen(true);
                 }}
-                className="px-4 py-2 border border-emerald-300 bg-emerald-50 text-[#083E34] rounded-xl text-xs font-semibold hover:bg-emerald-100 transition cursor-pointer"
+                className="px-4 py-2 border border-[#BFDBFE] bg-[#EFF6FF] text-[#174EA6] rounded-xl text-xs font-semibold hover:bg-blue-100/70 transition cursor-pointer"
               >
                 Update Personal Info
               </button>
@@ -2022,7 +2020,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
             )}
             <button
               onClick={onClose}
-              className="px-4 py-2 bg-[#D4AF37] text-slate-950 rounded-xl text-xs font-bold hover:bg-[#C59B27] transition cursor-pointer shadow-xs active:scale-95"
+              className="px-4 py-2 bg-[#174EA6] text-white rounded-xl text-xs font-bold hover:bg-[#0B1F3A] transition cursor-pointer shadow-xs active:scale-95"
             >
               Close Dossier
             </button>

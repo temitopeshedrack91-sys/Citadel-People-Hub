@@ -92,15 +92,15 @@ export const AIAssistantView: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-[#174EA6] rounded-xl border border-[#BFDBFE] p-6 shadow-2xs text-white">
+      <div className="bg-[#0B1F3A] rounded-xl border border-slate-800 p-6 shadow-2xs text-white">
         <div className="flex items-center gap-2 mb-3">
-          <Lock className="w-4 h-4 text-[#D4AF37]" />
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-[#D4AF37]">Safe operating requirements</h3>
+          <Lock className="w-4 h-4 text-blue-300" />
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-blue-200">Safe operating requirements</h3>
         </div>
         <ul className="space-y-2 text-xs text-slate-200 leading-relaxed">
           {safetyControls.map((item) => (
             <li key={item} className="flex gap-2.5 items-start">
-              <span className="mt-0.5 text-[#D4AF37] font-bold">•</span>
+              <span className="mt-0.5 text-blue-300 font-bold">•</span>
               <span>{item}</span>
             </li>
           ))}

@@ -214,7 +214,7 @@ export const ReportsView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-[#083E34]" />
+            <BarChart3 className="w-5 h-5 text-[#174EA6]" />
             <span>
               {isBizHead
                 ? `${currentUser.entityName || 'Entity'} HR Reports`
@@ -237,15 +237,15 @@ export const ReportsView: React.FC = () => {
             onClick={handleExportCSV}
             className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-1.5 shadow-2xs transition cursor-pointer min-h-[38px]"
           >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-700" />
+            <FileSpreadsheet className="w-4 h-4 text-[#174EA6]" />
             <span>Export CSV</span>
           </button>
           <button
             onClick={handlePrintPDF}
-            className="px-3.5 py-2 rounded-xl bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#C59B27] transition cursor-pointer active:scale-95 min-h-[38px]"
+            className="px-3.5 py-2 rounded-xl bg-[#174EA6] text-white hover:bg-[#0B1F3A] text-xs font-semibold flex items-center gap-1.5 shadow-xs transition cursor-pointer active:scale-95 min-h-[38px]"
           >
-            <Printer className="w-4 h-4 text-slate-950 stroke-[2.5]" />
-            <span className="font-bold">Print Report</span>
+            <Printer className="w-4 h-4 text-white stroke-[2.25]" />
+            <span className="font-semibold">Print Report</span>
           </button>
         </div>
       </div>
@@ -317,7 +317,7 @@ export const ReportsView: React.FC = () => {
             <span className="text-slate-500 block">
               {isHrOrAdmin ? 'Backend Staff Total' : 'Scoped Staff Total'}
             </span>
-            <span className="text-base font-black text-[#083E34]">
+            <span className="text-base font-black text-slate-900">
               {isHrOrAdmin
                 ? workforceSummary?.totalEmployees ?? workforceSummary?.totalStaff ?? totalStaff
                 : totalStaff}
@@ -382,7 +382,7 @@ export const ReportsView: React.FC = () => {
                     <td className="py-3 px-4 text-slate-700 font-medium">{d.entityName}</td>
                     <td className="py-3 px-4 text-slate-800 font-semibold">{d.headOfDepartment || d.headOfDepartmentName || 'To Be Appointed'}</td>
                     <td className="py-3 px-4 text-center font-bold text-slate-900">{count}</td>
-                    <td className="py-3 px-4 text-right font-mono font-bold text-[#083E34]">{pct}%</td>
+                    <td className="py-3 px-4 text-right font-mono font-bold text-[#174EA6]">{pct}%</td>
                   </tr>
                 );
               })}
@@ -395,9 +395,9 @@ export const ReportsView: React.FC = () => {
       {showPrintModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto animate-fade-in print:p-0 print:bg-white">
           <div className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col print:shadow-none print:border-none print:m-0">
-            <div className="bg-[#083E34] text-white p-4 sm:p-6 relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 print:bg-slate-900 border-b border-emerald-900/30">
+            <div className="bg-[#0B1F3A] text-white p-4 sm:p-6 relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 print:bg-slate-900 border-b border-slate-800">
               <div>
-                <span className="text-[10px] font-mono text-amber-300 font-bold uppercase tracking-wider block">
+                <span className="text-[10px] font-mono text-slate-300 font-bold uppercase tracking-wider block">
                   Citadel People Hub • PCCM Executive Dossier
                 </span>
                 <h3 className="text-base sm:text-lg font-bold text-white mt-1">
@@ -411,7 +411,7 @@ export const ReportsView: React.FC = () => {
               <div className="flex items-center gap-2 print:hidden shrink-0">
                 <button
                   onClick={() => window.print()}
-                  className="px-3.5 py-2 bg-amber-400 text-[#083E34] font-bold text-xs rounded-xl hover:bg-amber-300 transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  className="px-3.5 py-2 bg-[#174EA6] text-white font-semibold text-xs rounded-xl hover:bg-blue-700 transition flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span>Print / Save as PDF</span>
@@ -429,11 +429,11 @@ export const ReportsView: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 border-b pb-5 border-slate-200">
                 <div className="p-3 bg-slate-50 rounded-xl">
                   <span className="text-[10px] uppercase font-bold text-slate-500 block">Total Headcount</span>
-                  <span className="text-2xl font-bold text-[#083E34]">{totalStaff} Personnel</span>
+                  <span className="text-2xl font-bold text-slate-900">{totalStaff} Personnel</span>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-xl">
                   <span className="text-[10px] uppercase font-bold text-slate-500 block">Active Entities</span>
-                  <span className="text-2xl font-bold text-[#083E34]">{entities.length} Group Entities</span>
+                  <span className="text-2xl font-bold text-slate-900">{entities.length} Group Entities</span>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-xl">
                   <span className="text-[10px] uppercase font-bold text-slate-500 block">Active On-Leave</span>
@@ -451,7 +451,7 @@ export const ReportsView: React.FC = () => {
                     return (
                       <div key={ent.id} className="border border-slate-200 rounded-lg p-3">
                         <span className="font-semibold text-slate-900 block text-xs">{ent.shortCode}</span>
-                        <span className="text-sm font-bold text-[#083E34] mt-1 block">{count} Staff</span>
+                        <span className="text-sm font-bold text-[#174EA6] mt-1 block">{count} Staff</span>
                         <span className="text-[10px] text-slate-500">{ent.name}</span>
                       </div>
                     );

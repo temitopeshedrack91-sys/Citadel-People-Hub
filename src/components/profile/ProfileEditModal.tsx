@@ -654,7 +654,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
               type="submit"
               disabled={isSaving}
               data-testid="profile-submit-btn"
-              className="px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs transition cursor-pointer bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] active:scale-[0.97] disabled:opacity-50"
+              className="px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs transition cursor-pointer bg-[#174EA6] text-white hover:bg-[#0B1F3A] active:scale-[0.97] disabled:opacity-50"
             >
               {isSaving ? (
                 <span>Submitting...</span>

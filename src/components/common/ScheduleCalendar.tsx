@@ -664,7 +664,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
               onClick={() => handleDayClick(d.num)}
               className={`py-2 px-1 rounded-xl text-center transition-all duration-150 flex flex-col items-center relative cursor-pointer ${
                 isSelected
-                  ? 'bg-[#174EA6] text-white shadow-xs font-bold ring-2 ring-[#D4AF37]/40'
+                  ? 'bg-[#174EA6] text-white shadow-xs font-bold ring-2 ring-[#174EA6]/25'
                   : 'bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold'
               }`}
             >
@@ -673,7 +673,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
               </span>
               <span className="text-xs font-bold mt-0.5">{d.num}</span>
               {d.isToday && !isSelected && (
-                <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mt-0.5" title="Today" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#174EA6] mt-0.5" title="Today" />
               )}
             </button>
           );

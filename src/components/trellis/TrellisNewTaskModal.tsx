@@ -350,7 +350,7 @@ export const TrellisNewTaskModal: React.FC = () => {
               type="submit"
               data-testid="trellis-submit-new-task"
               disabled={isSaving}
-              className="px-5 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold shadow-xs transition active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-2"
+              className="px-5 py-2.5 rounded-xl bg-[#174EA6] hover:bg-[#0B1F3A] text-white font-semibold shadow-xs transition active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#174EA6] focus-visible:ring-offset-2"
             >
               {isSaving ? 'Saving…' : 'Create & Assign Task'}
             </button>

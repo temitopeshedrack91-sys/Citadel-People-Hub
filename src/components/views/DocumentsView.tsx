@@ -237,10 +237,10 @@ Timestamp:     ${new Date().toLocaleString()}
         {permissions.canManageDocuments && (
           <button
             onClick={() => setIsUploadModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] text-xs font-bold flex items-center gap-1.5 shadow-xs border border-[#C59B27] transition cursor-pointer active:scale-95 min-h-[38px]"
+            className="px-3.5 py-2 rounded-xl bg-[#174EA6] text-white hover:bg-[#0B1F3A] text-xs font-semibold flex items-center gap-1.5 shadow-xs transition cursor-pointer active:scale-95 min-h-[38px]"
           >
-            <Upload className="w-4 h-4 text-slate-950 stroke-[2.5]" />
-            <span className="font-bold">Upload document</span>
+            <Upload className="w-4 h-4 text-white stroke-[2.25]" />
+            <span className="font-semibold">Upload document</span>
           </button>
         )}
       </div>
@@ -254,7 +254,7 @@ Timestamp:     ${new Date().toLocaleString()}
             placeholder="Search document title, category, or policy..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/25"
+            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#174EA6] focus:ring-1 focus:ring-[#174EA6]/25"
           />
         </div>
 
@@ -263,10 +263,10 @@ Timestamp:     ${new Date().toLocaleString()}
             <button
               key={cat}
               onClick={() => setCategoryFilter(cat)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition shrink-0 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition shrink-0 cursor-pointer ${
                 categoryFilter === cat
-                  ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
-                  : 'text-black hover:bg-slate-100'
+                  ? 'bg-[#174EA6] text-white shadow-xs'
+                  : 'text-slate-700 hover:bg-slate-100'
               }`}
             >
               {cat}
@@ -332,7 +332,7 @@ Timestamp:     ${new Date().toLocaleString()}
       {isUploadModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B1F3A]/80 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto animate-fade-in">
           <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
-            <div className="bg-[#174EA6] text-white p-5 relative border-b border-[#BFDBFE] shrink-0">
+            <div className="bg-[#0B1F3A] text-white p-5 relative border-b border-slate-800 shrink-0">
               <button
                 onClick={() => setIsUploadModalOpen(false)}
                 className="absolute top-4 right-4 text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
@@ -340,10 +340,10 @@ Timestamp:     ${new Date().toLocaleString()}
                 <X className="w-5 h-5" />
               </button>
               <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <Upload className="w-4 h-4 text-[#D4AF37]" />
+                <Upload className="w-4 h-4 text-white" />
                 <span>Upload Document to Vault</span>
               </h3>
-              <p className="text-xs text-[#D4AF37] mt-0.5">
+              <p className="text-xs text-slate-300 mt-0.5">
                 PCCM Document Repository & Policy Publishing
               </p>
             </div>
@@ -462,7 +462,7 @@ Timestamp:     ${new Date().toLocaleString()}
                 <button
                   type="submit"
                   disabled={isUploading}
-                  className="px-5 py-2 bg-[#D4AF37] text-slate-950 font-bold rounded-xl hover:bg-[#C59B27] transition shadow-xs cursor-pointer active:scale-95"
+                  className="px-5 py-2 bg-[#174EA6] text-white font-semibold rounded-xl hover:bg-[#0B1F3A] transition shadow-xs cursor-pointer active:scale-95"
                 >
                   {isUploading ? 'Publishing...' : 'Save & Publish Document'}
                 </button>

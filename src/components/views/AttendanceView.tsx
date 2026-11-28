@@ -362,15 +362,15 @@ export const AttendanceView: React.FC = () => {
     <div className="space-y-6 font-sans animate-fade-in text-slate-900">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 bg-[#1E1E1E] text-white px-4 py-2.5 rounded-xl shadow-lg border border-[#D4AF37]/40 flex items-center gap-2 text-xs font-bold animate-fade-in">
-          <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />
+        <div className="fixed top-20 right-6 z-50 bg-[#0B1F3A] text-white px-4 py-2.5 rounded-xl shadow-lg border border-slate-700 flex items-center gap-2 text-xs font-bold animate-fade-in">
+          <CheckCircle2 className="w-4 h-4 text-white" />
           <span>{toastMessage}</span>
         </div>
       )}
 
       <div>
         <h1 className="text-lg sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-          <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-[#083E34] shrink-0" />
+          <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-[#174EA6] shrink-0" />
           <span>Attendance &amp; Biometric Imports</span>
         </h1>
         <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -387,11 +387,11 @@ export const AttendanceView: React.FC = () => {
           onClick={() => setActiveTab('daily_summary')}
           className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 min-h-[40px] shrink-0 cursor-pointer ${
             activeTab === 'daily_summary'
-              ? 'bg-[#D4AF37] text-slate-950 shadow-xs border border-[#C59B27]'
+              ? 'bg-[#174EA6] text-white shadow-xs border border-[#174EA6]'
               : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
           }`}
         >
-          <Fingerprint className={`w-4 h-4 ${activeTab === 'daily_summary' ? 'text-slate-950' : 'text-slate-500'}`} />
+          <Fingerprint className={`w-4 h-4 ${activeTab === 'daily_summary' ? 'text-white' : 'text-slate-500'}`} />
           <span>Import &amp; Daily Summary</span>
         </button>
 
@@ -401,11 +401,11 @@ export const AttendanceView: React.FC = () => {
           onClick={() => setActiveTab('schedules')}
           className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 min-h-[40px] shrink-0 cursor-pointer ${
             activeTab === 'schedules'
-              ? 'bg-[#D4AF37] text-slate-950 shadow-xs border border-[#C59B27]'
+              ? 'bg-[#174EA6] text-white shadow-xs border border-[#174EA6]'
               : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
           }`}
         >
-          <Building className={`w-4 h-4 ${activeTab === 'schedules' ? 'text-slate-950' : 'text-[#D4AF37]'}`} />
+          <Building className={`w-4 h-4 ${activeTab === 'schedules' ? 'text-white' : 'text-slate-500'}`} />
           <span>Shift Schedules &amp; Policies</span>
         </button>
 
@@ -415,11 +415,11 @@ export const AttendanceView: React.FC = () => {
           onClick={() => setActiveTab('timesheets')}
           className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 min-h-[40px] shrink-0 cursor-pointer ${
             activeTab === 'timesheets'
-              ? 'bg-[#D4AF37] text-slate-950 shadow-xs border border-[#C59B27]'
+              ? 'bg-[#174EA6] text-white shadow-xs border border-[#174EA6]'
               : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
           }`}
         >
-          <Clock className={`w-4 h-4 ${activeTab === 'timesheets' ? 'text-slate-950' : 'text-slate-500'}`} />
+          <Clock className={`w-4 h-4 ${activeTab === 'timesheets' ? 'text-white' : 'text-slate-500'}`} />
           <span>Weekly Timesheets</span>
         </button>
       </div>
@@ -428,7 +428,7 @@ export const AttendanceView: React.FC = () => {
         <div className="space-y-5">
           {/* Biometric Import Panel */}
           <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03)] overflow-hidden">
-            <div className="p-5 bg-gradient-to-r from-[#083E34] via-[#062C25] to-[#0F5447] text-white">
+            <div className="p-5 bg-[#0B1F3A] text-white">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
@@ -438,7 +438,7 @@ export const AttendanceView: React.FC = () => {
                     <h2 className="text-sm font-bold tracking-tight text-white">
                       Biometric Attendance Import
                     </h2>
-                    <p className="text-[11px] text-emerald-100/90 font-medium mt-0.5 max-w-2xl">
+                    <p className="text-[11px] text-slate-300 font-medium mt-0.5 max-w-2xl">
                       Upload the export from the biometric device software. A single upload
                       refreshes the whole daily summary and never duplicates an overlapping
                       record.
@@ -446,7 +446,7 @@ export const AttendanceView: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 self-start sm:self-auto">
-                  <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-[#D4AF37] text-slate-950 border border-[#C59B27]">
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-white/15 text-slate-200 border border-white/15">
                     ZKTeco / CSV / TSV / DAT
                   </span>
                 </div>
@@ -465,8 +465,8 @@ export const AttendanceView: React.FC = () => {
                   onClick={() => fileInputRef.current?.click()}
                   className={`rounded-xl border-2 border-dashed p-6 text-center transition cursor-pointer ${
                     isDragOver
-                      ? 'border-[#D4AF37] bg-amber-50/80 scale-[1.01]'
-                      : 'border-slate-300 bg-slate-50/70 hover:border-[#D4AF37] hover:bg-amber-50/30'
+                      ? 'border-[#174EA6] bg-blue-50/60 scale-[1.01]'
+                      : 'border-slate-300 bg-slate-50/70 hover:border-[#174EA6] hover:bg-blue-50/20'
                   }`}
                 >
                   <input
@@ -477,7 +477,7 @@ export const AttendanceView: React.FC = () => {
                     data-testid="attendance-import-input"
                     onChange={handleFileInputChange}
                   />
-                  <FileSpreadsheet className="w-8 h-8 mx-auto text-[#083E34]" />
+                  <FileSpreadsheet className="w-8 h-8 mx-auto text-[#174EA6]" />
                   <p className="text-xs font-black text-slate-900 mt-2.5">
                     Drop the biometric export here or click to browse
                   </p>
@@ -492,7 +492,7 @@ export const AttendanceView: React.FC = () => {
                       id="attendance-import-btn"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isImporting}
-                      className="px-4 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 border border-[#C59B27] font-black text-xs transition inline-flex items-center gap-2 shadow-xs active:scale-[0.98] disabled:opacity-60 cursor-pointer"
+                      className="px-4 py-2.5 rounded-xl bg-[#174EA6] hover:bg-[#0B1F3A] text-white border border-[#174EA6] font-black text-xs transition inline-flex items-center gap-2 shadow-xs active:scale-[0.98] disabled:opacity-60 cursor-pointer"
                     >
                       {isImporting ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -509,7 +509,7 @@ export const AttendanceView: React.FC = () => {
                       className="px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 font-bold text-xs transition inline-flex items-center gap-2 shadow-2xs active:scale-[0.98] cursor-pointer"
                       title="Load built-in ZKTeco biometric punches for demonstration"
                     >
-                      <Fingerprint className="w-4 h-4 text-[#083E34]" />
+                      <Fingerprint className="w-4 h-4 text-[#174EA6]" />
                       <span>Load Sample Biometric Data</span>
                     </button>}
 
@@ -547,7 +547,7 @@ export const AttendanceView: React.FC = () => {
               )}
 
               <div className="flex items-start gap-2 text-[11px] text-slate-500 font-medium">
-                <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[#C59B27]" />
+                <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[#174EA6]" />
                 <p>
                   Current assumptions: 4-digit zero-padded device IDs, local device
                   timestamps, and optional punch direction. Adjust the parser and matcher
@@ -662,7 +662,7 @@ export const AttendanceView: React.FC = () => {
             <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
               <div>
                 <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                  <CalendarDays className="w-4 h-4 text-[#083E34]" />
+                  <CalendarDays className="w-4 h-4 text-[#174EA6]" />
                   <span>Daily Attendance Summary</span>
                 </h3>
                 <p className="text-[11px] text-slate-500 font-medium mt-0.5">
@@ -677,7 +677,7 @@ export const AttendanceView: React.FC = () => {
                   id="attendance-date-filter"
                   value={dateFilter}
                   onChange={(event) => setDateFilter(event.target.value)}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none focus:border-[#D4AF37] cursor-pointer"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none focus:border-[#174EA6] cursor-pointer"
                 >
                   <option value="all">All dates</option>
                   {availableDates.map((date) => (
@@ -859,7 +859,7 @@ export const AttendanceView: React.FC = () => {
                 </h3>
                 <p className="text-[11px] text-slate-600">Standard operating shifts, early shifts, and special schedules from Workbook Sheet 7</p>
               </div>
-              <span className="text-xs font-bold px-2.5 py-1 bg-[#083E34] text-[#D4AF37] border border-[#D4AF37]/30 rounded-lg">
+              <span className="text-xs font-bold px-2.5 py-1 bg-[#0B1F3A] text-white border border-slate-700 rounded-lg">
                 5 Active Schedules
               </span>
             </div>
@@ -867,7 +867,7 @@ export const AttendanceView: React.FC = () => {
             {/* Desktop: horizontal table */}
             <div className="hidden lg:block overflow-x-auto custom-scrollbar">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[#083E34] text-white uppercase tracking-wider text-xs font-bold">
+                <thead className="bg-[#0B1F3A] text-white uppercase tracking-wider text-xs font-bold">
                   <tr>
                     <th className="py-3.5 px-4 whitespace-nowrap">Entity / Operational Unit</th>
                     <th className="py-3.5 px-4 whitespace-nowrap">Shift Timings</th>
@@ -883,7 +883,7 @@ export const AttendanceView: React.FC = () => {
                     <tr key={sched.id} className="hover:bg-slate-50 transition">
                       <td className="py-3.5 px-4 font-black text-black">
                         <div className="flex items-center gap-2">
-                          <Building className="w-4 h-4 text-[#083E34]" />
+                          <Building className="w-4 h-4 text-[#174EA6]" />
                           <span>{sched.entityOrUnit}</span>
                         </div>
                         <span className="text-[10px] text-slate-500 font-semibold block ml-6">
@@ -935,7 +935,7 @@ export const AttendanceView: React.FC = () => {
               {CITADEL_ATTENDANCE_SCHEDULES.map((sched) => (
                 <div key={sched.id} className="p-3 space-y-2 hover:bg-slate-50/60 rounded-lg transition border border-transparent hover:border-slate-200">
                   <div className="flex items-center gap-2 text-xs font-black text-black">
-                    <Building className="w-3.5 h-3.5 text-[#083E34]" />
+                    <Building className="w-3.5 h-3.5 text-[#174EA6]" />
                     <span>{sched.entityOrUnit}</span>
                   </div>
                   <div className="text-[10px] text-slate-500 font-semibold">
@@ -1152,7 +1152,7 @@ export const AttendanceView: React.FC = () => {
           <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-[#D4AF37]" />
+                <Clock className="w-4 h-4 text-[#174EA6]" />
                 <span>Weekly Employee Timesheets</span>
               </h3>
               <p className="text-xs text-slate-500 font-medium mt-0.5">

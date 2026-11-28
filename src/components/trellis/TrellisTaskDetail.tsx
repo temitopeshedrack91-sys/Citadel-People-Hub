@@ -242,7 +242,7 @@ export const TrellisTaskDetail: React.FC = () => {
             data-testid="trellis-toggle-edit-btn"
             className={`p-1.5 rounded-lg transition ${
               isEditMode
-                ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
+                ? 'bg-[#174EA6] text-white shadow-xs'
                 : 'hover:bg-slate-100 hover:text-slate-700'
             }`}
             title={isEditMode ? 'Exit edit mode' : 'Edit task'}
@@ -438,7 +438,7 @@ export const TrellisTaskDetail: React.FC = () => {
                     }}
                     className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border transition cursor-pointer ${
                       isSelected
-                        ? 'bg-[#D4AF37] text-slate-950 border-[#C59B27]'
+                        ? 'bg-[#174EA6] text-white border-[#174EA6]'
                         : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
@@ -523,7 +523,7 @@ export const TrellisTaskDetail: React.FC = () => {
             <button
               type="submit"
               data-testid="trellis-save-edit-btn"
-              className="px-5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 text-xs font-bold transition shadow-xs min-h-[40px]"
+              className="px-5 py-2 rounded-xl bg-[#174EA6] hover:bg-[#0B1F3A] text-white text-xs font-semibold transition shadow-xs min-h-[40px]"
             >
               Save Changes
             </button>
@@ -993,7 +993,7 @@ export const TrellisTaskDetail: React.FC = () => {
               <span>citadel_mobile_mockup.png</span>
               <span className="text-slate-400">1.4 MB</span>
             </div>
-            <div className="h-20 bg-slate-900 rounded-xl flex flex-col items-center justify-center p-2 text-center text-[10px] text-[#D4AF37] font-bold">
+            <div className="h-20 bg-[#0B1F3A] rounded-xl flex flex-col items-center justify-center p-2 text-center text-[10px] text-white font-bold">
               <span>citadel_hr_funnel.svg</span>
               <span className="text-slate-400 font-normal">240 KB</span>
             </div>

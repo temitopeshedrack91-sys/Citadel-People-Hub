@@ -347,10 +347,10 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-bold">
+              <span className="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold">
                 Business Head · Entity Scoped
               </span>
-              <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 text-[#083E34] text-[11px] font-semibold border border-emerald-200">
+              <span className="px-2.5 py-0.5 rounded-md bg-[#EFF6FF] text-[#174EA6] text-[11px] font-semibold border border-blue-200">
                 {currentUser.entityName || 'Assigned Business Entity'}
               </span>
             </div>
@@ -367,18 +367,18 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
               type="button"
               onClick={onOpenLeaveModal}
               id="business-head-apply-leave-btn"
-              className="px-3.5 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C59B27] text-slate-950 font-bold text-xs shadow-xs transition flex items-center gap-2 active:scale-95 cursor-pointer min-h-[38px] border border-[#C59B27]"
+              className="px-3.5 py-2 rounded-xl bg-[#174EA6] hover:bg-[#0B1F3A] text-white font-semibold text-xs shadow-xs transition flex items-center gap-2 active:scale-95 cursor-pointer min-h-[38px]"
             >
-              <CalendarDays className="w-4 h-4 text-slate-950" />
+              <CalendarDays className="w-4 h-4 text-white" />
               <span>Apply for Leave</span>
             </button>
             <button
               type="button"
               data-testid="business-head-reports-btn"
               onClick={() => onNavigate('reports')}
-              className="px-3.5 py-2 rounded-xl bg-[#083E34] hover:bg-[#062E27] text-white font-semibold text-xs transition flex items-center gap-2 cursor-pointer min-h-[38px]"
+              className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold text-xs transition flex items-center gap-2 cursor-pointer min-h-[38px]"
             >
-              <BarChart3 className="w-4 h-4" />
+              <BarChart3 className="w-4 h-4 text-[#174EA6]" />
               <span>Entity HR Reports</span>
             </button>
           </div>
@@ -404,12 +404,12 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-black uppercase text-slate-700">Entity Workforce</span>
-            <div className="w-8 h-8 rounded-xl bg-[#083E34] text-amber-300 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-[#0B1F3A] text-white flex items-center justify-center">
               <Users className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5 tabular-nums">
-            <span className="text-2xl font-black text-[#083E34]">{entityEmployees.length}</span>
+            <span className="text-2xl font-black text-slate-900">{entityEmployees.length}</span>
             <span className="text-xs text-slate-500 font-bold">personnel in entity</span>
           </div>
           <p className="text-[11px] text-slate-600 mt-2 font-medium">
@@ -420,12 +420,12 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-black uppercase text-slate-700">Departments</span>
-            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-[#EFF6FF] text-[#174EA6] flex items-center justify-center">
               <Building2 className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5 tabular-nums">
-            <span className="text-2xl font-black text-[#083E34]">{entityDepartments.length}</span>
+            <span className="text-2xl font-black text-slate-900">{entityDepartments.length}</span>
             <span className="text-xs text-slate-500 font-bold">entity units</span>
           </div>
           <p className="text-[11px] text-slate-600 mt-2 font-medium truncate">
@@ -436,12 +436,12 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-black uppercase text-slate-700">Pending Requests</span>
-            <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-800 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
               <CalendarDays className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5 tabular-nums">
-            <span className="text-2xl font-black text-rose-600">
+            <span className="text-2xl font-black text-slate-900">
               {pendingLeaveQueue.length + activeExitRequests.length}
             </span>
             <span className="text-xs text-slate-500 font-bold">open leave &amp; exit items</span>
@@ -454,19 +454,19 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-black uppercase text-slate-700">Entity Attendance</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
               <Clock className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5 tabular-nums">
-            <span className="text-2xl font-black text-[#083E34]">
+            <span className="text-2xl font-black text-slate-900">
               {attendanceRate.pct !== null ? `${attendanceRate.pct}%` : 'No Logs'}
             </span>
             <span className="text-xs text-slate-500 font-bold">
               {attendanceRate.sampleSize > 0 ? `(${attendanceRate.presentCount}/${attendanceRate.sampleSize})` : 'yet'}
             </span>
           </div>
-          <p className="text-[11px] text-emerald-700 mt-2 font-semibold">
+          <p className="text-[11px] text-slate-600 mt-2 font-semibold">
             {attendanceRate.sampleSize > 0 ? 'Live shift adherence across entity' : 'Awaiting biometric / clock-in logs'}
           </p>
         </div>
@@ -477,7 +477,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
         <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
           <div>
             <h2 className="text-sm font-black text-slate-900 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-amber-600" />
+              <ShieldCheck className="w-4 h-4 text-[#174EA6]" />
               <span>Entity Leave &amp; Exit Review Queue ({pendingLeaveQueue.length + activeExitRequests.length})</span>
             </h2>
             <p className="text-xs text-slate-600 mt-0.5">
@@ -487,7 +487,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
           <button
             type="button"
             onClick={() => onNavigate('leave')}
-            className="text-xs font-bold text-[#083E34] hover:underline flex items-center gap-1 cursor-pointer"
+            className="text-xs font-bold text-[#174EA6] hover:underline flex items-center gap-1 cursor-pointer"
           >
             <span>Open Leave Module</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
@@ -528,9 +528,9 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
                     type="button"
                     disabled={processingLeaveId === req.id}
                     onClick={() => handleLeaveEndorse(req)}
-                    className="px-4 py-2 rounded-xl bg-[#D4AF37] text-slate-950 hover:bg-[#C59B27] font-black text-xs shadow-xs flex items-center gap-1.5 transition cursor-pointer border border-[#C59B27] disabled:opacity-50"
+                    className="px-4 py-2 rounded-xl bg-[#174EA6] text-white hover:bg-[#0B1F3A] font-semibold text-xs shadow-xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
                   >
-                    <Check className="w-4 h-4 text-slate-950" />
+                    <Check className="w-4 h-4 text-white" />
                     <span>Endorse Request</span>
                   </button>
                 </div>
@@ -557,7 +557,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
               <button
                 type="button"
                 onClick={() => onNavigate('offboarding')}
-                className="text-xs font-bold text-[#083E34] hover:underline cursor-pointer"
+                className="text-xs font-bold text-[#174EA6] hover:underline cursor-pointer"
               >
                 Review Offboarding →
               </button>
@@ -581,7 +581,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-sm font-black text-slate-900 flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-[#083E34]" />
+              <Building2 className="w-4 h-4 text-[#174EA6]" />
               <span>Departmental Structures ({entityDepartments.length})</span>
             </h2>
             <p className="text-xs text-slate-600 mt-0.5">
@@ -591,7 +591,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
           <button
             type="button"
             onClick={() => onNavigate('directory')}
-            className="text-xs font-bold text-[#083E34] hover:text-amber-700 flex items-center gap-1 cursor-pointer"
+            className="text-xs font-bold text-[#174EA6] hover:text-[#0B1F3A] flex items-center gap-1 cursor-pointer"
           >
             <span>Org Directory</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
@@ -612,7 +612,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-bold text-slate-900 text-xs truncate">{dept.name}</span>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 shrink-0">
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#EFF6FF] text-[#174EA6] border border-blue-200 shrink-0">
                     {deptStaff.length} Staff
                   </span>
                 </div>
@@ -635,7 +635,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
         <div className="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
           <div>
             <h2 className="text-sm font-black text-slate-900 flex items-center gap-2">
-              <Users className="w-4 h-4 text-[#083E34]" />
+              <Users className="w-4 h-4 text-[#174EA6]" />
               <span>Entity Employees ({filteredEntityEmployees.length})</span>
             </h2>
             <p className="text-xs text-slate-600 mt-0.5">
@@ -651,7 +651,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search entity staff..."
                 aria-label="Search entity employees"
-                className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-[#083E34]"
+                className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-[#174EA6]"
               />
             </div>
             <button
@@ -690,7 +690,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
                 <button
                   type="button"
                   onClick={() => setSelectedEmployee(emp)}
-                  className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:border-[#083E34] text-slate-700 hover:text-[#083E34] font-semibold text-[11px] flex items-center gap-1 cursor-pointer"
+                  className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:border-[#174EA6] text-slate-700 hover:text-[#174EA6] font-semibold text-[11px] flex items-center gap-1 cursor-pointer"
                 >
                   <Eye className="w-3.5 h-3.5" />
                   <span>View Dossier</span>
@@ -699,7 +699,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
                   type="button"
                   data-testid={`propose-change-${emp.staffId}`}
                   onClick={() => openChangeModalForEmployee(emp)}
-                  className="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-semibold text-[11px] flex items-center gap-1 cursor-pointer"
+                  className="px-2.5 py-1.5 rounded-lg bg-[#EFF6FF] hover:bg-blue-100 text-[#174EA6] border border-blue-200 font-semibold text-[11px] flex items-center gap-1 cursor-pointer"
                 >
                   <FileEdit className="w-3.5 h-3.5" />
                   <span>Propose Change (HR)</span>
@@ -729,10 +729,10 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
           className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4"
         >
           <div className="bg-white rounded-2xl max-w-md w-full border border-slate-200 shadow-xl overflow-hidden">
-            <div className="px-5 py-4 bg-[#083E34] text-white flex items-center justify-between">
+            <div className="px-5 py-4 bg-[#0B1F3A] text-white flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold">Submit Change Request for HR Approval</h3>
-                <p className="text-[11px] text-amber-200 mt-0.5">
+                <p className="text-[11px] text-slate-300 mt-0.5">
                   {changeTargetEmp.fullName} ({changeTargetEmp.staffId})
                 </p>
               </div>
@@ -747,7 +747,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
             </div>
 
             <form onSubmit={handleSubmitPermittedChangeForHr} className="p-5 space-y-3.5 text-xs">
-              <p className="text-[11px] text-slate-600 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+              <p className="text-[11px] text-slate-600 bg-slate-50 border border-slate-200 rounded-lg p-2.5">
                 Updates proposed by Business Heads enter the PCCM HR approval queue before updating authoritative personnel records.
               </p>
 
@@ -762,7 +762,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
                   type="text"
                   value={proposedPhone}
                   onChange={(e) => setProposedPhone(e.target.value)}
-                  className="w-full p-2 rounded-lg border border-slate-200 focus:outline-none focus:border-[#083E34]"
+                  className="w-full p-2 rounded-lg border border-slate-200 focus:outline-none focus:border-[#174EA6]"
                 />
               </div>
 
@@ -772,7 +772,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
                   type="email"
                   value={proposedEmail}
                   onChange={(e) => setProposedEmail(e.target.value)}
-                  className="w-full p-2 rounded-lg border border-slate-200 focus:outline-none focus:border-[#083E34]"
+                  className="w-full p-2 rounded-lg border border-slate-200 focus:outline-none focus:border-[#174EA6]"
                 />
               </div>
 
@@ -782,7 +782,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
                   type="text"
                   value={proposedAddress}
                   onChange={(e) => setProposedAddress(e.target.value)}
-                  className="w-full p-2 rounded-lg border border-slate-200 focus:outline-none focus:border-[#083E34]"
+                  className="w-full p-2 rounded-lg border border-slate-200 focus:outline-none focus:border-[#174EA6]"
                 />
               </div>
 
@@ -794,7 +794,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
                   value={changeReason}
                   onChange={(e) => setChangeReason(e.target.value)}
                   placeholder="Explain the operational reason for this update..."
-                  className="w-full p-2 rounded-lg border border-slate-200 focus:outline-none focus:border-[#083E34]"
+                  className="w-full p-2 rounded-lg border border-slate-200 focus:outline-none focus:border-[#174EA6]"
                 />
               </div>
 
@@ -810,7 +810,7 @@ export const BusinessHeadDashboard: React.FC<BusinessHeadDashboardProps> = ({
                   type="submit"
                   disabled={isSubmittingChange}
                   data-testid="submit-business-head-change-btn"
-                  className="px-4 py-2 rounded-lg bg-[#083E34] text-white font-semibold hover:bg-[#062E27] flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2 rounded-lg bg-[#174EA6] text-white font-semibold hover:bg-[#0B1F3A] flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>{isSubmittingChange ? 'Submitting...' : 'Submit for HR Approval'}</span>

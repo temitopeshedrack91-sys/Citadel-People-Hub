@@ -80,9 +80,9 @@ export const AuditLogsView: React.FC = () => {
             <button
               key={mod}
               onClick={() => setModuleFilter(mod)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap cursor-pointer ${
                 moduleFilter === mod
-                  ? 'bg-[#D4AF37] text-slate-950 shadow-xs'
+                  ? 'bg-[#174EA6] text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
